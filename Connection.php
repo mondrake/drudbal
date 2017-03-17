@@ -8,12 +8,14 @@ use Drupal\Core\Database\Database;
 use Drupal\Core\Database\DatabaseNotFoundException;
 use Drupal\Core\Database\TransactionCommitFailedException;
 use Drupal\Core\Database\DatabaseException;
+use Drupal\Core\Database\StatementInterface;
 use Drupal\Core\Database\Connection as DatabaseConnection;
 use Drupal\Component\Utility\Unicode;
 
 use Doctrine\DBAL\Connection as DBALConnection;
 use Doctrine\DBAL\DriverManager as DBALDriverManager;
 use Doctrine\DBAL\Version as DBALVersion;
+use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\Exception\ConnectionException as DBALConnectionException;
 
 /**
@@ -22,7 +24,7 @@ use Doctrine\DBAL\Exception\ConnectionException as DBALConnectionException;
  */
 
 /**
- * MySQL implementation of \Drupal\Core\Database\Connection.
+ * DRUBAL implementation of \Drupal\Core\Database\Connection.
  */
 class Connection extends DatabaseConnection {
 
@@ -89,10 +91,88 @@ class Connection extends DatabaseConnection {
    * {@inheritdoc}
    */
   public function query($query, array $args = [], $options = []) {
+    // Use default values if not already set.
+    $options += $this->defaultOptions();
+
     try {
-      return parent::query($query, $args, $options);
+      // We allow either a pre-bound statement object or a literal string.
+      // In either case, we want to end up with an executed statement object,
+      // which we pass to PDOStatement::execute.
+      if ($query instanceof StatementInterface) {   // @todo
+        $stmt = $query;
+        $stmt->execute(NULL, $options);
+      }
+      else {
+        $this->expandArguments($query, $args);
+        // To protect against SQL injection, Drupal only supports executing one
+        // statement at a time.  Thus, the presence of a SQL delimiter (the
+        // semicolon) is not allowed unless the option is set.  Allowing
+        // semicolons should only be needed for special cases like defining a
+        // function or stored procedure in SQL. Trim any trailing delimiter to
+        // minimize false positives.
+        $query = rtrim($query, ";  \t\n\r\0\x0B");
+        if (strpos($query, ';') !== FALSE && empty($options['allow_delimiter_in_query'])) {
+          throw new \InvalidArgumentException('; is not supported in SQL strings. Use only one statement at a time.');
+        }
+
+        // Resolve tables' names with prefix.
+        $query = $this->prefixTables($query);
+
+        // Prepare a DBAL statement.
+        $DBAL_stmt = $this->DBALConnection->prepare($query);
+
+        // Set the fetch mode for the statement. @todo if not PDO?
+        if (isset($options['fetch'])) {
+          if (is_string($options['fetch'])) {
+            // \PDO::FETCH_PROPS_LATE tells __construct() to run before properties
+            // are added to the object.
+            $DBAL_stmt->setFetchMode(\PDO::FETCH_CLASS | \PDO::FETCH_PROPS_LATE, $options['fetch']);
+          }
+          else {
+            $DBAL_stmt->setFetchMode($options['fetch']);
+          }
+        }
+
+        // Bind parameters.
+        foreach ($args as $arg => $value) {
+          $DBAL_stmt->bindValue($arg, $value);
+        }
+
+        // Executes statement via DBAL.
+        $DBAL_stmt->execute();
+
+        // This is the PDO statement. @todo if not using PDO?
+        $stmt = $DBAL_stmt->getWrappedStatement();
+      }
+
+      // Depending on the type of query we may need to return a different value.
+      // See DatabaseConnection::defaultOptions() for a description of each
+      // value.
+      switch ($options['return']) {
+        case Database::RETURN_STATEMENT:
+          return $stmt;
+        case Database::RETURN_AFFECTED:
+          $stmt->allowRowCount = TRUE;
+          return $stmt->rowCount();
+        case Database::RETURN_INSERT_ID:
+          $sequence_name = isset($options['sequence_name']) ? $options['sequence_name'] : NULL;
+          return $this->connection->lastInsertId($sequence_name);
+        case Database::RETURN_NULL:
+          return NULL;
+        default:
+          throw new \PDOException('Invalid return directive: ' . $options['return']);
+      }
     }
-    catch (DatabaseException $e) {
+    catch (\PDOException $e) {
+      // Most database drivers will return NULL here, but some of them
+      // (e.g. the SQLite driver) may need to re-run the query, so the return
+      // value will be the same as for static::query().
+      return $this->handleQueryException($e, $query, $args, $options);
+    }
+    catch (DBALException $e) {
+      return $this->handleQueryDBALException($e, $query, $args, $options);
+    }
+    catch (DatabaseException $e) {  // @todo MySql specific.
       if ($e->getPrevious()->errorInfo[1] == 1153) {
         // If a max_allowed_packet error occurs the message length is truncated.
         // This should prevent the error from recurring if the exception is
@@ -102,6 +182,34 @@ class Connection extends DatabaseConnection {
       }
       throw $e;
     }
+  }
+
+  /**
+   * Wraps and re-throws any DBALException thrown by static::query().
+   *
+   * @param \Doctrine\DBAL\DBALException $e
+   *   The exception thrown by static::query().
+   * @param $query
+   *   The query executed by static::query().
+   * @param array $args
+   *   An array of arguments for the prepared statement.
+   * @param array $options
+   *   An associative array of options to control how the query is run.
+   *
+   * @return @todo
+   *
+   * @throws \Drupal\Core\Database\DatabaseExceptionWrapper
+   */
+  protected function handleQueryDBALException(DBALException $e, $query, array $args = [], $options = []) {
+    if ($options['throw_exception']) {
+      // Wrap the exception in another exception, because PHP does not allow
+      // overriding Exception::getMessage(). Its message is the extra database
+      // debug information.
+      $query_string = ($query instanceof StatementInterface) ? $query->getQueryString() : $query;
+      $message = $e->getMessage() . ": " . $query_string . "; " . print_r($args, TRUE);
+      throw new DatabaseExceptionWrapper($message, 0, $e);
+    }
+    return NULL;
   }
 
   /**
@@ -149,6 +257,7 @@ class Connection extends DatabaseConnection {
       ]);
       $options['driverOptions'] = $connection_options['pdo'];
       $dbal_connection = DBALDriverManager::getConnection($options);
+      $dbal_connection->setFetchMode(\PDO::FETCH_OBJ);
       $pdo = $dbal_connection->getWrappedConnection();
     }
     catch (DBALConnectionException $e) {
