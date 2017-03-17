@@ -2,7 +2,6 @@
 
 namespace Drupal\Driver\Database\drubal;
 
-use Drupal\Core\Database\DatabaseAccessDeniedException;
 use Drupal\Core\Database\DatabaseExceptionWrapper;
 
 use Drupal\Core\Database\Database;
@@ -12,9 +11,9 @@ use Drupal\Core\Database\DatabaseException;
 use Drupal\Core\Database\Connection as DatabaseConnection;
 use Drupal\Component\Utility\Unicode;
 
-use Doctrine\DBAL\Configuration as DBALConfiguration;
 use Doctrine\DBAL\DriverManager as DBALDriverManager;
 use Doctrine\DBAL\Version as DBALVersion;
+use Doctrine\DBAL\Exception\ConnectionException as DBALConnectionException;
 
 /**
  * @addtogroup database
@@ -25,16 +24,6 @@ use Doctrine\DBAL\Version as DBALVersion;
  * MySQL implementation of \Drupal\Core\Database\Connection.
  */
 class Connection extends DatabaseConnection {
-
-  /**
-   * Error code for "Unknown database" error.
-   */
-  const DATABASE_NOT_FOUND = 1049;
-
-  /**
-   * Error code for "Access denied" error.
-   */
-  const ACCESS_DENIED = 1045;
 
   /**
    * Error code for "Can't initialize character set" error.
@@ -90,7 +79,7 @@ class Connection extends DatabaseConnection {
     $this->connectionOptions = $connection_options;
 
     // Set the DBAL connection.
-    $this->DBALConnection = DBALDriverManager::getConnection(['url' => $connection_options['url']], new DBALConfiguration());
+    $this->DBALConnection = DBALDriverManager::getConnection($connection_options);
   }
 
   /**
@@ -123,21 +112,10 @@ class Connection extends DatabaseConnection {
     else {
       $charset = 'utf8mb4';
     }
-    // The DSN should use either a socket or a host/port.
-    if (isset($connection_options['unix_socket'])) {
-      $dsn = 'mysql:unix_socket=' . $connection_options['unix_socket'];
-    }
-    else {
-      // Default to TCP connection on port 3306.
-      $dsn = 'mysql:host=' . $connection_options['host'] . ';port=' . (empty($connection_options['port']) ? 3306 : $connection_options['port']);
-    }
     // Character set is added to dsn to ensure PDO uses the proper character
     // set when escaping. This has security implications. See
     // https://www.drupal.org/node/1201452 for further discussion.
-    $dsn .= ';charset=' . $charset;
-    if (!empty($connection_options['database'])) {
-      $dsn .= ';dbname=' . $connection_options['database'];
-    }
+    $connection_options['charset'] = $charset;
     // Allow PDO options to be overridden.
     $connection_options += [
       'pdo' => [],
@@ -160,16 +138,18 @@ class Connection extends DatabaseConnection {
     }
 
     try {
-      $pdo = new \PDO($dsn, $connection_options['username'], $connection_options['password'], $connection_options['pdo']);
+      $options = array_diff_key($connection_options, [
+        'namespace' => NULL,
+        'prefix' => NULL,
+        'driver' => NULL,
+        'pdo' => NULL,
+      ]);
+      $options['driverOptions'] = $connection_options['pdo'];
+      $dbal_connection = DBALDriverManager::getConnection($options);
+      $pdo = $dbal_connection->getWrappedConnection();
     }
-    catch (\PDOException $e) {
-      if ($e->getCode() == static::DATABASE_NOT_FOUND) {
-        throw new DatabaseNotFoundException($e->getMessage(), $e->getCode(), $e);
-      }
-      if ($e->getCode() == static::ACCESS_DENIED) {
-        throw new DatabaseAccessDeniedException($e->getMessage(), $e->getCode(), $e);
-      }
-      throw $e;
+    catch (DBALConnectionException $e) {
+      throw new DatabaseExceptionWrapper($e->getMessage(), $e->getCode(), $e);
     }
 
     // Force MySQL to use the UTF-8 character set. Also set the collation, if a
@@ -391,7 +371,7 @@ class Connection extends DatabaseConnection {
    * @return string database server version string
    */
   public function getDbServerVersion() {
-    return $this->connection->getAttribute(\PDO::ATTR_SERVER_VERSION); // @todo if not PDO??
+    return $this->DBALConnection->getWrappedConnection()->getAttribute(\PDO::ATTR_SERVER_VERSION); // @todo if not PDO??
   }
 
 }
