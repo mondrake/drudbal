@@ -43,7 +43,7 @@ class Tasks extends InstallTasks {
    * {@inheritdoc}
    */
   public function name() {
-    return t('MySQL, MariaDB, Percona Server, or equivalent');
+    return t('Doctrine DBAL');
   }
 
   /**

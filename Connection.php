@@ -12,6 +12,10 @@ use Drupal\Core\Database\DatabaseException;
 use Drupal\Core\Database\Connection as DatabaseConnection;
 use Drupal\Component\Utility\Unicode;
 
+use Doctrine\DBAL\Configuration as DBALConfiguration;
+use Doctrine\DBAL\DriverManager as DBALDriverManager;
+use Doctrine\DBAL\Version as DBALVersion;
+
 /**
  * @addtogroup database
  * @{
@@ -48,6 +52,13 @@ class Connection extends DatabaseConnection {
   const SQLSTATE_SYNTAX_ERROR = 42000;
 
   /**
+   * The actual DBAL connection.
+   *
+   * @var \Doctrine\DBAL\Connection
+   */
+  protected $DBALconnection;
+
+  /**
    * Flag to indicate if the cleanup function in __destruct() should run.
    *
    * @var bool
@@ -77,6 +88,9 @@ class Connection extends DatabaseConnection {
     $this->transactionalDDLSupport = FALSE;
 
     $this->connectionOptions = $connection_options;
+
+    // Set the DBAL connection.
+    $this->DBALConnection = DBALDriverManager::getConnection(['url' => $connection_options['url']], new DBALConfiguration());
   }
 
   /**
@@ -223,11 +237,18 @@ class Connection extends DatabaseConnection {
   }
 
   public function driver() {
-    return 'mysql';
+    return 'drubal';
   }
 
   public function databaseType() {
-    return 'mysql';
+    return $this->DBALConnection->getDriver()->getDatabasePlatform()->getName();
+  }
+
+  /**
+   * Returns the DBAL version and database information.
+   */
+  public function version() {
+    return "DBAL {$this->getDBALVersion()} on {$this->databaseType()}/{$this->getDbServerVersion()} via {$this->getDBALDriver()}";
   }
 
   /**
@@ -344,6 +365,33 @@ class Connection extends DatabaseConnection {
         }
       }
     }
+  }
+
+  /**
+   * Gets the DBAL version string
+   *
+   * @return string DBAL version string
+   */
+  public function getDBALVersion() {
+    return DBALVersion::VERSION;
+  }
+
+  /**
+   * Gets the DBAL driver name
+   *
+   * @return string DBAL driver name
+   */
+  public function getDBALDriver() {
+    return $this->DBALConnection->getDriver()->getName();
+  }
+
+  /**
+   * Gets the database server version
+   *
+   * @return string database server version string
+   */
+  public function getDbServerVersion() {
+    return $this->connection->getAttribute(\PDO::ATTR_SERVER_VERSION); // @todo if not PDO??
   }
 
 }
