@@ -229,9 +229,9 @@ class Connection extends DatabaseConnection {
     $connection_options['charset'] = $charset;
     // Allow PDO options to be overridden.
     $connection_options += [
-      'pdo' => [],
+      'driverOptions' => [],
     ];
-    $connection_options['pdo'] += [
+    $connection_options['driverOptions'] += [
       \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
       // So we don't have to mess around with cursors and unbuffered queries by default.
       \PDO::MYSQL_ATTR_USE_BUFFERED_QUERY => TRUE,
@@ -245,7 +245,7 @@ class Connection extends DatabaseConnection {
     if (defined('\PDO::MYSQL_ATTR_MULTI_STATEMENTS')) {
       // An added connection option in PHP 5.5.21 to optionally limit SQL to a
       // single statement like mysqli.
-      $connection_options['pdo'] += [\PDO::MYSQL_ATTR_MULTI_STATEMENTS => FALSE];
+      $connection_options['driverOptions'] += [\PDO::MYSQL_ATTR_MULTI_STATEMENTS => FALSE];
     }
 
     try {
@@ -253,12 +253,9 @@ class Connection extends DatabaseConnection {
         'namespace' => NULL,
         'prefix' => NULL,
         'driver' => NULL,
-        'pdo' => NULL,
       ]);
-      $options['driverOptions'] = $connection_options['pdo'];
       $dbal_connection = DBALDriverManager::getConnection($options);
       $dbal_connection->setFetchMode(\PDO::FETCH_OBJ);
-      $pdo = $dbal_connection->getWrappedConnection();
     }
     catch (DBALConnectionException $e) {
       throw new DatabaseExceptionWrapper($e->getMessage(), $e->getCode(), $e);
@@ -268,10 +265,10 @@ class Connection extends DatabaseConnection {
     // certain one has been set; otherwise, MySQL defaults to
     // 'utf8mb4_general_ci' for utf8mb4.
     if (!empty($connection_options['collation'])) {
-      $pdo->exec('SET NAMES ' . $charset . ' COLLATE ' . $connection_options['collation']);
+      $dbal_connection->exec('SET NAMES ' . $charset . ' COLLATE ' . $connection_options['collation']);
     }
     else {
-      $pdo->exec('SET NAMES ' . $charset);
+      $dbal_connection->exec('SET NAMES ' . $charset);
     }
 
     // Set MySQL init_commands if not already defined.  Default Drupal's MySQL
@@ -290,7 +287,7 @@ class Connection extends DatabaseConnection {
     ];
     // Execute initial commands.
     foreach ($connection_options['init_commands'] as $sql) {
-      $pdo->exec($sql);
+      $dbal_connection->exec($sql);
     }
 
     return $dbal_connection;
