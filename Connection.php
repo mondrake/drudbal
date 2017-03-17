@@ -79,7 +79,7 @@ class Connection extends DatabaseConnection {
     $this->connectionOptions = $connection_options;
 
     // Set the DBAL connection.
-    $this->DBALConnection = DBALDriverManager::getConnection($connection_options);
+    $this->DBALConnection = DBALDriverManager::getConnection(['pdo' => $connection]);
   }
 
   /**
