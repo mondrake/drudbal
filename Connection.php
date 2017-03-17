@@ -11,6 +11,7 @@ use Drupal\Core\Database\DatabaseException;
 use Drupal\Core\Database\Connection as DatabaseConnection;
 use Drupal\Component\Utility\Unicode;
 
+use Doctrine\DBAL\Connection as DBALConnection;
 use Doctrine\DBAL\DriverManager as DBALDriverManager;
 use Doctrine\DBAL\Version as DBALVersion;
 use Doctrine\DBAL\Exception\ConnectionException as DBALConnectionException;
@@ -67,8 +68,13 @@ class Connection extends DatabaseConnection {
   /**
    * Constructs a Connection object.
    */
-  public function __construct(\PDO $connection, array $connection_options = []) {
-    parent::__construct($connection, $connection_options);
+  public function __construct(DBALConnection $connection, array $connection_options = []) {
+    // Set the DBAL connection.
+    $this->DBALConnection = $connection;
+
+    // @todo parent expects a PDO object in the constructor, which may not be
+    // the case with DBAL.
+    parent::__construct($connection->getWrappedConnection(), $connection_options);
 
     // This driver defaults to transaction support, except if explicitly passed FALSE.
     $this->transactionSupport = !isset($connection_options['transactions']) || ($connection_options['transactions'] !== FALSE);
@@ -77,9 +83,6 @@ class Connection extends DatabaseConnection {
     $this->transactionalDDLSupport = FALSE;
 
     $this->connectionOptions = $connection_options;
-
-    // Set the DBAL connection.
-    $this->DBALConnection = DBALDriverManager::getConnection(['pdo' => $connection]);
   }
 
   /**
@@ -181,7 +184,7 @@ class Connection extends DatabaseConnection {
       $pdo->exec($sql);
     }
 
-    return $pdo;
+    return $dbal_connection;
   }
 
   /**
