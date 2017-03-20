@@ -23,7 +23,7 @@ class Tasks extends InstallTasks {
   const LIBMYSQLCLIENT_MINIMUM_VERSION = '5.5.3';
 
   /**
-   * The PDO driver name for MySQL and equivalent databases.
+   * The driver name for DRUBAL.
    *
    * @var string
    */
@@ -43,14 +43,22 @@ class Tasks extends InstallTasks {
    * {@inheritdoc}
    */
   public function name() {
-    return t('Doctrine DBAL');
+    if ($this->connect() === TRUE) {
+      $connection = Database::getConnection();
+     return "Doctrine DBAL on {$connection->databaseType()}/{$connection->getDbServerVersion()} via {$connection->getDBALDriver()}";
+    }
+    else {
+      return t('Doctrine DBAL');
+    }
   }
 
   /**
    * {@inheritdoc}
    */
   public function minimumVersion() {
-    return '5.5.3';
+    return '2.5.12';
+
+// @todo     5.5.3';
   }
 
   /**
@@ -130,10 +138,24 @@ class Tasks extends InstallTasks {
    */
   public function getFormOptions(array $database) {
     $form = parent::getFormOptions($database);
-    if (empty($form['advanced_options']['port']['#default_value'])) {
-      $form['advanced_options']['port']['#default_value'] = '3306';
-    }
 
+    // Remove the options that only apply to client/server style databases.
+    unset($form['database'], $form['username'], $form['password'], $form['advanced_options']['host'], $form['advanced_options']['port']);
+
+    $form['url'] = [
+      '#type' => 'textarea',
+      '#title' => t('Database URL'),
+      '#description' => t('@todo point to Doctrine docs http://docs.doctrine-project.org/projects/doctrine-dbal/en/latest/reference/configuration.html. MySql example: mysql://dbuser:password@localhost:port/mydb'),
+      '#default_value' => empty($database['url']) ? 'mysql://dbuser:password@localhost:port/database' : $database['url'],
+      '#rows' => 3,
+      '#size' => 45,
+      '#required' => TRUE,
+      '#states' => [
+        'required' => [
+          ':input[name=driver]' => ['value' => $this->pdoDriver],
+        ],
+      ],
+    ];
     return $form;
   }
 

@@ -214,7 +214,6 @@ class Connection extends DatabaseConnection {
       $options = array_diff_key($connection_options, [
         'namespace' => NULL,
         'prefix' => NULL,
-        'driver' => NULL,
       ]);
       $dbal_connection = DBALDriverManager::getConnection($options);
       $dbal_connection->setFetchMode(\PDO::FETCH_OBJ);
@@ -267,30 +266,22 @@ class Connection extends DatabaseConnection {
   }
 
   /**
-   * Returns the DBAL version and database information.
+   * Returns the DBAL version.
    */
   public function version() {
-    return "DBAL {$this->getDBALVersion()} on {$this->databaseType()}/{$this->getDbServerVersion()} via {$this->getDBALDriver()}";
+    return DBALVersion::VERSION;
   }
 
   /**
-   * Overrides \Drupal\Core\Database\Connection::createDatabase().
-   *
-   * @param string $database
-   *   The name of the database to create.
-   *
-   * @throws \Drupal\Core\Database\DatabaseNotFoundException
+   * {@inheritdoc}
    */
   public function createDatabase($database) {
-    // Escape the database name.
-    $database = Database::getConnection()->escapeDatabase($database);
-
     try {
-      // Create the database and set it as active.
-      $this->connection->exec("CREATE DATABASE $database");
-      $this->connection->exec("USE $database");
+      PdoMysql::preCreateDatabase($this->DBALConnection, $database);
+      $this->DBALConnection->getSchemaManager()->createDatabase($database);
+      PdoMysql::postCreateDatabase($this->DBALConnection, $database);
     }
-    catch (\Exception $e) {
+    catch (DBALException $e) {
       throw new DatabaseNotFoundException($e->getMessage());
     }
   }
@@ -387,15 +378,6 @@ class Connection extends DatabaseConnection {
         }
       }
     }
-  }
-
-  /**
-   * Gets the DBAL version string
-   *
-   * @return string DBAL version string
-   */
-  public function getDBALVersion() {
-    return DBALVersion::VERSION;
   }
 
   /**

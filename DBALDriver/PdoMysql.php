@@ -108,4 +108,18 @@ class PdoMysql {
     }
   }
 
+  /**
+   * @todo
+   */
+  public static function preCreateDatabase(DBALConnection $connection, $database) {
+  }
+
+  /**
+   * @todo
+   */
+  public static function postCreateDatabase(DBALConnection $connection, $database) {
+    // Set the database as active.
+    $connection->exec("USE $database");
+  }
+
 }
