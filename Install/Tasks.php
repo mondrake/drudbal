@@ -56,6 +56,9 @@ class Tasks extends InstallTasks {
    * {@inheritdoc}
    */
   public function minimumVersion() {
+    // Note: This is the minimum version of Doctrine DBAL; the minimum version
+    // of the db server should be managed in
+    // Drupal\Driver\Database\drubal\DBALDriver\[driver_name]::runInstallTasks.
     return '2.5.12';
   }
 

@@ -170,18 +170,6 @@ abstract class PDOMySql {
   /**
    * @todo
    */
-  public static function preConnectionConstruct(array &$connection_options = []) {
-  }
-
-  /**
-   * @todo
-   */
-  public static function postConnectionConstruct(array &$connection_options = []) {
-  }
-
-  /**
-   * @todo
-   */
   public static function transactionSupport(array &$connection_options = []) {
     // This driver defaults to transaction support, except if explicitly passed FALSE.
     return !isset($connection_options['transactions']) || ($connection_options['transactions'] !== FALSE);
