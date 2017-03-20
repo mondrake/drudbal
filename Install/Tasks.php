@@ -4,39 +4,29 @@ namespace Drupal\Driver\Database\drubal\Install;
 
 use Drupal\Core\Database\Install\Tasks as InstallTasks;
 use Drupal\Core\Database\Database;
-use Drupal\Core\Database\Driver\mysql\Connection;
-use Drupal\Core\Database\DatabaseNotFoundException;
+use Drupal\Driver\Database\drubal\DBALDriver; // @todo
+use Doctrine\DBAL\DriverManager as DBALDriverManager;
 
 /**
- * Specifies installation tasks for MySQL and equivalent databases.
+ * Specifies installation tasks for DRUBAL driver.
  */
 class Tasks extends InstallTasks {
 
   /**
-   * Minimum required MySQLnd version.
-   */
-  const MYSQLND_MINIMUM_VERSION = '5.0.9';
-
-  /**
-   * Minimum required libmysqlclient version.
-   */
-  const LIBMYSQLCLIENT_MINIMUM_VERSION = '5.5.3';
-
-  /**
-   * The driver name for DRUBAL.
-   *
-   * @var string
-   */
-  protected $pdoDriver = 'mysql';
-
-  /**
-   * Constructs a \Drupal\Core\Database\Driver\mysql\Install\Tasks object.
+   * Constructs a \Drupal\Driver\Database\drubal\Install\Tasks object.
    */
   public function __construct() {
     $this->tasks[] = [
+      'function' => 'runDBALDriverInstallTasks',
       'arguments' => [],
-      'function' => 'ensureInnoDbAvailable',
     ];
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function installable() {
+    return empty($this->error);
   }
 
   /**
@@ -45,7 +35,11 @@ class Tasks extends InstallTasks {
   public function name() {
     if ($this->connect() === TRUE) {
       $connection = Database::getConnection();
-     return "Doctrine DBAL on {$connection->databaseType()}/{$connection->getDbServerVersion()} via {$connection->getDBALDriver()}";
+      return t('Doctrine DBAL on @database_type/@database_server_version via @dbal_driver', [
+        '@database_type' => $connection->databaseType(),
+        '@database_server_version' => $connection->getDbServerVersion(),
+        '@dbal_driver' => $connection->getDBALDriver(),
+      ]);
     }
     else {
       return t('Doctrine DBAL');
@@ -57,80 +51,20 @@ class Tasks extends InstallTasks {
    */
   public function minimumVersion() {
     return '2.5.12';
-
-// @todo     5.5.3';
   }
 
   /**
-   * {@inheritdoc}
+   * Check if we can connect to the database.
    */
   protected function connect() {
-    try {
-      // This doesn't actually test the connection.
-      db_set_active();
-      // Now actually do a check.
-      try {
-        Database::getConnection();
-      }
-      catch (\Exception $e) {
-        // Detect utf8mb4 incompability.
-        if ($e->getCode() == Connection::UNSUPPORTED_CHARSET || ($e->getCode() == Connection::SQLSTATE_SYNTAX_ERROR && $e->errorInfo[1] == Connection::UNKNOWN_CHARSET)) {
-          $this->fail(t('Your MySQL server and PHP MySQL driver must support utf8mb4 character encoding. Make sure to use a database system that supports this (such as MySQL/MariaDB/Percona 5.5.3 and up), and that the utf8mb4 character set is compiled in. See the <a href=":documentation" target="_blank">MySQL documentation</a> for more information.', [':documentation' => 'https://dev.mysql.com/doc/refman/5.0/en/cannot-initialize-character-set.html']));
-          $info = Database::getConnectionInfo();
-          $info_copy = $info;
-          // Set a flag to fall back to utf8. Note: this flag should only be
-          // used here and is for internal use only.
-          $info_copy['default']['_dsn_utf8_fallback'] = TRUE;
-          // In order to change the Database::$databaseInfo array, we need to
-          // remove the active connection, then re-add it with the new info.
-          Database::removeConnection('default');
-          Database::addConnectionInfo('default', 'default', $info_copy['default']);
-          // Connect with the new database info, using the utf8 character set so
-          // that we can run the checkEngineVersion test.
-          Database::getConnection();
-          // Revert to the old settings.
-          Database::removeConnection('default');
-          Database::addConnectionInfo('default', 'default', $info['default']);
-        }
-        else {
-          // Rethrow the exception.
-          throw $e;
-        }
-      }
-      $this->pass('Drupal can CONNECT to the database ok.');
+    $results = DBALDriver\PdoMysql::installConnect();
+    foreach ($results['pass'] as $result) {
+      $this->pass($result);
     }
-    catch (\Exception $e) {
-      // Attempt to create the database if it is not found.
-      if ($e->getCode() == Connection::DATABASE_NOT_FOUND) {
-        // Remove the database string from connection info.
-        $connection_info = Database::getConnectionInfo();
-        $database = $connection_info['default']['database'];
-        unset($connection_info['default']['database']);
-
-        // In order to change the Database::$databaseInfo array, need to remove
-        // the active connection, then re-add it with the new info.
-        Database::removeConnection('default');
-        Database::addConnectionInfo('default', 'default', $connection_info['default']);
-
-        try {
-          // Now, attempt the connection again; if it's successful, attempt to
-          // create the database.
-          Database::getConnection()->createDatabase($database);
-        }
-        catch (DatabaseNotFoundException $e) {
-          // Still no dice; probably a permission issue. Raise the error to the
-          // installer.
-          $this->fail(t('Database %database not found. The server reports the following message when attempting to create the database: %error.', ['%database' => $database, '%error' => $e->getMessage()]));
-        }
-      }
-      else {
-        // Database connection failed for some other reason than the database
-        // not existing.
-        $this->fail(t('Failed to connect to your database server. The server reports the following message: %error.<ul><li>Is the database server running?</li><li>Does the database exist or does the database user have sufficient privileges to create the database?</li><li>Have you entered the correct database name?</li><li>Have you entered the correct username and password?</li><li>Have you entered the correct database hostname?</li></ul>', ['%error' => $e->getMessage()]));
-        return FALSE;
-      }
+    foreach ($results['fail'] as $result) {
+      $this->fail($result);
     }
-    return TRUE;
+    return empty($results['fail']);
   }
 
   /**
@@ -146,49 +80,52 @@ class Tasks extends InstallTasks {
       '#type' => 'textarea',
       '#title' => t('Database URL'),
       '#description' => t('@todo point to Doctrine docs http://docs.doctrine-project.org/projects/doctrine-dbal/en/latest/reference/configuration.html. MySql example: mysql://dbuser:password@localhost:port/mydb'),
-      '#default_value' => empty($database['url']) ? 'mysql://dbuser:password@localhost:port/database' : $database['url'],
+      '#default_value' => empty($database['url']) ? '' : $database['url'],
       '#rows' => 3,
       '#size' => 45,
       '#required' => TRUE,
       '#states' => [
         'required' => [
-          ':input[name=driver]' => ['value' => $this->pdoDriver],
+          ':input[name=driver]' => ['value' => 'drubal'],
         ],
       ],
     ];
+    $form['dbal_driver'] = [
+      '#type' => 'hidden',
+      '#title' => t('DBAL driver'),
+      '#default_value' => empty($database['dbal_driver']) ? '' : $database['dbal_driver'],
+      '#element_validate' => [[$this, 'validateDBALDriver']],
+    ];
+
     return $form;
   }
 
   /**
-   * Ensure that InnoDB is available.
+   * Validates the 'dbal_driver' field of the installation form.
    */
-  public function ensureInnoDbAvailable() {
-    $engines = Database::getConnection()->query('SHOW ENGINES')->fetchAllKeyed();
-    if (isset($engines['MyISAM']) && $engines['MyISAM'] == 'DEFAULT' && !isset($engines['InnoDB'])) {
-      $this->fail(t('The MyISAM storage engine is not supported.'));
+  public function validateDBALDriver($element, $form_state, $form) {
+    // Opens a DBAL connection just to retrieve the actual DBAL driver being
+    // used, so that it does get stored in the settings.
+    try {
+      $dbal_connection = DBALDriverManager::getConnection($form_state->getValue('drubal'));
+      $form_state->setValue(['drubal', 'dbal_driver'], $dbal_connection->getDriver()->getName());
+    }
+    catch (\Exception $e) {
+      $this->fail($e->getMessage());
     }
   }
 
   /**
-   * {@inheritdoc}
+   * Executes DBAL driver installation specific tasks.
    */
-  protected function checkEngineVersion() {
-    parent::checkEngineVersion();
-
-    // Ensure that the MySQL driver supports utf8mb4 encoding.
-    $version = Database::getConnection()->clientVersion();
-    if (FALSE !== strpos($version, 'mysqlnd')) {
-      // The mysqlnd driver supports utf8mb4 starting at version 5.0.9.
-      $version = preg_replace('/^\D+([\d.]+).*/', '$1', $version);
-      if (version_compare($version, self::MYSQLND_MINIMUM_VERSION, '<')) {
-        $this->fail(t("The MySQLnd driver version %version is less than the minimum required version. Upgrade to MySQLnd version %mysqlnd_minimum_version or up, or alternatively switch mysql drivers to libmysqlclient version %libmysqlclient_minimum_version or up.", ['%version' => $version, '%mysqlnd_minimum_version' => self::MYSQLND_MINIMUM_VERSION, '%libmysqlclient_minimum_version' => self::LIBMYSQLCLIENT_MINIMUM_VERSION]));
-      }
+  public function runDBALDriverInstallTasks() {
+    $connection = Database::getConnection();
+    $results = DBALDriver\PdoMysql::runInstallTasks($connection);
+    foreach ($results['pass'] as $result) {
+      $this->pass($result);
     }
-    else {
-      // The libmysqlclient driver supports utf8mb4 starting at version 5.5.3.
-      if (version_compare($version, self::LIBMYSQLCLIENT_MINIMUM_VERSION, '<')) {
-        $this->fail(t("The libmysqlclient driver version %version is less than the minimum required version. Upgrade to libmysqlclient version %libmysqlclient_minimum_version or up, or alternatively switch mysql drivers to MySQLnd version %mysqlnd_minimum_version or up.", ['%version' => $version, '%libmysqlclient_minimum_version' => self::LIBMYSQLCLIENT_MINIMUM_VERSION, '%mysqlnd_minimum_version' => self::MYSQLND_MINIMUM_VERSION]));
-      }
+    foreach ($results['fail'] as $result) {
+      $this->fail($result);
     }
   }
 
