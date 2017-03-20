@@ -39,7 +39,7 @@ class Tasks extends InstallTasks {
    * {@inheritdoc}
    */
   public function name() {
-    if ($this->connect() === TRUE) {
+    try {
       $connection = Database::getConnection();
       return t('Doctrine DBAL on @database_type/@database_server_version via @dbal_driver', [
         '@database_type' => $connection->databaseType(),
@@ -47,7 +47,7 @@ class Tasks extends InstallTasks {
         '@dbal_driver' => $connection->getDBALDriver(),
       ]);
     }
-    else {
+    catch (\Exception $e) {
       return t('Doctrine DBAL');
     }
   }
@@ -69,6 +69,9 @@ class Tasks extends InstallTasks {
       Database::setActiveConnection();
       // Find the DBAL driver class to hand over connection checks to.
       $dbal_connection_info = Database::getConnectionInfo()['default'];
+      if (empty($dbal_connection_info)) {
+        throw new \Exception('No connection information available');
+      }
       if (isset($dbal_connection_info['dbal_driver'])) {
         $dbal_connection_info['driver'] = $dbal_connection_info['dbal_driver'];
       }
