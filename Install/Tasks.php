@@ -125,6 +125,14 @@ class Tasks extends InstallTasks {
   }
 
   /**
+   * @todo Validates the 'url' field of the installation form.
+   */
+  public function validateDBALUrl(array $element, FormStateInterface $form_state, array $form) {
+    // At least some basic form of validation of the first component of the
+    // URL, i.e. the DBAL driver.
+  }
+
+  /**
    * Validates the 'dbal_driver' field of the installation form.
    */
   public function validateDBALDriver(array $element, FormStateInterface $form_state, array $form) {
