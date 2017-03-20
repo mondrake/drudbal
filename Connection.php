@@ -18,7 +18,7 @@ use Doctrine\DBAL\Version as DBALVersion;
 use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\Exception\ConnectionException as DBALConnectionException;
 
-use Drupal\Driver\Database\drubal\DBALDriver\PdoMysql;
+use Drupal\Driver\Database\drubal\DBALDriver\PDOMySql;
 
 /**
  * DRUBAL implementation of \Drupal\Core\Database\Connection.
@@ -39,6 +39,43 @@ class Connection extends DatabaseConnection {
    * SQLSTATE error code for "Syntax error or access rule violation".
    */
   const SQLSTATE_SYNTAX_ERROR = 42000;
+
+  /**
+   * List of supported drivers and their mappings to the driver classes.
+   *
+   * To add your own driver use the 'driverClass' parameter to
+   * {@link DriverManager::getConnection()}.
+   *
+   * @var array
+   */
+  protected static $driverMap = array(
+    'pdo_mysql'          => 'Drupal\Driver\Database\drubal\DBALDriver\PDOMySql',
+    'pdo_sqlite'         => 'Drupal\Driver\Database\drubal\DBALDriver\PDOSqlite',
+    'pdo_pgsql'          => 'Drupal\Driver\Database\drubal\DBALDriver\PDOPgSql',
+    'pdo_oci'            => 'Drupal\Driver\Database\drubal\DBALDriver\PDOOracle',
+    'oci8'               => 'Drupal\Driver\Database\drubal\DBALDriver\OCI8',
+    'ibm_db2'            => 'Drupal\Driver\Database\drubal\DBALDriver\IBMDB2\DB2Driver',
+    'pdo_sqlsrv'         => 'Drupal\Driver\Database\drubal\DBALDriver\PDOSqlsrv',
+    'mysqli'             => 'Drupal\Driver\Database\drubal\DBALDriver\Mysqli',
+    'drizzle_pdo_mysql'  => 'Drupal\Driver\Database\drubal\DBALDriver\DrizzlePDOMySql',
+    'sqlanywhere'        => 'Drupal\Driver\Database\drubal\DBALDriver\SQLAnywhere',
+    'sqlsrv'             => 'Drupal\Driver\Database\drubal\DBALDriver\SQLSrv',
+  );
+
+  /**
+   * List of URL schemes from a database URL and their mappings to driver.
+   */
+  protected static $driverSchemeAliases = array(
+    'db2'        => 'ibm_db2',
+    'mssql'      => 'pdo_sqlsrv',
+    'mysql'      => 'pdo_mysql',
+    'mysql2'     => 'pdo_mysql', // Amazon RDS, for some weird reason
+    'postgres'   => 'pdo_pgsql',
+    'postgresql' => 'pdo_pgsql',
+    'pgsql'      => 'pdo_pgsql',
+    'sqlite'     => 'pdo_sqlite',
+    'sqlite3'    => 'pdo_sqlite',
+  );
 
   /**
    * The actual DBAL connection.
@@ -75,8 +112,8 @@ class Connection extends DatabaseConnection {
     // the case with DBAL.
     parent::__construct($connection->getWrappedConnection(), $connection_options);
 
-    $this->transactionSupport = PdoMysql::transactionSupport($connection_options);
-    $this->transactionalDDLSupport = PdoMysql::transactionalDDLSupport($connection_options);
+    $this->transactionSupport = PDOMySql::transactionSupport($connection_options);
+    $this->transactionalDDLSupport = PDOMySql::transactionalDDLSupport($connection_options);
     $this->connectionOptions = $connection_options;
   }
 
@@ -210,14 +247,14 @@ class Connection extends DatabaseConnection {
    */
   public static function open(array &$connection_options = []) {
     try {
-      PdoMysql::preConnectionOpen($connection_options);
+      PDOMySql::preConnectionOpen($connection_options);
       $options = array_diff_key($connection_options, [
         'namespace' => NULL,
         'prefix' => NULL,
       ]);
       $dbal_connection = DBALDriverManager::getConnection($options);
       $dbal_connection->setFetchMode(\PDO::FETCH_OBJ);
-      PdoMysql::postConnectionOpen($dbal_connection, $connection_options);
+      PDOMySql::postConnectionOpen($dbal_connection, $connection_options);
     }
     catch (DBALConnectionException $e) {
       throw new DatabaseExceptionWrapper($e->getMessage(), $e->getCode(), $e);
@@ -277,9 +314,9 @@ class Connection extends DatabaseConnection {
    */
   public function createDatabase($database) {
     try {
-      PdoMysql::preCreateDatabase($this->DBALConnection, $database);
+      PDOMySql::preCreateDatabase($this->DBALConnection, $database);
       $this->DBALConnection->getSchemaManager()->createDatabase($database);
-      PdoMysql::postCreateDatabase($this->DBALConnection, $database);
+      PDOMySql::postCreateDatabase($this->DBALConnection, $database);
     }
     catch (DBALException $e) {
       throw new DatabaseNotFoundException($e->getMessage());
@@ -387,6 +424,15 @@ class Connection extends DatabaseConnection {
    */
   public function getDBALDriver() {
     return $this->DBALConnection->getDriver()->getName();
+  }
+
+  /**
+   * Gets the DBAL driver class.
+   *
+   * @return string DBAL driver class.
+   */
+  public static function getDBALDriverClass($driver_name) {
+    return static::$driverMap[$driver_name];
   }
 
   /**

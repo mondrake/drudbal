@@ -9,7 +9,7 @@ use Doctrine\DBAL\Connection as DBALConnection;
 /**
  * Driver specific methods for pdo_mysql.
  */
-class PdoMysql {
+abstract class PDOMySql {
 
   /**
    * Minimum required mysql version.
@@ -61,8 +61,6 @@ class PdoMysql {
     ];
 
     try {
-      // This doesn't actually test the connection.
-      db_set_active();
       // Now actually do a check.
       try {
         Database::getConnection();

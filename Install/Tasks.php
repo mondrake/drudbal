@@ -4,11 +4,17 @@ namespace Drupal\Driver\Database\drubal\Install;
 
 use Drupal\Core\Database\Install\Tasks as InstallTasks;
 use Drupal\Core\Database\Database;
-use Drupal\Driver\Database\drubal\DBALDriver; // @todo
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\Driver\Database\drubal\Connection as DrubalConnection;
 use Doctrine\DBAL\DriverManager as DBALDriverManager;
 
 /**
  * Specifies installation tasks for DRUBAL driver.
+ *
+ * Note: there should not be db platform specific code here. Any tasks that
+ * cannot be managed by Doctrine DBAL should be added to driver specific code
+ * in Drupal\Driver\Database\drubal\DBALDriver\[driver_name] classes and
+ * execution handed over to there.
  */
 class Tasks extends InstallTasks {
 
@@ -57,12 +63,27 @@ class Tasks extends InstallTasks {
    * Check if we can connect to the database.
    */
   protected function connect() {
-    $results = DBALDriver\PdoMysql::installConnect();
-    foreach ($results['pass'] as $result) {
-      $this->pass($result);
+    try {
+      // Just set the active connection to default. This doesn't actually
+      // test the connection.
+      Database::setActiveConnection();
+      // Find the DBAL driver class to hand over connection checks to.
+      $dbal_connection_info = Database::getConnectionInfo()['default'];
+      if (isset($dbal_connection_info['dbal_driver'])) {
+        $dbal_connection_info['driver'] = $dbal_connection_info['dbal_driver'];
+      }
+      $dbal_connection = DBALDriverManager::getConnection($dbal_connection_info);
+      $dbal_driver_class = DrubalConnection::getDBALDriverClass($dbal_connection->getDriver()->getName());
+      $results = $dbal_driver_class::installConnect();
+      foreach ($results['pass'] as $result) {
+        $this->pass($result);
+      }
+      foreach ($results['fail'] as $result) {
+        $this->fail($result);
+      }
     }
-    foreach ($results['fail'] as $result) {
-      $this->fail($result);
+    catch (\Exception $e) {
+      $this->fail(t('Failed to connect to your database server. The server reports the following message: %error.<ul><li>Is the database server running?</li><li>Does the database exist, and have you entered the correct database name?</li><li>Have you entered the correct username and password?</li><li>Have you entered the correct database hostname?</li></ul>', ['%error' => $e->getMessage()]));
     }
     return empty($results['fail']);
   }
@@ -103,7 +124,7 @@ class Tasks extends InstallTasks {
   /**
    * Validates the 'dbal_driver' field of the installation form.
    */
-  public function validateDBALDriver($element, $form_state, $form) {
+  public function validateDBALDriver(array $element, FormStateInterface $form_state, array $form) {
     // Opens a DBAL connection just to retrieve the actual DBAL driver being
     // used, so that it does get stored in the settings.
     try {
@@ -120,7 +141,8 @@ class Tasks extends InstallTasks {
    */
   public function runDBALDriverInstallTasks() {
     $connection = Database::getConnection();
-    $results = DBALDriver\PdoMysql::runInstallTasks($connection);
+    $dbal_driver = $connection->getDBALDriverClass($connection->getDBALDriver());
+    $results = $dbal_driver::runInstallTasks($connection);
     foreach ($results['pass'] as $result) {
       $this->pass($result);
     }
