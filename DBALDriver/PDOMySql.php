@@ -3,13 +3,13 @@
 namespace Drupal\Driver\Database\drubal\DBALDriver;
 
 use Drupal\Core\Database\Database;
-use Drupal\Driver\Database\drubal\Connection;
+use Drupal\Driver\Database\drubal\Connection as DrubalConnection;
 use Doctrine\DBAL\Connection as DBALConnection;
 
 /**
  * Driver specific methods for pdo_mysql.
  */
-abstract class PDOMySql {
+class PDOMySql {
 
   /**
    * Minimum required mysql version.
@@ -50,6 +50,113 @@ abstract class PDOMySql {
    * SQLSTATE error code for "Syntax error or access rule violation".
    */
   const SQLSTATE_SYNTAX_ERROR = 42000;
+
+  /**
+   * The DRUBAL connection.
+   *
+   * @var @todo
+   */
+  protected $drubalConnection;
+
+  /**
+   * Flag to indicate if the cleanup function in __destruct() should run.
+   *
+   * @var bool
+   */
+  protected $needsCleanup = FALSE;
+
+  /**
+   * @todo shouldn't serialization being avoided?? this is from mysql core
+   */
+  public function serialize() {
+    // Cleanup the connection, much like __destruct() does it as well.
+    if ($this->needsCleanup) {
+      $this->nextIdDelete();
+    }
+    $this->needsCleanup = FALSE;
+
+    return parent::serialize();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function __destruct() {
+    if ($this->needsCleanup) {
+      $this->nextIdDelete();
+    }
+  }
+
+  /**
+   * @todo
+   */
+  public static function preConnectionOpen(array &$connection_options = []) {
+    if (isset($connection_options['_dsn_utf8_fallback']) && $connection_options['_dsn_utf8_fallback'] === TRUE) {
+      // Only used during the installer version check, as a fallback from utf8mb4.
+      $charset = 'utf8';
+    }
+    else {
+      $charset = 'utf8mb4';
+    }
+    // Character set is added to dsn to ensure PDO uses the proper character
+    // set when escaping. This has security implications. See
+    // https://www.drupal.org/node/1201452 for further discussion.
+    $connection_options['charset'] = $charset;
+    // Allow PDO options to be overridden.
+    $connection_options += [
+      'driverOptions' => [],
+    ];
+    $connection_options['driverOptions'] += [
+      \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
+      // So we don't have to mess around with cursors and unbuffered queries by default.
+      \PDO::MYSQL_ATTR_USE_BUFFERED_QUERY => TRUE,
+      // Make sure MySQL returns all matched rows on update queries including
+      // rows that actually didn't have to be updated because the values didn't
+      // change. This matches common behavior among other database systems.
+      \PDO::MYSQL_ATTR_FOUND_ROWS => TRUE,
+      // Because MySQL's prepared statements skip the query cache, because it's dumb.
+      \PDO::ATTR_EMULATE_PREPARES => TRUE,
+    ];
+    if (defined('\PDO::MYSQL_ATTR_MULTI_STATEMENTS')) {
+      // An added connection option in PHP 5.5.21 to optionally limit SQL to a
+      // single statement like mysqli.
+      $connection_options['driverOptions'] += [\PDO::MYSQL_ATTR_MULTI_STATEMENTS => FALSE];
+    }
+  }
+
+  /**
+   * @todo
+   */
+  public static function postConnectionOpen(DBALConnection $connection, array &$connection_options = []) {
+    // Force MySQL to use the UTF-8 character set. Also set the collation, if a
+    // certain one has been set; otherwise, MySQL defaults to
+    // 'utf8mb4_general_ci' for utf8mb4.
+    if (!empty($connection_options['collation'])) {
+      $connection->exec('SET NAMES ' . $connection_options['charset'] . ' COLLATE ' . $connection_options['collation']);
+    }
+    else {
+      $connection->exec('SET NAMES ' . $connection_options['charset']);
+    }
+
+    // Set MySQL init_commands if not already defined.  Default Drupal's MySQL
+    // behavior to conform more closely to SQL standards.  This allows Drupal
+    // to run almost seamlessly on many different kinds of database systems.
+    // These settings force MySQL to behave the same as postgresql, or sqlite
+    // in regards to syntax interpretation and invalid data handling.  See
+    // https://www.drupal.org/node/344575 for further discussion. Also, as MySQL
+    // 5.5 changed the meaning of TRADITIONAL we need to spell out the modes one
+    // by one.
+    $connection_options += [
+      'init_commands' => [],
+    ];
+    $connection_options['init_commands'] += [
+      'sql_mode' => "SET sql_mode = 'ANSI,STRICT_TRANS_TABLES,STRICT_ALL_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,ONLY_FULL_GROUP_BY'",
+    ];
+    // Execute initial commands.
+    foreach ($connection_options['init_commands'] as $sql) {
+      $connection->exec($sql);
+    }
+  }
 
   /**
    * @todo
@@ -128,7 +235,7 @@ abstract class PDOMySql {
   /**
    * @todo
    */
-  public static function runInstallTasks(Connection $connection) {
+  public static function runInstallTasks(DrubalConnection $connection) {
     $results = [
       'fail' => [],
       'pass' => [],
@@ -170,7 +277,7 @@ abstract class PDOMySql {
   /**
    * @todo
    */
-  public static function transactionSupport(array &$connection_options = []) {
+  public function transactionSupport(DrubalConnection $connection, array &$connection_options = []) {
     // This driver defaults to transaction support, except if explicitly passed FALSE.
     return !isset($connection_options['transactions']) || ($connection_options['transactions'] !== FALSE);
   }
@@ -178,7 +285,7 @@ abstract class PDOMySql {
   /**
    * @todo
    */
-  public static function transactionalDDLSupport(array &$connection_options = []) {
+  public function transactionalDDLSupport(DrubalConnection $connection, array &$connection_options = []) {
     // MySQL never supports transactional DDL.
     return FALSE;
   }
@@ -186,86 +293,64 @@ abstract class PDOMySql {
   /**
    * @todo
    */
-  public static function preConnectionOpen(array &$connection_options = []) {
-    if (isset($connection_options['_dsn_utf8_fallback']) && $connection_options['_dsn_utf8_fallback'] === TRUE) {
-      // Only used during the installer version check, as a fallback from utf8mb4.
-      $charset = 'utf8';
-    }
-    else {
-      $charset = 'utf8mb4';
-    }
-    // Character set is added to dsn to ensure PDO uses the proper character
-    // set when escaping. This has security implications. See
-    // https://www.drupal.org/node/1201452 for further discussion.
-    $connection_options['charset'] = $charset;
-    // Allow PDO options to be overridden.
-    $connection_options += [
-      'driverOptions' => [],
-    ];
-    $connection_options['driverOptions'] += [
-      \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
-      // So we don't have to mess around with cursors and unbuffered queries by default.
-      \PDO::MYSQL_ATTR_USE_BUFFERED_QUERY => TRUE,
-      // Make sure MySQL returns all matched rows on update queries including
-      // rows that actually didn't have to be updated because the values didn't
-      // change. This matches common behavior among other database systems.
-      \PDO::MYSQL_ATTR_FOUND_ROWS => TRUE,
-      // Because MySQL's prepared statements skip the query cache, because it's dumb.
-      \PDO::ATTR_EMULATE_PREPARES => TRUE,
-    ];
-    if (defined('\PDO::MYSQL_ATTR_MULTI_STATEMENTS')) {
-      // An added connection option in PHP 5.5.21 to optionally limit SQL to a
-      // single statement like mysqli.
-      $connection_options['driverOptions'] += [\PDO::MYSQL_ATTR_MULTI_STATEMENTS => FALSE];
-    }
+  public static function preCreateDatabase(DrubalConnection $connection, $database) {
   }
 
   /**
    * @todo
    */
-  public static function postConnectionOpen(DBALConnection $connection, array &$connection_options = []) {
-    // Force MySQL to use the UTF-8 character set. Also set the collation, if a
-    // certain one has been set; otherwise, MySQL defaults to
-    // 'utf8mb4_general_ci' for utf8mb4.
-    if (!empty($connection_options['collation'])) {
-      $connection->exec('SET NAMES ' . $connection_options['charset'] . ' COLLATE ' . $connection_options['collation']);
-    }
-    else {
-      $connection->exec('SET NAMES ' . $connection_options['charset']);
-    }
-
-    // Set MySQL init_commands if not already defined.  Default Drupal's MySQL
-    // behavior to conform more closely to SQL standards.  This allows Drupal
-    // to run almost seamlessly on many different kinds of database systems.
-    // These settings force MySQL to behave the same as postgresql, or sqlite
-    // in regards to syntax interpretation and invalid data handling.  See
-    // https://www.drupal.org/node/344575 for further discussion. Also, as MySQL
-    // 5.5 changed the meaning of TRADITIONAL we need to spell out the modes one
-    // by one.
-    $connection_options += [
-      'init_commands' => [],
-    ];
-    $connection_options['init_commands'] += [
-      'sql_mode' => "SET sql_mode = 'ANSI,STRICT_TRANS_TABLES,STRICT_ALL_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,ONLY_FULL_GROUP_BY'",
-    ];
-    // Execute initial commands.
-    foreach ($connection_options['init_commands'] as $sql) {
-      $connection->exec($sql);
-    }
-  }
-
-  /**
-   * @todo
-   */
-  public static function preCreateDatabase(DBALConnection $connection, $database) {
-  }
-
-  /**
-   * @todo
-   */
-  public static function postCreateDatabase(DBALConnection $connection, $database) {
+  public static function postCreateDatabase(DrubalConnection $connection, $database) {
     // Set the database as active.
-    $connection->exec("USE $database");
+    $connection->getDBALConnection()->exec("USE $database");
+  }
+
+  /**
+   * @todo
+   */
+  public function nextId(DrubalConnection $connection, $existing_id = 0) {
+    $new_id = $connection->query('INSERT INTO {sequences} () VALUES ()', [], ['return' => Database::RETURN_INSERT_ID]);
+    // This should only happen after an import or similar event.
+    if ($existing_id >= $new_id) {
+      // If we INSERT a value manually into the sequences table, on the next
+      // INSERT, MySQL will generate a larger value. However, there is no way
+      // of knowing whether this value already exists in the table. MySQL
+      // provides an INSERT IGNORE which would work, but that can mask problems
+      // other than duplicate keys. Instead, we use INSERT ... ON DUPLICATE KEY
+      // UPDATE in such a way that the UPDATE does not do anything. This way,
+      // duplicate keys do not generate errors but everything else does.
+      $connection->query('INSERT INTO {sequences} (value) VALUES (:value) ON DUPLICATE KEY UPDATE value = value', [':value' => $existing_id]);
+      $new_id = $connection->query('INSERT INTO {sequences} () VALUES ()', [], ['return' => Database::RETURN_INSERT_ID]);
+    }
+    $this->drubalConnection = $connection;
+    $this->needsCleanup = TRUE;
+    return $new_id;
+  }
+
+  /**
+   * @todo make class instantiatable because of needsCleanup
+   */
+  public function nextIdDelete() {
+    // While we want to clean up the table to keep it up from occupying too
+    // much storage and memory, we must keep the highest value in the table
+    // because InnoDB uses an in-memory auto-increment counter as long as the
+    // server runs. When the server is stopped and restarted, InnoDB
+    // reinitializes the counter for each table for the first INSERT to the
+    // table based solely on values from the table so deleting all values would
+    // be a problem in this case. Also, TRUNCATE resets the auto increment
+    // counter.
+    try {
+      $max_id = $this->drubalConnection->query('SELECT MAX(value) FROM {sequences}')->fetchField();
+      // We know we are using MySQL here, no need for the slower db_delete().
+      $this->drubalConnection->query('DELETE FROM {sequences} WHERE value < :value', [':value' => $max_id]);
+    }
+    // During testing, this function is called from shutdown with the
+    // simpletest prefix stored in $this->connection, and those tables are gone
+    // by the time shutdown is called so we need to ignore the database
+    // errors. There is no problem with completely ignoring errors here: if
+    // these queries fail, the sequence will work just fine, just use a bit
+    // more database storage and memory.
+    catch (DatabaseException $e) {
+    }
   }
 
 }

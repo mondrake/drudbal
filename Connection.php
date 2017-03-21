@@ -18,35 +18,21 @@ use Doctrine\DBAL\Version as DBALVersion;
 use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\Exception\ConnectionException as DBALConnectionException;
 
-use Drupal\Driver\Database\drubal\DBALDriver\PDOMySql;
-
 /**
  * DRUBAL implementation of \Drupal\Core\Database\Connection.
+ *
+ * Note: there should not be db platform specific code here. Any tasks that
+ * cannot be managed by Doctrine DBAL should be added to driver specific code
+ * in Drupal\Driver\Database\drubal\DBALDriver\[driver_name] classes and
+ * execution handed over to there.
  */
 class Connection extends DatabaseConnection {
 
   /**
-   * Error code for "Can't initialize character set" error.
-   */
-  const UNSUPPORTED_CHARSET = 2019;
-
-  /**
-   * Driver-specific error code for "Unknown character set" error.
-   */
-  const UNKNOWN_CHARSET = 1115;
-
-  /**
-   * SQLSTATE error code for "Syntax error or access rule violation".
-   */
-  const SQLSTATE_SYNTAX_ERROR = 42000;
-
-  /**
-   * List of supported drivers and their mappings to the driver classes.
+   * List of supported drivers and their mappings to the DBAL driver extension
+   * classes.
    *
-   * To add your own driver use the 'driverClass' parameter to
-   * {@link DriverManager::getConnection()}.
-   *
-   * @var array
+   * @var string[]
    */
   protected static $driverMap = array(
     'pdo_mysql'          => 'Drupal\Driver\Database\drubal\DBALDriver\PDOMySql',
@@ -64,6 +50,8 @@ class Connection extends DatabaseConnection {
 
   /**
    * List of URL schemes from a database URL and their mappings to driver.
+   *
+   * @var string[]
    */
   protected static $driverSchemeAliases = array(
     'db2'        => 'ibm_db2',
@@ -82,14 +70,21 @@ class Connection extends DatabaseConnection {
    *
    * @var \Doctrine\DBAL\Connection
    */
-  protected $DBALconnection;
+  protected $DBALConnection;
 
   /**
-   * Flag to indicate if the cleanup function in __destruct() should run.
+   * The current DBAL driver class.
    *
-   * @var bool
+   * @var \Doctrine\DBAL\Connection
    */
-  protected $needsCleanup = FALSE;
+  protected $DBALDriverExtensionClass;
+
+  /**
+   * The DBAL driver extension.
+   *
+   * @var @todo
+   */
+  protected $DBALDriverExtension;
 
   /**
    * The minimal possible value for the max_allowed_packet setting of MySQL.
@@ -104,16 +99,24 @@ class Connection extends DatabaseConnection {
   /**
    * Constructs a Connection object.
    */
-  public function __construct(DBALConnection $connection, array $connection_options = []) {
-    // Set the DBAL connection.
-    $this->DBALConnection = $connection;
+  public function __construct(DBALConnection $dbal_connection, array $connection_options = []) {
+    // Set the DBAL connection and the driver extension.
+    $this->DBALConnection = $dbal_connection;
+    if (isset($connection_options['dbal_driver'])) {
+      $this->DBALDriverExtensionClass = $this->getDBALDriverExtensionClass($connection_options['dbal_driver']);
+    }
+    else {
+      $this->DBALDriverExtensionClass = $this->getDBALDriverExtensionClass($this->getDBALDriver());
+    }
+    $this->DBALDriverExtension = new $this->DBALDriverExtensionClass();
 
     // @todo parent expects a PDO object in the constructor, which may not be
     // the case with DBAL.
-    parent::__construct($connection->getWrappedConnection(), $connection_options);
+    // @todo maybe avoid calling parent, and set Statement class to DBAL Statement
+    parent::__construct($dbal_connection->getWrappedConnection(), $connection_options);
 
-    $this->transactionSupport = PDOMySql::transactionSupport($connection_options);
-    $this->transactionalDDLSupport = PDOMySql::transactionalDDLSupport($connection_options);
+    $this->transactionSupport = $this->DBALDriverExtension->transactionSupport($this, $connection_options);
+    $this->transactionalDDLSupport = $this->DBALDriverExtension->transactionalDDLSupport($this, $connection_options);
     $this->connectionOptions = $connection_options;
   }
 
@@ -247,41 +250,20 @@ class Connection extends DatabaseConnection {
    */
   public static function open(array &$connection_options = []) {
     try {
-      PDOMySql::preConnectionOpen($connection_options);
+      $dbal_driver_class = static::getDBALDriverExtensionClass($connection_options['dbal_driver']);
+      $dbal_driver_class::preConnectionOpen($connection_options);
       $options = array_diff_key($connection_options, [
         'namespace' => NULL,
         'prefix' => NULL,
       ]);
       $dbal_connection = DBALDriverManager::getConnection($options);
-      $dbal_connection->setFetchMode(\PDO::FETCH_OBJ);
-      PDOMySql::postConnectionOpen($dbal_connection, $connection_options);
+      $dbal_connection->setFetchMode(\PDO::FETCH_OBJ); // @todo check why not by default
+      $dbal_driver_class::postConnectionOpen($dbal_connection, $connection_options);
     }
     catch (DBALConnectionException $e) {
       throw new DatabaseExceptionWrapper($e->getMessage(), $e->getCode(), $e);
     }
     return $dbal_connection;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function serialize() {
-    // Cleanup the connection, much like __destruct() does it as well.
-    if ($this->needsCleanup) {
-      $this->nextIdDelete();
-    }
-    $this->needsCleanup = FALSE;
-
-    return parent::serialize();
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function __destruct() {
-    if ($this->needsCleanup) {
-      $this->nextIdDelete();
-    }
   }
 
   public function queryRange($query, $from, $count, array $args = [], array $options = []) {
@@ -314,9 +296,9 @@ class Connection extends DatabaseConnection {
    */
   public function createDatabase($database) {
     try {
-      PDOMySql::preCreateDatabase($this->DBALConnection, $database);
+      $this->DBALDriverExtension->preCreateDatabase($this, $database);
       $this->DBALConnection->getSchemaManager()->createDatabase($database);
-      PDOMySql::postCreateDatabase($this->DBALConnection, $database);
+      $this->DBALDriverExtension->postCreateDatabase($this, $database);
     }
     catch (DBALException $e) {
       throw new DatabaseNotFoundException($e->getMessage());
@@ -328,45 +310,15 @@ class Connection extends DatabaseConnection {
     return NULL;
   }
 
+  /**
+   * {@inheritdoc}
+   */
   public function nextId($existing_id = 0) {
-    $new_id = $this->query('INSERT INTO {sequences} () VALUES ()', [], ['return' => Database::RETURN_INSERT_ID]);
-    // This should only happen after an import or similar event.
-    if ($existing_id >= $new_id) {
-      // If we INSERT a value manually into the sequences table, on the next
-      // INSERT, MySQL will generate a larger value. However, there is no way
-      // of knowing whether this value already exists in the table. MySQL
-      // provides an INSERT IGNORE which would work, but that can mask problems
-      // other than duplicate keys. Instead, we use INSERT ... ON DUPLICATE KEY
-      // UPDATE in such a way that the UPDATE does not do anything. This way,
-      // duplicate keys do not generate errors but everything else does.
-      $this->query('INSERT INTO {sequences} (value) VALUES (:value) ON DUPLICATE KEY UPDATE value = value', [':value' => $existing_id]);
-      $new_id = $this->query('INSERT INTO {sequences} () VALUES ()', [], ['return' => Database::RETURN_INSERT_ID]);
-    }
-    $this->needsCleanup = TRUE;
-    return $new_id;
-  }
-
-  public function nextIdDelete() {
-    // While we want to clean up the table to keep it up from occupying too
-    // much storage and memory, we must keep the highest value in the table
-    // because InnoDB uses an in-memory auto-increment counter as long as the
-    // server runs. When the server is stopped and restarted, InnoDB
-    // reinitializes the counter for each table for the first INSERT to the
-    // table based solely on values from the table so deleting all values would
-    // be a problem in this case. Also, TRUNCATE resets the auto increment
-    // counter.
     try {
-      $max_id = $this->query('SELECT MAX(value) FROM {sequences}')->fetchField();
-      // We know we are using MySQL here, no need for the slower db_delete().
-      $this->query('DELETE FROM {sequences} WHERE value < :value', [':value' => $max_id]);
+      return $this->DBALDriverExtension->nextId($this, $existing_id);
     }
-    // During testing, this function is called from shutdown with the
-    // simpletest prefix stored in $this->connection, and those tables are gone
-    // by the time shutdown is called so we need to ignore the database
-    // errors. There is no problem with completely ignoring errors here: if
-    // these queries fail, the sequence will work just fine, just use a bit
-    // more database storage and memory.
-    catch (DatabaseException $e) {
+    catch (DBALException $e) {
+      throw new \Exception($e->getMessage());
     }
   }
 
@@ -418,6 +370,15 @@ class Connection extends DatabaseConnection {
   }
 
   /**
+   * Gets the DBAL connection.
+   *
+   * @return string DBAL driver name
+   */
+  public function getDBALConnection() {
+    return $this->DBALConnection;
+  }
+
+  /**
    * Gets the DBAL driver name
    *
    * @return string DBAL driver name
@@ -431,8 +392,17 @@ class Connection extends DatabaseConnection {
    *
    * @return string DBAL driver class.
    */
-  public static function getDBALDriverClass($driver_name) {
+  public static function getDBALDriverExtensionClass($driver_name) {
     return static::$driverMap[$driver_name];
+  }
+
+  /**
+   * Gets the DBAL driver extension.
+   *
+   * @return @todo
+   */
+  public function getDBALDriverExtension() {
+    return $this->DBALDriverExtension;
   }
 
   /**

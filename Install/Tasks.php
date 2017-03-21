@@ -79,7 +79,7 @@ class Tasks extends InstallTasks {
         $dbal_connection_info['driver'] = $dbal_connection_info['dbal_driver'];
       }
       $dbal_connection = DBALDriverManager::getConnection($dbal_connection_info);
-      $dbal_driver_class = DrubalConnection::getDBALDriverClass($dbal_connection->getDriver()->getName());
+      $dbal_driver_class = DrubalConnection::getDBALDriverExtensionClass($dbal_connection->getDriver()->getName());
       $results = $dbal_driver_class::installConnect();
       foreach ($results['pass'] as $result) {
         $this->pass($result);
@@ -155,7 +155,7 @@ class Tasks extends InstallTasks {
    */
   public function runDBALDriverInstallTasks() {
     $connection = Database::getConnection();
-    $dbal_driver = $connection->getDBALDriverClass($connection->getDBALDriver());
+    $dbal_driver = $connection->getDBALDriverExtensionClass($connection->getDBALDriver());
     $results = $dbal_driver::runInstallTasks($connection);
     foreach ($results['pass'] as $result) {
       $this->pass($result);
