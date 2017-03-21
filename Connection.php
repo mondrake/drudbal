@@ -108,15 +108,15 @@ class Connection extends DatabaseConnection {
     else {
       $this->DBALDriverExtensionClass = $this->getDBALDriverExtensionClass($this->getDBALDriver());
     }
-    $this->DBALDriverExtension = new $this->DBALDriverExtensionClass();
+    $this->DBALDriverExtension = new $this->DBALDriverExtensionClass($this);
 
     // @todo parent expects a PDO object in the constructor, which may not be
     // the case with DBAL.
     // @todo maybe avoid calling parent, and set Statement class to DBAL Statement
     parent::__construct($dbal_connection->getWrappedConnection(), $connection_options);
 
-    $this->transactionSupport = $this->DBALDriverExtension->transactionSupport($this, $connection_options);
-    $this->transactionalDDLSupport = $this->DBALDriverExtension->transactionalDDLSupport($this, $connection_options);
+    $this->transactionSupport = $this->DBALDriverExtension->transactionSupport($connection_options);
+    $this->transactionalDDLSupport = $this->DBALDriverExtension->transactionalDDLSupport($connection_options);
     $this->connectionOptions = $connection_options;
   }
 
@@ -296,9 +296,9 @@ class Connection extends DatabaseConnection {
    */
   public function createDatabase($database) {
     try {
-      $this->DBALDriverExtension->preCreateDatabase($this, $database);
+      $this->DBALDriverExtension->preCreateDatabase($database);
       $this->DBALConnection->getSchemaManager()->createDatabase($database);
-      $this->DBALDriverExtension->postCreateDatabase($this, $database);
+      $this->DBALDriverExtension->postCreateDatabase($database);
     }
     catch (DBALException $e) {
       throw new DatabaseNotFoundException($e->getMessage());
@@ -315,7 +315,7 @@ class Connection extends DatabaseConnection {
    */
   public function nextId($existing_id = 0) {
     try {
-      return $this->DBALDriverExtension->nextId($this, $existing_id);
+      return $this->DBALDriverExtension->nextId($existing_id);
     }
     catch (DBALException $e) {
       throw new \Exception($e->getMessage());

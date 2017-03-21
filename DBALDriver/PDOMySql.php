@@ -54,7 +54,7 @@ class PDOMySql {
   /**
    * The DRUBAL connection.
    *
-   * @var @todo
+   * @todo should not be here, risk of circular reference.
    */
   protected $drubalConnection;
 
@@ -64,6 +64,13 @@ class PDOMySql {
    * @var bool
    */
   protected $needsCleanup = FALSE;
+
+  /**
+   * Constructs a Connection object.
+   */
+  public function __construct(DrubalConnection $drubal_connection) {
+    $this->drubalConnection = $drubal_connection;
+  }
 
   /**
    * @todo shouldn't serialization being avoided?? this is from mysql core
@@ -127,15 +134,15 @@ class PDOMySql {
   /**
    * @todo
    */
-  public static function postConnectionOpen(DBALConnection $connection, array &$connection_options = []) {
+  public static function postConnectionOpen(DBALConnection $dbal_connection, array &$connection_options = []) {
     // Force MySQL to use the UTF-8 character set. Also set the collation, if a
     // certain one has been set; otherwise, MySQL defaults to
     // 'utf8mb4_general_ci' for utf8mb4.
     if (!empty($connection_options['collation'])) {
-      $connection->exec('SET NAMES ' . $connection_options['charset'] . ' COLLATE ' . $connection_options['collation']);
+      $dbal_connection->exec('SET NAMES ' . $connection_options['charset'] . ' COLLATE ' . $connection_options['collation']);
     }
     else {
-      $connection->exec('SET NAMES ' . $connection_options['charset']);
+      $dbal_connection->exec('SET NAMES ' . $connection_options['charset']);
     }
 
     // Set MySQL init_commands if not already defined.  Default Drupal's MySQL
@@ -154,7 +161,7 @@ class PDOMySql {
     ];
     // Execute initial commands.
     foreach ($connection_options['init_commands'] as $sql) {
-      $connection->exec($sql);
+      $dbal_connection->exec($sql);
     }
   }
 
@@ -235,28 +242,28 @@ class PDOMySql {
   /**
    * @todo
    */
-  public static function runInstallTasks(DrubalConnection $connection) {
+  public static function runInstallTasks(DrubalConnection $drubal_connection) {
     $results = [
       'fail' => [],
       'pass' => [],
     ];
 
     // Ensure that MySql has the right minimum version.
-    if (version_compare($connection->getDbServerVersion(), self::MYSQLSERVER_MINIMUM_VERSION, '<')) {
+    if (version_compare($drubal_connection->getDbServerVersion(), self::MYSQLSERVER_MINIMUM_VERSION, '<')) {
       $results['fail'][] = t("The MySQL server version %version is less than the minimum required version %minimum_version.", [
-        '%version' => $connection->getDbServerVersion(),
+        '%version' => $drubal_connection->getDbServerVersion(),
         '%minimum_version' => self::MYSQLSERVER_MINIMUM_VERSION,
       ]);
     }
 
     // Ensure that InnoDB is available.
-    $engines = $connection->query('SHOW ENGINES')->fetchAllKeyed();
+    $engines = $drubal_connection->query('SHOW ENGINES')->fetchAllKeyed();
     if (isset($engines['MyISAM']) && $engines['MyISAM'] == 'DEFAULT' && !isset($engines['InnoDB'])) {
       $results['fail'][] = t('The MyISAM storage engine is not supported.');
     }
 
     // Ensure that the MySQL driver supports utf8mb4 encoding.
-    $version = $connection->clientVersion();
+    $version = $drubal_connection->clientVersion();
     if (FALSE !== strpos($version, 'mysqlnd')) {
       // The mysqlnd driver supports utf8mb4 starting at version 5.0.9.
       $version = preg_replace('/^\D+([\d.]+).*/', '$1', $version);
@@ -277,7 +284,7 @@ class PDOMySql {
   /**
    * @todo
    */
-  public function transactionSupport(DrubalConnection $connection, array &$connection_options = []) {
+  public function transactionSupport(array &$connection_options = []) {
     // This driver defaults to transaction support, except if explicitly passed FALSE.
     return !isset($connection_options['transactions']) || ($connection_options['transactions'] !== FALSE);
   }
@@ -285,7 +292,7 @@ class PDOMySql {
   /**
    * @todo
    */
-  public function transactionalDDLSupport(DrubalConnection $connection, array &$connection_options = []) {
+  public function transactionalDDLSupport(array &$connection_options = []) {
     // MySQL never supports transactional DDL.
     return FALSE;
   }
@@ -293,22 +300,22 @@ class PDOMySql {
   /**
    * @todo
    */
-  public static function preCreateDatabase(DrubalConnection $connection, $database) {
+  public static function preCreateDatabase($database) {
   }
 
   /**
    * @todo
    */
-  public static function postCreateDatabase(DrubalConnection $connection, $database) {
+  public static function postCreateDatabase($database) {
     // Set the database as active.
-    $connection->getDBALConnection()->exec("USE $database");
+    $this->drubalConnection->getDBALConnection()->exec("USE $database");
   }
 
   /**
    * @todo
    */
-  public function nextId(DrubalConnection $connection, $existing_id = 0) {
-    $new_id = $connection->query('INSERT INTO {sequences} () VALUES ()', [], ['return' => Database::RETURN_INSERT_ID]);
+  public function nextId($existing_id = 0) {
+    $new_id = $this->drubalConnection->query('INSERT INTO {sequences} () VALUES ()', [], ['return' => Database::RETURN_INSERT_ID]);
     // This should only happen after an import or similar event.
     if ($existing_id >= $new_id) {
       // If we INSERT a value manually into the sequences table, on the next
@@ -318,10 +325,9 @@ class PDOMySql {
       // other than duplicate keys. Instead, we use INSERT ... ON DUPLICATE KEY
       // UPDATE in such a way that the UPDATE does not do anything. This way,
       // duplicate keys do not generate errors but everything else does.
-      $connection->query('INSERT INTO {sequences} (value) VALUES (:value) ON DUPLICATE KEY UPDATE value = value', [':value' => $existing_id]);
-      $new_id = $connection->query('INSERT INTO {sequences} () VALUES ()', [], ['return' => Database::RETURN_INSERT_ID]);
+      $this->drubalConnection->query('INSERT INTO {sequences} (value) VALUES (:value) ON DUPLICATE KEY UPDATE value = value', [':value' => $existing_id]);
+      $new_id = $this->drubalConnection->query('INSERT INTO {sequences} () VALUES ()', [], ['return' => Database::RETURN_INSERT_ID]);
     }
-    $this->drubalConnection = $connection;
     $this->needsCleanup = TRUE;
     return $new_id;
   }
