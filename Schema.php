@@ -58,7 +58,7 @@ class Schema extends DatabaseSchema {
       $info['table'] = substr($table, ++$pos);
     }
     else {
-      $info['database'] = $this->connection->getConnectionOptions()['database'];
+      $info['database'] = $this->connection->getDBALConnection()->getDatabase();
       $info['table'] = $table;
     }
     return $info;

@@ -333,9 +333,12 @@ class PDOMySql {
   }
 
   /**
-   * @todo make class instantiatable because of needsCleanup
+   * @todo
    */
   public function nextIdDelete() {
+    // @todo this is called on destruct and PDO is in inconsistent state.
+    // Open a new connection even if it's not really good :(
+    $drubal_connection = Database::getConnection();
     // While we want to clean up the table to keep it up from occupying too
     // much storage and memory, we must keep the highest value in the table
     // because InnoDB uses an in-memory auto-increment counter as long as the
@@ -345,9 +348,9 @@ class PDOMySql {
     // be a problem in this case. Also, TRUNCATE resets the auto increment
     // counter.
     try {
-      $max_id = $this->drubalConnection->query('SELECT MAX(value) FROM {sequences}')->fetchField();
+      $max_id = $drubal_connection->query('SELECT MAX(value) FROM {sequences}')->fetchField();
       // We know we are using MySQL here, no need for the slower db_delete().
-      $this->drubalConnection->query('DELETE FROM {sequences} WHERE value < :value', [':value' => $max_id]);
+      $drubal_connection->query('DELETE FROM {sequences} WHERE value < :value', [':value' => $max_id]);
     }
     // During testing, this function is called from shutdown with the
     // simpletest prefix stored in $this->connection, and those tables are gone

@@ -110,10 +110,10 @@ class Connection extends DatabaseConnection {
     }
     $this->DBALDriverExtension = new $this->DBALDriverExtensionClass($this);
 
-    // @todo parent expects a PDO object in the constructor, which may not be
-    // the case with DBAL.
-    // @todo maybe avoid calling parent, and set Statement class to DBAL Statement
-    parent::__construct($dbal_connection->getWrappedConnection(), $connection_options);
+    $this->setPrefix(isset($connection_options['prefix']) ? $connection_options['prefix'] : '');
+
+    $this->connection = $dbal_connection->getWrappedConnection();
+    $this->connection->setAttribute(\PDO::ATTR_STATEMENT_CLASS, [$this->statementClass, [$this]]);
 
     $this->transactionSupport = $this->DBALDriverExtension->transactionSupport($connection_options);
     $this->transactionalDDLSupport = $this->DBALDriverExtension->transactionalDDLSupport($connection_options);
@@ -324,12 +324,7 @@ class Connection extends DatabaseConnection {
    * {@inheritdoc}
    */
   public function nextId($existing_id = 0) {
-    try {
-      return $this->DBALDriverExtension->nextId($existing_id);
-    }
-    catch (DBALException $e) {
-      throw new \Exception($e->getMessage());
-    }
+    return $this->DBALDriverExtension->nextId($existing_id);
   }
 
   /**
@@ -363,7 +358,10 @@ class Connection extends DatabaseConnection {
           //
           // To avoid exceptions when no actual error has occurred, we silently
           // succeed for MySQL error code 1305 ("SAVEPOINT does not exist").
-          if ($e->getPrevious()->errorInfo[1] == '1305') {
+          //
+          // With DBAL, the previous exception is DBALException, and the
+          // previous again is PDOException where errorInfo is stored.
+          if ($e->getPrevious()->getPrevious()->errorInfo[1] == '1305') {
             // If one SAVEPOINT was released automatically, then all were.
             // Therefore, clean the transaction stack.
             $this->transactionLayers = [];
