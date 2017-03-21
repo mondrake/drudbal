@@ -378,8 +378,7 @@ class Schema extends DatabaseSchema {
       return FALSE;
     }
 
-    $prefix_info = $this->getPrefixInfo($table);
-    $this->connection->getDBALConnection()->getSchemaManager()->dropTable($prefix_info['table']);
+    $this->connection->getDBALConnection()->getSchemaManager()->dropTable($this->getPrefixInfo($table)['table']);
     return TRUE;
   }
 
@@ -561,11 +560,7 @@ class Schema extends DatabaseSchema {
   }
 
   public function tableExists($table) {
-    $prefix_info = $this->getPrefixInfo($table);
-    $this->connection->getDBALConnection()->setFetchMode(\PDO::FETCH_ASSOC); // @todo check why not by default
-    $exists = $this->connection->getDBALConnection()->getSchemaManager()->tablesExist([$prefix_info['table']]);
-    $this->connection->getDBALConnection()->setFetchMode(\PDO::FETCH_OBJ); // @todo check why not by default
-    return $exists;
+    return $this->connection->getDBALConnection()->getSchemaManager()->tablesExist([$this->getPrefixInfo($table)['table']]);
   }
 
   public function fieldExists($table, $column) {

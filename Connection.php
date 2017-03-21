@@ -259,7 +259,6 @@ class Connection extends DatabaseConnection {
         'prefix' => NULL,
       ]);
       $dbal_connection = DBALDriverManager::getConnection($options);
-      $dbal_connection->setFetchMode(\PDO::FETCH_OBJ); // @todo check why not by default
       $dbal_driver_class::postConnectionOpen($dbal_connection, $connection_options);
     }
     catch (DBALConnectionException $e) {
