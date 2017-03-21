@@ -347,31 +347,8 @@ class Connection extends DatabaseConnection {
       }
       else {
         // Attempt to release this savepoint in the standard way.
-        try {
-          $this->query('RELEASE SAVEPOINT ' . $name);
-        }
-        catch (DatabaseExceptionWrapper $e) {
-          // However, in MySQL (InnoDB), savepoints are automatically committed
-          // when tables are altered or created (DDL transactions are not
-          // supported). This can cause exceptions due to trying to release
-          // savepoints which no longer exist.
-          //
-          // To avoid exceptions when no actual error has occurred, we silently
-          // succeed for MySQL error code 1305 ("SAVEPOINT does not exist").
-          //
-          // With DBAL, the previous exception is DBALException, and the
-          // previous again is PDOException where errorInfo is stored.
-          if ($e->getPrevious()->getPrevious()->errorInfo[1] == '1305') {
-            // If one SAVEPOINT was released automatically, then all were.
-            // Therefore, clean the transaction stack.
-            $this->transactionLayers = [];
-            // We also have to explain to PDO that the transaction stack has
-            // been cleaned-up.
-            $this->connection->commit();
-          }
-          else {
-            throw $e;
-          }
+        if ($this->DBALDriverExtension->releaseSavepoint($name) === 'all') {
+          $this->transactionLayers = [];
         }
       }
     }
