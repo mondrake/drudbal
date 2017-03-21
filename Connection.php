@@ -267,13 +267,23 @@ class Connection extends DatabaseConnection {
   }
 
   public function queryRange($query, $from, $count, array $args = [], array $options = []) {
-    return $this->query($query . ' LIMIT ' . (int) $from . ', ' . (int) $count, $args, $options);
+    try {
+      return $this->DBALDriverExtension->queryRange($query, $from, $count, $args, $options);
+    }
+    catch (DBALException $e) {
+      throw new \Exception($e->getMessage());
+    }
   }
 
   public function queryTemporary($query, array $args = [], array $options = []) {
-    $tablename = $this->generateTemporaryTableName();
-    $this->query('CREATE TEMPORARY TABLE {' . $tablename . '} Engine=MEMORY ' . $query, $args, $options);
-    return $tablename;
+    try {
+      $tablename = $this->generateTemporaryTableName();
+      $this->DBALDriverExtension->queryTemporary($tablename, $query, $args, $options);
+      return $tablename;
+    }
+    catch (DBALException $e) {
+      throw new \Exception($e->getMessage());
+    }
   }
 
   public function driver() {

@@ -359,4 +359,12 @@ class PDOMySql {
     }
   }
 
+  public function queryRange($query, $from, $count, array $args = [], array $options = []) {
+    return $this->drubalConnection->query($query . ' LIMIT ' . (int) $from . ', ' . (int) $count, $args, $options);
+  }
+
+  public function queryTemporary($tablename, $query, array $args = [], array $options = []) {
+    return $this->drubalConnection->query('CREATE TEMPORARY TABLE {' . $tablename . '} Engine=MEMORY ' . $query, $args, $options);
+  }
+
 }
