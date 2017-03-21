@@ -122,6 +122,8 @@ class Connection extends DatabaseConnection {
 
   /**
    * {@inheritdoc}
+   *
+   * @todo clean this up.
    */
   public function query($query, array $args = [], $options = []) {
     // Use default values if not already set.
@@ -328,7 +330,7 @@ class Connection extends DatabaseConnection {
   }
 
   /**
-   * Overridden to work around issues to MySQL not supporting transactional DDL.
+   * {@inheritdoc}
    */
   protected function popCommittableTransactions() {
     // Commit all the committable layers.
@@ -394,6 +396,8 @@ class Connection extends DatabaseConnection {
    * Gets the database server version
    *
    * @return string database server version string
+   *
+   * @todo there should be a DBAL native method for this...
    */
   public function getDbServerVersion() {
     return $this->DBALConnection->getWrappedConnection()->getAttribute(\PDO::ATTR_SERVER_VERSION); // @todo if not PDO??
