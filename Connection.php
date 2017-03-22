@@ -35,17 +35,17 @@ class Connection extends DatabaseConnection {
    * @var string[]
    */
   protected static $driverMap = array(
-    'pdo_mysql'          => 'Drupal\Driver\Database\drubal\DBALDriver\PDOMySql',
-    'pdo_sqlite'         => 'Drupal\Driver\Database\drubal\DBALDriver\PDOSqlite',
-    'pdo_pgsql'          => 'Drupal\Driver\Database\drubal\DBALDriver\PDOPgSql',
-    'pdo_oci'            => 'Drupal\Driver\Database\drubal\DBALDriver\PDOOracle',
-    'oci8'               => 'Drupal\Driver\Database\drubal\DBALDriver\OCI8',
-    'ibm_db2'            => 'Drupal\Driver\Database\drubal\DBALDriver\IBMDB2\DB2Driver',
-    'pdo_sqlsrv'         => 'Drupal\Driver\Database\drubal\DBALDriver\PDOSqlsrv',
-    'mysqli'             => 'Drupal\Driver\Database\drubal\DBALDriver\Mysqli',
-    'drizzle_pdo_mysql'  => 'Drupal\Driver\Database\drubal\DBALDriver\DrizzlePDOMySql',
-    'sqlanywhere'        => 'Drupal\Driver\Database\drubal\DBALDriver\SQLAnywhere',
-    'sqlsrv'             => 'Drupal\Driver\Database\drubal\DBALDriver\SQLSrv',
+    'pdo_mysql'          => 'PDOMySql',
+    'pdo_sqlite'         => 'PDOSqlite',
+    'pdo_pgsql'          => 'PDOPgSql',
+    'pdo_oci'            => 'PDOOracle',
+    'oci8'               => 'OCI8',
+    'ibm_db2'            => 'IBMDB2\DB2Driver',
+    'pdo_sqlsrv'         => 'PDOSqlsrv',
+    'mysqli'             => 'Mysqli',
+    'drizzle_pdo_mysql'  => 'DrizzlePDOMySql',
+    'sqlanywhere'        => 'SQLAnywhere',
+    'sqlsrv'             => 'SQLSrv',
   );
 
   /**
@@ -73,13 +73,6 @@ class Connection extends DatabaseConnection {
   protected $DBALConnection;
 
   /**
-   * The current DBAL driver class.
-   *
-   * @var \Doctrine\DBAL\Connection
-   */
-  protected $DBALDriverExtensionClass;
-
-  /**
    * The DBAL driver extension.
    *
    * @var @todo
@@ -103,12 +96,12 @@ class Connection extends DatabaseConnection {
     // Set the DBAL connection and the driver extension.
     $this->DBALConnection = $dbal_connection;
     if (isset($connection_options['dbal_driver'])) {
-      $this->DBALDriverExtensionClass = $this->getDBALDriverExtensionClass($connection_options['dbal_driver']);
+      $drubal_dbal_driver_class = $this->getDrubalDbalDriverClass($connection_options['dbal_driver']);
     }
     else {
-      $this->DBALDriverExtensionClass = $this->getDBALDriverExtensionClass($this->getDBALDriver());
+      $drubal_dbal_driver_class = $this->getDrubalDbalDriverClass($this->getDBALDriver());
     }
-    $this->DBALDriverExtension = new $this->DBALDriverExtensionClass($this);
+    $this->DBALDriverExtension = new $drubal_dbal_driver_class($this);
 
     $this->setPrefix(isset($connection_options['prefix']) ? $connection_options['prefix'] : '');
 
@@ -252,7 +245,7 @@ class Connection extends DatabaseConnection {
    */
   public static function open(array &$connection_options = []) {
     try {
-      $dbal_driver_class = static::getDBALDriverExtensionClass($connection_options['dbal_driver']);
+      $dbal_driver_class = static::getDrubalDbalDriverClass($connection_options['dbal_driver']);
       $dbal_driver_class::preConnectionOpen($connection_options);
       $options = array_diff_key($connection_options, [
         'namespace' => NULL,
@@ -378,8 +371,8 @@ class Connection extends DatabaseConnection {
    *
    * @return string DBAL driver class.
    */
-  public static function getDBALDriverExtensionClass($driver_name) {
-    return static::$driverMap[$driver_name];
+  public static function getDrubalDbalDriverClass($driver_name) {
+    return "Drupal\\Driver\\Database\\drubal\\DBALDriver\\" . static::$driverMap[$driver_name];  // @todo manage aliases, class path to const
   }
 
   /**
