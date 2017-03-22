@@ -5,7 +5,11 @@ namespace Drupal\Driver\Database\drubal\DBALDriver;
 use Drupal\Core\Database\Database;
 use Drupal\Core\Database\DatabaseExceptionWrapper;
 use Drupal\Driver\Database\drubal\Connection as DrubalConnection;
+
 use Doctrine\DBAL\Connection as DBALConnection;
+use Doctrine\DBAL\DriverManager as DBALDriverManager;
+use Doctrine\DBAL\DBALException;
+use Doctrine\DBAL\Exception\ConnectionException as DBALConnectionException;
 
 /**
  * Driver specific methods for pdo_mysql.
@@ -71,6 +75,25 @@ class PDOMySql {
    */
   public function __construct(DrubalConnection $drubal_connection) {
     $this->drubalConnection = $drubal_connection;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function open(array &$connection_options = []) {
+    try {
+      static::preConnectionOpen($connection_options);
+      $options = array_diff_key($connection_options, [
+        'namespace' => NULL,
+        'prefix' => NULL,
+      ]);
+      $dbal_connection = DBALDriverManager::getConnection($options);
+      static::postConnectionOpen($dbal_connection, $connection_options);
+    }
+    catch (DBALConnectionException $e) {
+      throw new DatabaseExceptionWrapper($e->getMessage(), $e->getCode(), $e);
+    }
+    return $dbal_connection;
   }
 
   /**

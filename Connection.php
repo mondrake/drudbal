@@ -13,10 +13,8 @@ use Drupal\Core\Database\Connection as DatabaseConnection;
 use Drupal\Component\Utility\Unicode;
 
 use Doctrine\DBAL\Connection as DBALConnection;
-use Doctrine\DBAL\DriverManager as DBALDriverManager;
 use Doctrine\DBAL\Version as DBALVersion;
 use Doctrine\DBAL\DBALException;
-use Doctrine\DBAL\Exception\ConnectionException as DBALConnectionException;
 
 /**
  * DRUBAL implementation of \Drupal\Core\Database\Connection.
@@ -244,20 +242,8 @@ class Connection extends DatabaseConnection {
    * {@inheritdoc}
    */
   public static function open(array &$connection_options = []) {
-    try {
-      $dbal_driver_class = static::getDrubalDbalDriverClass($connection_options['dbal_driver']);
-      $dbal_driver_class::preConnectionOpen($connection_options);
-      $options = array_diff_key($connection_options, [
-        'namespace' => NULL,
-        'prefix' => NULL,
-      ]);
-      $dbal_connection = DBALDriverManager::getConnection($options);
-      $dbal_driver_class::postConnectionOpen($dbal_connection, $connection_options);
-    }
-    catch (DBALConnectionException $e) {
-      throw new DatabaseExceptionWrapper($e->getMessage(), $e->getCode(), $e);
-    }
-    return $dbal_connection;
+    $drubal_dbal_driver_class = static::getDrubalDbalDriverClass($connection_options['dbal_driver']);
+    return $drubal_dbal_driver_class::open($connection_options);
   }
 
   public function queryRange($query, $from, $count, array $args = [], array $options = []) {
