@@ -64,6 +64,13 @@ class PDOMySql {
   protected $drubalConnection;
 
   /**
+   * The actual DBAL connection.
+   *
+   * @var \Doctrine\DBAL\Connection
+   */
+  protected $DBALConnection;
+
+  /**
    * Flag to indicate if the cleanup function in __destruct() should run.
    *
    * @var bool
@@ -73,8 +80,18 @@ class PDOMySql {
   /**
    * Constructs a Connection object.
    */
-  public function __construct(DrubalConnection $drubal_connection) {
+  public function __construct(DrubalConnection $drubal_connection, DBALConnection $dbal_connection) {
     $this->drubalConnection = $drubal_connection;
+    $this->DBALConnection = $dbal_connection;
+  }
+
+  /**
+   * Gets the DBAL connection.
+   *
+   * @return string DBAL driver name
+   */
+  public function getDBALConnection() {
+    return $this->DBALConnection;
   }
 
   /**
@@ -287,7 +304,7 @@ class PDOMySql {
     }
 
     // Ensure that the MySQL driver supports utf8mb4 encoding.
-    $version = $this->drubalConnection->clientVersion();
+    $version = $this->clientVersion();
     if (FALSE !== strpos($version, 'mysqlnd')) {
       // The mysqlnd driver supports utf8mb4 starting at version 5.0.9.
       $version = preg_replace('/^\D+([\d.]+).*/', '$1', $version);
@@ -360,9 +377,6 @@ class PDOMySql {
    * @todo
    */
   public function nextIdDelete() {
-    // @todo this is called on destruct and PDO is in inconsistent state.
-    // Open a new connection even if it's not really good :(
-    $drubal_connection = Database::getConnection();
     // While we want to clean up the table to keep it up from occupying too
     // much storage and memory, we must keep the highest value in the table
     // because InnoDB uses an in-memory auto-increment counter as long as the
@@ -372,9 +386,9 @@ class PDOMySql {
     // be a problem in this case. Also, TRUNCATE resets the auto increment
     // counter.
     try {
-      $max_id = $drubal_connection->query('SELECT MAX(value) FROM {sequences}')->fetchField();
+      $max_id = $this->drubalConnection->query('SELECT MAX(value) FROM {sequences}')->fetchField();
       // We know we are using MySQL here, no need for the slower db_delete().
-      $drubal_connection->query('DELETE FROM {sequences} WHERE value < :value', [':value' => $max_id]);
+      $this->drubalConnection->query('DELETE FROM {sequences} WHERE value < :value', [':value' => $max_id]);
     }
     // During testing, this function is called from shutdown with the
     // simpletest prefix stored in $this->connection, and those tables are gone
@@ -424,6 +438,14 @@ class PDOMySql {
         throw $e;
       }
     }
+  }
+
+
+  /**
+   * Returns the version of the database client.
+   */
+  public function clientVersion() {
+    return $this->DBALConnection->getWrappedConnection()->getAttribute(\PDO::ATTR_CLIENT_VERSION);
   }
 
 }

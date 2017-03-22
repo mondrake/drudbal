@@ -64,13 +64,6 @@ class Connection extends DatabaseConnection {
   );
 
   /**
-   * The actual DBAL connection.
-   *
-   * @var \Doctrine\DBAL\Connection
-   */
-  protected $DBALConnection;
-
-  /**
    * The DBAL driver extension.
    *
    * @var @todo
@@ -91,19 +84,31 @@ class Connection extends DatabaseConnection {
    * Constructs a Connection object.
    */
   public function __construct(DBALConnection $dbal_connection, array $connection_options = []) {
-    // Set the DBAL connection and the driver extension.
-    $this->DBALConnection = $dbal_connection;
     $drubal_dbal_driver_class = static::getDrubalDbalDriverClass($dbal_connection->getDriver()->getName());
-    $this->DBALDriverExtension = new $drubal_dbal_driver_class($this);
-
-    $this->setPrefix(isset($connection_options['prefix']) ? $connection_options['prefix'] : '');
-
-    $this->connection = $dbal_connection->getWrappedConnection();
-    $this->connection->setAttribute(\PDO::ATTR_STATEMENT_CLASS, [$this->statementClass, [$this]]);
-
+    $this->DBALDriverExtension = new $drubal_dbal_driver_class($this, $dbal_connection);
+    $dbal_connection->getWrappedConnection()->setAttribute(\PDO::ATTR_STATEMENT_CLASS, [$this->statementClass, [$this]]);  // @todo move to driver
     $this->transactionSupport = $this->DBALDriverExtension->transactionSupport($connection_options);
     $this->transactionalDDLSupport = $this->DBALDriverExtension->transactionalDDLSupport($connection_options);
+    $this->setPrefix(isset($connection_options['prefix']) ? $connection_options['prefix'] : '');
     $this->connectionOptions = $connection_options;
+  }
+
+  /**
+   * Destroys this Connection object.
+   *
+   * PHP does not destruct an object if it is still referenced in other
+   * variables. In case of PDO database connection objects, PHP only closes the
+   * connection when the PDO object is destructed, so any references to this
+   * object may cause the number of maximum allowed connections to be exceeded.
+   */
+  public function destroy() {
+    // Destroy all references to this connection by setting them to NULL.
+    // The Statement class attribute only accepts a new value that presents a
+    // proper callable, so we reset it to PDOStatement.
+    if (!empty($this->statementClass)) {
+      $this->getDBALconnection()->getWrappedConnection()->setAttribute(\PDO::ATTR_STATEMENT_CLASS, ['PDOStatement', []]);
+    }
+    $this->schema = NULL;
   }
 
   /**
@@ -111,6 +116,13 @@ class Connection extends DatabaseConnection {
    */
   public function runInstallTasks() {
     return $this->DBALDriverExtension->runInstallTasks();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function clientVersion() {
+    return $this->DBALDriverExtension->clientVersion();
   }
 
   /**
@@ -147,7 +159,7 @@ class Connection extends DatabaseConnection {
         $query = $this->prefixTables($query);
 
         // Prepare a DBAL statement.
-        $DBAL_stmt = $this->DBALConnection->prepare($query);
+        $DBAL_stmt = $this->getDBALConnection()->prepare($query);
 
         // Set the fetch mode for the statement. @todo if not PDO?
         if (isset($options['fetch'])) {
@@ -184,7 +196,7 @@ class Connection extends DatabaseConnection {
           return $stmt->rowCount();
         case Database::RETURN_INSERT_ID:
           $sequence_name = isset($options['sequence_name']) ? $options['sequence_name'] : NULL;
-          return $this->connection->lastInsertId($sequence_name);
+          return $this->getDBALConnection()->lastInsertId($sequence_name);
         case Database::RETURN_NULL:
           return NULL;
         default:
@@ -273,7 +285,7 @@ class Connection extends DatabaseConnection {
   }
 
   public function databaseType() {
-    return $this->DBALConnection->getDriver()->getDatabasePlatform()->getName();
+    return $this->getDBALConnection()->getDriver()->getDatabasePlatform()->getName();
   }
 
   /**
@@ -289,7 +301,7 @@ class Connection extends DatabaseConnection {
   public function createDatabase($database) {
     try {
       $this->DBALDriverExtension->preCreateDatabase($database);
-      $this->DBALConnection->getSchemaManager()->createDatabase($database);
+      $this->getDBALConnection()->getSchemaManager()->createDatabase($database);
       $this->DBALDriverExtension->postCreateDatabase($database);
     }
     catch (DBALException $e) {
@@ -310,6 +322,92 @@ class Connection extends DatabaseConnection {
   }
 
   /**
+   * Rolls back the transaction entirely or to a named savepoint.
+   *
+   * This method throws an exception if no transaction is active.
+   *
+   * @param string $savepoint_name
+   *   (optional) The name of the savepoint. The default, 'drupal_transaction',
+   *    will roll the entire transaction back.
+   *
+   * @throws \Drupal\Core\Database\TransactionOutOfOrderException
+   * @throws \Drupal\Core\Database\TransactionNoActiveException
+   *
+   * @see \Drupal\Core\Database\Transaction::rollBack()
+   */
+  public function rollBack($savepoint_name = 'drupal_transaction') {
+    if (!$this->supportsTransactions()) {
+      return;
+    }
+    if (!$this->inTransaction()) {
+      throw new TransactionNoActiveException();
+    }
+    // A previous rollback to an earlier savepoint may mean that the savepoint
+    // in question has already been accidentally committed.
+    if (!isset($this->transactionLayers[$savepoint_name])) {
+      throw new TransactionNoActiveException();
+    }
+
+    // We need to find the point we're rolling back to, all other savepoints
+    // before are no longer needed. If we rolled back other active savepoints,
+    // we need to throw an exception.
+    $rolled_back_other_active_savepoints = FALSE;
+    while ($savepoint = array_pop($this->transactionLayers)) {
+      if ($savepoint == $savepoint_name) {
+        // If it is the last the transaction in the stack, then it is not a
+        // savepoint, it is the transaction itself so we will need to roll back
+        // the transaction rather than a savepoint.
+        if (empty($this->transactionLayers)) {
+          break;
+        }
+        $this->query('ROLLBACK TO SAVEPOINT ' . $savepoint);
+        $this->popCommittableTransactions();
+        if ($rolled_back_other_active_savepoints) {
+          throw new TransactionOutOfOrderException();
+        }
+        return;
+      }
+      else {
+        $rolled_back_other_active_savepoints = TRUE;
+      }
+    }
+    $this->getDBALConnection()->rollBack();
+    if ($rolled_back_other_active_savepoints) {
+      throw new TransactionOutOfOrderException();
+    }
+  }
+
+  /**
+   * Increases the depth of transaction nesting.
+   *
+   * If no transaction is already active, we begin a new transaction.
+   *
+   * @param string $name
+   *   The name of the transaction.
+   *
+   * @throws \Drupal\Core\Database\TransactionNameNonUniqueException
+   *
+   * @see \Drupal\Core\Database\Transaction
+   */
+  public function pushTransaction($name) {
+    if (!$this->supportsTransactions()) {
+      return;
+    }
+    if (isset($this->transactionLayers[$name])) {
+      throw new TransactionNameNonUniqueException($name . " is already in use.");
+    }
+    // If we're already in a transaction then we want to create a savepoint
+    // rather than try to create another transaction.
+    if ($this->inTransaction()) {
+      $this->query('SAVEPOINT ' . $name);
+    }
+    else {
+      $this->getDBALConnection()->beginTransaction();
+    }
+    $this->transactionLayers[$name] = $name;
+  }
+
+  /**
    * {@inheritdoc}
    */
   protected function popCommittableTransactions() {
@@ -323,8 +421,8 @@ class Connection extends DatabaseConnection {
       // If there are no more layers left then we should commit.
       unset($this->transactionLayers[$name]);
       if (empty($this->transactionLayers)) {
-        if (!$this->connection->commit()) {
-          throw new TransactionCommitFailedException();
+        if (!$this->getDBALConnection()->commit()) {  // @todo DBAL does not return false, raises exception
+//          throw new TransactionCommitFailedException();
         }
       }
       else {
@@ -342,7 +440,7 @@ class Connection extends DatabaseConnection {
    * @return string DBAL driver name
    */
   public function getDBALConnection() {
-    return $this->DBALConnection;
+    return $this->DBALDriverExtension->getDBALConnection();
   }
 
   /**
@@ -368,10 +466,17 @@ class Connection extends DatabaseConnection {
    *
    * @return string database server version string
    *
-   * @todo there should be a DBAL native method for this...
+   * @todo there is a DBAL native method for this: lib/Doctrine/DBAL/Driver/PDOConnection.php getServerVersion()
    */
   public function getDbServerVersion() {
-    return $this->DBALConnection->getWrappedConnection()->getAttribute(\PDO::ATTR_SERVER_VERSION); // @todo if not PDO??
+    return $this->getDBALConnection()->getWrappedConnection()->getAttribute(\PDO::ATTR_SERVER_VERSION); // @todo if not PDO??
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function quote($string, $parameter_type = \PDO::PARAM_STR) {   // @todo adjust default
+    return $this->getDBALConnection()->quote($string, $parameter_type);
   }
 
 }
