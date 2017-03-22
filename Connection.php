@@ -465,11 +465,9 @@ class Connection extends DatabaseConnection {
    * Gets the database server version
    *
    * @return string database server version string
-   *
-   * @todo there is a DBAL native method for this: lib/Doctrine/DBAL/Driver/PDOConnection.php getServerVersion()
    */
   public function getDbServerVersion() {
-    return $this->getDBALConnection()->getWrappedConnection()->getAttribute(\PDO::ATTR_SERVER_VERSION); // @todo if not PDO??
+    return $this->getDBALConnection()->getWrappedConnection()->getServerVersion();
   }
 
   /**
