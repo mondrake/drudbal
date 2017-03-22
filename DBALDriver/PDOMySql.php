@@ -266,28 +266,28 @@ class PDOMySql {
   /**
    * @todo
    */
-  public static function runInstallTasks(DrubalConnection $drubal_connection) {
+  public function runInstallTasks() {
     $results = [
       'fail' => [],
       'pass' => [],
     ];
 
     // Ensure that MySql has the right minimum version.
-    if (version_compare($drubal_connection->getDbServerVersion(), self::MYSQLSERVER_MINIMUM_VERSION, '<')) {
+    if (version_compare($this->drubalConnection->getDbServerVersion(), self::MYSQLSERVER_MINIMUM_VERSION, '<')) {
       $results['fail'][] = t("The MySQL server version %version is less than the minimum required version %minimum_version.", [
-        '%version' => $drubal_connection->getDbServerVersion(),
+        '%version' => $this->drubalConnection->getDbServerVersion(),
         '%minimum_version' => self::MYSQLSERVER_MINIMUM_VERSION,
       ]);
     }
 
     // Ensure that InnoDB is available.
-    $engines = $drubal_connection->query('SHOW ENGINES')->fetchAllKeyed();
+    $engines = $this->drubalConnection->query('SHOW ENGINES')->fetchAllKeyed();
     if (isset($engines['MyISAM']) && $engines['MyISAM'] == 'DEFAULT' && !isset($engines['InnoDB'])) {
       $results['fail'][] = t('The MyISAM storage engine is not supported.');
     }
 
     // Ensure that the MySQL driver supports utf8mb4 encoding.
-    $version = $drubal_connection->clientVersion();
+    $version = $this->drubalConnection->clientVersion();
     if (FALSE !== strpos($version, 'mysqlnd')) {
       // The mysqlnd driver supports utf8mb4 starting at version 5.0.9.
       $version = preg_replace('/^\D+([\d.]+).*/', '$1', $version);

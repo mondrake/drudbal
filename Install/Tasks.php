@@ -44,7 +44,7 @@ class Tasks extends InstallTasks {
       return t('Doctrine DBAL on @database_type/@database_server_version via @dbal_driver', [
         '@database_type' => $connection->databaseType(),
         '@database_server_version' => $connection->getDbServerVersion(),
-        '@dbal_driver' => $connection->getDBALDriver(),
+        '@dbal_driver' => $connection->getDBALConnection()->getDriver()->getName(),
       ]);
     }
     catch (\Exception $e) {
@@ -155,8 +155,7 @@ class Tasks extends InstallTasks {
    */
   public function runDBALDriverInstallTasks() {
     $connection = Database::getConnection();
-    $dbal_driver = DrubalConnection::getDrubalDbalDriverClass($connection->getDBALDriver());
-    $results = $dbal_driver::runInstallTasks($connection);
+    $results = $connection->runInstallTasks();
     foreach ($results['pass'] as $result) {
       $this->pass($result);
     }

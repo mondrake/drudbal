@@ -107,6 +107,13 @@ class Connection extends DatabaseConnection {
   }
 
   /**
+   * @todo
+   */
+  public function runInstallTasks() {
+    return $this->DBALDriverExtension->runInstallTasks();
+  }
+
+  /**
    * {@inheritdoc}
    *
    * @todo clean this up.
@@ -336,15 +343,6 @@ class Connection extends DatabaseConnection {
    */
   public function getDBALConnection() {
     return $this->DBALConnection;
-  }
-
-  /**
-   * Gets the DBAL driver name
-   *
-   * @return string DBAL driver name
-   */
-  public function getDBALDriver() {
-    return $this->DBALConnection->getDriver()->getName();
   }
 
   /**
