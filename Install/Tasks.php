@@ -155,7 +155,7 @@ class Tasks extends InstallTasks {
    */
   public function runDBALDriverInstallTasks() {
     $connection = Database::getConnection();
-    $dbal_driver = $connection->getDrubalDbalDriverClass($connection->getDBALDriver());
+    $dbal_driver = DrubalConnection::getDrubalDbalDriverClass($connection->getDBALDriver());
     $results = $dbal_driver::runInstallTasks($connection);
     foreach ($results['pass'] as $result) {
       $this->pass($result);

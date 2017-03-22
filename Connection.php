@@ -93,12 +93,7 @@ class Connection extends DatabaseConnection {
   public function __construct(DBALConnection $dbal_connection, array $connection_options = []) {
     // Set the DBAL connection and the driver extension.
     $this->DBALConnection = $dbal_connection;
-    if (isset($connection_options['dbal_driver'])) {
-      $drubal_dbal_driver_class = $this->getDrubalDbalDriverClass($connection_options['dbal_driver']);
-    }
-    else {
-      $drubal_dbal_driver_class = $this->getDrubalDbalDriverClass($this->getDBALDriver());
-    }
+    $drubal_dbal_driver_class = static::getDrubalDbalDriverClass($dbal_connection->getDriver()->getName());
     $this->DBALDriverExtension = new $drubal_dbal_driver_class($this);
 
     $this->setPrefix(isset($connection_options['prefix']) ? $connection_options['prefix'] : '');
