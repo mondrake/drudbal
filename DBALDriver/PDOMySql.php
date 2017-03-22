@@ -382,7 +382,9 @@ class PDOMySql {
     // errors. There is no problem with completely ignoring errors here: if
     // these queries fail, the sequence will work just fine, just use a bit
     // more database storage and memory.
-    catch (DatabaseException $e) {
+//    catch (DatabaseException $e) {
+    catch (\Exception $e) {
+      return;  // @todo
     }
   }
 
