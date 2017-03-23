@@ -392,7 +392,11 @@ class Schema extends DatabaseSchema {
       return FALSE;
     }
 
-    $this->connection->getDBALConnection()->getSchemaManager()->dropTable($this->getPrefixInfo($table)['table']);
+    $this->dbalSchemaReload(); // @todo temp
+    $toSchema = clone $this->dbalSchema;
+    $toSchema->dropTable($this->getPrefixInfo($table)['table']);
+    $this->dbalExecuteSchemaChange($toSchema);
+
     return TRUE;
   }
 
@@ -436,13 +440,10 @@ class Schema extends DatabaseSchema {
       return FALSE;
     }
 
+    $this->dbalSchemaReload(); // @todo temp
     $toSchema = clone $this->dbalSchema;
     $toSchema->getTable($this->getPrefixInfo($table)['table'])->dropColumn($field);
-    $sql_statements = $this->dbalSchema->getMigrateToSql($toSchema, $this->connection->getDBALConnection()->getDatabasePlatform());
-    foreach ($sql_statements as $sql) {
-      $this->connection->getDBALConnection()->exec($sql);
-    }
-    $this->dbalSchema = $toSchema;
+    $this->dbalExecuteSchemaChange($toSchema);
 
     return TRUE;
   }
@@ -609,6 +610,18 @@ class Schema extends DatabaseSchema {
    */
   public function dbalSchemaReload() {
     $this->dbalSchema = $this->connection->getDBALConnection()->getSchemaManager()->createSchema();
+  }
+
+  /**
+   * @todo temp while some method alter the current dbalSchema and others not.
+   */
+  public function dbalExecuteSchemaChange($toSchema) {
+    $sql_statements = $this->dbalSchema->getMigrateToSql($toSchema, $this->connection->getDBALConnection()->getDatabasePlatform());
+    foreach ($sql_statements as $sql) {
+debug($sql);
+      $this->connection->getDBALConnection()->exec($sql);
+    }
+    $this->dbalSchema = $toSchema;
   }
 
 }
