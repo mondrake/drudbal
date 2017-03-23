@@ -479,7 +479,16 @@ class Schema extends DatabaseSchema {
       throw new SchemaObjectExistsException(t("Cannot add primary key to table @table: primary key already exists.", ['@table' => $table]));
     }
 
-    $this->connection->query('ALTER TABLE {' . $table . '} ADD PRIMARY KEY (' . $this->createKeySql($fields) . ')');
+    // @todo DBAL does not support creating indexes with column lenghts: https://github.com/doctrine/dbal/pull/2412
+    if (($idx_cols = $this->dbalResolveIndexColumnNames($fields)) !== FALSE) {
+      $this->dbalSchemaReload(); // @todo temp
+      $toSchema = clone $this->dbalSchema;
+      $toSchema->getTable($this->getPrefixInfo($table)['table'])->setPrimaryKey($idx_cols);
+      $this->dbalExecuteSchemaChange($toSchema);
+    }
+    else {
+      $this->connection->query('ALTER TABLE {' . $table . '} ADD PRIMARY KEY (' . $this->createKeySql($fields) . ')');
+    }
   }
 
   public function dropPrimaryKey($table) {
@@ -487,7 +496,11 @@ class Schema extends DatabaseSchema {
       return FALSE;
     }
 
-    $this->connection->query('ALTER TABLE {' . $table . '} DROP PRIMARY KEY');
+    $this->dbalSchemaReload(); // @todo temp
+    $toSchema = clone $this->dbalSchema;
+    $toSchema->getTable($this->getPrefixInfo($table)['table'])->dropPrimaryKey();
+    $this->dbalExecuteSchemaChange($toSchema);
+
     return TRUE;
   }
 
@@ -529,11 +542,10 @@ class Schema extends DatabaseSchema {
     if (($idx_cols = $this->dbalResolveIndexColumnNames($indexes[$name])) !== FALSE) {
       $this->dbalSchemaReload(); // @todo temp
       $toSchema = clone $this->dbalSchema;
-      $toSchema->getTable($this->getPrefixInfo($table)['table'])->addIndex($this->dbalResolveIndexColumnNames($indexes[$name]), $name);
+      $toSchema->getTable($this->getPrefixInfo($table)['table'])->addIndex($idx_cols, $name);
       $this->dbalExecuteSchemaChange($toSchema);
     }
     else {
-//debug('ALTER TABLE {' . $table . '} ADD INDEX `' . $name . '` (' . $this->createKeySql($indexes[$name]) . ')');
       $this->connection->query('ALTER TABLE {' . $table . '} ADD INDEX `' . $name . '` (' . $this->createKeySql($indexes[$name]) . ')');
     }
   }
@@ -629,10 +641,13 @@ class Schema extends DatabaseSchema {
   /**
    * @todo temp while some method alter the current dbalSchema and others not.
    */
-  protected function dbalExecuteSchemaChange($toSchema, $do = TRUE) {
+  protected function dbalExecuteSchemaChange($toSchema, $do = TRUE, $debug = FALSE) {
+
+    // @todo catch Exceptions!!!
+
     $sql_statements = $this->dbalSchema->getMigrateToSql($toSchema, $this->connection->getDBALConnection()->getDatabasePlatform());
     foreach ($sql_statements as $sql) {
-//debug($sql);
+      if ($debug) debug($sql);
       if ($do) $this->connection->getDBALConnection()->exec($sql);
     }
     if ($do) $this->dbalSchema = $toSchema;
