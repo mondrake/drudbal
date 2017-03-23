@@ -525,7 +525,17 @@ class Schema extends DatabaseSchema {
     $spec['indexes'][$name] = $fields;
     $indexes = $this->getNormalizedIndexes($spec);
 
-    $this->connection->query('ALTER TABLE {' . $table . '} ADD INDEX `' . $name . '` (' . $this->createKeySql($indexes[$name]) . ')');
+    // @todo DBAL does not support creating indexes with column lenghts: https://github.com/doctrine/dbal/pull/2412
+    if (($idx_cols = $this->dbalResolveIndexColumnNames($indexes[$name])) !== FALSE) {
+      $this->dbalSchemaReload(); // @todo temp
+      $toSchema = clone $this->dbalSchema;
+      $toSchema->getTable($this->getPrefixInfo($table)['table'])->addIndex($this->dbalResolveIndexColumnNames($indexes[$name]), $name);
+      $this->dbalExecuteSchemaChange($toSchema);
+    }
+    else {
+//debug('ALTER TABLE {' . $table . '} ADD INDEX `' . $name . '` (' . $this->createKeySql($indexes[$name]) . ')');
+      $this->connection->query('ALTER TABLE {' . $table . '} ADD INDEX `' . $name . '` (' . $this->createKeySql($indexes[$name]) . ')');
+    }
   }
 
   public function dropIndex($table, $name) {
@@ -533,7 +543,11 @@ class Schema extends DatabaseSchema {
       return FALSE;
     }
 
-    $this->connection->query('ALTER TABLE {' . $table . '} DROP INDEX `' . $name . '`');
+    $this->dbalSchemaReload(); // @todo temp
+    $toSchema = clone $this->dbalSchema;
+    $toSchema->getTable($this->getPrefixInfo($table)['table'])->dropIndex($name);
+    $this->dbalExecuteSchemaChange($toSchema);
+
     return TRUE;
   }
 
@@ -608,20 +622,33 @@ class Schema extends DatabaseSchema {
   /**
    * @todo temp while some method alter the current dbalSchema and others not.
    */
-  public function dbalSchemaReload() {
+  protected function dbalSchemaReload() {
     $this->dbalSchema = $this->connection->getDBALConnection()->getSchemaManager()->createSchema();
   }
 
   /**
    * @todo temp while some method alter the current dbalSchema and others not.
    */
-  public function dbalExecuteSchemaChange($toSchema) {
+  protected function dbalExecuteSchemaChange($toSchema, $do = TRUE) {
     $sql_statements = $this->dbalSchema->getMigrateToSql($toSchema, $this->connection->getDBALConnection()->getDatabasePlatform());
     foreach ($sql_statements as $sql) {
-debug($sql);
-      $this->connection->getDBALConnection()->exec($sql);
+//debug($sql);
+      if ($do) $this->connection->getDBALConnection()->exec($sql);
     }
-    $this->dbalSchema = $toSchema;
+    if ($do) $this->dbalSchema = $toSchema;
+  }
+
+  protected function dbalResolveIndexColumnNames($fields) {
+    $return = [];
+    foreach ($fields as $field) {
+      if (is_array($field)) {
+        return FALSE;
+      }
+      else {
+        $return[] = $field;
+      }
+    }
+    return $return;
   }
 
 }
