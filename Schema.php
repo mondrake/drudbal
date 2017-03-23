@@ -9,6 +9,8 @@ use Drupal\Core\Database\SchemaObjectDoesNotExistException;
 use Drupal\Core\Database\Schema as DatabaseSchema;
 use Drupal\Component\Utility\Unicode;
 
+use Doctrine\DBAL\Schema\SchemaException as DBALSchemaException;
+
 /**
  * DRUBAL implementation of \Drupal\Core\Database\Schema.
  */
@@ -36,6 +38,18 @@ class Schema extends DatabaseSchema {
     'LONGTEXT',
     'TEXT',
   ];
+
+  /**
+   * Current connection DBAL schema.
+   *
+   * @todo
+   */
+  protected $dbalSchema;
+
+  public function __construct($connection) {
+    parent::__construct($connection);
+    $this->dbalSchema = $this->connection->getDBALConnection()->getSchemaManager()->createSchema();
+  }
 
   /**
    * Get information about the table and database name from the prefix.
@@ -422,7 +436,14 @@ class Schema extends DatabaseSchema {
       return FALSE;
     }
 
-    $this->connection->query('ALTER TABLE {' . $table . '} DROP `' . $field . '`');
+    $toSchema = clone $this->dbalSchema;
+    $toSchema->getTable($this->getPrefixInfo($table)['table'])->dropColumn($field);
+    $sql_statements = $this->dbalSchema->getMigrateToSql($toSchema, $this->connection->getDBALConnection()->getDatabasePlatform());
+    foreach ($sql_statements as $sql) {
+      $this->connection->getDBALConnection()->exec($sql);
+    }
+    $this->dbalSchema = $toSchema;
+
     return TRUE;
   }
 
@@ -560,14 +581,34 @@ class Schema extends DatabaseSchema {
   }
 
   public function tableExists($table) {
+    //$this->dbalSchemaReload(); // @todo temp
+/*    try {
+      return (bool) $this->dbalSchema->getTable($this->getPrefixInfo($table)['table']);
+    }
+    catch (DBALSchemaException $e) {
+      if ($e->getCode() === DBALSchemaException::TABLE_DOESNT_EXIST) {
+        return FALSE;
+      }
+      throw $e;
+    }*/
     return $this->connection->getDBALConnection()->getSchemaManager()->tablesExist([$this->getPrefixInfo($table)['table']]);
   }
 
   public function fieldExists($table, $column) {
+    if (!$this->tableExists($table)) {
+      return FALSE;
+    }
     // @todo is it right to use array_keys to find the names, or shall the name
     // property of each column object be used?
     $columns = array_keys($this->connection->getDBALConnection()->getSchemaManager()->listTableColumns($this->getPrefixInfo($table)['table']));
     return in_array($column, $columns);
+  }
+
+  /**
+   * @todo temp while some method alter the current dbalSchema and others not.
+   */
+  public function dbalSchemaReload() {
+    $this->dbalSchema = $this->connection->getDBALConnection()->getSchemaManager()->createSchema();
   }
 
 }
