@@ -5,6 +5,6 @@ namespace Drupal\Driver\Database\drubal;
 use Drupal\Core\Database\Transaction as DatabaseTransaction;
 
 /**
- * MySQL implementation of \Drupal\Core\Database\Transaction.
+ * DRUBAL implementation of \Drupal\Core\Database\Transaction.
  */
 class Transaction extends DatabaseTransaction { }
