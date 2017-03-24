@@ -528,16 +528,20 @@ class Schema extends DatabaseSchema {
       throw new SchemaObjectExistsException(t("Cannot add unique key @name to table @table: unique key already exists.", ['@table' => $table, '@name' => $name]));
     }
 
-    $this->connection->query('ALTER TABLE {' . $table . '} ADD UNIQUE KEY `' . $name . '` (' . $this->createKeySql($fields) . ')');
+    // @todo DBAL does not support creating indexes with column lenghts: https://github.com/doctrine/dbal/pull/2412
+    if (($idx_cols = $this->dbalResolveIndexColumnNames($fields)) !== FALSE) {
+      $current_schema = $this->dbalSchemaManager->createSchema();
+      $to_schema = clone $current_schema;
+      $to_schema->getTable($this->getPrefixInfo($table)['table'])->addUniqueIndex($idx_cols, $name);
+      $this->dbalExecuteSchemaChange($current_schema, $to_schema);
+    }
+    else {
+      $this->connection->query('ALTER TABLE {' . $table . '} ADD UNIQUE KEY `' . $name . '` (' . $this->createKeySql($fields) . ')');
+    }
   }
 
   public function dropUniqueKey($table, $name) {
-    if (!$this->indexExists($table, $name)) {
-      return FALSE;
-    }
-
-    $this->connection->query('ALTER TABLE {' . $table . '} DROP KEY `' . $name . '`');
-    return TRUE;
+    return $this->dropIndex($table, $name);
   }
 
   /**
