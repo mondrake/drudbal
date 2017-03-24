@@ -442,10 +442,10 @@ class Schema extends DatabaseSchema {
       return FALSE;
     }
 
-    $fromSchema = $this->dbalSchemaManager->createSchema();
-    $toSchema = clone $fromSchema;
-    $toSchema->getTable($this->getPrefixInfo($table)['table'])->dropColumn($field);
-    $this->dbalExecuteSchemaChange($fromSchema, $toSchema);
+    $current_schema = $this->dbalSchemaManager->createSchema();
+    $to_schema = clone $current_schema;
+    $to_schema->getTable($this->getPrefixInfo($table)['table'])->dropColumn($field);
+    $this->dbalExecuteSchemaChange($current_schema, $to_schema);
 
     return TRUE;
   }
@@ -467,26 +467,36 @@ class Schema extends DatabaseSchema {
   }
 
   public function indexExists($table, $name) {
-    // Returns one row for each column in the index. Result is string or FALSE.
-    // Details at http://dev.mysql.com/doc/refman/5.0/en/show-index.html
-    $row = $this->connection->query('SHOW INDEX FROM {' . $table . '} WHERE key_name = ' . $this->connection->quote($name))->fetchAssoc();
-    return isset($row['Key_name']);
+    if (!$this->tableExists($table)) {
+      return FALSE;
+    }
+    try {
+      // @todo is it right to use array_keys to find the names, or shall the name
+      // property of each index object be used?
+      $indexes = array_keys($this->dbalSchemaManager->listTableIndexes($this->getPrefixInfo($table)['table']));
+      return in_array($name, $indexes);
+    }
+    catch (\Exception $e) {
+      debug($e->message);
+      return FALSE;
+    }
   }
 
   public function addPrimaryKey($table, $fields) {
     if (!$this->tableExists($table)) {
       throw new SchemaObjectDoesNotExistException(t("Cannot add primary key to table @table: table doesn't exist.", ['@table' => $table]));
     }
-    if ($this->indexExists($table, 'PRIMARY')) {
+
+    $current_schema = $this->dbalSchemaManager->createSchema();
+    if ($current_schema->getTable($this->getPrefixInfo($table)['table'])->hasPrimaryKey()) {
       throw new SchemaObjectExistsException(t("Cannot add primary key to table @table: primary key already exists.", ['@table' => $table]));
     }
 
     // @todo DBAL does not support creating indexes with column lenghts: https://github.com/doctrine/dbal/pull/2412
     if (($idx_cols = $this->dbalResolveIndexColumnNames($fields)) !== FALSE) {
-      $fromSchema = $this->dbalSchemaManager->createSchema();
-      $toSchema = clone $fromSchema;
-      $toSchema->getTable($this->getPrefixInfo($table)['table'])->setPrimaryKey($idx_cols);
-      $this->dbalExecuteSchemaChange($fromSchema, $toSchema);
+      $to_schema = clone $current_schema;
+      $to_schema->getTable($this->getPrefixInfo($table)['table'])->setPrimaryKey($idx_cols);
+      $this->dbalExecuteSchemaChange($current_schema, $to_schema);
     }
     else {
       $this->connection->query('ALTER TABLE {' . $table . '} ADD PRIMARY KEY (' . $this->createKeySql($fields) . ')');
@@ -494,14 +504,18 @@ class Schema extends DatabaseSchema {
   }
 
   public function dropPrimaryKey($table) {
-    if (!$this->indexExists($table, 'PRIMARY')) {
+    if (!$this->tableExists($table)) {
       return FALSE;
     }
 
-    $fromSchema = $this->dbalSchemaManager->createSchema();
-    $toSchema = clone $fromSchema;
-    $toSchema->getTable($this->getPrefixInfo($table)['table'])->dropPrimaryKey();
-    $this->dbalExecuteSchemaChange($fromSchema, $toSchema);
+    $current_schema = $this->dbalSchemaManager->createSchema();
+    if (!$current_schema->getTable($this->getPrefixInfo($table)['table'])->hasPrimaryKey()) {
+      return FALSE;
+    }
+
+    $to_schema = clone $current_schema;
+    $to_schema->getTable($this->getPrefixInfo($table)['table'])->dropPrimaryKey();
+    $this->dbalExecuteSchemaChange($current_schema, $to_schema);
 
     return TRUE;
   }
@@ -542,10 +556,10 @@ class Schema extends DatabaseSchema {
 
     // @todo DBAL does not support creating indexes with column lenghts: https://github.com/doctrine/dbal/pull/2412
     if (($idx_cols = $this->dbalResolveIndexColumnNames($indexes[$name])) !== FALSE) {
-      $fromSchema = $this->dbalSchemaManager->createSchema();
-      $toSchema = clone $fromSchema;
-      $toSchema->getTable($this->getPrefixInfo($table)['table'])->addIndex($idx_cols, $name);
-      $this->dbalExecuteSchemaChange($fromSchema, $toSchema);
+      $current_schema = $this->dbalSchemaManager->createSchema();
+      $to_schema = clone $current_schema;
+      $to_schema->getTable($this->getPrefixInfo($table)['table'])->addIndex($idx_cols, $name);
+      $this->dbalExecuteSchemaChange($current_schema, $to_schema);
     }
     else {
       $this->connection->query('ALTER TABLE {' . $table . '} ADD INDEX `' . $name . '` (' . $this->createKeySql($indexes[$name]) . ')');
@@ -612,25 +626,37 @@ class Schema extends DatabaseSchema {
   }
 
   public function tableExists($table) {
-    return $this->dbalSchemaManager->tablesExist([$this->getPrefixInfo($table)['table']]);
+    try {
+      return $this->dbalSchemaManager->tablesExist([$this->getPrefixInfo($table)['table']]);
+    }
+    catch (\Exception $e) {
+      debug($e->message);
+      return FALSE;
+    }
   }
 
   public function fieldExists($table, $column) {
     if (!$this->tableExists($table)) {
       return FALSE;
     }
-    // @todo is it right to use array_keys to find the names, or shall the name
-    // property of each column object be used?
-    $columns = array_keys($this->dbalSchemaManager->listTableColumns($this->getPrefixInfo($table)['table']));
-    return in_array($column, $columns);
+    try {
+      // @todo is it right to use array_keys to find the names, or shall the name
+      // property of each index object be used?
+      $columns = array_keys($this->dbalSchemaManager->listTableColumns($this->getPrefixInfo($table)['table']));
+      return in_array($column, $columns);
+    }
+    catch (\Exception $e) {
+      debug($e->message);
+      return FALSE;
+    }
   }
 
   /**
    * @todo temp while some method alter the current dbalSchema and others not.
    */
-  protected function dbalExecuteSchemaChange($fromSchema, $toSchema, $do = TRUE, $debug = FALSE) {
+  protected function dbalExecuteSchemaChange($current_schema, $to_schema, $do = TRUE, $debug = FALSE) {
     try {
-      $sql_statements = $fromSchema->getMigrateToSql($toSchema, $this->connection->getDbalConnection()->getDatabasePlatform());
+      $sql_statements = $current_schema->getMigrateToSql($to_schema, $this->connection->getDbalConnection()->getDatabasePlatform());
       foreach ($sql_statements as $sql) {
         /*if ($debug)*/ debug($sql);
         if ($do) $this->connection->getDbalConnection()->exec($sql);
