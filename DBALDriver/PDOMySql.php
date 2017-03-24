@@ -90,7 +90,7 @@ class PDOMySql {
    *
    * @return string DBAL driver name
    */
-  public function getDBALConnection() {
+  public function getDbalConnection() {
     return $this->DBALConnection;
   }
 
@@ -349,7 +349,7 @@ class PDOMySql {
    */
   public static function postCreateDatabase($database) {
     // Set the database as active.
-    $this->drubalConnection->getDBALConnection()->exec("USE $database");
+    $this->drubalConnection->getDbalConnection()->exec("USE $database");
   }
 
   /**

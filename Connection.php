@@ -68,7 +68,7 @@ class Connection extends DatabaseConnection {
    *
    * @var @todo
    */
-  protected $DBALDriverExtension;
+  protected $drubalDriver;
 
   /**
    * The minimal possible value for the max_allowed_packet setting of MySQL.
@@ -84,11 +84,11 @@ class Connection extends DatabaseConnection {
    * Constructs a Connection object.
    */
   public function __construct(DBALConnection $dbal_connection, array $connection_options = []) {
-    $drubal_dbal_driver_class = static::getDrubalDbalDriverClass($dbal_connection->getDriver()->getName());
-    $this->DBALDriverExtension = new $drubal_dbal_driver_class($this, $dbal_connection);
+    $drubal_dbal_driver_class = static::getDrubalDriverClass($dbal_connection->getDriver()->getName());
+    $this->drubalDriver = new $drubal_dbal_driver_class($this, $dbal_connection);
     $dbal_connection->getWrappedConnection()->setAttribute(\PDO::ATTR_STATEMENT_CLASS, [$this->statementClass, [$this]]);  // @todo move to driver
-    $this->transactionSupport = $this->DBALDriverExtension->transactionSupport($connection_options);
-    $this->transactionalDDLSupport = $this->DBALDriverExtension->transactionalDDLSupport($connection_options);
+    $this->transactionSupport = $this->drubalDriver->transactionSupport($connection_options);
+    $this->transactionalDDLSupport = $this->drubalDriver->transactionalDDLSupport($connection_options);
     $this->setPrefix(isset($connection_options['prefix']) ? $connection_options['prefix'] : '');
     $this->connectionOptions = $connection_options;
   }
@@ -106,7 +106,7 @@ class Connection extends DatabaseConnection {
     // The Statement class attribute only accepts a new value that presents a
     // proper callable, so we reset it to PDOStatement.
     if (!empty($this->statementClass)) {
-      $this->getDBALconnection()->getWrappedConnection()->setAttribute(\PDO::ATTR_STATEMENT_CLASS, ['PDOStatement', []]);
+      $this->getDbalConnection()->getWrappedConnection()->setAttribute(\PDO::ATTR_STATEMENT_CLASS, ['PDOStatement', []]);
     }
     $this->schema = NULL;
   }
@@ -115,14 +115,14 @@ class Connection extends DatabaseConnection {
    * @todo
    */
   public function runInstallTasks() {
-    return $this->DBALDriverExtension->runInstallTasks();
+    return $this->drubalDriver->runInstallTasks();
   }
 
   /**
    * {@inheritdoc}
    */
   public function clientVersion() {
-    return $this->DBALDriverExtension->clientVersion();
+    return $this->drubalDriver->clientVersion();
   }
 
   /**
@@ -159,7 +159,7 @@ class Connection extends DatabaseConnection {
         $query = $this->prefixTables($query);
 
         // Prepare a DBAL statement.
-        $DBAL_stmt = $this->getDBALConnection()->prepare($query);
+        $DBAL_stmt = $this->getDbalConnection()->prepare($query);
 
         // Set the fetch mode for the statement. @todo if not PDO?
         if (isset($options['fetch'])) {
@@ -196,7 +196,7 @@ class Connection extends DatabaseConnection {
           return $stmt->rowCount();
         case Database::RETURN_INSERT_ID:
           $sequence_name = isset($options['sequence_name']) ? $options['sequence_name'] : NULL;
-          return $this->getDBALConnection()->lastInsertId($sequence_name);
+          return $this->getDbalConnection()->lastInsertId($sequence_name);
         case Database::RETURN_NULL:
           return NULL;
         default:
@@ -256,13 +256,13 @@ class Connection extends DatabaseConnection {
    * {@inheritdoc}
    */
   public static function open(array &$connection_options = []) {
-    $drubal_dbal_driver_class = static::getDrubalDbalDriverClass($connection_options['dbal_driver']);
+    $drubal_dbal_driver_class = static::getDrubalDriverClass($connection_options['dbal_driver']);
     return $drubal_dbal_driver_class::open($connection_options);
   }
 
   public function queryRange($query, $from, $count, array $args = [], array $options = []) {
     try {
-      return $this->DBALDriverExtension->queryRange($query, $from, $count, $args, $options);
+      return $this->drubalDriver->queryRange($query, $from, $count, $args, $options);
     }
     catch (DBALException $e) {
       throw new \Exception($e->getMessage());
@@ -272,7 +272,7 @@ class Connection extends DatabaseConnection {
   public function queryTemporary($query, array $args = [], array $options = []) {
     try {
       $tablename = $this->generateTemporaryTableName();
-      $this->DBALDriverExtension->queryTemporary($tablename, $query, $args, $options);
+      $this->drubalDriver->queryTemporary($tablename, $query, $args, $options);
       return $tablename;
     }
     catch (DBALException $e) {
@@ -285,7 +285,7 @@ class Connection extends DatabaseConnection {
   }
 
   public function databaseType() {
-    return $this->getDBALConnection()->getDriver()->getDatabasePlatform()->getName();
+    return $this->getDbalConnection()->getDriver()->getDatabasePlatform()->getName();
   }
 
   /**
@@ -300,9 +300,9 @@ class Connection extends DatabaseConnection {
    */
   public function createDatabase($database) {
     try {
-      $this->DBALDriverExtension->preCreateDatabase($database);
-      $this->getDBALConnection()->getSchemaManager()->createDatabase($database);
-      $this->DBALDriverExtension->postCreateDatabase($database);
+      $this->drubalDriver->preCreateDatabase($database);
+      $this->getDbalConnection()->getSchemaManager()->createDatabase($database);
+      $this->drubalDriver->postCreateDatabase($database);
     }
     catch (DBALException $e) {
       throw new DatabaseNotFoundException($e->getMessage());
@@ -318,7 +318,7 @@ class Connection extends DatabaseConnection {
    * {@inheritdoc}
    */
   public function nextId($existing_id = 0) {
-    return $this->DBALDriverExtension->nextId($existing_id);
+    return $this->drubalDriver->nextId($existing_id);
   }
 
   /**
@@ -371,7 +371,7 @@ class Connection extends DatabaseConnection {
         $rolled_back_other_active_savepoints = TRUE;
       }
     }
-    $this->getDBALConnection()->rollBack();
+    $this->getDbalConnection()->rollBack();
     if ($rolled_back_other_active_savepoints) {
       throw new TransactionOutOfOrderException();
     }
@@ -402,7 +402,7 @@ class Connection extends DatabaseConnection {
       $this->query('SAVEPOINT ' . $name);
     }
     else {
-      $this->getDBALConnection()->beginTransaction();
+      $this->getDbalConnection()->beginTransaction();
     }
     $this->transactionLayers[$name] = $name;
   }
@@ -421,13 +421,13 @@ class Connection extends DatabaseConnection {
       // If there are no more layers left then we should commit.
       unset($this->transactionLayers[$name]);
       if (empty($this->transactionLayers)) {
-        if (!$this->getDBALConnection()->commit()) {  // @todo DBAL does not return false, raises exception
+        if (!$this->getDbalConnection()->commit()) {  // @todo DBAL does not return false, raises exception
 //          throw new TransactionCommitFailedException();
         }
       }
       else {
         // Attempt to release this savepoint in the standard way.
-        if ($this->DBALDriverExtension->releaseSavepoint($name) === 'all') {
+        if ($this->drubalDriver->releaseSavepoint($name) === 'all') {
           $this->transactionLayers = [];
         }
       }
@@ -439,8 +439,8 @@ class Connection extends DatabaseConnection {
    *
    * @return string DBAL driver name
    */
-  public function getDBALConnection() {
-    return $this->DBALDriverExtension->getDBALConnection();
+  public function getDbalConnection() {
+    return $this->drubalDriver->getDbalConnection();
   }
 
   /**
@@ -448,17 +448,8 @@ class Connection extends DatabaseConnection {
    *
    * @return string DBAL driver class.
    */
-  public static function getDrubalDbalDriverClass($driver_name) {
+  public static function getDrubalDriverClass($driver_name) {
     return "Drupal\\Driver\\Database\\drubal\\DBALDriver\\" . static::$driverMap[$driver_name];  // @todo manage aliases, class path to const
-  }
-
-  /**
-   * Gets the DBAL driver extension.
-   *
-   * @return @todo
-   */
-  public function getDBALDriverExtension() {
-    return $this->DBALDriverExtension;
   }
 
   /**
@@ -467,14 +458,14 @@ class Connection extends DatabaseConnection {
    * @return string database server version string
    */
   public function getDbServerVersion() {
-    return $this->getDBALConnection()->getWrappedConnection()->getServerVersion();
+    return $this->getDbalConnection()->getWrappedConnection()->getServerVersion();
   }
 
   /**
    * {@inheritdoc}
    */
   public function quote($string, $parameter_type = \PDO::PARAM_STR) {   // @todo adjust default
-    return $this->getDBALConnection()->quote($string, $parameter_type);
+    return $this->getDbalConnection()->quote($string, $parameter_type);
   }
 
 }

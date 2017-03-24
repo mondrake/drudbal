@@ -48,7 +48,7 @@ class Schema extends DatabaseSchema {
 
   public function __construct($connection) {
     parent::__construct($connection);
-    $this->dbalSchema = $this->connection->getDBALConnection()->getSchemaManager()->createSchema();
+    $this->dbalSchema = $this->connection->getDbalConnection()->getSchemaManager()->createSchema();
   }
 
   /**
@@ -67,7 +67,7 @@ class Schema extends DatabaseSchema {
       $info['table'] = substr($table, ++$pos);
     }
     else {
-      $info['database'] = $this->connection->getDBALConnection()->getDatabase();
+      $info['database'] = $this->connection->getDbalConnection()->getDatabase();
       $info['table'] = $table;
     }
     return $info;
@@ -618,7 +618,7 @@ class Schema extends DatabaseSchema {
       }
       throw $e;
     }*/
-    return $this->connection->getDBALConnection()->getSchemaManager()->tablesExist([$this->getPrefixInfo($table)['table']]);
+    return $this->connection->getDbalConnection()->getSchemaManager()->tablesExist([$this->getPrefixInfo($table)['table']]);
   }
 
   public function fieldExists($table, $column) {
@@ -627,7 +627,7 @@ class Schema extends DatabaseSchema {
     }
     // @todo is it right to use array_keys to find the names, or shall the name
     // property of each column object be used?
-    $columns = array_keys($this->connection->getDBALConnection()->getSchemaManager()->listTableColumns($this->getPrefixInfo($table)['table']));
+    $columns = array_keys($this->connection->getDbalConnection()->getSchemaManager()->listTableColumns($this->getPrefixInfo($table)['table']));
     return in_array($column, $columns);
   }
 
@@ -635,7 +635,7 @@ class Schema extends DatabaseSchema {
    * @todo temp while some method alter the current dbalSchema and others not.
    */
   protected function dbalSchemaReload() {
-    $this->dbalSchema = $this->connection->getDBALConnection()->getSchemaManager()->createSchema();
+    $this->dbalSchema = $this->connection->getDbalConnection()->getSchemaManager()->createSchema();
   }
 
   /**
@@ -645,10 +645,10 @@ class Schema extends DatabaseSchema {
 
     // @todo catch Exceptions!!!
 
-    $sql_statements = $this->dbalSchema->getMigrateToSql($toSchema, $this->connection->getDBALConnection()->getDatabasePlatform());
+    $sql_statements = $this->dbalSchema->getMigrateToSql($toSchema, $this->connection->getDbalConnection()->getDatabasePlatform());
     foreach ($sql_statements as $sql) {
       if ($debug) debug($sql);
-      if ($do) $this->connection->getDBALConnection()->exec($sql);
+      if ($do) $this->connection->getDbalConnection()->exec($sql);
     }
     if ($do) $this->dbalSchema = $toSchema;
   }
