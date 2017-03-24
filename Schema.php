@@ -9,6 +9,7 @@ use Drupal\Core\Database\SchemaObjectDoesNotExistException;
 use Drupal\Core\Database\Schema as DatabaseSchema;
 use Drupal\Component\Utility\Unicode;
 
+use Doctrine\DBAL\Schema\Schema as DbalSchema;
 use Doctrine\DBAL\Schema\SchemaException as DBALSchemaException;
 
 /**
@@ -88,6 +89,49 @@ class Schema extends DatabaseSchema {
     $condition->condition('table_schema', $table_info['database']);
     $condition->condition('table_name', $table_info['table'], $operator);
     return $condition;
+  }
+
+  /**
+   * Create a new table from a Drupal table definition.
+   *
+   * @param $name
+   *   The name of the table to create.
+   * @param $table
+   *   A Schema API table definition array.
+   *
+   * @throws \Drupal\Core\Database\SchemaObjectExistsException
+   *   If the specified table already exists.
+   */
+  public function createTable($name, $table) {
+    if ($this->tableExists($name)) {
+      throw new SchemaObjectExistsException(t('Table @name already exists.', ['@name' => $name]));
+    }
+    $statements = $this->createTableSql($name, $table);
+    $dbal_statements = $this->createDbalTableSql($name, $table);
+debug([$table, $statements, $dbal_statements]);
+    foreach ($statements as $statement) {
+      $this->connection->query($statement);
+    }
+  }
+
+  /**
+   * Generate SQL to create a new table from a Drupal schema definition.
+   *
+   * @param $name
+   *   The name of the table to create.
+   * @param $table
+   *   A Schema API table definition array.
+   * @return
+   *   An array of SQL statements to create the table.
+   */
+  protected function createDbalTableSql($name, $table) {
+    $schema = new DbalSchema();
+    $table = $schema->createTable($name);
+    $table->addColumn("id", "integer", array("unsigned" => true));
+    $table->addColumn("username", "string", array("length" => 32));
+    $table->setPrimaryKey(array("id"));
+    $table->addUniqueIndex(array("username"));
+    return $schema->toSql($this->connection->getDbalConnection()->getDatabasePlatform());
   }
 
   /**
@@ -235,6 +279,35 @@ class Schema extends DatabaseSchema {
     return $field;
   }
 
+  /**
+   * Set database-engine specific properties for a field.
+   *
+   * @param $field
+   *   A field description array, as specified in the schema documentation.
+   */
+  protected function processDbalField($field) {
+
+    if (!isset($field['size'])) {
+      $field['size'] = 'normal';
+    }
+
+    // Set the correct database-engine specific datatype.
+    // In case one is already provided, force it to uppercase.
+    if (isset($field['mysql_type'])) {
+      $field['mysql_type'] = Unicode::strtoupper($field['mysql_type']);
+    }
+    else {
+      $map = $this->getDbalFieldTypeMap();
+      $field['mysql_type'] = $map[$field['type'] . ':' . $field['size']];
+    }
+
+    if (isset($field['type']) && $field['type'] == 'serial') {
+      $field['auto_increment'] = TRUE;
+    }
+
+    return $field;
+  }
+
   public function getFieldTypeMap() {
     // Put :normal last so it gets preserved by array_flip. This makes
     // it much easier for modules (such as schema.module) to map
@@ -274,6 +347,49 @@ class Schema extends DatabaseSchema {
 
       'blob:big'        => 'LONGBLOB',
       'blob:normal'     => 'BLOB',
+    ];
+    return $map;
+  }
+
+  public function getDbalFieldTypeMap() {
+    // Put :normal last so it gets preserved by array_flip. This makes
+    // it much easier for modules (such as schema.module) to map
+    // database types back into schema types.
+    // $map does not use drupal_static as its value never changes.
+    static $map = [
+      'varchar_ascii:normal' => 'string',
+
+      'varchar:normal'  => 'string',
+      'char:normal'     => 'string',
+
+      'text:tiny'       => 'text',
+      'text:small'      => 'text',
+      'text:medium'     => 'text',
+      'text:big'        => 'text',
+      'text:normal'     => 'text',
+
+      'serial:tiny'     => 'smallint',
+      'serial:small'    => 'smallint',
+      'serial:medium'   => 'integer',
+      'serial:big'      => 'bigint',
+      'serial:normal'   => 'integer',
+
+      'int:tiny'        => 'smallint',
+      'int:small'       => 'smallint',
+      'int:medium'      => 'integer',
+      'int:big'         => 'bigint',
+      'int:normal'      => 'integer',
+
+      'float:tiny'      => 'float',
+      'float:small'     => 'float',
+      'float:medium'    => 'float',
+      'float:big'       => 'float',
+      'float:normal'    => 'float',
+
+      'numeric:normal'  => 'decimal',
+
+      'blob:big'        => 'blob',
+      'blob:normal'     => 'blob',
     ];
     return $map;
   }
