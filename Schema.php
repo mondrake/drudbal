@@ -45,10 +45,12 @@ class Schema extends DatabaseSchema {
    * @todo
    */
   protected $dbalSchema;
+  protected $dbalSchemaManager;
 
   public function __construct($connection) {
     parent::__construct($connection);
-    $this->dbalSchema = $this->connection->getDbalConnection()->getSchemaManager()->createSchema();
+    $this->dbalSchemaManager = $this->connection->getDbalConnection()->getSchemaManager();
+    $this->dbalSchema = $this->dbalSchemaManager->createSchema();
   }
 
   /**
@@ -392,12 +394,14 @@ class Schema extends DatabaseSchema {
       return FALSE;
     }
 
-    $this->dbalSchemaReload(); // @todo temp
-    $toSchema = clone $this->dbalSchema;
-    $toSchema->dropTable($this->getPrefixInfo($table)['table']);
-    $this->dbalExecuteSchemaChange($toSchema);
-
-    return TRUE;
+    try {
+      $this->dbalSchemaManager->dropTable($this->getPrefixInfo($table)['table']);
+      return TRUE;
+    }
+    catch (\Exception $e) {
+      debug($e->message);
+      return FALSE;
+    }
   }
 
   public function addField($table, $field, $spec, $keys_new = []) {
@@ -555,12 +559,14 @@ class Schema extends DatabaseSchema {
       return FALSE;
     }
 
-    $this->dbalSchemaReload(); // @todo temp
-    $toSchema = clone $this->dbalSchema;
-    $toSchema->getTable($this->getPrefixInfo($table)['table'])->dropIndex($name);
-    $this->dbalExecuteSchemaChange($toSchema);
-
-    return TRUE;
+    try {
+      $this->dbalSchemaManager->dropIndex($name, $this->getPrefixInfo($table)['table']);
+      return TRUE;
+    }
+    catch (\Exception $e) {
+      debug($e->message);
+      return FALSE;
+    }
   }
 
   public function changeField($table, $field, $field_new, $spec, $keys_new = []) {
@@ -618,7 +624,7 @@ class Schema extends DatabaseSchema {
       }
       throw $e;
     }*/
-    return $this->connection->getDbalConnection()->getSchemaManager()->tablesExist([$this->getPrefixInfo($table)['table']]);
+    return $this->dbalSchemaManager->tablesExist([$this->getPrefixInfo($table)['table']]);
   }
 
   public function fieldExists($table, $column) {
@@ -627,7 +633,7 @@ class Schema extends DatabaseSchema {
     }
     // @todo is it right to use array_keys to find the names, or shall the name
     // property of each column object be used?
-    $columns = array_keys($this->connection->getDbalConnection()->getSchemaManager()->listTableColumns($this->getPrefixInfo($table)['table']));
+    $columns = array_keys($this->dbalSchemaManager->listTableColumns($this->getPrefixInfo($table)['table']));
     return in_array($column, $columns);
   }
 
@@ -635,7 +641,7 @@ class Schema extends DatabaseSchema {
    * @todo temp while some method alter the current dbalSchema and others not.
    */
   protected function dbalSchemaReload() {
-    $this->dbalSchema = $this->connection->getDbalConnection()->getSchemaManager()->createSchema();
+    $this->dbalSchema = $this->dbalSchemaManager->createSchema();
   }
 
   /**
@@ -645,12 +651,17 @@ class Schema extends DatabaseSchema {
 
     // @todo catch Exceptions!!!
 
-    $sql_statements = $this->dbalSchema->getMigrateToSql($toSchema, $this->connection->getDbalConnection()->getDatabasePlatform());
-    foreach ($sql_statements as $sql) {
-      if ($debug) debug($sql);
-      if ($do) $this->connection->getDbalConnection()->exec($sql);
+    try {
+      $sql_statements = $this->dbalSchema->getMigrateToSql($toSchema, $this->connection->getDbalConnection()->getDatabasePlatform());
+      foreach ($sql_statements as $sql) {
+        /*if ($debug)*/ debug($sql);
+        if ($do) $this->connection->getDbalConnection()->exec($sql);
+      }
+      if ($do) $this->dbalSchema = $toSchema;
     }
-    if ($do) $this->dbalSchema = $toSchema;
+    catch (\Exception $e) {
+      debug($e->message);
+    }
   }
 
   protected function dbalResolveIndexColumnNames($fields) {
