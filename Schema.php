@@ -44,13 +44,11 @@ class Schema extends DatabaseSchema {
    *
    * @todo
    */
-  protected $dbalSchema;
   protected $dbalSchemaManager;
 
   public function __construct($connection) {
     parent::__construct($connection);
     $this->dbalSchemaManager = $this->connection->getDbalConnection()->getSchemaManager();
-    $this->dbalSchema = $this->dbalSchemaManager->createSchema();
   }
 
   /**
@@ -444,10 +442,10 @@ class Schema extends DatabaseSchema {
       return FALSE;
     }
 
-    $this->dbalSchemaReload(); // @todo temp
-    $toSchema = clone $this->dbalSchema;
+    $fromSchema = $this->dbalSchemaManager->createSchema();
+    $toSchema = clone $fromSchema;
     $toSchema->getTable($this->getPrefixInfo($table)['table'])->dropColumn($field);
-    $this->dbalExecuteSchemaChange($toSchema);
+    $this->dbalExecuteSchemaChange($fromSchema, $toSchema);
 
     return TRUE;
   }
@@ -485,10 +483,10 @@ class Schema extends DatabaseSchema {
 
     // @todo DBAL does not support creating indexes with column lenghts: https://github.com/doctrine/dbal/pull/2412
     if (($idx_cols = $this->dbalResolveIndexColumnNames($fields)) !== FALSE) {
-      $this->dbalSchemaReload(); // @todo temp
-      $toSchema = clone $this->dbalSchema;
+      $fromSchema = $this->dbalSchemaManager->createSchema();
+      $toSchema = clone $fromSchema;
       $toSchema->getTable($this->getPrefixInfo($table)['table'])->setPrimaryKey($idx_cols);
-      $this->dbalExecuteSchemaChange($toSchema);
+      $this->dbalExecuteSchemaChange($fromSchema, $toSchema);
     }
     else {
       $this->connection->query('ALTER TABLE {' . $table . '} ADD PRIMARY KEY (' . $this->createKeySql($fields) . ')');
@@ -500,10 +498,10 @@ class Schema extends DatabaseSchema {
       return FALSE;
     }
 
-    $this->dbalSchemaReload(); // @todo temp
-    $toSchema = clone $this->dbalSchema;
+    $fromSchema = $this->dbalSchemaManager->createSchema();
+    $toSchema = clone $fromSchema;
     $toSchema->getTable($this->getPrefixInfo($table)['table'])->dropPrimaryKey();
-    $this->dbalExecuteSchemaChange($toSchema);
+    $this->dbalExecuteSchemaChange($fromSchema, $toSchema);
 
     return TRUE;
   }
@@ -544,10 +542,10 @@ class Schema extends DatabaseSchema {
 
     // @todo DBAL does not support creating indexes with column lenghts: https://github.com/doctrine/dbal/pull/2412
     if (($idx_cols = $this->dbalResolveIndexColumnNames($indexes[$name])) !== FALSE) {
-      $this->dbalSchemaReload(); // @todo temp
-      $toSchema = clone $this->dbalSchema;
+      $fromSchema = $this->dbalSchemaManager->createSchema();
+      $toSchema = clone $fromSchema;
       $toSchema->getTable($this->getPrefixInfo($table)['table'])->addIndex($idx_cols, $name);
-      $this->dbalExecuteSchemaChange($toSchema);
+      $this->dbalExecuteSchemaChange($fromSchema, $toSchema);
     }
     else {
       $this->connection->query('ALTER TABLE {' . $table . '} ADD INDEX `' . $name . '` (' . $this->createKeySql($indexes[$name]) . ')');
@@ -614,16 +612,6 @@ class Schema extends DatabaseSchema {
   }
 
   public function tableExists($table) {
-    //$this->dbalSchemaReload(); // @todo temp
-/*    try {
-      return (bool) $this->dbalSchema->getTable($this->getPrefixInfo($table)['table']);
-    }
-    catch (DBALSchemaException $e) {
-      if ($e->getCode() === DBALSchemaException::TABLE_DOESNT_EXIST) {
-        return FALSE;
-      }
-      throw $e;
-    }*/
     return $this->dbalSchemaManager->tablesExist([$this->getPrefixInfo($table)['table']]);
   }
 
@@ -640,24 +628,13 @@ class Schema extends DatabaseSchema {
   /**
    * @todo temp while some method alter the current dbalSchema and others not.
    */
-  protected function dbalSchemaReload() {
-    $this->dbalSchema = $this->dbalSchemaManager->createSchema();
-  }
-
-  /**
-   * @todo temp while some method alter the current dbalSchema and others not.
-   */
-  protected function dbalExecuteSchemaChange($toSchema, $do = TRUE, $debug = FALSE) {
-
-    // @todo catch Exceptions!!!
-
+  protected function dbalExecuteSchemaChange($fromSchema, $toSchema, $do = TRUE, $debug = FALSE) {
     try {
-      $sql_statements = $this->dbalSchema->getMigrateToSql($toSchema, $this->connection->getDbalConnection()->getDatabasePlatform());
+      $sql_statements = $fromSchema->getMigrateToSql($toSchema, $this->connection->getDbalConnection()->getDatabasePlatform());
       foreach ($sql_statements as $sql) {
         /*if ($debug)*/ debug($sql);
         if ($do) $this->connection->getDbalConnection()->exec($sql);
       }
-      if ($do) $this->dbalSchema = $toSchema;
     }
     catch (\Exception $e) {
       debug($e->message);
