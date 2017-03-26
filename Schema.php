@@ -108,7 +108,7 @@ class Schema extends DatabaseSchema {
     }
     $statements = $this->createTableSql($name, $table);
     $dbal_statements = $this->createDbalTableSql($name, $table);
-debug([$table, $statements, $dbal_statements]);
+debug([$statements, $dbal_statements]);
     foreach ($statements as $statement) {
       $this->connection->query($statement);
     }
@@ -128,11 +128,12 @@ debug([$table, $statements, $dbal_statements]);
     $schema = new DbalSchema();
     $new_table = $schema->createTable($this->getPrefixInfo($name)['table']);
 
-    // Add the SQL statement for each field.
+    // Add the columns.
     foreach ($table['fields'] as $field_name => $field) {
-      $new_table->addColumn($field_name, "integer", array("unsigned" => true));
+      $new_table->addColumn($field_name, $this->getDbalFieldType($field), array("unsigned" => true));
 //      $sql .= $this->createFieldSql($field_name, $this->processField($field)) . ", \n";
     }
+
 //    $table->addColumn("id", "integer", array("unsigned" => true));
 //    $table->addColumn("username", "string", array("length" => 32));
 //    $table->setPrimaryKey(array("id"));
@@ -286,32 +287,18 @@ debug([$table, $statements, $dbal_statements]);
   }
 
   /**
-   * Set database-engine specific properties for a field.
+   * Gets DBAL field type, given Drupal's field specs.
    *
    * @param $field
    *   A field description array, as specified in the schema documentation.
    */
-  protected function processDbalField($field) {
-
+  protected function getDbalFieldType($field) {
     if (!isset($field['size'])) {
       $field['size'] = 'normal';
     }
-
-    // Set the correct database-engine specific datatype.
-    // In case one is already provided, force it to uppercase.
-    if (isset($field['mysql_type'])) {
-      $field['mysql_type'] = Unicode::strtoupper($field['mysql_type']);
-    }
-    else {
-      $map = $this->getDbalFieldTypeMap();
-      $field['mysql_type'] = $map[$field['type'] . ':' . $field['size']];
-    }
-
-    if (isset($field['type']) && $field['type'] == 'serial') {
-      $field['auto_increment'] = TRUE;
-    }
-
-    return $field;
+    $map = $this->getDbalFieldTypeMap();
+    // @todo check if excpetion shoul be raised if no key in array.
+    return $map[$field['type'] . ':' . $field['size']];
   }
 
   public function getFieldTypeMap() {
