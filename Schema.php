@@ -108,7 +108,7 @@ class Schema extends DatabaseSchema {
     }
     $statements = $this->createTableSql($name, $table);
     $dbal_statements = $this->createDbalTableSql($name, $table);
-debug([$statements, $dbal_statements]);
+debug([$table, $statements, $dbal_statements]);
     foreach ($statements as $statement) {
       $this->connection->query($statement);
     }
@@ -130,7 +130,7 @@ debug([$statements, $dbal_statements]);
 
     // Add the columns.
     foreach ($table['fields'] as $field_name => $field) {
-      $new_table->addColumn($field_name, $this->getDbalFieldType($field), array("unsigned" => true));
+      $new_table->addColumn($field_name, $this->getDbalColumnType($field), $this->getDbalColumnOptions($field));
 //      $sql .= $this->createFieldSql($field_name, $this->processField($field)) . ", \n";
     }
 
@@ -287,18 +287,90 @@ debug([$statements, $dbal_statements]);
   }
 
   /**
-   * Gets DBAL field type, given Drupal's field specs.
+   * Gets DBAL column type, given Drupal's field specs.
    *
    * @param $field
    *   A field description array, as specified in the schema documentation.
    */
-  protected function getDbalFieldType($field) {
+  protected function getDbalColumnType($field) {
     if (!isset($field['size'])) {
       $field['size'] = 'normal';
     }
     $map = $this->getDbalFieldTypeMap();
     // @todo check if excpetion shoul be raised if no key in array.
     return $map[$field['type'] . ':' . $field['size']];
+  }
+
+  /**
+   * Gets DBAL column options, given Drupal's field specs.
+   *
+   * @param $field
+   *   A field description array, as specified in the schema documentation.
+   */
+  protected function getDbalColumnOptions($field) {
+    $options = [];
+/*    $sql = "`" . $name . "` " . $spec['mysql_type'];
+
+    if (in_array($spec['mysql_type'], $this->mysqlStringTypes)) {
+      if (isset($spec['length'])) {
+        $sql .= '(' . $spec['length'] . ')';
+      }
+      if (!empty($spec['binary'])) {
+        $sql .= ' BINARY';
+      }
+      // Note we check for the "type" key here. "mysql_type" is VARCHAR:
+      if (isset($spec['type']) && $spec['type'] == 'varchar_ascii') {
+        $sql .= ' CHARACTER SET ascii COLLATE ascii_general_ci';
+      }
+    }
+    elseif (isset($spec['precision']) && isset($spec['scale'])) {
+      $sql .= '(' . $spec['precision'] . ', ' . $spec['scale'] . ')';
+    }
+*/
+    if (isset($field['length'])) {
+      $options['length'] = $field['length'];
+    }
+
+    if (isset($field['precision'])) {
+      $options['precision'] = $field['precision'];
+    }
+
+    if (isset($field['scale'])) {
+      $options['scale'] = $field['scale'];
+    }
+
+    if (!empty($field['unsigned'])) {
+      $options['unsigned'] = $field['unsigned'];
+    }
+
+    if (isset($field['not null'])) {
+      $options['notnull'] = $field['not null'];
+    }
+
+    if (!empty($field['auto_increment'])) {
+      $options['autoincrement'] = $field['auto_increment'];
+    }
+
+    if (!empty($field['description'])) {
+      $options['comment'] = $field['description'];
+//      $sql .= ' COMMENT ' . $this->prepareComment($spec['description'], self::COMMENT_MAX_COLUMN);
+    }
+
+    // $spec['default'] can be NULL, so we explicitly check for the key here.
+/*    if (array_key_exists('default', $spec)) {
+      $sql .= ' DEFAULT ' . $this->escapeDefaultValue($spec['default']);
+    }
+
+    if (empty($spec['not null']) && !isset($spec['default'])) {
+      $sql .= ' DEFAULT NULL';
+    }
+
+    // Add column comment.
+    if (!empty($spec['description'])) {
+      $sql .= ' COMMENT ' . $this->prepareComment($spec['description'], self::COMMENT_MAX_COLUMN);
+    }*/
+
+    return $options;
   }
 
   public function getFieldTypeMap() {
