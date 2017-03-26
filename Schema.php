@@ -126,11 +126,17 @@ debug([$table, $statements, $dbal_statements]);
    */
   protected function createDbalTableSql($name, $table) {
     $schema = new DbalSchema();
-    $table = $schema->createTable($name);
-    $table->addColumn("id", "integer", array("unsigned" => true));
-    $table->addColumn("username", "string", array("length" => 32));
-    $table->setPrimaryKey(array("id"));
-    $table->addUniqueIndex(array("username"));
+    $new_table = $schema->createTable($this->getPrefixInfo($name)['table']);
+
+    // Add the SQL statement for each field.
+    foreach ($table['fields'] as $field_name => $field) {
+      $new_table->addColumn($field_name, "integer", array("unsigned" => true));
+//      $sql .= $this->createFieldSql($field_name, $this->processField($field)) . ", \n";
+    }
+//    $table->addColumn("id", "integer", array("unsigned" => true));
+//    $table->addColumn("username", "string", array("length" => 32));
+//    $table->setPrimaryKey(array("id"));
+//    $table->addUniqueIndex(array("username"));
     return $schema->toSql($this->connection->getDbalConnection()->getDatabasePlatform());
   }
 
