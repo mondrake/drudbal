@@ -347,6 +347,11 @@ debug([$table, $statements, $dbal_statements]);
       $options['notnull'] = $field['not null'];
     }
 
+    // $spec['default'] can be NULL, so we explicitly check for the key here.
+    if (array_key_exists('default', $field)) {
+      $options['default'] = $field['default'];
+    }
+
     if (!empty($field['auto_increment'])) {
       $options['autoincrement'] = $field['auto_increment'];
     }
@@ -356,17 +361,8 @@ debug([$table, $statements, $dbal_statements]);
 //      $sql .= ' COMMENT ' . $this->prepareComment($spec['description'], self::COMMENT_MAX_COLUMN);
     }
 
-    // $spec['default'] can be NULL, so we explicitly check for the key here.
-/*    if (array_key_exists('default', $spec)) {
-      $sql .= ' DEFAULT ' . $this->escapeDefaultValue($spec['default']);
-    }
-
-    if (empty($spec['not null']) && !isset($spec['default'])) {
-      $sql .= ' DEFAULT NULL';
-    }
-
     // Add column comment.
-    if (!empty($spec['description'])) {
+/*    if (!empty($spec['description'])) {
       $sql .= ' COMMENT ' . $this->prepareComment($spec['description'], self::COMMENT_MAX_COLUMN);
     }*/
 
