@@ -130,7 +130,7 @@ class Schema extends DatabaseSchema {
 
     // Add table comment.
     if (!empty($table['description'])) {
-      $new_table->addOption('comment', $this->prepareDbalComment($table['description'], self::COMMENT_MAX_TABLE)); // @todo abstract
+      $new_table->addOption('comment', $this->prepareComment($table['description'], self::COMMENT_MAX_TABLE)); // @todo abstract
     }
 
     // Add columns.
@@ -162,70 +162,6 @@ class Schema extends DatabaseSchema {
         $this->addIndex($name, $index, $fields, $table); // @todo if length limited?
       }
     }
-  }
-
-  /**
-   * Create an SQL string for a field to be used in table creation or alteration.
-   *
-   * Before passing a field out of a schema definition into this function it has
-   * to be processed by _db_process_field().
-   *
-   * @param string $name
-   *   Name of the field.
-   * @param array $spec
-   *   The field specification, as per the schema data structure format.
-   */
-  protected function createFieldSql($name, $spec) {
-    $sql = "`" . $name . "` " . $spec['mysql_type'];
-
-    if (in_array($spec['mysql_type'], $this->mysqlStringTypes)) {
-      if (isset($spec['length'])) {
-        $sql .= '(' . $spec['length'] . ')';
-      }
-      if (!empty($spec['binary'])) {
-        $sql .= ' BINARY';
-      }
-      // Note we check for the "type" key here. "mysql_type" is VARCHAR:
-      if (isset($spec['type']) && $spec['type'] == 'varchar_ascii') {
-        $sql .= ' CHARACTER SET ascii COLLATE ascii_general_ci';
-      }
-    }
-    elseif (isset($spec['precision']) && isset($spec['scale'])) {
-      $sql .= '(' . $spec['precision'] . ', ' . $spec['scale'] . ')';
-    }
-
-    if (!empty($spec['unsigned'])) {
-      $sql .= ' unsigned';
-    }
-
-    if (isset($spec['not null'])) {
-      if ($spec['not null']) {
-        $sql .= ' NOT NULL';
-      }
-      else {
-        $sql .= ' NULL';
-      }
-    }
-
-    if (!empty($spec['auto_increment'])) {
-      $sql .= ' auto_increment';
-    }
-
-    // $spec['default'] can be NULL, so we explicitly check for the key here.
-    if (array_key_exists('default', $spec)) {
-      $sql .= ' DEFAULT ' . $this->escapeDefaultValue($spec['default']);
-    }
-
-    if (empty($spec['not null']) && !isset($spec['default'])) {
-      $sql .= ' DEFAULT NULL';
-    }
-
-    // Add column comment.
-    if (!empty($spec['description'])) {
-      $sql .= ' COMMENT ' . $this->prepareComment($spec['description'], self::COMMENT_MAX_COLUMN);
-    }
-
-    return $sql;
   }
 
   /**
@@ -327,7 +263,7 @@ class Schema extends DatabaseSchema {
     }
 
     if (!empty($field['description'])) {
-      $options['comment'] = $this->prepareDbalComment($field['description'], self::COMMENT_MAX_COLUMN); // @todo abstract from mysql??
+      $options['comment'] = $this->prepareComment($field['description'], self::COMMENT_MAX_COLUMN); // @todo abstract from mysql??
     }
 
     // Get the column definition from DBAL, and trim the field name.
@@ -428,27 +364,6 @@ class Schema extends DatabaseSchema {
       'blob:normal'     => 'blob',
     ];
     return $map;
-  }
-
-  protected function createKeysSql($spec) {
-    $keys = [];
-
-    if (!empty($spec['primary key'])) {
-      $keys[] = 'PRIMARY KEY (' . $this->createKeySql($spec['primary key']) . ')';
-    }
-    if (!empty($spec['unique keys'])) {
-      foreach ($spec['unique keys'] as $key => $fields) {
-        $keys[] = 'UNIQUE KEY `' . $key . '` (' . $this->createKeySql($fields) . ')';
-      }
-    }
-    if (!empty($spec['indexes'])) {
-      $indexes = $this->getNormalizedIndexes($spec);
-      foreach ($indexes as $index => $fields) {
-        $keys[] = 'INDEX `' . $index . '` (' . $this->createKeySql($fields) . ')';
-      }
-    }
-
-    return $keys;
   }
 
   /**
@@ -809,17 +724,6 @@ class Schema extends DatabaseSchema {
   }
 
   public function prepareComment($comment, $length = NULL) {
-    // Truncate comment to maximum comment length.
-    if (isset($length)) {
-      // Add table prefixes before truncating.
-      $comment = Unicode::truncate($this->connection->prefixTables($comment), $length, TRUE, TRUE);
-    }
-    // Remove semicolons to avoid triggering multi-statement check.
-    $comment = strtr($comment, [';' => '.']);
-    return $this->connection->quote($comment);
-  }
-
-  public function prepareDbalComment($comment, $length = NULL) {
     // Truncate comment to maximum comment length.
     if (isset($length)) {
       // Add table prefixes before truncating.
