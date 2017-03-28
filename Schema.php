@@ -567,13 +567,36 @@ class Schema extends DatabaseSchema {
       $fixnull = TRUE;
       $spec['not null'] = FALSE;
     }
-    $query = 'ALTER TABLE {' . $table . '} ADD ';
-    $query .= $this->createFieldSql($field, $this->processField($spec));
-    if ($keys_sql = $this->createKeysSql($keys_new)) {
-      $query .= ', ADD ' . implode(', ADD ', $keys_sql);
+
+    $current_schema = $this->dbalSchemaManager->createSchema();
+    $dbal_type = $this->getDbalColumnType($spec);
+    $to_schema = clone $current_schema;
+    $dbal_table = $to_schema->getTable($this->getPrefixInfo($table)['table']);
+    $dbal_table->addColumn($field, $dbal_type, ['columnDefinition' => $this->getDbalColumnDefinition($field, $dbal_type, $spec)]);
+    $sql_statements = $current_schema->getMigrateToSql($to_schema, $this->connection->getDbalConnection()->getDatabasePlatform());
+    $this->dbalExecuteSchemaChange($sql_statements); // @todo manage return
+
+    // Manage change to primary key.
+    if (!empty($keys_new['primary key'])) {
+      $this->dropPrimaryKey($table);
+      $this->addPrimaryKey($table, $keys_new['primary key']);
     }
-debug($query);
-    $this->connection->query($query);
+
+    // Add unique keys.
+    if (!empty($keys_new['unique keys'])) {
+      foreach ($keys_new['unique keys'] as $key => $fields) {
+        $this->addUniqueKey($table, $key, $fields);
+      }
+    }
+
+    // Add indexes.
+    if (!empty($keys_new['indexes'])) {
+      $indexes = $this->getNormalizedIndexes($keys_new['indexes']);
+      foreach ($indexes as $index => $fields) {
+        $this->addIndex($table, $index, $fields, $keys_new);
+      }
+    }
+
     if (isset($spec['initial'])) {
       $this->connection->update($table)
         ->fields([$field => $spec['initial']])
@@ -654,7 +677,7 @@ debug($query);
       $this->dbalExecuteSchemaChange($sql_statements); // @todo manage return
     }
     else {
-debug('*** LEGACY *** ' . 'ALTER TABLE {' . $table . '} ADD PRIMARY KEY (' . $this->createKeySql($fields) . ')');
+//debug('*** LEGACY *** ' . 'ALTER TABLE {' . $table . '} ADD PRIMARY KEY (' . $this->createKeySql($fields) . ')');
       $this->connection->query('ALTER TABLE {' . $table . '} ADD PRIMARY KEY (' . $this->createKeySql($fields) . ')');
     }
   }
@@ -694,7 +717,7 @@ debug('*** LEGACY *** ' . 'ALTER TABLE {' . $table . '} ADD PRIMARY KEY (' . $th
       $this->dbalExecuteSchemaChange($sql_statements); // @todo manage return
     }
     else {
-debug('*** LEGACY *** ' . 'ALTER TABLE {' . $table . '} ADD UNIQUE KEY `' . $name . '` (' . $this->createKeySql($fields) . ')');
+//debug('*** LEGACY *** ' . 'ALTER TABLE {' . $table . '} ADD UNIQUE KEY `' . $name . '` (' . $this->createKeySql($fields) . ')');
       $this->connection->query('ALTER TABLE {' . $table . '} ADD UNIQUE KEY `' . $name . '` (' . $this->createKeySql($fields) . ')');
     }
   }
@@ -726,7 +749,7 @@ debug('*** LEGACY *** ' . 'ALTER TABLE {' . $table . '} ADD UNIQUE KEY `' . $nam
       $this->dbalExecuteSchemaChange($sql_statements); // @todo manage return
     }
     else {
-debug('*** LEGACY *** ' . 'ALTER TABLE {' . $table . '} ADD INDEX `' . $name . '` (' . $this->createKeySql($indexes[$name]) . ')');
+//debug('*** LEGACY *** ' . 'ALTER TABLE {' . $table . '} ADD INDEX `' . $name . '` (' . $this->createKeySql($indexes[$name]) . ')');
       $this->connection->query('ALTER TABLE {' . $table . '} ADD INDEX `' . $name . '` (' . $this->createKeySql($indexes[$name]) . ')');
     }
   }
@@ -833,7 +856,7 @@ debug('*** LEGACY *** ' . 'ALTER TABLE {' . $table . '} ADD INDEX `' . $name . '
   protected function dbalExecuteSchemaChange($sql_statements, $do = TRUE, $debug = FALSE) {
     try {
       foreach ($sql_statements as $sql) {
-        /*if ($debug)*/ debug($sql);
+        if ($debug) debug($sql);
         if ($do) $this->connection->getDbalConnection()->exec($sql);
       }
     }
