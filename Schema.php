@@ -695,8 +695,8 @@ class Schema extends DatabaseSchema {
     $dbal_type = $this->getDbalColumnType($spec);
     $dbal_column_definition = $this->getDbalColumnDefinition($field_new, $dbal_type, $spec);
     // @todo DBAL is limited here, if we pass only 'columnDefinition' to
-    // ::changeColumn the schema diff will not capture any change. So we need
-    // to fallback to platform specific syntax.
+    // ::changeColumn the schema diff will not capture any change. We need to
+    // fallback to platform specific syntax.
     // @see https://github.com/doctrine/dbal/issues/1033
     $sql = 'ALTER TABLE {' . $table . '} CHANGE `' . $field . '` `' . $field_new . '` ' . $dbal_column_definition;
     $this->connection->query($sql); // @todo manage exceptions
@@ -738,15 +738,13 @@ class Schema extends DatabaseSchema {
    * Retrieve a table or column comment.
    */
   public function getComment($table, $column = NULL) {
-    $condition = $this->buildTableNameCondition($table);
+    $dbal_table = $this->dbalSchemaManager->createSchema()->getTable($this->getPrefixInfo($table)['table']);
     if (isset($column)) {
-      $condition->condition('column_name', $column);
-      $condition->compile($this->connection, $this);
-      // Don't use {} around information_schema.columns table.
-      return $this->connection->query("SELECT column_comment FROM information_schema.columns WHERE " . (string) $condition, $condition->arguments())->fetchField();
+      return $dbal_table->getColumn($column)->getComment(); // @todo manage exception
     }
-    $condition->compile($this->connection, $this);
-    // Don't use {} around information_schema.tables table.
+    // @todo DBAL is limited here, table comments cannot be retrieved from
+    // introspected schema. We need to fallback to platform specific syntax.
+    // @see https://github.com/doctrine/dbal/issues/1335
     $comment = $this->connection->query("SELECT table_comment FROM information_schema.tables WHERE " . (string) $condition, $condition->arguments())->fetchField();
     // Work-around for MySQL 5.0 bug http://bugs.mysql.com/bug.php?id=11379
     return preg_replace('/; InnoDB free:.*$/', '', $comment);
@@ -757,7 +755,7 @@ class Schema extends DatabaseSchema {
       return $this->dbalSchemaManager->tablesExist([$this->getPrefixInfo($table)['table']]);
     }
     catch (\Exception $e) {
-      debug($e->message);
+      debug($e->message); // @todo check!
       return FALSE;
     }
   }
@@ -773,7 +771,7 @@ class Schema extends DatabaseSchema {
       return in_array($column, $columns);
     }
     catch (\Exception $e) {
-      debug($e->message);
+      debug($e->message); // @todo check!
       return FALSE;
     }
   }
