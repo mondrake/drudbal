@@ -134,22 +134,9 @@ class Schema extends DatabaseSchema {
     }
 
     // Add columns.
-    $platform = $this->connection->getDbalConnection()->getDatabasePlatform();
     foreach ($table['fields'] as $field_name => $field) {
       $dbal_type = $this->getDbalColumnType($field);
-      $dbal_field = $this->getDbalColumnOptions($field);
-      $dbal_field_options = array_merge(['type' => DbalType::getType($dbal_type)], $dbal_field);
-      $dbal_column_definition = $platform->getColumnDeclarationSQL($field_name, $dbal_field_options);
-      $dbal_column_definition = substr($dbal_column_definition, strlen($field_name) + 1);
-      // @todo mysql specific
-      if (isset($field['type']) && $field['type'] == 'varchar_ascii') {
-        $dbal_column_definition = preg_replace('/CHAR\(([0-9]+)\)/', '$0 CHARACTER SET ascii', $dbal_column_definition);
-      }
-      if (isset($field['binary']) && $field['binary']) {
-        $dbal_column_definition = preg_replace('/CHAR\(([0-9]+)\)/', '$0 BINARY', $dbal_column_definition);
-      }
-//debug($dbal_column_definition);
-      $new_column = $new_table->addColumn($field_name, $dbal_type, ['columnDefinition' => $dbal_column_definition]);
+      $new_column = $new_table->addColumn($field_name, $dbal_type, ['columnDefinition' => $this->getDbalColumnDefinition($field_name, $dbal_type, $field)]);
     }
 
     // Add primary key.
@@ -291,7 +278,9 @@ class Schema extends DatabaseSchema {
    * @param $field
    *   A field description array, as specified in the schema documentation.
    */
-  protected function getDbalColumnOptions($field) {
+  protected function getDbalColumnDefinition($field_name, $dbal_type, $field) {
+    $platform = $this->connection->getDbalConnection()->getDatabasePlatform();
+
     $options = [];
 /*    $sql = "`" . $name . "` " . $spec['mysql_type'];
 
@@ -301,6 +290,7 @@ class Schema extends DatabaseSchema {
       }
     }
 */
+    $options['type'] = DbalType::getType($dbal_type);
 
     if (isset($field['type']) && $field['type'] == 'varchar_ascii') {
       $options['charset'] = 'ascii'; // @todo mysql specific
@@ -340,7 +330,18 @@ class Schema extends DatabaseSchema {
       $options['comment'] = $this->prepareDbalComment($field['description'], self::COMMENT_MAX_COLUMN); // @todo abstract from mysql??
     }
 
-    return $options;
+    // Get the column definition from DBAL, and trim the field name.
+    $dbal_column_definition = substr($platform->getColumnDeclarationSQL($field_name, $options), strlen($field_name) + 1);
+
+    // @todo mysql specific
+    if (isset($field['type']) && $field['type'] == 'varchar_ascii') {
+      $dbal_column_definition = preg_replace('/CHAR\(([0-9]+)\)/', '$0 CHARACTER SET ascii', $dbal_column_definition);
+    }
+    if (isset($field['binary']) && $field['binary']) {
+      $dbal_column_definition = preg_replace('/CHAR\(([0-9]+)\)/', '$0 BINARY', $dbal_column_definition);
+    }
+
+    return $dbal_column_definition;
   }
 
   public function getFieldTypeMap() {
@@ -571,6 +572,7 @@ class Schema extends DatabaseSchema {
     if ($keys_sql = $this->createKeysSql($keys_new)) {
       $query .= ', ADD ' . implode(', ADD ', $keys_sql);
     }
+debug($query);
     $this->connection->query($query);
     if (isset($spec['initial'])) {
       $this->connection->update($table)
