@@ -77,23 +77,6 @@ class Schema extends DatabaseSchema {
   }
 
   /**
-   * Build a condition to match a table name against a standard information_schema.
-   *
-   * MySQL uses databases like schemas rather than catalogs so when we build
-   * a condition to query the information_schema.tables, we set the default
-   * database as the schema unless specified otherwise, and exclude table_catalog
-   * from the condition criteria.
-   */
-  protected function buildTableNameCondition($table_name, $operator = '=', $add_prefix = TRUE) {
-    $table_info = $this->getPrefixInfo($table_name, $add_prefix);
-
-    $condition = new Condition('AND');
-    $condition->condition('table_schema', $table_info['database']);
-    $condition->condition('table_name', $table_info['table'], $operator);
-    return $condition;
-  }
-
-  /**
    * Create a new table from a Drupal table definition.
    *
    * @param $name
@@ -738,6 +721,7 @@ class Schema extends DatabaseSchema {
    * Retrieve a table or column comment.
    */
   public function getComment($table, $column = NULL) {
+    $table_info = $this->getPrefixInfo($table);
     $dbal_table = $this->dbalSchemaManager->createSchema()->getTable($this->getPrefixInfo($table)['table']);
     if (isset($column)) {
       return $dbal_table->getColumn($column)->getComment(); // @todo manage exception
@@ -745,6 +729,9 @@ class Schema extends DatabaseSchema {
     // @todo DBAL is limited here, table comments cannot be retrieved from
     // introspected schema. We need to fallback to platform specific syntax.
     // @see https://github.com/doctrine/dbal/issues/1335
+    $condition = new Condition('AND'); // @todo use DBAL queryBuilder
+    $condition->condition('table_schema', $table_info['database']);
+    $condition->condition('table_name', $table_info['table'], '=');
     $comment = $this->connection->query("SELECT table_comment FROM information_schema.tables WHERE " . (string) $condition, $condition->arguments())->fetchField();
     // Work-around for MySQL 5.0 bug http://bugs.mysql.com/bug.php?id=11379
     return preg_replace('/; InnoDB free:.*$/', '', $comment);
