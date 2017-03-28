@@ -9,6 +9,7 @@ use Drupal\Core\Database\SchemaObjectDoesNotExistException;
 use Drupal\Core\Database\Schema as DatabaseSchema;
 use Drupal\Component\Utility\Unicode;
 
+use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\Schema\Schema as DbalSchema;
 use Doctrine\DBAL\Schema\SchemaException as DBALSchemaException;
 use Doctrine\DBAL\Types\Type as DbalType;
@@ -834,8 +835,8 @@ debug('*** LEGACY *** ' . 'ALTER TABLE {' . $table . '} ADD INDEX `' . $name . '
         if ($do) $this->connection->getDbalConnection()->exec($sql);
       }
     }
-    catch (\Exception $e) {
-      debug($e->getMessage());
+    catch (DBALException $e) {  // @todo more granular exception??
+      return FALSE;
     }
   }
 
