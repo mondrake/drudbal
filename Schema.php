@@ -777,11 +777,35 @@ class Schema extends DatabaseSchema {
       throw new SchemaObjectExistsException(t("Cannot rename field @table.@name to @name_new: target field already exists.", ['@table' => $table, '@name' => $field, '@name_new' => $field_new]));
     }
 
-    $sql = 'ALTER TABLE {' . $table . '} CHANGE `' . $field . '` ' . $this->createFieldSql($field_new, $this->processField($spec));
-    if ($keys_sql = $this->createKeysSql($keys_new)) {
-      $sql .= ', ADD ' . implode(', ADD ', $keys_sql);
+    $dbal_type = $this->getDbalColumnType($spec);
+    $dbal_column_definition = $this->getDbalColumnDefinition($field_new, $dbal_type, $spec);
+    // @todo DBAL is limited here, if we pass only 'columnDefinition' to
+    // ::changeColumn the schema diff will not capture any change. So we need
+    // to fallback to platform specific syntax.
+    // @see https://github.com/doctrine/dbal/issues/1033
+    $sql = 'ALTER TABLE {' . $table . '} CHANGE `' . $field . '` `' . $field_new . '` ' . $dbal_column_definition;
+    $this->connection->query($sql); // @todo manage exceptions
+
+    // Manage change to primary key.
+    if (!empty($keys_new['primary key'])) {
+      $this->dropPrimaryKey($table);
+      $this->addPrimaryKey($table, $keys_new['primary key']);
     }
-    $this->connection->query($sql);
+
+    // Add unique keys.
+    if (!empty($keys_new['unique keys'])) {
+      foreach ($keys_new['unique keys'] as $key => $fields) {
+        $this->addUniqueKey($table, $key, $fields);
+      }
+    }
+
+    // Add indexes.
+    if (!empty($keys_new['indexes'])) {
+      $indexes = $this->getNormalizedIndexes($keys_new['indexes']);
+      foreach ($indexes as $index => $fields) {
+        $this->addIndex($table, $index, $fields, $keys_new);
+      }
+    }
   }
 
   public function prepareComment($comment, $length = NULL) {
