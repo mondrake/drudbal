@@ -11,6 +11,7 @@ use Drupal\Component\Utility\Unicode;
 
 use Doctrine\DBAL\Schema\Schema as DbalSchema;
 use Doctrine\DBAL\Schema\SchemaException as DBALSchemaException;
+use Doctrine\DBAL\Types\Type as DbalType;
 
 /**
  * DRUBAL implementation of \Drupal\Core\Database\Schema.
@@ -106,52 +107,7 @@ class Schema extends DatabaseSchema {
     if ($this->tableExists($name)) {
       throw new SchemaObjectExistsException(t('Table @name already exists.', ['@name' => $name]));
     }
-    $statements = $this->createTableSql($name, $table);
-    $dbal_statements = $this->createDbalTableSql($name, $table);
-debug([$table, $statements, $dbal_statements]);
-    foreach ($statements as $statement) {
-      $this->connection->query($statement);
-    }
-  }
 
-  /**
-   * Generate SQL to create a new table from a Drupal schema definition.
-   *
-   * @param $name
-   *   The name of the table to create.
-   * @param $table
-   *   A Schema API table definition array.
-   * @return
-   *   An array of SQL statements to create the table.
-   */
-  protected function createDbalTableSql($name, $table) {
-    $schema = new DbalSchema();
-    $new_table = $schema->createTable($this->getPrefixInfo($name)['table']);
-
-    // Add the columns.
-    foreach ($table['fields'] as $field_name => $field) {
-      $new_table->addColumn($field_name, $this->getDbalColumnType($field), $this->getDbalColumnOptions($field));
-//      $sql .= $this->createFieldSql($field_name, $this->processField($field)) . ", \n";
-    }
-
-//    $table->addColumn("id", "integer", array("unsigned" => true));
-//    $table->addColumn("username", "string", array("length" => 32));
-//    $table->setPrimaryKey(array("id"));
-//    $table->addUniqueIndex(array("username"));
-    return $schema->toSql($this->connection->getDbalConnection()->getDatabasePlatform());
-  }
-
-  /**
-   * Generate SQL to create a new table from a Drupal schema definition.
-   *
-   * @param $name
-   *   The name of the table to create.
-   * @param $table
-   *   A Schema API table definition array.
-   * @return
-   *   An array of SQL statements to create the table.
-   */
-  protected function createTableSql($name, $table) {
     $info = $this->connection->getConnectionOptions();
 
     // Provide defaults if needed.
@@ -160,37 +116,64 @@ debug([$table, $statements, $dbal_statements]);
       'mysql_character_set' => 'utf8mb4',
     ];
 
-    $sql = "CREATE TABLE {" . $name . "} (\n";
+    // Create table via DBAL.
+    $schema = new DbalSchema;
+    $new_table = $schema->createTable($this->getPrefixInfo($name)['table']);
+    $new_table->addOption('charset', $table['mysql_character_set']); // @todo abstract
+    $new_table->addOption('engine', $table['mysql_engine']); // @todo abstract
+    $info['collation'] = 'utf8mb4_unicode_ci'; // @todo abstract
 
-    // Add the SQL statement for each field.
-    foreach ($table['fields'] as $field_name => $field) {
-      $sql .= $this->createFieldSql($field_name, $this->processField($field)) . ", \n";
-    }
-
-    // Process keys & indexes.
-    $keys = $this->createKeysSql($table);
-    if (count($keys)) {
-      $sql .= implode(", \n", $keys) . ", \n";
-    }
-
-    // Remove the last comma and space.
-    $sql = substr($sql, 0, -3) . "\n) ";
-
-    $sql .= 'ENGINE = ' . $table['mysql_engine'] . ' DEFAULT CHARACTER SET ' . $table['mysql_character_set'];
-    // By default, MySQL uses the default collation for new tables, which is
-    // 'utf8mb4_general_ci' for utf8mb4. If an alternate collation has been
-    // set, it needs to be explicitly specified.
-    // @see \Drupal\Core\Database\Driver\mysql\Schema
     if (!empty($info['collation'])) {
-      $sql .= ' COLLATE ' . $info['collation'];
+      $new_table->addOption('collate', $info['collation']); // @todo abstract
     }
 
     // Add table comment.
     if (!empty($table['description'])) {
-      $sql .= ' COMMENT ' . $this->prepareComment($table['description'], self::COMMENT_MAX_TABLE);
+      $new_table->addOption('comment', $this->prepareDbalComment($table['description'], self::COMMENT_MAX_TABLE)); // @todo abstract
     }
 
-    return [$sql];
+    // Add columns.
+    $platform = $this->connection->getDbalConnection()->getDatabasePlatform();
+    foreach ($table['fields'] as $field_name => $field) {
+      $dbal_type = $this->getDbalColumnType($field);
+      $dbal_field = $this->getDbalColumnOptions($field);
+      $dbal_field_options = array_merge(['type' => DbalType::getType($dbal_type)], $dbal_field);
+      $dbal_column_definition = $platform->getColumnDeclarationSQL($field_name, $dbal_field_options);
+      $dbal_column_definition = substr($dbal_column_definition, strlen($field_name) + 1);
+      // @todo mysql specific
+      if (isset($field['type']) && $field['type'] == 'varchar_ascii') {
+        $dbal_column_definition = preg_replace('/CHAR\(([0-9]+)\)/', '$0 CHARACTER SET ascii', $dbal_column_definition);
+      }
+      if (isset($field['binary']) && $field['binary']) {
+        $dbal_column_definition = preg_replace('/CHAR\(([0-9]+)\)/', '$0 BINARY', $dbal_column_definition);
+      }
+//debug($dbal_column_definition);
+      $new_column = $new_table->addColumn($field_name, $dbal_type, ['columnDefinition' => $dbal_column_definition]);
+    }
+
+    // Add primary key.
+    if (!empty($table['primary key'])) {
+      $new_table->setPrimaryKey($table['primary key']); // @todo if length limited?
+    }
+
+    // Execute the table creation.
+    $sql_statements = $schema->toSql($this->connection->getDbalConnection()->getDatabasePlatform());
+    $this->dbalExecuteSchemaChange($sql_statements); // @todo manage return
+
+    // Add unique keys.
+    if (!empty($table['unique keys'])) {
+      foreach ($table['unique keys'] as $key => $fields) {
+        $this->addUniqueKey($name, $key, $fields); // @todo if length limited?
+      }
+    }
+
+    // Add indexes.
+    if (!empty($table['indexes'])) {
+      $indexes = $this->getNormalizedIndexes($table);
+      foreach ($indexes as $index => $fields) {
+        $this->addIndex($name, $index, $fields, $table); // @todo if length limited?
+      }
+    }
   }
 
   /**
@@ -297,7 +280,7 @@ debug([$table, $statements, $dbal_statements]);
       $field['size'] = 'normal';
     }
     $map = $this->getDbalFieldTypeMap();
-    // @todo check if excpetion shoul be raised if no key in array.
+    // @todo check if exception should be raised if no key in array.
     return $map[$field['type'] . ':' . $field['size']];
   }
 
@@ -315,27 +298,20 @@ debug([$table, $statements, $dbal_statements]);
       if (isset($spec['length'])) {
         $sql .= '(' . $spec['length'] . ')';
       }
-      if (!empty($spec['binary'])) {
-        $sql .= ' BINARY';
-      }
-      // Note we check for the "type" key here. "mysql_type" is VARCHAR:
-      if (isset($spec['type']) && $spec['type'] == 'varchar_ascii') {
-        $sql .= ' CHARACTER SET ascii COLLATE ascii_general_ci';
-      }
-    }
-    elseif (isset($spec['precision']) && isset($spec['scale'])) {
-      $sql .= '(' . $spec['precision'] . ', ' . $spec['scale'] . ')';
     }
 */
+
+    if (isset($field['type']) && $field['type'] == 'varchar_ascii') {
+      $options['charset'] = 'ascii'; // @todo mysql specific
+      $options['collation'] = 'ascii_general_ci'; // @todo mysql specific
+    }
+
     if (isset($field['length'])) {
       $options['length'] = $field['length'];
     }
 
-    if (isset($field['precision'])) {
+    if (isset($field['precision']) && isset($field['scale'])) {
       $options['precision'] = $field['precision'];
-    }
-
-    if (isset($field['scale'])) {
       $options['scale'] = $field['scale'];
     }
 
@@ -343,8 +319,11 @@ debug([$table, $statements, $dbal_statements]);
       $options['unsigned'] = $field['unsigned'];
     }
 
-    if (isset($field['not null'])) {
-      $options['notnull'] = $field['not null'];
+    if (!empty($field['not null'])) {
+      $options['notnull'] = (bool) $field['not null'];
+    }
+    else {
+      $options['notnull'] = FALSE;
     }
 
     // $spec['default'] can be NULL, so we explicitly check for the key here.
@@ -352,19 +331,13 @@ debug([$table, $statements, $dbal_statements]);
       $options['default'] = $field['default'];
     }
 
-    if (!empty($field['auto_increment'])) {
-      $options['autoincrement'] = $field['auto_increment'];
+    if ($field['type'] == 'serial') {
+      $options['autoincrement'] = TRUE;
     }
 
     if (!empty($field['description'])) {
-      $options['comment'] = $field['description'];
-//      $sql .= ' COMMENT ' . $this->prepareComment($spec['description'], self::COMMENT_MAX_COLUMN);
+      $options['comment'] = $this->prepareDbalComment($field['description'], self::COMMENT_MAX_COLUMN); // @todo abstract from mysql??
     }
-
-    // Add column comment.
-/*    if (!empty($spec['description'])) {
-      $sql .= ' COMMENT ' . $this->prepareComment($spec['description'], self::COMMENT_MAX_COLUMN);
-    }*/
 
     return $options;
   }
@@ -622,7 +595,8 @@ debug([$table, $statements, $dbal_statements]);
     $current_schema = $this->dbalSchemaManager->createSchema();
     $to_schema = clone $current_schema;
     $to_schema->getTable($this->getPrefixInfo($table)['table'])->dropColumn($field);
-    $this->dbalExecuteSchemaChange($current_schema, $to_schema);
+    $sql_statements = $current_schema->getMigrateToSql($to_schema, $this->connection->getDbalConnection()->getDatabasePlatform());
+    $this->dbalExecuteSchemaChange($sql_statements); // @todo manage return
 
     return TRUE;
   }
@@ -673,9 +647,11 @@ debug([$table, $statements, $dbal_statements]);
     if (($idx_cols = $this->dbalResolveIndexColumnNames($fields)) !== FALSE) {
       $to_schema = clone $current_schema;
       $to_schema->getTable($this->getPrefixInfo($table)['table'])->setPrimaryKey($idx_cols);
-      $this->dbalExecuteSchemaChange($current_schema, $to_schema);
+      $sql_statements = $current_schema->getMigrateToSql($to_schema, $this->connection->getDbalConnection()->getDatabasePlatform());
+      $this->dbalExecuteSchemaChange($sql_statements); // @todo manage return
     }
     else {
+debug('*** LEGACY *** ' . 'ALTER TABLE {' . $table . '} ADD PRIMARY KEY (' . $this->createKeySql($fields) . ')');
       $this->connection->query('ALTER TABLE {' . $table . '} ADD PRIMARY KEY (' . $this->createKeySql($fields) . ')');
     }
   }
@@ -692,7 +668,8 @@ debug([$table, $statements, $dbal_statements]);
 
     $to_schema = clone $current_schema;
     $to_schema->getTable($this->getPrefixInfo($table)['table'])->dropPrimaryKey();
-    $this->dbalExecuteSchemaChange($current_schema, $to_schema);
+    $sql_statements = $current_schema->getMigrateToSql($to_schema, $this->connection->getDbalConnection()->getDatabasePlatform());
+    $this->dbalExecuteSchemaChange($sql_statements); // @todo manage return
 
     return TRUE;
   }
@@ -710,9 +687,11 @@ debug([$table, $statements, $dbal_statements]);
       $current_schema = $this->dbalSchemaManager->createSchema();
       $to_schema = clone $current_schema;
       $to_schema->getTable($this->getPrefixInfo($table)['table'])->addUniqueIndex($idx_cols, $name);
-      $this->dbalExecuteSchemaChange($current_schema, $to_schema);
+      $sql_statements = $current_schema->getMigrateToSql($to_schema, $this->connection->getDbalConnection()->getDatabasePlatform());
+      $this->dbalExecuteSchemaChange($sql_statements); // @todo manage return
     }
     else {
+debug('*** LEGACY *** ' . 'ALTER TABLE {' . $table . '} ADD UNIQUE KEY `' . $name . '` (' . $this->createKeySql($fields) . ')');
       $this->connection->query('ALTER TABLE {' . $table . '} ADD UNIQUE KEY `' . $name . '` (' . $this->createKeySql($fields) . ')');
     }
   }
@@ -740,9 +719,11 @@ debug([$table, $statements, $dbal_statements]);
       $current_schema = $this->dbalSchemaManager->createSchema();
       $to_schema = clone $current_schema;
       $to_schema->getTable($this->getPrefixInfo($table)['table'])->addIndex($idx_cols, $name);
-      $this->dbalExecuteSchemaChange($current_schema, $to_schema);
+      $sql_statements = $current_schema->getMigrateToSql($to_schema, $this->connection->getDbalConnection()->getDatabasePlatform());
+      $this->dbalExecuteSchemaChange($sql_statements); // @todo manage return
     }
     else {
+debug('*** LEGACY *** ' . 'ALTER TABLE {' . $table . '} ADD INDEX `' . $name . '` (' . $this->createKeySql($indexes[$name]) . ')');
       $this->connection->query('ALTER TABLE {' . $table . '} ADD INDEX `' . $name . '` (' . $this->createKeySql($indexes[$name]) . ')');
     }
   }
@@ -786,6 +767,17 @@ debug([$table, $statements, $dbal_statements]);
     // Remove semicolons to avoid triggering multi-statement check.
     $comment = strtr($comment, [';' => '.']);
     return $this->connection->quote($comment);
+  }
+
+  public function prepareDbalComment($comment, $length = NULL) {
+    // Truncate comment to maximum comment length.
+    if (isset($length)) {
+      // Add table prefixes before truncating.
+      $comment = Unicode::truncate($this->connection->prefixTables($comment), $length, TRUE, TRUE);
+    }
+    // Remove semicolons to avoid triggering multi-statement check.
+    $comment = strtr($comment, [';' => '.']);  // @todo abstract from mysql??
+    return $comment;
   }
 
   /**
@@ -835,16 +827,15 @@ debug([$table, $statements, $dbal_statements]);
   /**
    * @todo temp while some method alter the current dbalSchema and others not.
    */
-  protected function dbalExecuteSchemaChange($current_schema, $to_schema, $do = TRUE, $debug = FALSE) {
+  protected function dbalExecuteSchemaChange($sql_statements, $do = TRUE, $debug = FALSE) {
     try {
-      $sql_statements = $current_schema->getMigrateToSql($to_schema, $this->connection->getDbalConnection()->getDatabasePlatform());
       foreach ($sql_statements as $sql) {
         /*if ($debug)*/ debug($sql);
         if ($do) $this->connection->getDbalConnection()->exec($sql);
       }
     }
     catch (\Exception $e) {
-      debug($e->message);
+      debug($e->getMessage());
     }
   }
 
