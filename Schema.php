@@ -105,7 +105,7 @@ class Schema extends DatabaseSchema {
     $new_table = $schema->createTable($this->getPrefixInfo($name)['table']);
     $new_table->addOption('charset', $table['mysql_character_set']); // @todo abstract
     $new_table->addOption('engine', $table['mysql_engine']); // @todo abstract
-    $info['collation'] = 'utf8mb4_unicode_ci'; // @todo abstract
+    $info['collation'] = 'utf8mb4_general_ci'; // @todo abstract
 
     if (!empty($info['collation'])) {
       $new_table->addOption('collate', $info['collation']); // @todo abstract
@@ -183,6 +183,10 @@ class Schema extends DatabaseSchema {
    *   A field description array, as specified in the schema documentation.
    */
   protected function getDbalColumnType($field) {
+    // @todo mysql specific
+    if (isset($field['mysql_type'])) {
+      return $this->connection->getDbalConnection()->getDatabasePlatform()->getDoctrineTypeMapping($field['mysql_type']);
+    }
     if (!isset($field['size'])) {
       $field['size'] = 'normal';
     }
@@ -201,14 +205,6 @@ class Schema extends DatabaseSchema {
     $platform = $this->connection->getDbalConnection()->getDatabasePlatform();
 
     $options = [];
-/*    $sql = "`" . $name . "` " . $spec['mysql_type'];
-
-    if (in_array($spec['mysql_type'], $this->mysqlStringTypes)) {
-      if (isset($spec['length'])) {
-        $sql .= '(' . $spec['length'] . ')';
-      }
-    }
-*/
     $options['type'] = DbalType::getType($dbal_type);
 
     if (isset($field['type']) && $field['type'] == 'varchar_ascii') {
@@ -238,10 +234,17 @@ class Schema extends DatabaseSchema {
 
     // $spec['default'] can be NULL, so we explicitly check for the key here.
     if (array_key_exists('default', $field)) {
-      $options['default'] = $field['default'];
+      if (is_null($field['default'])) {
+        if ((isset($field['not null']) && (bool) $field['not null'] === FALSE) || !isset($field['not null'])) {
+          $options['notnull'] = FALSE;
+        }
+      }
+      else {
+        $options['default'] = $this->dbalEncodeQuotes($field['default']);
+      }
     }
 
-    if ($field['type'] == 'serial') {
+    if (isset($field['type']) && $field['type'] == 'serial') {
       $options['autoincrement'] = TRUE;
     }
 
@@ -259,8 +262,19 @@ class Schema extends DatabaseSchema {
     if (isset($field['binary']) && $field['binary']) {
       $dbal_column_definition = preg_replace('/CHAR\(([0-9]+)\)/', '$0 BINARY', $dbal_column_definition);
     }
+    // Decode quotes.
+    $dbal_column_definition = strtr($dbal_column_definition, [
+      "]]]]QUOTEDELIMITERDRUBAL[[[[" => '\\\'',
+    ]);
 
     return $dbal_column_definition;
+  }
+
+  // @todo move to connection
+  public function dbalEncodeQuotes($string) {
+    return strtr($string, [
+      '\'' => "]]]]QUOTEDELIMITERDRUBAL[[[[", // @todo maybe use dbal query instead of exec??
+    ]);
   }
 
   public function getFieldTypeMap() {
@@ -530,7 +544,11 @@ class Schema extends DatabaseSchema {
       throw new SchemaObjectDoesNotExistException(t("Cannot set default value of field @table.@field: field doesn't exist.", ['@table' => $table, '@field' => $field]));
     }
 
-    $this->connection->query('ALTER TABLE {' . $table . '} ALTER COLUMN `' . $field . '` SET DEFAULT ' . $this->escapeDefaultValue($default));
+    $current_schema = $this->dbalSchemaManager->createSchema();
+    $to_schema = clone $current_schema;
+    $to_schema->getTable($this->getPrefixInfo($table)['table'])->getColumn($field)->setDefault($this->escapeDefaultValue($default));
+    $sql_statements = $current_schema->getMigrateToSql($to_schema, $this->connection->getDbalConnection()->getDatabasePlatform());
+    $this->dbalExecuteSchemaChange($sql_statements); // @todo manage return
   }
 
   public function fieldSetNoDefault($table, $field) {
@@ -546,10 +564,15 @@ class Schema extends DatabaseSchema {
       return FALSE;
     }
     try {
-      // @todo is it right to use array_keys to find the names, or shall the name
-      // property of each index object be used?
-      $indexes = array_keys($this->dbalSchemaManager->listTableIndexes($this->getPrefixInfo($table)['table']));
-      return in_array($name, $indexes);
+      // @todo PRIMARY is mysql ONLY
+      if ($name == 'PRIMARY') {
+        $current_schema = $this->dbalSchemaManager->createSchema();
+        return $current_schema->getTable($this->getPrefixInfo($table)['table'])->hasPrimaryKey();
+      }
+      else {
+        $indexes = array_keys($this->dbalSchemaManager->listTableIndexes($this->getPrefixInfo($table)['table']));
+        return in_array($name, $indexes);
+      }
     }
     catch (\Exception $e) {
       debug($e->message);
@@ -682,12 +705,17 @@ class Schema extends DatabaseSchema {
     // fallback to platform specific syntax.
     // @see https://github.com/doctrine/dbal/issues/1033
     $sql = 'ALTER TABLE {' . $table . '} CHANGE `' . $field . '` `' . $field_new . '` ' . $dbal_column_definition;
+    if (!empty($keys_new['primary key'])) {
+      $keys_sql = $this->createKeysSql(['primary key' => $keys_new['primary key']]);
+      $sql .= ', ADD ' . $keys_sql[0];
+    }
     $this->connection->query($sql); // @todo manage exceptions
 
-    // Manage change to primary key.
+    // New primary key.
     if (!empty($keys_new['primary key'])) {
-      $this->dropPrimaryKey($table);
-      $this->addPrimaryKey($table, $keys_new['primary key']);
+      // Drop the existing one before altering the table. @todo might have been added in platform specific command
+//      $this->dropPrimaryKey($table);
+//      $this->addPrimaryKey($table, $keys_new['primary key']);
     }
 
     // Add unique keys.
@@ -729,12 +757,19 @@ class Schema extends DatabaseSchema {
     // @todo DBAL is limited here, table comments cannot be retrieved from
     // introspected schema. We need to fallback to platform specific syntax.
     // @see https://github.com/doctrine/dbal/issues/1335
-    $condition = new Condition('AND'); // @todo use DBAL queryBuilder
-    $condition->condition('table_schema', $table_info['database']);
-    $condition->condition('table_name', $table_info['table'], '=');
-    $comment = $this->connection->query("SELECT table_comment FROM information_schema.tables WHERE " . (string) $condition, $condition->arguments())->fetchField();
-    // Work-around for MySQL 5.0 bug http://bugs.mysql.com/bug.php?id=11379
-    return preg_replace('/; InnoDB free:.*$/', '', $comment);
+    $dbal_query = $this->connection->getDbalConnection()->createQueryBuilder();
+    $dbal_query
+      ->select('table_comment')
+      ->from('information_schema.tables')
+      ->where(
+          $dbal_query->expr()->andX(
+            $dbal_query->expr()->eq('table_schema', '?'),
+            $dbal_query->expr()->eq('table_name', '?')
+          )
+        )
+      ->setParameter(0, $table_info['database'])
+      ->setParameter(1, $table_info['table']);
+    return $dbal_query->execute()->fetchField();
   }
 
   public function tableExists($table) {
@@ -774,6 +809,7 @@ class Schema extends DatabaseSchema {
       }
     }
     catch (DBALException $e) {  // @todo more granular exception??
+debug($e->getMessage());
       return FALSE;
     }
   }
@@ -838,6 +874,27 @@ class Schema extends DatabaseSchema {
     $tables = preg_grep('/^' . $table_expression . '$/i', $tables);
 
     return $tables;
+  }
+
+  protected function createKeysSql($spec) {
+    $keys = [];
+
+    if (!empty($spec['primary key'])) {
+      $keys[] = 'PRIMARY KEY (' . $this->createKeySql($spec['primary key']) . ')';
+    }
+    if (!empty($spec['unique keys'])) {
+      foreach ($spec['unique keys'] as $key => $fields) {
+        $keys[] = 'UNIQUE KEY `' . $key . '` (' . $this->createKeySql($fields) . ')';
+      }
+    }
+    if (!empty($spec['indexes'])) {
+      $indexes = $this->getNormalizedIndexes($spec);
+      foreach ($indexes as $index => $fields) {
+        $keys[] = 'INDEX `' . $index . '` (' . $this->createKeySql($fields) . ')';
+      }
+    }
+
+    return $keys;
   }
 
 }
