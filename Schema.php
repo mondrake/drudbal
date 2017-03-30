@@ -43,6 +43,9 @@ class Schema extends DatabaseSchema {
    */
   protected $drubalDriver;
 
+  /**
+   * @todo
+   */
   public function __construct($connection) {
     parent::__construct($connection);
     $this->drubalDriver = $this->connection->getDrubalDriver();
@@ -96,7 +99,7 @@ class Schema extends DatabaseSchema {
 
     // Execute the table creation.
     $sql_statements = $schema->toSql($this->dbalPlatform);
-    $this->dbalExecuteSchemaChange($sql_statements); // @todo manage return
+    $this->dbalExecuteSchemaChange($sql_statements);
 
     // Add unique keys.
     if (!empty($table['unique keys'])) {
@@ -118,6 +121,8 @@ class Schema extends DatabaseSchema {
    *
    * @param $field
    *   A field description array, as specified in the schema documentation.
+   *
+   * @return @todo
    */
   protected function getDbalColumnType($field) {
     $dbal_type = NULL;
@@ -142,6 +147,8 @@ class Schema extends DatabaseSchema {
    *
    * @param $field
    *   A field description array, as specified in the schema documentation.
+   *
+   * @return @todo
    */
   protected function getDbalColumnDefinition($field_name, $dbal_type, $field) {
     $options = [];
@@ -296,7 +303,7 @@ class Schema extends DatabaseSchema {
     $dbal_table = $to_schema->getTable($this->getPrefixedTableName($table));
     $dbal_table->addColumn($field, $dbal_type, ['columnDefinition' => $this->getDbalColumnDefinition($field, $dbal_type, $spec)]);
     $sql_statements = $current_schema->getMigrateToSql($to_schema, $this->dbalPlatform);
-    $this->dbalExecuteSchemaChange($sql_statements); // @todo manage return
+    $this->dbalExecuteSchemaChange($sql_statements);
 
     // Manage change to primary key.
     if (!empty($keys_new['primary key'])) {
@@ -346,7 +353,7 @@ class Schema extends DatabaseSchema {
     $to_schema = clone $current_schema;
     $to_schema->getTable($this->getPrefixedTableName($table))->dropColumn($field);
     $sql_statements = $current_schema->getMigrateToSql($to_schema, $this->dbalPlatform);
-    $this->dbalExecuteSchemaChange($sql_statements); // @todo manage return
+    $this->dbalExecuteSchemaChange($sql_statements);
 
     return TRUE;
   }
@@ -363,7 +370,7 @@ class Schema extends DatabaseSchema {
     $to_schema = clone $current_schema;
     $to_schema->getTable($this->getPrefixedTableName($table))->getColumn($field)->setDefault($this->escapeDefaultValue($default)); // @todo use dbalEncodeQuotes instead??
     $sql_statements = $current_schema->getMigrateToSql($to_schema, $this->dbalPlatform);
-    $this->dbalExecuteSchemaChange($sql_statements); // @todo manage return
+    $this->dbalExecuteSchemaChange($sql_statements);
   }
 
   /**
@@ -417,7 +424,7 @@ class Schema extends DatabaseSchema {
     $to_schema = clone $current_schema;
     $to_schema->getTable($this->getPrefixedTableName($table))->setPrimaryKey($this->dbalResolveIndexColumnList($fields));
     $sql_statements = $current_schema->getMigrateToSql($to_schema, $this->dbalPlatform);
-    $this->dbalExecuteSchemaChange($sql_statements); // @todo manage return
+    $this->dbalExecuteSchemaChange($sql_statements);
   }
 
   /**
@@ -436,7 +443,7 @@ class Schema extends DatabaseSchema {
     $to_schema = clone $current_schema;
     $to_schema->getTable($this->getPrefixedTableName($table))->dropPrimaryKey();
     $sql_statements = $current_schema->getMigrateToSql($to_schema, $this->dbalPlatform);
-    $this->dbalExecuteSchemaChange($sql_statements); // @todo manage return
+    $this->dbalExecuteSchemaChange($sql_statements);
 
     return TRUE;
   }
@@ -462,7 +469,7 @@ class Schema extends DatabaseSchema {
     $to_schema = clone $current_schema;
     $to_schema->getTable($this->getPrefixedTableName($table))->addUniqueIndex($this->dbalResolveIndexColumnList($fields), $name);
     $sql_statements = $current_schema->getMigrateToSql($to_schema, $this->dbalPlatform);
-    $this->dbalExecuteSchemaChange($sql_statements); // @todo manage return
+    $this->dbalExecuteSchemaChange($sql_statements);
   }
 
   /**
@@ -493,7 +500,7 @@ class Schema extends DatabaseSchema {
     $to_schema = clone $current_schema;
     $to_schema->getTable($this->getPrefixedTableName($table))->addIndex($this->dbalResolveIndexColumnList($fields), $name);
     $sql_statements = $current_schema->getMigrateToSql($to_schema, $this->dbalPlatform);
-    $this->dbalExecuteSchemaChange($sql_statements); // @todo manage return
+    $this->dbalExecuteSchemaChange($sql_statements);
   }
 
   /**
@@ -581,9 +588,10 @@ class Schema extends DatabaseSchema {
 
     // Driver did not pick up, proceed with DBAL.
     if (isset($column)) {
-      $raw_comment = $dbal_schema->getTable($this->getPrefixedTableName($table))->getColumn($column)->getComment(); // @todo manage exception
+      $comment = $dbal_schema->getTable($this->getPrefixedTableName($table))->getColumn($column)->getComment();
       // Let driver cleanup the comment if necessary.
-      return $this->drubalDriver->alterGetComment($raw_comment, $dbal_schema, $table, $column);
+      $this->drubalDriver->alterGetComment($comment, $dbal_schema, $table, $column);
+      return $comment;
     }
     // DBAL cannot retrieve table comments from introspected schema. Driver
     // should have processed already.
@@ -609,21 +617,17 @@ class Schema extends DatabaseSchema {
   }
 
   /**
-   * @todo temp while some method alter the current dbalSchema and others not.
+   * @todo
    */
-  protected function dbalExecuteSchemaChange($sql_statements, $do = TRUE, $debug = FALSE) {
-    try {
-      foreach ($sql_statements as $sql) {
-        if ($debug) debug($sql);
-        if ($do) $this->connection->getDbalConnection()->exec($sql);
-      }
-    }
-    catch (DBALException $e) {  // @todo more granular exception??
-debug($e->getMessage());
-      return FALSE;
+  protected function dbalExecuteSchemaChange($sql_statements) {
+    foreach ($sql_statements as $sql) {
+      $this->connection->getDbalConnection()->exec($sql);
     }
   }
 
+  /**
+   * @todo
+   */
   protected function dbalResolveIndexColumnList($fields) {
     $return = [];
     foreach ($fields as $field) {

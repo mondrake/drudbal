@@ -614,15 +614,16 @@ class PDOMySql {
         )
       ->setParameter(0, $table_info['database'])
       ->setParameter(1, $table_info['table']);
-    $comment = $this->alterGetComment($dbal_query->execute()->fetchField(), $dbal_schema, $table, $column);
+    $comment = $dbal_query->execute()->fetchField();
+    $this->alterGetComment($comment, $dbal_schema, $table, $column);
     return TRUE;
   }
 
   /**
    * Alter a table or column comment retrieved from schema.
    */
-  public function alterGetComment($comment, $dbal_schema, $table, $column = NULL) {
-    return $comment;
+  public function alterGetComment(&$comment, $dbal_schema, $table, $column = NULL) {
+    return;
   }
 
   /**
@@ -696,7 +697,7 @@ class PDOMySql {
    * @throws \Drupal\Core\Database\SchemaException
    *   Thrown if field specification is missing.
    */
-  public function getNormalizedIndexes(array $spec) {
+  protected function getNormalizedIndexes(array $spec) {
     $indexes = isset($spec['indexes']) ? $spec['indexes'] : [];
     foreach ($indexes as $index_name => $index_fields) {
       foreach ($index_fields as $index_key => $index_field) {
