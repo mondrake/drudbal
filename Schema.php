@@ -32,14 +32,22 @@ class Schema extends DatabaseSchema {
   protected $dbalSchemaManager;
 
   /**
+   * Current connection DBAL platform.
+   *
+   * @todo
+   */
+  protected $dbalPlatform;
+
+  /**
    * @todo
    */
   protected $drubalDriver;
 
   public function __construct($connection) {
     parent::__construct($connection);
-    $this->dbalSchemaManager = $this->connection->getDbalConnection()->getSchemaManager();
     $this->drubalDriver = $this->connection->getDrubalDriver();
+    $this->dbalSchemaManager = $this->connection->getDbalConnection()->getSchemaManager();
+    $this->dbalPlatform = $this->connection->getDbalConnection()->getDatabasePlatform();
   }
 
   /**
@@ -83,7 +91,7 @@ class Schema extends DatabaseSchema {
     }
 
     // Execute the table creation.
-    $sql_statements = $schema->toSql($this->connection->getDbalConnection()->getDatabasePlatform());
+    $sql_statements = $schema->toSql($this->dbalPlatform);
     $this->dbalExecuteSchemaChange($sql_statements); // @todo manage return
 
     // Add unique keys.
@@ -111,7 +119,7 @@ class Schema extends DatabaseSchema {
   protected function getDbalColumnType($field) {
     // @todo mysql specific
     if (isset($field['mysql_type'])) {
-      return $this->connection->getDbalConnection()->getDatabasePlatform()->getDoctrineTypeMapping($field['mysql_type']);
+      return $this->dbalPlatform->getDoctrineTypeMapping($field['mysql_type']);
     }
     if (!isset($field['size'])) {
       $field['size'] = 'normal';
@@ -128,9 +136,8 @@ class Schema extends DatabaseSchema {
    *   A field description array, as specified in the schema documentation.
    */
   protected function getDbalColumnDefinition($field_name, $dbal_type, $field) {
-    $platform = $this->connection->getDbalConnection()->getDatabasePlatform();
-
     $options = [];
+
     $options['type'] = DbalType::getType($dbal_type);
 
     if (isset($field['type']) && $field['type'] == 'varchar_ascii') {
@@ -181,7 +188,7 @@ class Schema extends DatabaseSchema {
     }
 
     // Get the column definition from DBAL, and trim the field name.
-    $dbal_column_definition = substr($platform->getColumnDeclarationSQL($field_name, $options), strlen($field_name) + 1);
+    $dbal_column_definition = substr($this->dbalPlatform->getColumnDeclarationSQL($field_name, $options), strlen($field_name) + 1);
 
     // @todo mysql specific
     // DBAL does not support unsigned float/numeric columns.
@@ -330,7 +337,7 @@ class Schema extends DatabaseSchema {
     $to_schema = clone $current_schema;
     $dbal_table = $to_schema->getTable($this->getPrefixedTableName($table));
     $dbal_table->addColumn($field, $dbal_type, ['columnDefinition' => $this->getDbalColumnDefinition($field, $dbal_type, $spec)]);
-    $sql_statements = $current_schema->getMigrateToSql($to_schema, $this->connection->getDbalConnection()->getDatabasePlatform());
+    $sql_statements = $current_schema->getMigrateToSql($to_schema, $this->dbalPlatform);
     $this->dbalExecuteSchemaChange($sql_statements); // @todo manage return
 
     // Manage change to primary key.
@@ -381,7 +388,7 @@ class Schema extends DatabaseSchema {
     $current_schema = $this->dbalSchemaManager->createSchema();
     $to_schema = clone $current_schema;
     $to_schema->getTable($this->getPrefixedTableName($table))->dropColumn($field);
-    $sql_statements = $current_schema->getMigrateToSql($to_schema, $this->connection->getDbalConnection()->getDatabasePlatform());
+    $sql_statements = $current_schema->getMigrateToSql($to_schema, $this->dbalPlatform);
     $this->dbalExecuteSchemaChange($sql_statements); // @todo manage return
 
     return TRUE;
@@ -398,7 +405,7 @@ class Schema extends DatabaseSchema {
     $current_schema = $this->dbalSchemaManager->createSchema();
     $to_schema = clone $current_schema;
     $to_schema->getTable($this->getPrefixedTableName($table))->getColumn($field)->setDefault($this->escapeDefaultValue($default)); // @todo use dbalEncodeQuotes instead??
-    $sql_statements = $current_schema->getMigrateToSql($to_schema, $this->connection->getDbalConnection()->getDatabasePlatform());
+    $sql_statements = $current_schema->getMigrateToSql($to_schema, $this->dbalPlatform);
     $this->dbalExecuteSchemaChange($sql_statements); // @todo manage return
   }
 
@@ -454,7 +461,7 @@ class Schema extends DatabaseSchema {
     if (($idx_cols = $this->dbalResolveIndexColumnNames($fields)) !== FALSE) {
       $to_schema = clone $current_schema;
       $to_schema->getTable($this->getPrefixedTableName($table))->setPrimaryKey($idx_cols);
-      $sql_statements = $current_schema->getMigrateToSql($to_schema, $this->connection->getDbalConnection()->getDatabasePlatform());
+      $sql_statements = $current_schema->getMigrateToSql($to_schema, $this->dbalPlatform);
       $this->dbalExecuteSchemaChange($sql_statements); // @todo manage return
     }
     else {
@@ -478,7 +485,7 @@ class Schema extends DatabaseSchema {
 
     $to_schema = clone $current_schema;
     $to_schema->getTable($this->getPrefixedTableName($table))->dropPrimaryKey();
-    $sql_statements = $current_schema->getMigrateToSql($to_schema, $this->connection->getDbalConnection()->getDatabasePlatform());
+    $sql_statements = $current_schema->getMigrateToSql($to_schema, $this->dbalPlatform);
     $this->dbalExecuteSchemaChange($sql_statements); // @todo manage return
 
     return TRUE;
@@ -500,7 +507,7 @@ class Schema extends DatabaseSchema {
       $current_schema = $this->dbalSchemaManager->createSchema();
       $to_schema = clone $current_schema;
       $to_schema->getTable($this->getPrefixedTableName($table))->addUniqueIndex($idx_cols, $name);
-      $sql_statements = $current_schema->getMigrateToSql($to_schema, $this->connection->getDbalConnection()->getDatabasePlatform());
+      $sql_statements = $current_schema->getMigrateToSql($to_schema, $this->dbalPlatform);
       $this->dbalExecuteSchemaChange($sql_statements); // @todo manage return
     }
     else {
@@ -535,7 +542,7 @@ class Schema extends DatabaseSchema {
       $current_schema = $this->dbalSchemaManager->createSchema();
       $to_schema = clone $current_schema;
       $to_schema->getTable($this->getPrefixedTableName($table))->addIndex($idx_cols, $name);
-      $sql_statements = $current_schema->getMigrateToSql($to_schema, $this->connection->getDbalConnection()->getDatabasePlatform());
+      $sql_statements = $current_schema->getMigrateToSql($to_schema, $this->dbalPlatform);
       $this->dbalExecuteSchemaChange($sql_statements); // @todo manage return
     }
     else {
