@@ -521,8 +521,9 @@ class PDOMySql {
     ]);
   }
 
-  public function delegateIndexExists(&$result, $schema, $table, $name) {
+  public function delegateIndexExists(&$result, $table, $name) {
     if ($name == 'PRIMARY') {
+      $schema = $this->dbalConnection->getSchemaManager()->createSchema();
       $result = $schema->getTable($this->getPrefixInfo($table)['table'])->hasPrimaryKey();
       return TRUE;
     }

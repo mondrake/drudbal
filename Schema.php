@@ -396,11 +396,9 @@ class Schema extends DatabaseSchema {
       return FALSE;
     }
 
-    $schema = $this->dbalSchemaManager->createSchema();
-
     // Delegate to driver.
     $result = FALSE;
-    if ($this->drubalDriver->delegateIndexExists($result, $schema, $table, $name)) {
+    if ($this->drubalDriver->delegateIndexExists($result, $table, $name)) {
       return $comment;
     }
 
@@ -429,7 +427,6 @@ class Schema extends DatabaseSchema {
       $this->dbalExecuteSchemaChange($sql_statements); // @todo manage return
     }
     else {
-//debug('*** LEGACY *** ' . 'ALTER TABLE {' . $table . '} ADD PRIMARY KEY (' . $this->createKeySql($fields) . ')');
       $this->connection->query('ALTER TABLE {' . $table . '} ADD PRIMARY KEY (' . $this->createKeySql($fields) . ')');
     }
   }
