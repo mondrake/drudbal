@@ -6,10 +6,10 @@ use Drupal\Core\Database\Database;
 use Drupal\Core\Database\DatabaseExceptionWrapper;
 use Drupal\Driver\Database\drubal\Connection as DrubalConnection;
 
-use Doctrine\DBAL\Connection as DBALConnection;
+use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\DriverManager as DBALDriverManager;
 use Doctrine\DBAL\DBALException;
-use Doctrine\DBAL\Exception\ConnectionException as DBALConnectionException;
+use Doctrine\DBAL\Exception\ConnectionException as DbalConnectionException;
 
 /**
  * Driver specific methods for pdo_mysql.
@@ -68,7 +68,7 @@ class PDOMySql {
    *
    * @var \Doctrine\DBAL\Connection
    */
-  protected $DBALConnection;
+  protected $dbalConnection;
 
   /**
    * Flag to indicate if the cleanup function in __destruct() should run.
@@ -80,9 +80,9 @@ class PDOMySql {
   /**
    * Constructs a Connection object.
    */
-  public function __construct(DrubalConnection $drubal_connection, DBALConnection $dbal_connection) {
+  public function __construct(DrubalConnection $drubal_connection, DbalConnection $dbal_connection) {
     $this->drubalConnection = $drubal_connection;
-    $this->DBALConnection = $dbal_connection;
+    $this->dbalConnection = $dbal_connection;
   }
 
   /**
@@ -91,7 +91,7 @@ class PDOMySql {
    * @return string DBAL driver name
    */
   public function getDbalConnection() {
-    return $this->DBALConnection;
+    return $this->dbalConnection;
   }
 
   /**
@@ -107,7 +107,7 @@ class PDOMySql {
       $dbal_connection = DBALDriverManager::getConnection($options);
       static::postConnectionOpen($dbal_connection, $connection_options);
     }
-    catch (DBALConnectionException $e) {
+    catch (DbalConnectionException $e) {
       throw new DatabaseExceptionWrapper($e->getMessage(), $e->getCode(), $e);
     }
     return $dbal_connection;
@@ -175,7 +175,7 @@ class PDOMySql {
   /**
    * @todo
    */
-  public static function postConnectionOpen(DBALConnection $dbal_connection, array &$connection_options = []) {
+  public static function postConnectionOpen(DbalConnection $dbal_connection, array &$connection_options = []) {
     // Force MySQL to use the UTF-8 character set. Also set the collation, if a
     // certain one has been set; otherwise, MySQL defaults to
     // 'utf8mb4_general_ci' for utf8mb4.
@@ -445,7 +445,68 @@ class PDOMySql {
    * Returns the version of the database client.
    */
   public function clientVersion() {
-    return $this->DBALConnection->getWrappedConnection()->getAttribute(\PDO::ATTR_CLIENT_VERSION);
+    return $this->dbalConnection->getWrappedConnection()->getAttribute(\PDO::ATTR_CLIENT_VERSION);
+  }
+
+  /**
+   * Schema delegated methods.
+   */
+
+  /**
+   * Get information about the table and database name from the prefix.
+   *
+   * @return
+   *   A keyed array with information about the database, table name and prefix.
+   */
+  public function getPrefixInfo($table = 'default', $add_prefix = TRUE) {
+    $info = ['prefix' => $this->drubalConnection->tablePrefix($table)];
+    if ($add_prefix) {
+      $table = $info['prefix'] . $table;
+    }
+    if (($pos = strpos($table, '.')) !== FALSE) {
+      $info['database'] = substr($table, 0, $pos);
+      $info['table'] = substr($table, ++$pos);
+    }
+    else {
+      $info['database'] = $this->dbalConnection->getDatabase();
+      $info['table'] = $table;
+    }
+    return $info;
+  }
+
+  /**
+   * Retrieve a table or column comment.
+   */
+  public function delegateGetComment(&$comment, $dbal_schema, $table, $column = NULL) {
+    if ($column !== NULL) {
+      return FALSE;
+    }
+
+    // DBAL cannot retrieve table comments from introspected schema.
+    // @see https://github.com/doctrine/dbal/issues/1335
+    $table_info = $this->getPrefixInfo($table);
+    $dbal_query = $this->dbalConnection->createQueryBuilder();
+    $dbal_query
+      ->select('table_comment')
+      ->from('information_schema.tables')
+      ->where(
+          $dbal_query->expr()->andX(
+            $dbal_query->expr()->eq('table_schema', '?'),
+            $dbal_query->expr()->eq('table_name', '?')
+          )
+        )
+      ->setParameter(0, $table_info['database'])
+      ->setParameter(1, $table_info['table']);
+    $comment = $this->alterGetComment($dbal_query->execute()->fetchField(), $dbal_schema, $table, $column);
+    return TRUE;
+  }
+
+
+  /**
+   * Alter a table or column comment retrieved from schema.
+   */
+  public function alterGetComment($comment, $dbal_schema, $table, $column = NULL) {
+    return $comment;
   }
 
 }

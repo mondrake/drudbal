@@ -16,6 +16,11 @@ use Doctrine\DBAL\Types\Type as DbalType;
 
 /**
  * DRUBAL implementation of \Drupal\Core\Database\Schema.
+ *
+ * Note: there should not be db platform specific code here. Any tasks that
+ * cannot be managed by Doctrine DBAL should be added to driver specific code
+ * in Drupal\Driver\Database\drubal\DBALDriver\[driver_name] classes and
+ * execution handed over to there.
  */
 class Schema extends DatabaseSchema {
 
@@ -49,31 +54,22 @@ class Schema extends DatabaseSchema {
    */
   protected $dbalSchemaManager;
 
+  /**
+   * @todo
+   */
+  protected $drubalDriver;
+
   public function __construct($connection) {
     parent::__construct($connection);
     $this->dbalSchemaManager = $this->connection->getDbalConnection()->getSchemaManager();
+    $this->drubalDriver = $this->connection->getDrubalDriver();
   }
 
   /**
-   * Get information about the table and database name from the prefix.
-   *
-   * @return
-   *   A keyed array with information about the database, table name and prefix.
+   * @todo
    */
-  protected function getPrefixInfo($table = 'default', $add_prefix = TRUE) {
-    $info = ['prefix' => $this->connection->tablePrefix($table)];
-    if ($add_prefix) {
-      $table = $info['prefix'] . $table;
-    }
-    if (($pos = strpos($table, '.')) !== FALSE) {
-      $info['database'] = substr($table, 0, $pos);
-      $info['table'] = substr($table, ++$pos);
-    }
-    else {
-      $info['database'] = $this->connection->getDbalConnection()->getDatabase();
-      $info['table'] = $table;
-    }
-    return $info;
+  protected function getPrefixedTableName($table) {
+    return $this->drubalDriver->getPrefixInfo($table)['table'];
   }
 
   /**
@@ -102,7 +98,7 @@ class Schema extends DatabaseSchema {
 
     // Create table via DBAL.
     $schema = new DbalSchema;
-    $new_table = $schema->createTable($this->getPrefixInfo($name)['table']);
+    $new_table = $schema->createTable($this->getPrefixedTableName($name));
     $new_table->addOption('charset', $table['mysql_character_set']); // @todo abstract
     $new_table->addOption('engine', $table['mysql_engine']); // @todo abstract
     $info['collation'] = 'utf8mb4_general_ci'; // @todo abstract
@@ -458,7 +454,7 @@ class Schema extends DatabaseSchema {
       throw new SchemaObjectExistsException(t("Cannot rename @table to @table_new: table @table_new already exists.", ['@table' => $table, '@table_new' => $new_name]));
     }
 
-    $info = $this->getPrefixInfo($new_name);
+    $info = $this->drubalDriver->getPrefixInfo($new_name);
     return $this->connection->query('ALTER TABLE {' . $table . '} RENAME TO `' . $info['table'] . '`');
   }
 
@@ -468,7 +464,7 @@ class Schema extends DatabaseSchema {
     }
 
     try {
-      $this->dbalSchemaManager->dropTable($this->getPrefixInfo($table)['table']);
+      $this->dbalSchemaManager->dropTable($this->getPrefixedTableName($table));
       return TRUE;
     }
     catch (\Exception $e) {
@@ -494,7 +490,7 @@ class Schema extends DatabaseSchema {
     $current_schema = $this->dbalSchemaManager->createSchema();
     $dbal_type = $this->getDbalColumnType($spec);
     $to_schema = clone $current_schema;
-    $dbal_table = $to_schema->getTable($this->getPrefixInfo($table)['table']);
+    $dbal_table = $to_schema->getTable($this->getPrefixedTableName($table));
     $dbal_table->addColumn($field, $dbal_type, ['columnDefinition' => $this->getDbalColumnDefinition($field, $dbal_type, $spec)]);
     $sql_statements = $current_schema->getMigrateToSql($to_schema, $this->connection->getDbalConnection()->getDatabasePlatform());
     $this->dbalExecuteSchemaChange($sql_statements); // @todo manage return
@@ -543,7 +539,7 @@ class Schema extends DatabaseSchema {
 
     $current_schema = $this->dbalSchemaManager->createSchema();
     $to_schema = clone $current_schema;
-    $to_schema->getTable($this->getPrefixInfo($table)['table'])->dropColumn($field);
+    $to_schema->getTable($this->getPrefixedTableName($table))->dropColumn($field);
     $sql_statements = $current_schema->getMigrateToSql($to_schema, $this->connection->getDbalConnection()->getDatabasePlatform());
     $this->dbalExecuteSchemaChange($sql_statements); // @todo manage return
 
@@ -557,7 +553,7 @@ class Schema extends DatabaseSchema {
 
     $current_schema = $this->dbalSchemaManager->createSchema();
     $to_schema = clone $current_schema;
-    $to_schema->getTable($this->getPrefixInfo($table)['table'])->getColumn($field)->setDefault($this->escapeDefaultValue($default)); // @todo use dbalEncodeQuotes instead??
+    $to_schema->getTable($this->getPrefixedTableName($table))->getColumn($field)->setDefault($this->escapeDefaultValue($default)); // @todo use dbalEncodeQuotes instead??
     $sql_statements = $current_schema->getMigrateToSql($to_schema, $this->connection->getDbalConnection()->getDatabasePlatform());
     $this->dbalExecuteSchemaChange($sql_statements); // @todo manage return
   }
@@ -578,10 +574,10 @@ class Schema extends DatabaseSchema {
       // @todo PRIMARY is mysql ONLY
       if ($name == 'PRIMARY') {
         $current_schema = $this->dbalSchemaManager->createSchema();
-        return $current_schema->getTable($this->getPrefixInfo($table)['table'])->hasPrimaryKey();
+        return $current_schema->getTable($this->getPrefixedTableName($table))->hasPrimaryKey();
       }
       else {
-        $indexes = array_keys($this->dbalSchemaManager->listTableIndexes($this->getPrefixInfo($table)['table']));
+        $indexes = array_keys($this->dbalSchemaManager->listTableIndexes($this->getPrefixedTableName($table)));
         return in_array($name, $indexes);
       }
     }
@@ -597,14 +593,14 @@ class Schema extends DatabaseSchema {
     }
 
     $current_schema = $this->dbalSchemaManager->createSchema();
-    if ($current_schema->getTable($this->getPrefixInfo($table)['table'])->hasPrimaryKey()) {
+    if ($current_schema->getTable($this->getPrefixedTableName($table))->hasPrimaryKey()) {
       throw new SchemaObjectExistsException(t("Cannot add primary key to table @table: primary key already exists.", ['@table' => $table]));
     }
 
     // @todo DBAL does not support creating indexes with column lenghts: https://github.com/doctrine/dbal/pull/2412
     if (($idx_cols = $this->dbalResolveIndexColumnNames($fields)) !== FALSE) {
       $to_schema = clone $current_schema;
-      $to_schema->getTable($this->getPrefixInfo($table)['table'])->setPrimaryKey($idx_cols);
+      $to_schema->getTable($this->getPrefixedTableName($table))->setPrimaryKey($idx_cols);
       $sql_statements = $current_schema->getMigrateToSql($to_schema, $this->connection->getDbalConnection()->getDatabasePlatform());
       $this->dbalExecuteSchemaChange($sql_statements); // @todo manage return
     }
@@ -620,12 +616,12 @@ class Schema extends DatabaseSchema {
     }
 
     $current_schema = $this->dbalSchemaManager->createSchema();
-    if (!$current_schema->getTable($this->getPrefixInfo($table)['table'])->hasPrimaryKey()) {
+    if (!$current_schema->getTable($this->getPrefixedTableName($table))->hasPrimaryKey()) {
       return FALSE;
     }
 
     $to_schema = clone $current_schema;
-    $to_schema->getTable($this->getPrefixInfo($table)['table'])->dropPrimaryKey();
+    $to_schema->getTable($this->getPrefixedTableName($table))->dropPrimaryKey();
     $sql_statements = $current_schema->getMigrateToSql($to_schema, $this->connection->getDbalConnection()->getDatabasePlatform());
     $this->dbalExecuteSchemaChange($sql_statements); // @todo manage return
 
@@ -644,7 +640,7 @@ class Schema extends DatabaseSchema {
     if (($idx_cols = $this->dbalResolveIndexColumnNames($fields)) !== FALSE) {
       $current_schema = $this->dbalSchemaManager->createSchema();
       $to_schema = clone $current_schema;
-      $to_schema->getTable($this->getPrefixInfo($table)['table'])->addUniqueIndex($idx_cols, $name);
+      $to_schema->getTable($this->getPrefixedTableName($table))->addUniqueIndex($idx_cols, $name);
       $sql_statements = $current_schema->getMigrateToSql($to_schema, $this->connection->getDbalConnection()->getDatabasePlatform());
       $this->dbalExecuteSchemaChange($sql_statements); // @todo manage return
     }
@@ -676,7 +672,7 @@ class Schema extends DatabaseSchema {
     if (($idx_cols = $this->dbalResolveIndexColumnNames($indexes[$name])) !== FALSE) {
       $current_schema = $this->dbalSchemaManager->createSchema();
       $to_schema = clone $current_schema;
-      $to_schema->getTable($this->getPrefixInfo($table)['table'])->addIndex($idx_cols, $name);
+      $to_schema->getTable($this->getPrefixedTableName($table))->addIndex($idx_cols, $name);
       $sql_statements = $current_schema->getMigrateToSql($to_schema, $this->connection->getDbalConnection()->getDatabasePlatform());
       $this->dbalExecuteSchemaChange($sql_statements); // @todo manage return
     }
@@ -692,7 +688,7 @@ class Schema extends DatabaseSchema {
     }
 
     try {
-      $this->dbalSchemaManager->dropIndex($name, $this->getPrefixInfo($table)['table']);
+      $this->dbalSchemaManager->dropIndex($name, $this->getPrefixedTableName($table));
       return TRUE;
     }
     catch (\Exception $e) {
@@ -760,32 +756,29 @@ class Schema extends DatabaseSchema {
    * Retrieve a table or column comment.
    */
   public function getComment($table, $column = NULL) {
-    $table_info = $this->getPrefixInfo($table);
-    $dbal_table = $this->dbalSchemaManager->createSchema()->getTable($this->getPrefixInfo($table)['table']);
-    if (isset($column)) {
-      return $dbal_table->getColumn($column)->getComment(); // @todo manage exception
+    $dbal_schema = $this->dbalSchemaManager->createSchema();
+    $comment = NULL;
+
+    // Delegate to driver.
+    if ($this->drubalDriver->delegateGetComment($comment, $dbal_schema, $table, $column)) {
+      return $comment;
     }
-    // @todo DBAL is limited here, table comments cannot be retrieved from
-    // introspected schema. We need to fallback to platform specific syntax.
+
+    // Driver did not pick up, proceed with DBAL.
+    if (isset($column)) {
+      $raw_comment = $dbal_schema->getTable($this->getPrefixedTableName($table))->getColumn($column)->getComment(); // @todo manage exception
+      // Let driver cleanup the comment if necessary.
+      return $this->drubalDriver->alterGetComment($raw_comment, $dbal_schema, $table, $column);
+    }
+    // DBAL cannot retrieve table comments from introspected schema. Driver
+    // should have processed already.
     // @see https://github.com/doctrine/dbal/issues/1335
-    $dbal_query = $this->connection->getDbalConnection()->createQueryBuilder();
-    $dbal_query
-      ->select('table_comment')
-      ->from('information_schema.tables')
-      ->where(
-          $dbal_query->expr()->andX(
-            $dbal_query->expr()->eq('table_schema', '?'),
-            $dbal_query->expr()->eq('table_name', '?')
-          )
-        )
-      ->setParameter(0, $table_info['database'])
-      ->setParameter(1, $table_info['table']);
-    return $dbal_query->execute()->fetchField();
+    return NULL;
   }
 
   public function tableExists($table) {
     try {
-      return $this->dbalSchemaManager->tablesExist([$this->getPrefixInfo($table)['table']]);
+      return $this->dbalSchemaManager->tablesExist([$this->getPrefixedTableName($table)]);
     }
     catch (\Exception $e) {
       debug($e->message); // @todo check!
@@ -800,7 +793,7 @@ class Schema extends DatabaseSchema {
     try {
       // @todo is it right to use array_keys to find the names, or shall the name
       // property of each index object be used?
-      $columns = array_keys($this->dbalSchemaManager->listTableColumns($this->getPrefixInfo($table)['table']));
+      $columns = array_keys($this->dbalSchemaManager->listTableColumns($this->getPrefixedTableName($table)));
       return in_array($column, $columns);
     }
     catch (\Exception $e) {

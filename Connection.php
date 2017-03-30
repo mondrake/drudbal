@@ -444,6 +444,15 @@ class Connection extends DatabaseConnection {
   }
 
   /**
+   * Gets the DRUBAL driver.
+   *
+   * @return @todo
+   */
+  public function getDrubalDriver() {
+    return $this->drubalDriver;
+  }
+
+  /**
    * Gets the DBAL driver class.
    *
    * @return string DBAL driver class.
