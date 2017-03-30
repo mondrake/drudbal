@@ -12,8 +12,8 @@ use Drupal\Core\Database\StatementInterface;
 use Drupal\Core\Database\Connection as DatabaseConnection;
 use Drupal\Component\Utility\Unicode;
 
-use Doctrine\DBAL\Connection as DBALConnection;
-use Doctrine\DBAL\Version as DBALVersion;
+use Doctrine\DBAL\Connection as DbalConnection;
+use Doctrine\DBAL\Version as DbalVersion;
 use Doctrine\DBAL\DBALException;
 
 /**
@@ -83,7 +83,7 @@ class Connection extends DatabaseConnection {
   /**
    * Constructs a Connection object.
    */
-  public function __construct(DBALConnection $dbal_connection, array $connection_options = []) {
+  public function __construct(DbalConnection $dbal_connection, array $connection_options = []) {
     $drubal_dbal_driver_class = static::getDrubalDriverClass($dbal_connection->getDriver()->getName());
     $this->drubalDriver = new $drubal_dbal_driver_class($this, $dbal_connection);
     $dbal_connection->getWrappedConnection()->setAttribute(\PDO::ATTR_STATEMENT_CLASS, [$this->statementClass, [$this]]);  // @todo move to driver
@@ -292,7 +292,7 @@ class Connection extends DatabaseConnection {
    * Returns the DBAL version.
    */
   public function version() {
-    return DBALVersion::VERSION;
+    return DbalVersion::VERSION;
   }
 
   /**
