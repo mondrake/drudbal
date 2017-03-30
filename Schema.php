@@ -374,6 +374,8 @@ class Schema extends DatabaseSchema {
     // Driver did not pick up, proceed with DBAL.
     $current_schema = $this->dbalSchemaManager->createSchema();
     $to_schema = clone $current_schema;
+    // @todo this may not work - need to see if ::escapeDefaultValue
+    // provides a sensible output.
     $to_schema->getTable($this->getPrefixedTableName($table))->getColumn($field)->setDefault($this->escapeDefaultValue($default));
     $sql_statements = $current_schema->getMigrateToSql($to_schema, $this->dbalPlatform);
     $this->dbalExecuteSchemaChange($sql_statements);
@@ -395,6 +397,8 @@ class Schema extends DatabaseSchema {
     // Driver did not pick up, proceed with DBAL.
     $current_schema = $this->dbalSchemaManager->createSchema();
     $to_schema = clone $current_schema;
+    // @todo this may not work - we need to 'DROP' the default, not set it
+    // to null.
     $to_schema->getTable($this->getPrefixedTableName($table))->getColumn($field)->setDefault(NULL);
     $sql_statements = $current_schema->getMigrateToSql($to_schema, $this->dbalPlatform);
     $this->dbalExecuteSchemaChange($sql_statements);
