@@ -5,6 +5,7 @@ namespace Drupal\Driver\Database\drubal\DBALDriver;
 use Drupal\Component\Utility\Unicode;
 use Drupal\Core\Database\Database;
 use Drupal\Core\Database\DatabaseExceptionWrapper;
+use Drupal\Core\Database\SchemaException;
 use Drupal\Driver\Database\drubal\Connection as DrubalConnection;
 
 use Doctrine\DBAL\Connection as DbalConnection;
@@ -488,6 +489,12 @@ class PDOMySql {
       $options['charset'] = 'ascii';
       $options['collation'] = 'ascii_general_ci';
     }
+  }
+
+  public function encodeDefaultValue($string) {
+    return strtr($string, [
+      '\'' => "]]]]QUOTEDELIMITERDRUBAL[[[[",
+    ]);
   }
 
   public function alterDbalColumnDefinition(&$dbal_column_definition, $options, $dbal_type, $field, $field_name) {

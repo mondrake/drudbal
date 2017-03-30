@@ -173,7 +173,7 @@ class Schema extends DatabaseSchema {
         }
       }
       else {
-        $options['default'] = $this->dbalEncodeQuotes($field['default']);
+        $options['default'] = this->drubalDriver->encodeDefaultValue($field['default']);
       }
     }
 
@@ -197,13 +197,6 @@ class Schema extends DatabaseSchema {
     $this->drubalDriver->alterDbalColumnDefinition($dbal_column_definition, $options, $dbal_type, $field, $field_name);
 
     return $dbal_column_definition;
-  }
-
-  // @todo move to connection
-  public function dbalEncodeQuotes($string) {
-    return strtr($string, [
-      '\'' => "]]]]QUOTEDELIMITERDRUBAL[[[[", // @todo maybe use dbal query instead of exec??
-    ]);
   }
 
   /**
@@ -533,15 +526,8 @@ class Schema extends DatabaseSchema {
     if (!$this->indexExists($table, $name)) {
       return FALSE;
     }
-
-    try {
-      $this->dbalSchemaManager->dropIndex($name, $this->getPrefixedTableName($table));
-      return TRUE;
-    }
-    catch (\Exception $e) {
-      debug($e->message);
-      return FALSE;
-    }
+    $this->dbalSchemaManager->dropIndex($name, $this->getPrefixedTableName($table));
+    return TRUE;
   }
 
   /**
