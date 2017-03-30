@@ -399,7 +399,7 @@ class Schema extends DatabaseSchema {
     // Delegate to driver.
     $result = FALSE;
     if ($this->drubalDriver->delegateIndexExists($result, $table, $name)) {
-      return $comment;
+      return $result;
     }
 
     // Driver did not pick up, proceed with DBAL.
@@ -419,16 +419,17 @@ class Schema extends DatabaseSchema {
       throw new SchemaObjectExistsException(t("Cannot add primary key to table @table: primary key already exists.", ['@table' => $table]));
     }
 
-    // @todo DBAL does not support creating indexes with column lenghts: https://github.com/doctrine/dbal/pull/2412
-    if (($idx_cols = $this->dbalResolveIndexColumnNames($fields)) !== FALSE) {
-      $to_schema = clone $current_schema;
-      $to_schema->getTable($this->getPrefixedTableName($table))->setPrimaryKey($idx_cols);
-      $sql_statements = $current_schema->getMigrateToSql($to_schema, $this->dbalPlatform);
-      $this->dbalExecuteSchemaChange($sql_statements); // @todo manage return
+    // Delegate to driver.
+    $result = FALSE;
+    if ($this->drubalDriver->delegateAddPrimaryKey($current_schema, $table, $fields)) {
+      return;
     }
-    else {
-      $this->connection->query('ALTER TABLE {' . $table . '} ADD PRIMARY KEY (' . $this->createKeySql($fields) . ')');
-    }
+
+    // Driver did not pick up, proceed with DBAL.
+    $to_schema = clone $current_schema;
+    $to_schema->getTable($this->getPrefixedTableName($table))->setPrimaryKey($this->dbalResolveIndexColumnNames($fields));
+    $sql_statements = $current_schema->getMigrateToSql($to_schema, $this->dbalPlatform);
+    $this->dbalExecuteSchemaChange($sql_statements); // @todo manage return
   }
 
   /**

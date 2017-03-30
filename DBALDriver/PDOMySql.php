@@ -529,6 +529,14 @@ class PDOMySql {
     }
   }
 
+  public function delegateAddPrimaryKey($schema, $table, $fields) {
+    // @todo DBAL does not support creating indexes with column lenghts: https://github.com/doctrine/dbal/pull/2412
+    if (($idx_cols = $this->dbalResolveIndexColumnNames($fields)) === FALSE) {
+      $this->drubalConnection->query('ALTER TABLE {' . $table . '} ADD PRIMARY KEY (' . $this->createKeySql($fields) . ')');
+      return TRUE;
+    }
+  }
+
   /**
    * Get information about the table and database name from the prefix.
    *
@@ -745,6 +753,32 @@ class PDOMySql {
     else {
       $index = [$index, 191];
     }
+  }
+
+  protected function createKeySql($fields) {
+    $return = [];
+    foreach ($fields as $field) {
+      if (is_array($field)) {
+        $return[] = '`' . $field[0] . '`(' . $field[1] . ')';
+      }
+      else {
+        $return[] = '`' . $field . '`';
+      }
+    }
+    return implode(', ', $return);
+  }
+
+  protected function dbalResolveIndexColumnNames($fields) {
+    $return = [];
+    foreach ($fields as $field) {
+      if (is_array($field)) {
+        return FALSE;
+      }
+      else {
+        $return[] = $field;
+      }
+    }
+    return $return;
   }
 
 
