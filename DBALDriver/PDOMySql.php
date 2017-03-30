@@ -545,4 +545,154 @@ class PDOMySql {
     return Unicode::truncate($comment, self::COMMENT_MAX_COLUMN, TRUE, TRUE);
   }
 
+  /**
+   * @var array
+   *   List of MySQL string types.
+   */
+  protected $mysqlStringTypes = [
+    'VARCHAR',
+    'CHAR',
+    'TINYTEXT',
+    'MEDIUMTEXT',
+    'LONGTEXT',
+    'TEXT',
+  ];
+
+  /**
+   * Set database-engine specific properties for a field.
+   *
+   * @param $field
+   *   A field description array, as specified in the schema documentation.
+   */
+  protected function processField($field) {
+
+    if (!isset($field['size'])) {
+      $field['size'] = 'normal';
+    }
+
+    // Set the correct database-engine specific datatype.
+    // In case one is already provided, force it to uppercase.
+    if (isset($field['mysql_type'])) {
+      $field['mysql_type'] = Unicode::strtoupper($field['mysql_type']);
+    }
+    else {
+      $map = $this->getFieldTypeMap();
+      $field['mysql_type'] = $map[$field['type'] . ':' . $field['size']];
+    }
+
+    if (isset($field['type']) && $field['type'] == 'serial') {
+      $field['auto_increment'] = TRUE;
+    }
+
+    return $field;
+  }
+
+  /**
+   * Gets normalized indexes from a table specification.
+   *
+   * Shortens indexes to 191 characters if they apply to utf8mb4-encoded
+   * fields, in order to comply with the InnoDB index limitation of 756 bytes.
+   *
+   * @param array $spec
+   *   The table specification.
+   *
+   * @return array
+   *   List of shortened indexes.
+   *
+   * @throws \Drupal\Core\Database\SchemaException
+   *   Thrown if field specification is missing.
+   */
+  public function getNormalizedIndexes(array $spec) {
+    $indexes = isset($spec['indexes']) ? $spec['indexes'] : [];
+    foreach ($indexes as $index_name => $index_fields) {
+      foreach ($index_fields as $index_key => $index_field) {
+        // Get the name of the field from the index specification.
+        $field_name = is_array($index_field) ? $index_field[0] : $index_field;
+        // Check whether the field is defined in the table specification.
+        if (isset($spec['fields'][$field_name])) {
+          // Get the MySQL type from the processed field.
+          $mysql_field = $this->processField($spec['fields'][$field_name]);
+          if (in_array($mysql_field['mysql_type'], $this->mysqlStringTypes)) {
+            // Check whether we need to shorten the index.
+            if ((!isset($mysql_field['type']) || $mysql_field['type'] != 'varchar_ascii') && (!isset($mysql_field['length']) || $mysql_field['length'] > 191)) {
+              // Limit the index length to 191 characters.
+              $this->shortenIndex($indexes[$index_name][$index_key]);
+            }
+          }
+        }
+        else {
+          throw new SchemaException("MySQL needs the '$field_name' field specification in order to normalize the '$index_name' index");
+        }
+      }
+    }
+    return $indexes;
+  }
+
+  protected function getFieldTypeMap() {
+    // Put :normal last so it gets preserved by array_flip. This makes
+    // it much easier for modules (such as schema.module) to map
+    // database types back into schema types.
+    // $map does not use drupal_static as its value never changes.
+    static $map = [
+      'varchar_ascii:normal' => 'VARCHAR',
+
+      'varchar:normal'  => 'VARCHAR',
+      'char:normal'     => 'CHAR',
+
+      'text:tiny'       => 'TINYTEXT',
+      'text:small'      => 'TINYTEXT',
+      'text:medium'     => 'MEDIUMTEXT',
+      'text:big'        => 'LONGTEXT',
+      'text:normal'     => 'TEXT',
+
+      'serial:tiny'     => 'TINYINT',
+      'serial:small'    => 'SMALLINT',
+      'serial:medium'   => 'MEDIUMINT',
+      'serial:big'      => 'BIGINT',
+      'serial:normal'   => 'INT',
+
+      'int:tiny'        => 'TINYINT',
+      'int:small'       => 'SMALLINT',
+      'int:medium'      => 'MEDIUMINT',
+      'int:big'         => 'BIGINT',
+      'int:normal'      => 'INT',
+
+      'float:tiny'      => 'FLOAT',
+      'float:small'     => 'FLOAT',
+      'float:medium'    => 'FLOAT',
+      'float:big'       => 'DOUBLE',
+      'float:normal'    => 'FLOAT',
+
+      'numeric:normal'  => 'DECIMAL',
+
+      'blob:big'        => 'LONGBLOB',
+      'blob:normal'     => 'BLOB',
+    ];
+    return $map;
+  }
+
+  /**
+   * Helper function for normalizeIndexes().
+   *
+   * Shortens an index to 191 characters.
+   *
+   * @param array $index
+   *   The index array to be used in createKeySql.
+   *
+   * @see Drupal\Core\Database\Driver\mysql\Schema::createKeySql()
+   * @see Drupal\Core\Database\Driver\mysql\Schema::normalizeIndexes()
+   */
+  protected function shortenIndex(&$index) {
+    if (is_array($index)) {
+      if ($index[1] > 191) {
+        $index[1] = 191;
+      }
+    }
+    else {
+      $index = [$index, 191];
+    }
+  }
+
+
+
 }
