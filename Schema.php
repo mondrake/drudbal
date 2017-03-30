@@ -117,16 +117,21 @@ class Schema extends DatabaseSchema {
    *   A field description array, as specified in the schema documentation.
    */
   protected function getDbalColumnType($field) {
-    // @todo mysql specific
-    if (isset($field['mysql_type'])) {
-      return $this->dbalPlatform->getDoctrineTypeMapping($field['mysql_type']);
+    $dbal_type = NULL;
+
+    // Delegate to driver.
+    if ($this->drubalDriver->delegateGetDbalColumnType($dbal_type, $field)) {
+      return $dbal_type;
     }
+
+    // Driver did not pick up, proceed with DBAL.
     if (!isset($field['size'])) {
       $field['size'] = 'normal';
     }
     $map = $this->getFieldTypeMap();
     // @todo check if exception should be raised if no key in array.
-    return $map[$field['type'] . ':' . $field['size']];
+    $dbal_type = $map[$field['type'] . ':' . $field['size']];
+    return $dbal_type;
   }
 
   /**
@@ -304,15 +309,7 @@ class Schema extends DatabaseSchema {
     if (!$this->tableExists($table)) {
       return FALSE;
     }
-
-    try {
-      $this->dbalSchemaManager->dropTable($this->getPrefixedTableName($table));
-      return TRUE;
-    }
-    catch (\Exception $e) {
-      debug($e->message);
-      return FALSE;
-    }
+    $this->dbalSchemaManager->dropTable($this->getPrefixedTableName($table));
   }
 
   /**

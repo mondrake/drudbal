@@ -473,7 +473,15 @@ class PDOMySql {
     $dbal_table->addOption('engine', $table['mysql_engine']);
     $info = $this->drubalConnection->getConnectionOptions();
     $dbal_table->addOption('collate', empty($info['collation']) ? 'utf8mb4_general_ci' : $info['collation']);
- }
+  }
+
+  public function delegateGetDbalColumnType(&$dbal_type, $field) {
+    if (isset($field['mysql_type'])) {
+      $dbal_type = $this->dbalConnection->getDatabasePlatform()->getDoctrineTypeMapping($field['mysql_type']);
+      return TRUE;
+    }
+    return FALSE;
+  }
 
   /**
    * Get information about the table and database name from the prefix.
