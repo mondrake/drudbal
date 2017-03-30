@@ -25,16 +25,6 @@ use Doctrine\DBAL\Types\Type as DbalType;
 class Schema extends DatabaseSchema {
 
   /**
-   * Maximum length of a table comment in MySQL.
-   */
-  const COMMENT_MAX_TABLE = 60;
-
-  /**
-   * Maximum length of a column comment in MySQL.
-   */
-  const COMMENT_MAX_COLUMN = 255;
-
-  /**
    * @var array
    *   List of MySQL string types.
    */
@@ -109,7 +99,9 @@ class Schema extends DatabaseSchema {
 
     // Add table comment.
     if (!empty($table['description'])) {
-      $new_table->addOption('comment', $this->prepareComment($table['description'], self::COMMENT_MAX_TABLE)); // @todo abstract
+      $comment = $this->connection->prefixTables($table['description']);
+      $comment = $this->drubalDriver->alterSetTableComment($comment, $name, $schema, $table);
+      $new_table->addOption('comment', $this->prepareComment($comment));
     }
 
     // Add columns.
@@ -245,7 +237,9 @@ class Schema extends DatabaseSchema {
     }
 
     if (!empty($field['description'])) {
-      $options['comment'] = $this->prepareComment($field['description'], self::COMMENT_MAX_COLUMN); // @todo abstract from mysql??
+      $comment = $this->connection->prefixTables($field['description']);
+      $comment = $this->drubalDriver->alterSetColumnComment($comment, $dbal_type, $field, $field_name);
+      $options['comment'] = $this->prepareComment($comment);
     }
 
     // Get the column definition from DBAL, and trim the field name.
@@ -745,7 +739,7 @@ class Schema extends DatabaseSchema {
     // Truncate comment to maximum comment length.
     if (isset($length)) {
       // Add table prefixes before truncating.
-      $comment = Unicode::truncate($this->connection->prefixTables($comment), $length, TRUE, TRUE);
+      $comment = Unicode::truncate($comment, $length, TRUE, TRUE);
     }
     // Remove semicolons to avoid triggering multi-statement check.
     $comment = strtr($comment, [';' => '.']);  // @todo abstract from mysql??

@@ -2,6 +2,7 @@
 
 namespace Drupal\Driver\Database\drubal\DBALDriver;
 
+use Drupal\Component\Utility\Unicode;
 use Drupal\Core\Database\Database;
 use Drupal\Core\Database\DatabaseExceptionWrapper;
 use Drupal\Driver\Database\drubal\Connection as DrubalConnection;
@@ -55,6 +56,16 @@ class PDOMySql {
    * SQLSTATE error code for "Syntax error or access rule violation".
    */
   const SQLSTATE_SYNTAX_ERROR = 42000;
+
+  /**
+   * Maximum length of a table comment in MySQL.
+   */
+  const COMMENT_MAX_TABLE = 60;
+
+  /**
+   * Maximum length of a column comment in MySQL.
+   */
+  const COMMENT_MAX_COLUMN = 255;
 
   /**
    * The DRUBAL connection.
@@ -501,12 +512,25 @@ class PDOMySql {
     return TRUE;
   }
 
-
   /**
    * Alter a table or column comment retrieved from schema.
    */
   public function alterGetComment($comment, $dbal_schema, $table, $column = NULL) {
     return $comment;
+  }
+
+  /**
+   * Alter a table comment being set.
+   */
+  public function alterSetTableComment($comment, $name, $dbal_schema, $table) {
+    return Unicode::truncate($comment, self::COMMENT_MAX_TABLE, TRUE, TRUE);
+  }
+
+  /**
+   * Alter a column comment being set.
+   */
+  public function alterSetColumnComment($comment, $dbal_type, $field, $field_name) {
+    return Unicode::truncate($comment, self::COMMENT_MAX_COLUMN, TRUE, TRUE);
   }
 
 }
