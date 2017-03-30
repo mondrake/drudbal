@@ -746,9 +746,6 @@ class Schema extends DatabaseSchema {
     return $comment;
   }
 
-  /**
-   * Retrieve a table or column comment.
-   */
   public function getComment($table, $column = NULL) {
     $dbal_schema = $this->dbalSchemaManager->createSchema();
     $comment = NULL;
@@ -771,29 +768,14 @@ class Schema extends DatabaseSchema {
   }
 
   public function tableExists($table) {
-    try {
-      return $this->dbalSchemaManager->tablesExist([$this->getPrefixedTableName($table)]);
-    }
-    catch (\Exception $e) {
-      debug($e->message); // @todo check!
-      return FALSE;
-    }
+    return $this->dbalSchemaManager->tablesExist([$this->getPrefixedTableName($table)]);
   }
 
   public function fieldExists($table, $column) {
     if (!$this->tableExists($table)) {
       return FALSE;
     }
-    try {
-      // @todo is it right to use array_keys to find the names, or shall the name
-      // property of each index object be used?
-      $columns = array_keys($this->dbalSchemaManager->listTableColumns($this->getPrefixedTableName($table)));
-      return in_array($column, $columns);
-    }
-    catch (\Exception $e) {
-      debug($e->message); // @todo check!
-      return FALSE;
-    }
+    return in_array($column, array_keys($this->dbalSchemaManager->listTableColumns($this->getPrefixedTableName($table))));
   }
 
   /**
@@ -826,13 +808,7 @@ debug($e->getMessage());
   }
 
   /**
-   * Finds all tables that are like the specified base table name.
-   *
-   * @param string $table_expression
-   *   An SQL expression, for example "cache_%" (without the quotes).
-   *
-   * @return array
-   *   Both the keys and the values are the matching tables.
+   * {@inheritdoc}
    */
   public function findTables($table_expression) {
     $individually_prefixed_tables = $this->connection->getUnprefixedTablesMap();
