@@ -532,6 +532,22 @@ class PDOMySql {
     return TRUE;
   }
 
+  public function delegateFieldSetDefault($table, $field, $default) {
+    // DBAL would use an ALTER TABLE ... CHANGE statement that would not
+    // preserve non-DBAL managed column attributes. Use MySql syntax here
+    // instead.
+    $this->drubalConnection->query('ALTER TABLE {' . $table . '} ALTER COLUMN `' . $field . '` SET DEFAULT ' . $default);
+    return TRUE;
+  }
+
+  public function delegateFieldSetNoDefault($table, $field) {
+    // DBAL would use an ALTER TABLE ... CHANGE statement that would not
+    // preserve non-DBAL managed column attributes. Use MySql syntax here
+    // instead.
+    $this->drubalConnection->query('ALTER TABLE {' . $table . '} ALTER COLUMN `' . $field . '` DROP DEFAULT');
+    return TRUE;
+  }
+
   public function delegateIndexExists(&$result, $table, $name) {
     if ($name == 'PRIMARY') {
       $schema = $this->dbalConnection->getSchemaManager()->createSchema();

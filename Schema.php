@@ -266,8 +266,8 @@ class Schema extends DatabaseSchema {
       throw new SchemaObjectExistsException(t("Cannot rename @table to @table_new: table @table_new already exists.", ['@table' => $table, '@table_new' => $new_name]));
     }
 
-    $info = $this->drubalDriver->getPrefixInfo($new_name);
-    return $this->connection->query('ALTER TABLE {' . $table . '} RENAME TO `' . $info['table'] . '`');
+    $this->dbalSchemaManager->renameTable($this->getPrefixedTableName($table), $this->getPrefixedTableName($new_name));
+    return TRUE;
   }
 
   /**
@@ -366,9 +366,15 @@ class Schema extends DatabaseSchema {
       throw new SchemaObjectDoesNotExistException(t("Cannot set default value of field @table.@field: field doesn't exist.", ['@table' => $table, '@field' => $field]));
     }
 
+    // Delegate to driver.
+    if ($this->drubalDriver->delegateFieldSetDefault($table, $field, $this->escapeDefaultValue($default))) {
+      return;
+    }
+
+    // Driver did not pick up, proceed with DBAL.
     $current_schema = $this->dbalSchemaManager->createSchema();
     $to_schema = clone $current_schema;
-    $to_schema->getTable($this->getPrefixedTableName($table))->getColumn($field)->setDefault($this->escapeDefaultValue($default)); // @todo use dbalEncodeQuotes instead??
+    $to_schema->getTable($this->getPrefixedTableName($table))->getColumn($field)->setDefault($this->escapeDefaultValue($default));
     $sql_statements = $current_schema->getMigrateToSql($to_schema, $this->dbalPlatform);
     $this->dbalExecuteSchemaChange($sql_statements);
   }
@@ -381,7 +387,17 @@ class Schema extends DatabaseSchema {
       throw new SchemaObjectDoesNotExistException(t("Cannot remove default value of field @table.@field: field doesn't exist.", ['@table' => $table, '@field' => $field]));
     }
 
-    $this->connection->query('ALTER TABLE {' . $table . '} ALTER COLUMN `' . $field . '` DROP DEFAULT');
+    // Delegate to driver.
+    if ($this->drubalDriver->delegateFieldSetNoDefault($table, $field)) {
+      return;
+    }
+
+    // Driver did not pick up, proceed with DBAL.
+    $current_schema = $this->dbalSchemaManager->createSchema();
+    $to_schema = clone $current_schema;
+    $to_schema->getTable($this->getPrefixedTableName($table))->getColumn($field)->setDefault(NULL);
+    $sql_statements = $current_schema->getMigrateToSql($to_schema, $this->dbalPlatform);
+    $this->dbalExecuteSchemaChange($sql_statements);
   }
 
   /**
@@ -527,7 +543,7 @@ class Schema extends DatabaseSchema {
 
     $dbal_type = $this->getDbalColumnType($spec);
     $dbal_column_definition = $this->getDbalColumnDefinition($field_new, $dbal_type, $spec);
-    // @todo DBAL is limited here, if we pass only 'columnDefinition' to
+    // DBAL is limited here, if we pass only 'columnDefinition' to
     // ::changeColumn the schema diff will not capture any change. We need to
     // fallback to platform specific syntax.
     // @see https://github.com/doctrine/dbal/issues/1033
