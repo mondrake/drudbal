@@ -87,7 +87,11 @@ class Schema extends DatabaseSchema {
 
     // Add primary key.
     if (!empty($table['primary key'])) {
-      $new_table->setPrimaryKey($table['primary key']); // @todo if length limited?
+      // @todo in MySql, this could still be a list of columns with length.
+      // However we have to add here instead of separate calls to
+      // ::addPrimaryKey to avoid failure when creating a table with an
+      // autoincrement column.
+      $new_table->setPrimaryKey($table['primary key']);
     }
 
     // Execute the table creation.
@@ -97,15 +101,14 @@ class Schema extends DatabaseSchema {
     // Add unique keys.
     if (!empty($table['unique keys'])) {
       foreach ($table['unique keys'] as $key => $fields) {
-        $this->addUniqueKey($name, $key, $fields); // @todo if length limited?
+        $this->addUniqueKey($name, $key, $fields);
       }
     }
 
     // Add indexes.
     if (!empty($table['indexes'])) {
-      $indexes = $this->drubalDriver->getNormalizedIndexes($table);
-      foreach ($indexes as $index => $fields) {
-        $this->addIndex($name, $index, $fields, $table); // @todo if length limited?
+      foreach ($table['indexes'] as $index => $fields) {
+        $this->addIndex($name, $index, $fields, $table);
       }
     }
   }
@@ -245,19 +248,6 @@ class Schema extends DatabaseSchema {
     return $map;
   }
 
-  protected function createKeySql($fields) {
-    $return = [];
-    foreach ($fields as $field) {
-      if (is_array($field)) {
-        $return[] = '`' . $field[0] . '`(' . $field[1] . ')';
-      }
-      else {
-        $return[] = '`' . $field . '`';
-      }
-    }
-    return implode(', ', $return);
-  }
-
   /**
    * {@inheritdoc}
    */
@@ -323,8 +313,7 @@ class Schema extends DatabaseSchema {
 
     // Add indexes.
     if (!empty($keys_new['indexes'])) {
-      $indexes = $this->drubalDriver->getNormalizedIndexes($keys_new['indexes']);
-      foreach ($indexes as $index => $fields) {
+      foreach ($keys_new['indexes'] as $index => $fields) {
         $this->addIndex($table, $index, $fields, $keys_new);
       }
     }
@@ -420,14 +409,13 @@ class Schema extends DatabaseSchema {
     }
 
     // Delegate to driver.
-    $result = FALSE;
     if ($this->drubalDriver->delegateAddPrimaryKey($current_schema, $table, $fields)) {
       return;
     }
 
     // Driver did not pick up, proceed with DBAL.
     $to_schema = clone $current_schema;
-    $to_schema->getTable($this->getPrefixedTableName($table))->setPrimaryKey($this->dbalResolveIndexColumnNames($fields));
+    $to_schema->getTable($this->getPrefixedTableName($table))->setPrimaryKey($this->dbalResolveIndexColumnList($fields));
     $sql_statements = $current_schema->getMigrateToSql($to_schema, $this->dbalPlatform);
     $this->dbalExecuteSchemaChange($sql_statements); // @todo manage return
   }
@@ -464,18 +452,17 @@ class Schema extends DatabaseSchema {
       throw new SchemaObjectExistsException(t("Cannot add unique key @name to table @table: unique key already exists.", ['@table' => $table, '@name' => $name]));
     }
 
-    // @todo DBAL does not support creating indexes with column lenghts: https://github.com/doctrine/dbal/pull/2412
-    if (($idx_cols = $this->dbalResolveIndexColumnNames($fields)) !== FALSE) {
-      $current_schema = $this->dbalSchemaManager->createSchema();
-      $to_schema = clone $current_schema;
-      $to_schema->getTable($this->getPrefixedTableName($table))->addUniqueIndex($idx_cols, $name);
-      $sql_statements = $current_schema->getMigrateToSql($to_schema, $this->dbalPlatform);
-      $this->dbalExecuteSchemaChange($sql_statements); // @todo manage return
+    // Delegate to driver.
+    if ($this->drubalDriver->delegateAddUniqueKey($table, $name, $fields)) {
+      return;
     }
-    else {
-//debug('*** LEGACY *** ' . 'ALTER TABLE {' . $table . '} ADD UNIQUE KEY `' . $name . '` (' . $this->createKeySql($fields) . ')');
-      $this->connection->query('ALTER TABLE {' . $table . '} ADD UNIQUE KEY `' . $name . '` (' . $this->createKeySql($fields) . ')');
-    }
+
+    // Driver did not pick up, proceed with DBAL.
+    $current_schema = $this->dbalSchemaManager->createSchema();
+    $to_schema = clone $current_schema;
+    $to_schema->getTable($this->getPrefixedTableName($table))->addUniqueIndex($this->dbalResolveIndexColumnList($fields), $name);
+    $sql_statements = $current_schema->getMigrateToSql($to_schema, $this->dbalPlatform);
+    $this->dbalExecuteSchemaChange($sql_statements); // @todo manage return
   }
 
   /**
@@ -496,21 +483,17 @@ class Schema extends DatabaseSchema {
       throw new SchemaObjectExistsException(t("Cannot add index @name to table @table: index already exists.", ['@table' => $table, '@name' => $name]));
     }
 
-    $spec['indexes'][$name] = $fields;
-    $indexes = $this->drubalDriver->getNormalizedIndexes($spec);
+    // Delegate to driver.
+    if ($this->drubalDriver->delegateAddIndex($table, $name, $fields, $spec)) {
+      return;
+    }
 
-    // @todo DBAL does not support creating indexes with column lenghts: https://github.com/doctrine/dbal/pull/2412
-    if (($idx_cols = $this->dbalResolveIndexColumnNames($indexes[$name])) !== FALSE) {
-      $current_schema = $this->dbalSchemaManager->createSchema();
-      $to_schema = clone $current_schema;
-      $to_schema->getTable($this->getPrefixedTableName($table))->addIndex($idx_cols, $name);
-      $sql_statements = $current_schema->getMigrateToSql($to_schema, $this->dbalPlatform);
-      $this->dbalExecuteSchemaChange($sql_statements); // @todo manage return
-    }
-    else {
-//debug('*** LEGACY *** ' . 'ALTER TABLE {' . $table . '} ADD INDEX `' . $name . '` (' . $this->createKeySql($indexes[$name]) . ')');
-      $this->connection->query('ALTER TABLE {' . $table . '} ADD INDEX `' . $name . '` (' . $this->createKeySql($indexes[$name]) . ')');
-    }
+    // Driver did not pick up, proceed with DBAL.
+    $current_schema = $this->dbalSchemaManager->createSchema();
+    $to_schema = clone $current_schema;
+    $to_schema->getTable($this->getPrefixedTableName($table))->addIndex($this->dbalResolveIndexColumnList($fields), $name);
+    $sql_statements = $current_schema->getMigrateToSql($to_schema, $this->dbalPlatform);
+    $this->dbalExecuteSchemaChange($sql_statements); // @todo manage return
   }
 
   /**
@@ -541,18 +524,16 @@ class Schema extends DatabaseSchema {
     // ::changeColumn the schema diff will not capture any change. We need to
     // fallback to platform specific syntax.
     // @see https://github.com/doctrine/dbal/issues/1033
-    $sql = 'ALTER TABLE {' . $table . '} CHANGE `' . $field . '` `' . $field_new . '` ' . $dbal_column_definition;
-    if (!empty($keys_new['primary key'])) {
-      $keys_sql = $this->createKeysSql(['primary key' => $keys_new['primary key']]);
-      $sql .= ', ADD ' . $keys_sql[0];
+    $primary_key_processed_by_driver = FALSE;
+    if (!$this->drubalDriver->delegateChangeField($primary_key_processed_by_driver, $table, $field, $field_new, $spec, $keys_new, $dbal_column_definition)) {
+      return;
     }
-    $this->connection->query($sql); // @todo manage exceptions
 
     // New primary key.
-    if (!empty($keys_new['primary key'])) {
-      // Drop the existing one before altering the table. @todo might have been added in platform specific command
-//      $this->dropPrimaryKey($table);
-//      $this->addPrimaryKey($table, $keys_new['primary key']);
+    if (!empty($keys_new['primary key']) && !$primary_key_processed_by_driver) {
+      // Drop the existing one before altering the table.
+      $this->dropPrimaryKey($table);
+      $this->addPrimaryKey($table, $keys_new['primary key']);
     }
 
     // Add unique keys.
@@ -564,8 +545,7 @@ class Schema extends DatabaseSchema {
 
     // Add indexes.
     if (!empty($keys_new['indexes'])) {
-      $indexes = $this->drubalDriver->getNormalizedIndexes($keys_new['indexes']);
-      foreach ($indexes as $index => $fields) {
+      foreach ($keys_new['indexes'] as $index => $fields) {
         $this->addIndex($table, $index, $fields, $keys_new);
       }
     }
@@ -581,7 +561,7 @@ class Schema extends DatabaseSchema {
       $comment = Unicode::truncate($comment, $length, TRUE, TRUE);
     }
     // Remove semicolons to avoid triggering multi-statement check.
-    $comment = strtr($comment, [';' => '.']);  // @todo abstract from mysql??
+    $comment = strtr($comment, [';' => '.']);
     return $comment;
   }
 
@@ -644,7 +624,7 @@ debug($e->getMessage());
     }
   }
 
-  protected function dbalResolveIndexColumnNames($fields) {
+  protected function dbalResolveIndexColumnList($fields) {
     $return = [];
     foreach ($fields as $field) {
       if (is_array($field)) {
@@ -698,27 +678,6 @@ debug($e->getMessage());
     $tables = preg_grep('/^' . $table_expression . '$/i', $tables);
 
     return $tables;
-  }
-
-  protected function createKeysSql($spec) {
-    $keys = [];
-
-    if (!empty($spec['primary key'])) {
-      $keys[] = 'PRIMARY KEY (' . $this->createKeySql($spec['primary key']) . ')';
-    }
-    if (!empty($spec['unique keys'])) {
-      foreach ($spec['unique keys'] as $key => $fields) {
-        $keys[] = 'UNIQUE KEY `' . $key . '` (' . $this->createKeySql($fields) . ')';
-      }
-    }
-    if (!empty($spec['indexes'])) {
-      $indexes = $this->drubalDriver->getNormalizedIndexes($spec);
-      foreach ($indexes as $index => $fields) {
-        $keys[] = 'INDEX `' . $index . '` (' . $this->createKeySql($fields) . ')';
-      }
-    }
-
-    return $keys;
   }
 
 }

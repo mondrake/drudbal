@@ -521,6 +521,17 @@ class PDOMySql {
     ]);
   }
 
+  public function delegateChangeField(&$primary_key_processed_by_driver, $table, $field, $field_new, $spec, $keys_new, $dbal_column_definition) {
+    $sql = 'ALTER TABLE {' . $table . '} CHANGE `' . $field . '` `' . $field_new . '` ' . $dbal_column_definition;
+    if (!empty($keys_new['primary key'])) {
+      $keys_sql = $this->createKeysSql(['primary key' => $keys_new['primary key']]);
+      $sql .= ', ADD ' . $keys_sql[0];
+      $primary_key_processed_by_driver = TRUE;
+    }
+    $this->drubalConnection->query($sql);
+    return TRUE;
+  }
+
   public function delegateIndexExists(&$result, $table, $name) {
     if ($name == 'PRIMARY') {
       $schema = $this->dbalConnection->getSchemaManager()->createSchema();
@@ -530,9 +541,30 @@ class PDOMySql {
   }
 
   public function delegateAddPrimaryKey($schema, $table, $fields) {
-    // @todo DBAL does not support creating indexes with column lenghts: https://github.com/doctrine/dbal/pull/2412
+    // DBAL does not support creating indexes with column lenghts.
+    // @see https://github.com/doctrine/dbal/pull/2412
     if (($idx_cols = $this->dbalResolveIndexColumnNames($fields)) === FALSE) {
       $this->drubalConnection->query('ALTER TABLE {' . $table . '} ADD PRIMARY KEY (' . $this->createKeySql($fields) . ')');
+      return TRUE;
+    }
+  }
+
+  public function delegateAddUniqueKey($table, $name, $fields) {
+    // DBAL does not support creating indexes with column lenghts.
+    // @see https://github.com/doctrine/dbal/pull/2412
+    if (($idx_cols = $this->dbalResolveIndexColumnNames($fields)) === FALSE) {
+      $this->drubalConnection->query('ALTER TABLE {' . $table . '} ADD UNIQUE KEY `' . $name . '` (' . $this->createKeySql($fields) . ')');
+      return TRUE;
+    }
+  }
+
+  public function delegateAddIndex($table, $name, $fields, $spec) {
+    // DBAL does not support creating indexes with column lenghts.
+    // @see https://github.com/doctrine/dbal/pull/2412
+    $spec['indexes'][$name] = $fields;
+    $indexes = $this->getNormalizedIndexes($spec);
+    if (($idx_cols = $this->dbalResolveIndexColumnNames($indexes[$name])) === FALSE) {
+      $this->drubalConnection->query('ALTER TABLE {' . $table . '} ADD INDEX `' . $name . '` (' . $this->createKeySql($indexes[$name]) . ')');
       return TRUE;
     }
   }
