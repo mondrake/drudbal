@@ -91,6 +91,20 @@ class Connection extends DatabaseConnection {
     $this->transactionalDDLSupport = $this->drubalDriver->transactionalDDLSupport($connection_options);
     $this->setPrefix(isset($connection_options['prefix']) ? $connection_options['prefix'] : '');
     $this->connectionOptions = $connection_options;
+    // Unset $this->connection so that __get() can return the DbalConnection on
+    // the driver instead.
+    unset($this->connection);
+  }
+
+  /**
+   * @todo
+   */
+  public function __get($name) {
+    // Calls to $this->connection return the DbalConnection on the driver
+    // instead.
+    if ($name === 'connection') {
+      return $this->getDbalConnection();
+    }
   }
 
   /**
@@ -373,36 +387,6 @@ class Connection extends DatabaseConnection {
   }
 
   /**
-   * Increases the depth of transaction nesting.
-   *
-   * If no transaction is already active, we begin a new transaction.
-   *
-   * @param string $name
-   *   The name of the transaction.
-   *
-   * @throws \Drupal\Core\Database\TransactionNameNonUniqueException
-   *
-   * @see \Drupal\Core\Database\Transaction
-   */
-  public function pushTransaction($name) {
-    if (!$this->supportsTransactions()) {
-      return;
-    }
-    if (isset($this->transactionLayers[$name])) {
-      throw new TransactionNameNonUniqueException($name . " is already in use.");
-    }
-    // If we're already in a transaction then we want to create a savepoint
-    // rather than try to create another transaction.
-    if ($this->inTransaction()) {
-      $this->query('SAVEPOINT ' . $name);
-    }
-    else {
-      $this->getDbalConnection()->beginTransaction();
-    }
-    $this->transactionLayers[$name] = $name;
-  }
-
-  /**
    * {@inheritdoc}
    */
   protected function popCommittableTransactions() {
@@ -465,12 +449,4 @@ class Connection extends DatabaseConnection {
     return $this->getDbalConnection()->getWrappedConnection()->getServerVersion();
   }
 
-  /**
-   * {@inheritdoc}
-   */
-  public function quote($string, $parameter_type = \PDO::PARAM_STR) {   // @todo adjust default
-    return $this->getDbalConnection()->quote($string, $parameter_type);
-  }
-
 }
-
