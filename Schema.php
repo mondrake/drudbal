@@ -173,7 +173,7 @@ class Schema extends DatabaseSchema {
         }
       }
       else {
-        $options['default'] = this->drubalDriver->encodeDefaultValue($field['default']);
+        $options['default'] = $this->drubalDriver->encodeDefaultValue($field['default']);
       }
     }
 
@@ -395,21 +395,17 @@ class Schema extends DatabaseSchema {
     if (!$this->tableExists($table)) {
       return FALSE;
     }
-    try {
-      // @todo PRIMARY is mysql ONLY
-      if ($name == 'PRIMARY') {
-        $current_schema = $this->dbalSchemaManager->createSchema();
-        return $current_schema->getTable($this->getPrefixedTableName($table))->hasPrimaryKey();
-      }
-      else {
-        $indexes = array_keys($this->dbalSchemaManager->listTableIndexes($this->getPrefixedTableName($table)));
-        return in_array($name, $indexes);
-      }
+
+    $schema = $this->dbalSchemaManager->createSchema();
+
+    // Delegate to driver.
+    $result = FALSE;
+    if ($this->drubalDriver->delegateIndexExists($result, $schema, $table, $name)) {
+      return $comment;
     }
-    catch (\Exception $e) {
-      debug($e->message);
-      return FALSE;
-    }
+
+    // Driver did not pick up, proceed with DBAL.
+    return in_array($name, array_keys($this->dbalSchemaManager->listTableIndexes($this->getPrefixedTableName($table))));
   }
 
   /**

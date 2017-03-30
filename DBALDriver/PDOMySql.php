@@ -521,6 +521,13 @@ class PDOMySql {
     ]);
   }
 
+  public function delegateIndexExists(&$result, $schema, $table, $name) {
+    if ($name == 'PRIMARY') {
+      $result = $schema->getTable($this->getPrefixInfo($table)['table'])->hasPrimaryKey();
+      return TRUE;
+    }
+  }
+
   /**
    * Get information about the table and database name from the prefix.
    *
