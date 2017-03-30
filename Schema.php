@@ -145,11 +145,6 @@ class Schema extends DatabaseSchema {
 
     $options['type'] = DbalType::getType($dbal_type);
 
-    if (isset($field['type']) && $field['type'] == 'varchar_ascii') {
-      $options['charset'] = 'ascii'; // @todo mysql specific
-      $options['collation'] = 'ascii_general_ci'; // @todo mysql specific
-    }
-
     if (isset($field['length'])) {
       $options['length'] = $field['length'];
     }
@@ -191,6 +186,9 @@ class Schema extends DatabaseSchema {
       $comment = $this->drubalDriver->alterSetColumnComment($comment, $dbal_type, $field, $field_name);
       $options['comment'] = $this->prepareComment($comment);
     }
+
+    // Let driver alter the column options if required.
+    $this->drubalDriver->alterDbalColumnOptions($options, $dbal_type, $field, $field_name);
 
     // Get the column definition from DBAL, and trim the field name.
     $dbal_column_definition = substr($this->dbalPlatform->getColumnDeclarationSQL($field_name, $options), strlen($field_name) + 1);

@@ -483,6 +483,13 @@ class PDOMySql {
     return FALSE;
   }
 
+  public function alterDbalColumnOptions(&$options, $dbal_type, $field, $field_name) {
+    if (isset($field['type']) && $field['type'] == 'varchar_ascii') {
+      $options['charset'] = 'ascii';
+      $options['collation'] = 'ascii_general_ci';
+    }
+  }
+
   /**
    * Get information about the table and database name from the prefix.
    *
