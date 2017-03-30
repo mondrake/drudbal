@@ -813,6 +813,25 @@ class PDOMySql {
     return $return;
   }
 
+  protected function createKeysSql($spec) {
+    $keys = [];
 
+    if (!empty($spec['primary key'])) {
+      $keys[] = 'PRIMARY KEY (' . $this->createKeySql($spec['primary key']) . ')';
+    }
+    if (!empty($spec['unique keys'])) {
+      foreach ($spec['unique keys'] as $key => $fields) {
+        $keys[] = 'UNIQUE KEY `' . $key . '` (' . $this->createKeySql($fields) . ')';
+      }
+    }
+    if (!empty($spec['indexes'])) {
+      $indexes = $this->drubalDriver->getNormalizedIndexes($spec);
+      foreach ($indexes as $index => $fields) {
+        $keys[] = 'INDEX `' . $index . '` (' . $this->createKeySql($fields) . ')';
+      }
+    }
+
+    return $keys;
+  }
 
 }
