@@ -50,15 +50,7 @@ class Schema extends DatabaseSchema {
   }
 
   /**
-   * Create a new table from a Drupal table definition.
-   *
-   * @param $name
-   *   The name of the table to create.
-   * @param $table
-   *   A Schema API table definition array.
-   *
-   * @throws \Drupal\Core\Database\SchemaObjectExistsException
-   *   If the specified table already exists.
+   * {@inheritdoc}
    */
   public function createTable($name, $table) {
     if ($this->tableExists($name)) {
@@ -224,6 +216,9 @@ class Schema extends DatabaseSchema {
     ]);
   }
 
+  /**
+   * {@inheritdoc}
+   */
   public function getFieldTypeMap() {
     // Put :normal last so it gets preserved by array_flip. This makes
     // it much easier for modules (such as schema.module) to map
@@ -280,6 +275,9 @@ class Schema extends DatabaseSchema {
     return implode(', ', $return);
   }
 
+  /**
+   * {@inheritdoc}
+   */
   public function renameTable($table, $new_name) {
     if (!$this->tableExists($table)) {
       throw new SchemaObjectDoesNotExistException(t("Cannot rename @table to @table_new: table @table doesn't exist.", ['@table' => $table, '@table_new' => $new_name]));
@@ -292,6 +290,9 @@ class Schema extends DatabaseSchema {
     return $this->connection->query('ALTER TABLE {' . $table . '} RENAME TO `' . $info['table'] . '`');
   }
 
+  /**
+   * {@inheritdoc}
+   */
   public function dropTable($table) {
     if (!$this->tableExists($table)) {
       return FALSE;
@@ -307,6 +308,9 @@ class Schema extends DatabaseSchema {
     }
   }
 
+  /**
+   * {@inheritdoc}
+   */
   public function addField($table, $field, $spec, $keys_new = []) {
     if (!$this->tableExists($table)) {
       throw new SchemaObjectDoesNotExistException(t("Cannot add field @table.@field: table doesn't exist.", ['@field' => $field, '@table' => $table]));
@@ -366,6 +370,9 @@ class Schema extends DatabaseSchema {
     }
   }
 
+  /**
+   * {@inheritdoc}
+   */
   public function dropField($table, $field) {
     if (!$this->fieldExists($table, $field)) {
       return FALSE;
@@ -380,6 +387,9 @@ class Schema extends DatabaseSchema {
     return TRUE;
   }
 
+  /**
+   * {@inheritdoc}
+   */
   public function fieldSetDefault($table, $field, $default) {
     if (!$this->fieldExists($table, $field)) {
       throw new SchemaObjectDoesNotExistException(t("Cannot set default value of field @table.@field: field doesn't exist.", ['@table' => $table, '@field' => $field]));
@@ -392,6 +402,9 @@ class Schema extends DatabaseSchema {
     $this->dbalExecuteSchemaChange($sql_statements); // @todo manage return
   }
 
+  /**
+   * {@inheritdoc}
+   */
   public function fieldSetNoDefault($table, $field) {
     if (!$this->fieldExists($table, $field)) {
       throw new SchemaObjectDoesNotExistException(t("Cannot remove default value of field @table.@field: field doesn't exist.", ['@table' => $table, '@field' => $field]));
@@ -400,6 +413,9 @@ class Schema extends DatabaseSchema {
     $this->connection->query('ALTER TABLE {' . $table . '} ALTER COLUMN `' . $field . '` DROP DEFAULT');
   }
 
+  /**
+   * {@inheritdoc}
+   */
   public function indexExists($table, $name) {
     if (!$this->tableExists($table)) {
       return FALSE;
@@ -421,6 +437,9 @@ class Schema extends DatabaseSchema {
     }
   }
 
+  /**
+   * {@inheritdoc}
+   */
   public function addPrimaryKey($table, $fields) {
     if (!$this->tableExists($table)) {
       throw new SchemaObjectDoesNotExistException(t("Cannot add primary key to table @table: table doesn't exist.", ['@table' => $table]));
@@ -444,6 +463,9 @@ class Schema extends DatabaseSchema {
     }
   }
 
+  /**
+   * {@inheritdoc}
+   */
   public function dropPrimaryKey($table) {
     if (!$this->tableExists($table)) {
       return FALSE;
@@ -462,6 +484,9 @@ class Schema extends DatabaseSchema {
     return TRUE;
   }
 
+  /**
+   * {@inheritdoc}
+   */
   public function addUniqueKey($table, $name, $fields) {
     if (!$this->tableExists($table)) {
       throw new SchemaObjectDoesNotExistException(t("Cannot add unique key @name to table @table: table doesn't exist.", ['@table' => $table, '@name' => $name]));
@@ -484,6 +509,9 @@ class Schema extends DatabaseSchema {
     }
   }
 
+  /**
+   * {@inheritdoc}
+   */
   public function dropUniqueKey($table, $name) {
     return $this->dropIndex($table, $name);
   }
@@ -516,6 +544,9 @@ class Schema extends DatabaseSchema {
     }
   }
 
+  /**
+   * {@inheritdoc}
+   */
   public function dropIndex($table, $name) {
     if (!$this->indexExists($table, $name)) {
       return FALSE;
@@ -531,6 +562,9 @@ class Schema extends DatabaseSchema {
     }
   }
 
+  /**
+   * {@inheritdoc}
+   */
   public function changeField($table, $field, $field_new, $spec, $keys_new = []) {
     if (!$this->fieldExists($table, $field)) {
       throw new SchemaObjectDoesNotExistException(t("Cannot change the definition of field @table.@name: field doesn't exist.", ['@table' => $table, '@name' => $field]));
@@ -575,6 +609,9 @@ class Schema extends DatabaseSchema {
     }
   }
 
+  /**
+   * {@inheritdoc}
+   */
   public function prepareComment($comment, $length = NULL) {
     // Truncate comment to maximum comment length.
     if (isset($length)) {
@@ -586,6 +623,11 @@ class Schema extends DatabaseSchema {
     return $comment;
   }
 
+  /**
+   * Retrieve a table or column comment.
+   *
+   * @todo
+   */
   public function getComment($table, $column = NULL) {
     $dbal_schema = $this->dbalSchemaManager->createSchema();
     $comment = NULL;
@@ -607,10 +649,16 @@ class Schema extends DatabaseSchema {
     return NULL;
   }
 
+  /**
+   * {@inheritdoc}
+   */
   public function tableExists($table) {
     return $this->dbalSchemaManager->tablesExist([$this->getPrefixedTableName($table)]);
   }
 
+  /**
+   * {@inheritdoc}
+   */
   public function fieldExists($table, $column) {
     if (!$this->tableExists($table)) {
       return FALSE;
