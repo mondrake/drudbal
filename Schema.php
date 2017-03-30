@@ -78,24 +78,12 @@ class Schema extends DatabaseSchema {
       throw new SchemaObjectExistsException(t('Table @name already exists.', ['@name' => $name]));
     }
 
-    $info = $this->connection->getConnectionOptions();
-
-    // Provide defaults if needed.
-    $table += [
-      'mysql_engine' => 'InnoDB',
-      'mysql_character_set' => 'utf8mb4',
-    ];
-
     // Create table via DBAL.
     $schema = new DbalSchema;
     $new_table = $schema->createTable($this->getPrefixedTableName($name));
-    $new_table->addOption('charset', $table['mysql_character_set']); // @todo abstract
-    $new_table->addOption('engine', $table['mysql_engine']); // @todo abstract
-    $info['collation'] = 'utf8mb4_general_ci'; // @todo abstract
 
-    if (!empty($info['collation'])) {
-      $new_table->addOption('collate', $info['collation']); // @todo abstract
-    }
+    // Delegate adding options to driver.
+    $this->drubalDriver->delegateCreateTableSetOptions($new_table, $schema, $table, $name);
 
     // Add table comment.
     if (!empty($table['description'])) {

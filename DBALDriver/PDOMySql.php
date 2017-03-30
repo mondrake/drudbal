@@ -463,6 +463,18 @@ class PDOMySql {
    * Schema delegated methods.
    */
 
+  public function delegateCreateTableSetOptions($dbal_table, $dbal_schema, &$table, $name) {
+    // Provide defaults if needed.
+    $table += [
+      'mysql_engine' => 'InnoDB',
+      'mysql_character_set' => 'utf8mb4',
+    ];
+    $dbal_table->addOption('charset', $table['mysql_character_set']);
+    $dbal_table->addOption('engine', $table['mysql_engine']);
+    $info = $this->drubalConnection->getConnectionOptions();
+    $dbal_table->addOption('collate', empty($info['collation']) ? 'utf8mb4_general_ci' : $info['collation']);
+ }
+
   /**
    * Get information about the table and database name from the prefix.
    *
