@@ -165,7 +165,7 @@ class Schema extends DatabaseSchema {
       $options['notnull'] = FALSE;
     }
 
-    // $spec['default'] can be NULL, so we explicitly check for the key here.
+    // $field['default'] can be NULL, so we explicitly check for the key here.
     if (array_key_exists('default', $field)) {
       if (is_null($field['default'])) {
         if ((isset($field['not null']) && (bool) $field['not null'] === FALSE) || !isset($field['not null'])) {
@@ -193,28 +193,8 @@ class Schema extends DatabaseSchema {
     // Get the column definition from DBAL, and trim the field name.
     $dbal_column_definition = substr($this->dbalPlatform->getColumnDeclarationSQL($field_name, $options), strlen($field_name) + 1);
 
-    // @todo mysql specific
-    // DBAL does not support unsigned float/numeric columns.
-    // @see https://github.com/doctrine/dbal/issues/2380
-    if (isset($field['type']) && $field['type'] == 'float' && !empty($field['unsigned']) && (bool) $field['unsigned'] === TRUE) {
-      $dbal_column_definition = str_replace('DOUBLE PRECISION', 'DOUBLE PRECISION UNSIGNED', $dbal_column_definition);
-    }
-    if (isset($field['type']) && $field['type'] == 'numeric' && !empty($field['unsigned']) && (bool) $field['unsigned'] === TRUE) {
-      $dbal_column_definition = preg_replace('/NUMERIC\((.+)\)/', '$0 UNSIGNED', $dbal_column_definition);
-    }
-    // DBAL does not support per-column charset.
-    // @see https://github.com/doctrine/dbal/pull/881
-    if (isset($field['type']) && $field['type'] == 'varchar_ascii') {
-      $dbal_column_definition = preg_replace('/CHAR\(([0-9]+)\)/', '$0 CHARACTER SET ascii', $dbal_column_definition);
-    }
-    // DBAL does not support BINARY option for char/varchar columns.
-    if (isset($field['binary']) && $field['binary']) {
-      $dbal_column_definition = preg_replace('/CHAR\(([0-9]+)\)/', '$0 BINARY', $dbal_column_definition);
-    }
-    // Decode quotes.
-    $dbal_column_definition = strtr($dbal_column_definition, [
-      "]]]]QUOTEDELIMITERDRUBAL[[[[" => '\\\'',
-    ]);
+    // Let driver alter the column definition if required.
+    $this->drubalDriver->alterDbalColumnDefinition($dbal_column_definition, $options, $dbal_type, $field, $field_name);
 
     return $dbal_column_definition;
   }

@@ -490,6 +490,30 @@ class PDOMySql {
     }
   }
 
+  public function alterDbalColumnDefinition(&$dbal_column_definition, $options, $dbal_type, $field, $field_name) {
+    // DBAL does not support unsigned float/numeric columns.
+    // @see https://github.com/doctrine/dbal/issues/2380
+    if (isset($field['type']) && $field['type'] == 'float' && !empty($field['unsigned']) && (bool) $field['unsigned'] === TRUE) {
+      $dbal_column_definition = str_replace('DOUBLE PRECISION', 'DOUBLE PRECISION UNSIGNED', $dbal_column_definition);
+    }
+    if (isset($field['type']) && $field['type'] == 'numeric' && !empty($field['unsigned']) && (bool) $field['unsigned'] === TRUE) {
+      $dbal_column_definition = preg_replace('/NUMERIC\((.+)\)/', '$0 UNSIGNED', $dbal_column_definition);
+    }
+    // DBAL does not support per-column charset.
+    // @see https://github.com/doctrine/dbal/pull/881
+    if (isset($field['type']) && $field['type'] == 'varchar_ascii') {
+      $dbal_column_definition = preg_replace('/CHAR\(([0-9]+)\)/', '$0 CHARACTER SET ascii', $dbal_column_definition);
+    }
+    // DBAL does not support BINARY option for char/varchar columns.
+    if (isset($field['binary']) && $field['binary']) {
+      $dbal_column_definition = preg_replace('/CHAR\(([0-9]+)\)/', '$0 BINARY', $dbal_column_definition);
+    }
+    // Decode quotes.
+    $dbal_column_definition = strtr($dbal_column_definition, [
+      "]]]]QUOTEDELIMITERDRUBAL[[[[" => '\\\'',
+    ]);
+  }
+
   /**
    * Get information about the table and database name from the prefix.
    *
