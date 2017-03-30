@@ -353,13 +353,13 @@ class PDOMySql {
   /**
    * @todo
    */
-  public static function preCreateDatabase($database) {
+  public function preCreateDatabase($database) {
   }
 
   /**
    * @todo
    */
-  public static function postCreateDatabase($database) {
+  public function postCreateDatabase($database) {
     // Set the database as active.
     $this->drubalConnection->getDbalConnection()->exec("USE $database");
   }

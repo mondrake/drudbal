@@ -94,12 +94,7 @@ class Connection extends DatabaseConnection {
   }
 
   /**
-   * Destroys this Connection object.
-   *
-   * PHP does not destruct an object if it is still referenced in other
-   * variables. In case of PDO database connection objects, PHP only closes the
-   * connection when the PDO object is destructed, so any references to this
-   * object may cause the number of maximum allowed connections to be exceeded.
+   * {@inheritdoc}
    */
   public function destroy() {
     // Destroy all references to this connection by setting them to NULL.
