@@ -71,9 +71,9 @@ class PDOMySql {
   /**
    * The DRUBAL connection.
    *
-   * @todo should not be here, risk of circular reference.
+   * @var @todo
    */
-  protected $drubalConnection;
+  protected $connection;
 
   /**
    * The actual DBAL connection.
@@ -100,10 +100,10 @@ class PDOMySql {
    * Constructs a Connection object.
    */
   public function __construct(DrubalConnection $drubal_connection, DbalConnection $dbal_connection, $statement_class) {
-    $this->drubalConnection = $drubal_connection;
+    $this->connection = $drubal_connection;
     $this->dbalConnection = $dbal_connection;
     $this->statementClass = $statement_class;
-    $this->dbalConnection->getWrappedConnection()->setAttribute(\PDO::ATTR_STATEMENT_CLASS, [$this->statementClass, [$this->drubalConnection]]);
+    $this->dbalConnection->getWrappedConnection()->setAttribute(\PDO::ATTR_STATEMENT_CLASS, [$this->statementClass, [$this->connection]]);
   }
 
   /**
@@ -323,15 +323,15 @@ class PDOMySql {
     ];
 
     // Ensure that MySql has the right minimum version.
-    if (version_compare($this->drubalConnection->getDbServerVersion(), self::MYSQLSERVER_MINIMUM_VERSION, '<')) {
+    if (version_compare($this->connection->getDbServerVersion(), self::MYSQLSERVER_MINIMUM_VERSION, '<')) { // @todo use dbal connection
       $results['fail'][] = t("The MySQL server version %version is less than the minimum required version %minimum_version.", [
-        '%version' => $this->drubalConnection->getDbServerVersion(),
+        '%version' => $this->connection->getDbServerVersion(), // @todo use dbal connection
         '%minimum_version' => self::MYSQLSERVER_MINIMUM_VERSION,
       ]);
     }
 
     // Ensure that InnoDB is available.
-    $engines = $this->drubalConnection->query('SHOW ENGINES')->fetchAllKeyed();
+    $engines = $this->connection->query('SHOW ENGINES')->fetchAllKeyed(); // @todo use dbal connection
     if (isset($engines['MyISAM']) && $engines['MyISAM'] == 'DEFAULT' && !isset($engines['InnoDB'])) {
       $results['fail'][] = t('The MyISAM storage engine is not supported.');
     }
@@ -382,14 +382,14 @@ class PDOMySql {
    */
   public function postCreateDatabase($database) {
     // Set the database as active.
-    $this->drubalConnection->getDbalConnection()->exec("USE $database");
+    $this->connection->getDbalConnection()->exec("USE $database"); // @todo use dbal connection
   }
 
   /**
    * @todo
    */
   public function nextId($existing_id = 0) {
-    $new_id = $this->drubalConnection->query('INSERT INTO {sequences} () VALUES ()', [], ['return' => Database::RETURN_INSERT_ID]);
+    $new_id = $this->connection->query('INSERT INTO {sequences} () VALUES ()', [], ['return' => Database::RETURN_INSERT_ID]);
     // This should only happen after an import or similar event.
     if ($existing_id >= $new_id) {
       // If we INSERT a value manually into the sequences table, on the next
@@ -399,8 +399,8 @@ class PDOMySql {
       // other than duplicate keys. Instead, we use INSERT ... ON DUPLICATE KEY
       // UPDATE in such a way that the UPDATE does not do anything. This way,
       // duplicate keys do not generate errors but everything else does.
-      $this->drubalConnection->query('INSERT INTO {sequences} (value) VALUES (:value) ON DUPLICATE KEY UPDATE value = value', [':value' => $existing_id]);
-      $new_id = $this->drubalConnection->query('INSERT INTO {sequences} () VALUES ()', [], ['return' => Database::RETURN_INSERT_ID]);
+      $this->connection->query('INSERT INTO {sequences} (value) VALUES (:value) ON DUPLICATE KEY UPDATE value = value', [':value' => $existing_id]);
+      $new_id = $this->connection->query('INSERT INTO {sequences} () VALUES ()', [], ['return' => Database::RETURN_INSERT_ID]);
     }
     $this->needsCleanup = TRUE;
     return $new_id;
@@ -419,9 +419,9 @@ class PDOMySql {
     // be a problem in this case. Also, TRUNCATE resets the auto increment
     // counter.
     try {
-      $max_id = $this->drubalConnection->query('SELECT MAX(value) FROM {sequences}')->fetchField();
+      $max_id = $this->connection->query('SELECT MAX(value) FROM {sequences}')->fetchField();
       // We know we are using MySQL here, no need for the slower db_delete().
-      $this->drubalConnection->query('DELETE FROM {sequences} WHERE value < :value', [':value' => $max_id]);
+      $this->connection->query('DELETE FROM {sequences} WHERE value < :value', [':value' => $max_id]);
     }
     // During testing, this function is called from shutdown with the
     // simpletest prefix stored in $this->connection, and those tables are gone
@@ -436,16 +436,16 @@ class PDOMySql {
   }
 
   public function queryRange($query, $from, $count, array $args = [], array $options = []) {
-    return $this->drubalConnection->query($query . ' LIMIT ' . (int) $from . ', ' . (int) $count, $args, $options);
+    return $this->connection->query($query . ' LIMIT ' . (int) $from . ', ' . (int) $count, $args, $options);
   }
 
   public function queryTemporary($tablename, $query, array $args = [], array $options = []) {
-    return $this->drubalConnection->query('CREATE TEMPORARY TABLE {' . $tablename . '} Engine=MEMORY ' . $query, $args, $options);
+    return $this->connection->query('CREATE TEMPORARY TABLE {' . $tablename . '} Engine=MEMORY ' . $query, $args, $options);
   }
 
   public function releaseSavepoint($name) {
     try {
-      $this->drubalConnection->query('RELEASE SAVEPOINT ' . $name);
+      $this->connection->query('RELEASE SAVEPOINT ' . $name); // @todo use dbal connection
       return 'ok';
     }
     catch (DatabaseExceptionWrapper $e) {
@@ -462,7 +462,7 @@ class PDOMySql {
       if ($e->getPrevious()->getPrevious()->errorInfo[1] == '1305') {
         // We also have to explain to PDO that the transaction stack has
         // been cleaned-up.
-        $this->drubalConnection->commit();
+        $this->connection->commit();
         // If one SAVEPOINT was released automatically, then all were.
         // Therefore, clean the transaction stack.
         return 'all';
@@ -493,7 +493,7 @@ class PDOMySql {
     ];
     $dbal_table->addOption('charset', $table['mysql_character_set']);
     $dbal_table->addOption('engine', $table['mysql_engine']);
-    $info = $this->drubalConnection->getConnectionOptions();
+    $info = $this->connection->getConnectionOptions();
     $dbal_table->addOption('collate', empty($info['collation']) ? 'utf8mb4_general_ci' : $info['collation']);
   }
 
@@ -549,7 +549,7 @@ class PDOMySql {
       $sql .= ', ADD ' . $keys_sql[0];
       $primary_key_processed_by_driver = TRUE;
     }
-    $this->drubalConnection->query($sql);
+    $this->connection->query($sql);
     return TRUE;
   }
 
@@ -557,7 +557,7 @@ class PDOMySql {
     // DBAL would use an ALTER TABLE ... CHANGE statement that would not
     // preserve non-DBAL managed column attributes. Use MySql syntax here
     // instead.
-    $this->drubalConnection->query('ALTER TABLE {' . $table . '} ALTER COLUMN `' . $field . '` SET DEFAULT ' . $default);
+    $this->connection->query('ALTER TABLE {' . $table . '} ALTER COLUMN `' . $field . '` SET DEFAULT ' . $default);
     return TRUE;
   }
 
@@ -565,7 +565,7 @@ class PDOMySql {
     // DBAL would use an ALTER TABLE ... CHANGE statement that would not
     // preserve non-DBAL managed column attributes. Use MySql syntax here
     // instead.
-    $this->drubalConnection->query('ALTER TABLE {' . $table . '} ALTER COLUMN `' . $field . '` DROP DEFAULT');
+    $this->connection->query('ALTER TABLE {' . $table . '} ALTER COLUMN `' . $field . '` DROP DEFAULT');
     return TRUE;
   }
 
@@ -581,7 +581,7 @@ class PDOMySql {
     // DBAL does not support creating indexes with column lenghts.
     // @see https://github.com/doctrine/dbal/pull/2412
     if (($idx_cols = $this->dbalResolveIndexColumnNames($fields)) === FALSE) {
-      $this->drubalConnection->query('ALTER TABLE {' . $table . '} ADD PRIMARY KEY (' . $this->createKeySql($fields) . ')');
+      $this->connection->query('ALTER TABLE {' . $table . '} ADD PRIMARY KEY (' . $this->createKeySql($fields) . ')');
       return TRUE;
     }
   }
@@ -590,7 +590,7 @@ class PDOMySql {
     // DBAL does not support creating indexes with column lenghts.
     // @see https://github.com/doctrine/dbal/pull/2412
     if (($idx_cols = $this->dbalResolveIndexColumnNames($fields)) === FALSE) {
-      $this->drubalConnection->query('ALTER TABLE {' . $table . '} ADD UNIQUE KEY `' . $name . '` (' . $this->createKeySql($fields) . ')');
+      $this->connection->query('ALTER TABLE {' . $table . '} ADD UNIQUE KEY `' . $name . '` (' . $this->createKeySql($fields) . ')');
       return TRUE;
     }
   }
@@ -601,7 +601,7 @@ class PDOMySql {
     $spec['indexes'][$name] = $fields;
     $indexes = $this->getNormalizedIndexes($spec);
     if (($idx_cols = $this->dbalResolveIndexColumnNames($indexes[$name])) === FALSE) {
-      $this->drubalConnection->query('ALTER TABLE {' . $table . '} ADD INDEX `' . $name . '` (' . $this->createKeySql($indexes[$name]) . ')');
+      $this->connection->query('ALTER TABLE {' . $table . '} ADD INDEX `' . $name . '` (' . $this->createKeySql($indexes[$name]) . ')');
       return TRUE;
     }
   }
@@ -613,7 +613,7 @@ class PDOMySql {
    *   A keyed array with information about the database, table name and prefix.
    */
   public function getPrefixInfo($table = 'default', $add_prefix = TRUE) {
-    $info = ['prefix' => $this->drubalConnection->tablePrefix($table)];
+    $info = ['prefix' => $this->connection->tablePrefix($table)];
     if ($add_prefix) {
       $table = $info['prefix'] . $table;
     }
