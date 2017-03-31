@@ -5,14 +5,15 @@ namespace Drupal\Driver\Database\drubal\DBALDriver;
 use Drupal\Component\Utility\Unicode;
 use Drupal\Core\Database\Database;
 use Drupal\Core\Database\DatabaseExceptionWrapper;
+use Drupal\Core\Database\IntegrityConstraintViolationException;
 use Drupal\Core\Database\SchemaException;
 use Drupal\Core\Database\TransactionCommitFailedException;
 use Drupal\Driver\Database\drubal\Connection as DrubalConnection;
 
 use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\ConnectionException as DbalConnectionException;
-use Doctrine\DBAL\DriverManager as DBALDriverManager;
 use Doctrine\DBAL\DBALException;
+use Doctrine\DBAL\DriverManager as DBALDriverManager;
 
 /**
  * Driver specific methods for pdo_mysql.
@@ -68,6 +69,16 @@ class PDOMySql {
    * Maximum length of a column comment in MySQL.
    */
   const COMMENT_MAX_COLUMN = 255;
+
+  /**
+   * The minimal possible value for the max_allowed_packet setting of MySQL.
+   *
+   * @link https://mariadb.com/kb/en/mariadb/server-system-variables/#max_allowed_packet
+   * @link https://dev.mysql.com/doc/refman/5.7/en/server-system-variables.html#sysvar_max_allowed_packet
+   *
+   * @var int
+   */
+  const MIN_MAX_ALLOWED_PACKET = 1024;
 
   /**
    * The DRUBAL connection.
@@ -370,6 +381,48 @@ class PDOMySql {
   public function transactionalDDLSupport(array &$connection_options = []) {
     // MySQL never supports transactional DDL.
     return FALSE;
+  }
+
+  /**
+   * Wraps and re-throws any DBALException thrown by static::query().
+   *
+   * @param \Doctrine\DBAL\DBALException $e
+   *   The exception thrown by static::query().
+   * @param $query
+   *   The query executed by static::query().
+   * @param array $args
+   *   An array of arguments for the prepared statement.
+   * @param array $options
+   *   An associative array of options to control how the query is run.
+   *
+   * @return @todo
+   *
+   * @throws \Drupal\Core\Database\DatabaseExceptionWrapper
+   */
+  public function handleQueryDBALException(DBALException $e, $query, array $args = [], $options = []) {
+    if ($options['throw_exception']) {
+      // Wrap the exception in another exception, because PHP does not allow
+      // overriding Exception::getMessage(). Its message is the extra database
+      // debug information.
+      $query_string = ($query instanceof StatementInterface) ? $query->getQueryString() : $query;
+      $message = $e->getPrevious()->getMessage() . ": " . $query_string . "; " . print_r($args, TRUE);
+      // Match all SQLSTATE 23xxx errors.
+      if (substr($e->getPrevious()->getCode(), -6, -3) == '23') {
+        throw new IntegrityConstraintViolationException($message, $e->getPrevious()->getCode(), $e); // @todo pass $e or $e->getPrevious as last parm?
+      }
+      elseif ($e->getPrevious()->errorInfo[1] == 1153) {
+        // If a max_allowed_packet error occurs the message length is truncated.
+        // This should prevent the error from recurring if the exception is
+        // logged to the database using dblog or the like.
+        $message = Unicode::truncateBytes($e->getMessage(), self::MIN_MAX_ALLOWED_PACKET);
+        throw new DatabaseExceptionWrapper($message, $e->getCode(), $e->getPrevious());
+      }
+      else {
+        throw new DatabaseExceptionWrapper($message, 0, $e); // @todo pass $e or $e->getPrevious as last parm?
+      }
+    }
+
+    return NULL;
   }
 
   /**

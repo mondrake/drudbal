@@ -2,20 +2,20 @@
 
 namespace Drupal\Driver\Database\drubal;
 
-use Drupal\Core\Database\DatabaseExceptionWrapper;
-
-use Drupal\Core\Database\Database;
-use Drupal\Core\Database\DatabaseNotFoundException;
-use Drupal\Core\Database\TransactionCommitFailedException;
-use Drupal\Core\Database\DatabaseException;
-use Drupal\Core\Database\StatementInterface;
-use Drupal\Core\Database\Connection as DatabaseConnection;
 use Drupal\Component\Utility\Unicode;
+use Drupal\Core\Database\Connection as DatabaseConnection;
+use Drupal\Core\Database\Database;
+use Drupal\Core\Database\DatabaseException;
+use Drupal\Core\Database\DatabaseExceptionWrapper;
+use Drupal\Core\Database\DatabaseNotFoundException;
+use Drupal\Core\Database\IntegrityConstraintViolationException;
+use Drupal\Core\Database\StatementInterface;
+use Drupal\Core\Database\TransactionCommitFailedException;
 
 use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\ConnectionException as DbalConnectionException;
-use Doctrine\DBAL\Version as DbalVersion;
 use Doctrine\DBAL\DBALException;
+use Doctrine\DBAL\Version as DbalVersion;
 
 /**
  * DRUBAL implementation of \Drupal\Core\Database\Connection.
@@ -70,16 +70,6 @@ class Connection extends DatabaseConnection {
    * @var @todo
    */
   protected $drubalDriver;
-
-  /**
-   * The minimal possible value for the max_allowed_packet setting of MySQL.
-   *
-   * @link https://mariadb.com/kb/en/mariadb/server-system-variables/#max_allowed_packet
-   * @link https://dev.mysql.com/doc/refman/5.7/en/server-system-variables.html#sysvar_max_allowed_packet
-   *
-   * @var int
-   */
-  const MIN_MAX_ALLOWED_PACKET = 1024;
 
   /**
    * Constructs a Connection object.
@@ -207,53 +197,9 @@ class Connection extends DatabaseConnection {
           throw new \PDOException('Invalid return directive: ' . $options['return']);
       }
     }
-    catch (\PDOException $e) {
-      // Most database drivers will return NULL here, but some of them
-      // (e.g. the SQLite driver) may need to re-run the query, so the return
-      // value will be the same as for static::query().
-      return $this->handleQueryException($e, $query, $args, $options);
-    }
     catch (DBALException $e) {
-      return $this->handleQueryDBALException($e, $query, $args, $options);
+      return $this->drubalDriver->handleQueryDBALException($e, $query, $args, $options); // @todo csn we change and pass the normal method here??
     }
-    catch (DatabaseException $e) {  // @todo MySql specific.
-      if ($e->getPrevious()->errorInfo[1] == 1153) {
-        // If a max_allowed_packet error occurs the message length is truncated.
-        // This should prevent the error from recurring if the exception is
-        // logged to the database using dblog or the like.
-        $message = Unicode::truncateBytes($e->getMessage(), self::MIN_MAX_ALLOWED_PACKET);
-        $e = new DatabaseExceptionWrapper($message, $e->getCode(), $e->getPrevious());
-      }
-      throw $e;
-    }
-  }
-
-  /**
-   * Wraps and re-throws any DBALException thrown by static::query().
-   *
-   * @param \Doctrine\DBAL\DBALException $e
-   *   The exception thrown by static::query().
-   * @param $query
-   *   The query executed by static::query().
-   * @param array $args
-   *   An array of arguments for the prepared statement.
-   * @param array $options
-   *   An associative array of options to control how the query is run.
-   *
-   * @return @todo
-   *
-   * @throws \Drupal\Core\Database\DatabaseExceptionWrapper
-   */
-  protected function handleQueryDBALException(DBALException $e, $query, array $args = [], $options = []) {
-    if ($options['throw_exception']) {
-      // Wrap the exception in another exception, because PHP does not allow
-      // overriding Exception::getMessage(). Its message is the extra database
-      // debug information.
-      $query_string = ($query instanceof StatementInterface) ? $query->getQueryString() : $query;
-      $message = $e->getMessage() . ": " . $query_string . "; " . print_r($args, TRUE);
-      throw new DatabaseExceptionWrapper($message, 0, $e);
-    }
-    return NULL;
   }
 
   /**
