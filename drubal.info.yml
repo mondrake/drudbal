@@ -1,0 +1,4 @@
+name: Drubal
+type: module
+description: 'A database driver bridge to Doctrine DBAL.'
+core: 8.x
