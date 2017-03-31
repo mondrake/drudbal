@@ -6,12 +6,13 @@ use Drupal\Component\Utility\Unicode;
 use Drupal\Core\Database\Database;
 use Drupal\Core\Database\DatabaseExceptionWrapper;
 use Drupal\Core\Database\SchemaException;
+use Drupal\Core\Database\TransactionCommitFailedException;
 use Drupal\Driver\Database\drubal\Connection as DrubalConnection;
 
 use Doctrine\DBAL\Connection as DbalConnection;
+use Doctrine\DBAL\ConnectionException as DbalConnectionException;
 use Doctrine\DBAL\DriverManager as DBALDriverManager;
 use Doctrine\DBAL\DBALException;
-use Doctrine\DBAL\Exception\ConnectionException as DbalConnectionException;
 
 /**
  * Driver specific methods for pdo_mysql.
@@ -449,7 +450,7 @@ class PDOMySql {
       return 'ok';
     }
     catch (DatabaseExceptionWrapper $e) {
-      // However, in MySQL (InnoDB), savepoints are automatically committed
+      // In MySQL (InnoDB), savepoints are automatically committed
       // when tables are altered or created (DDL transactions are not
       // supported). This can cause exceptions due to trying to release
       // savepoints which no longer exist.
@@ -462,7 +463,12 @@ class PDOMySql {
       if ($e->getPrevious()->getPrevious()->errorInfo[1] == '1305') {
         // We also have to explain to PDO that the transaction stack has
         // been cleaned-up.
-        $this->connection->commit();
+        try {
+          $this->dbalConnection->commit();
+        }
+        catch (\Exception $e) {
+          throw new TransactionCommitFailedException();
+        }
         // If one SAVEPOINT was released automatically, then all were.
         // Therefore, clean the transaction stack.
         return 'all';
@@ -472,7 +478,6 @@ class PDOMySql {
       }
     }
   }
-
 
   /**
    * Returns the version of the database client.

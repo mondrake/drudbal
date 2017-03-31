@@ -13,6 +13,7 @@ use Drupal\Core\Database\Connection as DatabaseConnection;
 use Drupal\Component\Utility\Unicode;
 
 use Doctrine\DBAL\Connection as DbalConnection;
+use Doctrine\DBAL\ConnectionException as DbalConnectionException;
 use Doctrine\DBAL\Version as DbalVersion;
 use Doctrine\DBAL\DBALException;
 
@@ -338,8 +339,11 @@ class Connection extends DatabaseConnection {
       // If there are no more layers left then we should commit.
       unset($this->transactionLayers[$name]);
       if (empty($this->transactionLayers)) {
-        if (!$this->getDbalConnection()->commit()) {  // @todo DBAL does not return false, raises exception
-//          throw new TransactionCommitFailedException();
+        try {
+          $this->getDbalConnection()->commit();
+        }
+        catch (DbalConnectionException $e) {
+          throw new TransactionCommitFailedException();
         }
       }
       else {
