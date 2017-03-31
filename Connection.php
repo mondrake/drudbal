@@ -85,8 +85,7 @@ class Connection extends DatabaseConnection {
    */
   public function __construct(DbalConnection $dbal_connection, array $connection_options = []) {
     $drubal_dbal_driver_class = static::getDrubalDriverClass($dbal_connection->getDriver()->getName());
-    $this->drubalDriver = new $drubal_dbal_driver_class($this, $dbal_connection);
-    $dbal_connection->getWrappedConnection()->setAttribute(\PDO::ATTR_STATEMENT_CLASS, [$this->statementClass, [$this]]);  // @todo move to driver
+    $this->drubalDriver = new $drubal_dbal_driver_class($this, $dbal_connection, $this->statementClass);
     $this->transactionSupport = $this->drubalDriver->transactionSupport($connection_options);
     $this->transactionalDDLSupport = $this->drubalDriver->transactionalDDLSupport($connection_options);
     $this->setPrefix(isset($connection_options['prefix']) ? $connection_options['prefix'] : '');
@@ -111,12 +110,7 @@ class Connection extends DatabaseConnection {
    * {@inheritdoc}
    */
   public function destroy() {
-    // Destroy all references to this connection by setting them to NULL.
-    // The Statement class attribute only accepts a new value that presents a
-    // proper callable, so we reset it to PDOStatement.
-    if (!empty($this->statementClass)) {
-      $this->getDbalConnection()->getWrappedConnection()->setAttribute(\PDO::ATTR_STATEMENT_CLASS, ['PDOStatement', []]);
-    }
+    $this->drubalDriver->destroy();
     $this->schema = NULL;
   }
 

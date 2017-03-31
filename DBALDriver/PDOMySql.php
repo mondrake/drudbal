@@ -83,6 +83,13 @@ class PDOMySql {
   protected $dbalConnection;
 
   /**
+   * The name of the Statement class for the connection.
+   *
+   * @var string
+   */
+  protected $statementClass;
+
+  /**
    * Flag to indicate if the cleanup function in __destruct() should run.
    *
    * @var bool
@@ -92,9 +99,11 @@ class PDOMySql {
   /**
    * Constructs a Connection object.
    */
-  public function __construct(DrubalConnection $drubal_connection, DbalConnection $dbal_connection) {
+  public function __construct(DrubalConnection $drubal_connection, DbalConnection $dbal_connection, $statement_class) {
     $this->drubalConnection = $drubal_connection;
     $this->dbalConnection = $dbal_connection;
+    $this->statementClass = $statement_class;
+    $this->dbalConnection->getWrappedConnection()->setAttribute(\PDO::ATTR_STATEMENT_CLASS, [$this->statementClass, [$this->drubalConnection]]);
   }
 
   /**
@@ -144,6 +153,18 @@ class PDOMySql {
   public function __destruct() {
     if ($this->needsCleanup) {
       $this->nextIdDelete();
+    }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function destroy() {
+    // Destroy all references to this connection by setting them to NULL.
+    // The Statement class attribute only accepts a new value that presents a
+    // proper callable, so we reset it to PDOStatement.
+    if (!empty($this->statementClass)) {
+      $this->getDbalConnection()->getWrappedConnection()->setAttribute(\PDO::ATTR_STATEMENT_CLASS, ['PDOStatement', []]);
     }
   }
 
