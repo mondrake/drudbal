@@ -325,62 +325,6 @@ class Connection extends DatabaseConnection {
   }
 
   /**
-   * Rolls back the transaction entirely or to a named savepoint.
-   *
-   * This method throws an exception if no transaction is active.
-   *
-   * @param string $savepoint_name
-   *   (optional) The name of the savepoint. The default, 'drupal_transaction',
-   *    will roll the entire transaction back.
-   *
-   * @throws \Drupal\Core\Database\TransactionOutOfOrderException
-   * @throws \Drupal\Core\Database\TransactionNoActiveException
-   *
-   * @see \Drupal\Core\Database\Transaction::rollBack()
-   */
-  public function rollBack($savepoint_name = 'drupal_transaction') {
-    if (!$this->supportsTransactions()) {
-      return;
-    }
-    if (!$this->inTransaction()) {
-      throw new TransactionNoActiveException();
-    }
-    // A previous rollback to an earlier savepoint may mean that the savepoint
-    // in question has already been accidentally committed.
-    if (!isset($this->transactionLayers[$savepoint_name])) {
-      throw new TransactionNoActiveException();
-    }
-
-    // We need to find the point we're rolling back to, all other savepoints
-    // before are no longer needed. If we rolled back other active savepoints,
-    // we need to throw an exception.
-    $rolled_back_other_active_savepoints = FALSE;
-    while ($savepoint = array_pop($this->transactionLayers)) {
-      if ($savepoint == $savepoint_name) {
-        // If it is the last the transaction in the stack, then it is not a
-        // savepoint, it is the transaction itself so we will need to roll back
-        // the transaction rather than a savepoint.
-        if (empty($this->transactionLayers)) {
-          break;
-        }
-        $this->query('ROLLBACK TO SAVEPOINT ' . $savepoint);
-        $this->popCommittableTransactions();
-        if ($rolled_back_other_active_savepoints) {
-          throw new TransactionOutOfOrderException();
-        }
-        return;
-      }
-      else {
-        $rolled_back_other_active_savepoints = TRUE;
-      }
-    }
-    $this->getDbalConnection()->rollBack();
-    if ($rolled_back_other_active_savepoints) {
-      throw new TransactionOutOfOrderException();
-    }
-  }
-
-  /**
    * {@inheritdoc}
    */
   protected function popCommittableTransactions() {
