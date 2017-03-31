@@ -76,7 +76,7 @@ class Connection extends DatabaseConnection {
    */
   public function __construct(DbalConnection $dbal_connection, array $connection_options = []) {
     $drubal_dbal_driver_class = static::getDrubalDriverClass($dbal_connection->getDriver()->getName());
-    $this->drubalDriver = new $drubal_dbal_driver_class($this, $dbal_connection, $this->statementClass);
+    $this->drubalDriver = new $drubal_dbal_driver_class($this, $dbal_connection);
     $this->transactionSupport = $this->drubalDriver->transactionSupport($connection_options);
     $this->transactionalDDLSupport = $this->drubalDriver->transactionalDDLSupport($connection_options);
     $this->setPrefix(isset($connection_options['prefix']) ? $connection_options['prefix'] : '');

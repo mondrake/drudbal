@@ -7,6 +7,7 @@ use Drupal\Core\Database\Database;
 use Drupal\Core\Database\DatabaseExceptionWrapper;
 use Drupal\Core\Database\IntegrityConstraintViolationException;
 use Drupal\Core\Database\SchemaException;
+use Drupal\Core\Database\Statement;
 use Drupal\Core\Database\TransactionCommitFailedException;
 use Drupal\Driver\Database\drubal\Connection as DrubalConnection;
 
@@ -95,13 +96,6 @@ class PDOMySql {
   protected $dbalConnection;
 
   /**
-   * The name of the Statement class for the connection.
-   *
-   * @var string
-   */
-  protected $statementClass;
-
-  /**
    * Flag to indicate if the cleanup function in __destruct() should run.
    *
    * @var bool
@@ -111,11 +105,10 @@ class PDOMySql {
   /**
    * Constructs a Connection object.
    */
-  public function __construct(DrubalConnection $drubal_connection, DbalConnection $dbal_connection, $statement_class) {
+  public function __construct(DrubalConnection $drubal_connection, DbalConnection $dbal_connection) {
     $this->connection = $drubal_connection;
     $this->dbalConnection = $dbal_connection;
-    $this->statementClass = $statement_class;
-    $this->dbalConnection->getWrappedConnection()->setAttribute(\PDO::ATTR_STATEMENT_CLASS, [$this->statementClass, [$this->connection]]);
+    $this->dbalConnection->getWrappedConnection()->setAttribute(\PDO::ATTR_STATEMENT_CLASS, [Statement::class, [$this->connection]]);
   }
 
   /**
