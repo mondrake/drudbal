@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\drubal\Tests;
+namespace Drupal\drudbal\Tests;
 
 use Drupal\Core\Database\Database;
 use Drupal\Core\Database\IntegrityConstraintViolationException;
@@ -8,7 +8,7 @@ use Drupal\Core\Database\IntegrityConstraintViolationException;
 /**
  * Tests handling of some invalid data.
  *
- * @group Drubal
+ * @group DruDbal
  */
 class InvalidDataTest extends DatabaseTestBase {
   /**

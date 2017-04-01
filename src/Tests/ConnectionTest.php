@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\drubal\Tests;
+namespace Drupal\drudbal\Tests;
 
 use Drupal\Core\Database\Database;
 use Drupal\Core\Database\DatabaseExceptionWrapper;
@@ -8,7 +8,7 @@ use Drupal\Core\Database\DatabaseExceptionWrapper;
 /**
  * Tests of the core database system.
  *
- * @group Drubal
+ * @group DruDbal
  */
 class ConnectionTest extends DatabaseTestBase {
 

@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\drubal\Tests;
+namespace Drupal\drudbal\Tests;
 
 use Drupal\Core\Database\Database;
 use Drupal\Core\Database\TransactionOutOfOrderException;
@@ -25,7 +25,7 @@ use Drupal\Core\Database\TransactionNoActiveException;
  *     Do more stuff
  *     Should still be in transaction A
  *
- * @group Drubal
+ * @group DruDbal
  */
 class TransactionTest extends DatabaseTestBase {
 

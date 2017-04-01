@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\drubal\Tests;
+namespace Drupal\drudbal\Tests;
 
 use Drupal\Core\Database\Database;
 use Drupal\Core\Database\SchemaException;
@@ -12,7 +12,7 @@ use Drupal\Component\Utility\Unicode;
 /**
  * Tests table creation and modification via the schema API.
  *
- * @group Drubal
+ * @group DruDbal
  */
 class SchemaTest extends WebTestBase {
 

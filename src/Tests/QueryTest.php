@@ -1,11 +1,11 @@
 <?php
 
-namespace Drupal\drubal\Tests;
+namespace Drupal\drudbal\Tests;
 
 /**
  * Tests Drupal's extended prepared statement syntax..
  *
- * @group Drubal
+ * @group DruDbal
  */
 class QueryTest extends DatabaseTestBase {
 

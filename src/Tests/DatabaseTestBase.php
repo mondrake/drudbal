@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\drubal\Tests;
+namespace Drupal\drudbal\Tests;
 
 use Drupal\simpletest\WebTestBase;
 
