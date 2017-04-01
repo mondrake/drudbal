@@ -41,14 +41,14 @@ class Schema extends DatabaseSchema {
   /**
    * @todo
    */
-  protected $drubalDriver;
+  protected $druDbalDriver;
 
   /**
    * @todo
    */
   public function __construct($connection) {
     parent::__construct($connection);
-    $this->drubalDriver = $this->connection->getDrubalDriver();
+    $this->druDbalDriver = $this->connection->getDruDbalDriver();
     $this->dbalSchemaManager = $this->connection->getDbalConnection()->getSchemaManager();
     $this->dbalPlatform = $this->connection->getDbalConnection()->getDatabasePlatform();
   }
@@ -57,7 +57,7 @@ class Schema extends DatabaseSchema {
    * @todo
    */
   protected function getPrefixedTableName($table) {
-    return $this->drubalDriver->getPrefixInfo($table)['table'];
+    return $this->druDbalDriver->getPrefixInfo($table)['table'];
   }
 
   /**
@@ -73,12 +73,12 @@ class Schema extends DatabaseSchema {
     $new_table = $schema->createTable($this->getPrefixedTableName($name));
 
     // Delegate adding options to driver.
-    $this->drubalDriver->delegateCreateTableSetOptions($new_table, $schema, $table, $name);
+    $this->druDbalDriver->delegateCreateTableSetOptions($new_table, $schema, $table, $name);
 
     // Add table comment.
     if (!empty($table['description'])) {
       $comment = $this->connection->prefixTables($table['description']);
-      $comment = $this->drubalDriver->alterSetTableComment($comment, $name, $schema, $table);
+      $comment = $this->druDbalDriver->alterSetTableComment($comment, $name, $schema, $table);
       $new_table->addOption('comment', $this->prepareComment($comment));
     }
 
@@ -128,7 +128,7 @@ class Schema extends DatabaseSchema {
     $dbal_type = NULL;
 
     // Delegate to driver.
-    if ($this->drubalDriver->delegateGetDbalColumnType($dbal_type, $field)) {
+    if ($this->druDbalDriver->delegateGetDbalColumnType($dbal_type, $field)) {
       return $dbal_type;
     }
 
@@ -183,7 +183,7 @@ class Schema extends DatabaseSchema {
         }
       }
       else {
-        $options['default'] = $this->drubalDriver->encodeDefaultValue($field['default']);
+        $options['default'] = $this->druDbalDriver->encodeDefaultValue($field['default']);
       }
     }
 
@@ -193,18 +193,18 @@ class Schema extends DatabaseSchema {
 
     if (!empty($field['description'])) {
       $comment = $this->connection->prefixTables($field['description']);
-      $comment = $this->drubalDriver->alterSetColumnComment($comment, $dbal_type, $field, $field_name);
+      $comment = $this->druDbalDriver->alterSetColumnComment($comment, $dbal_type, $field, $field_name);
       $options['comment'] = $this->prepareComment($comment);
     }
 
     // Let driver alter the column options if required.
-    $this->drubalDriver->alterDbalColumnOptions($options, $dbal_type, $field, $field_name);
+    $this->druDbalDriver->alterDbalColumnOptions($options, $dbal_type, $field, $field_name);
 
     // Get the column definition from DBAL, and trim the field name.
     $dbal_column_definition = substr($this->dbalPlatform->getColumnDeclarationSQL($field_name, $options), strlen($field_name) + 1);
 
     // Let driver alter the column definition if required.
-    $this->drubalDriver->alterDbalColumnDefinition($dbal_column_definition, $options, $dbal_type, $field, $field_name);
+    $this->druDbalDriver->alterDbalColumnDefinition($dbal_column_definition, $options, $dbal_type, $field, $field_name);
 
     return $dbal_column_definition;
   }
@@ -367,7 +367,7 @@ class Schema extends DatabaseSchema {
     }
 
     // Delegate to driver.
-    if ($this->drubalDriver->delegateFieldSetDefault($table, $field, $this->escapeDefaultValue($default))) {
+    if ($this->druDbalDriver->delegateFieldSetDefault($table, $field, $this->escapeDefaultValue($default))) {
       return;
     }
 
@@ -390,7 +390,7 @@ class Schema extends DatabaseSchema {
     }
 
     // Delegate to driver.
-    if ($this->drubalDriver->delegateFieldSetNoDefault($table, $field)) {
+    if ($this->druDbalDriver->delegateFieldSetNoDefault($table, $field)) {
       return;
     }
 
@@ -414,7 +414,7 @@ class Schema extends DatabaseSchema {
 
     // Delegate to driver.
     $result = FALSE;
-    if ($this->drubalDriver->delegateIndexExists($result, $table, $name)) {
+    if ($this->druDbalDriver->delegateIndexExists($result, $table, $name)) {
       return $result;
     }
 
@@ -436,7 +436,7 @@ class Schema extends DatabaseSchema {
     }
 
     // Delegate to driver.
-    if ($this->drubalDriver->delegateAddPrimaryKey($current_schema, $table, $fields)) {
+    if ($this->druDbalDriver->delegateAddPrimaryKey($current_schema, $table, $fields)) {
       return;
     }
 
@@ -480,7 +480,7 @@ class Schema extends DatabaseSchema {
     }
 
     // Delegate to driver.
-    if ($this->drubalDriver->delegateAddUniqueKey($table, $name, $fields)) {
+    if ($this->druDbalDriver->delegateAddUniqueKey($table, $name, $fields)) {
       return;
     }
 
@@ -511,7 +511,7 @@ class Schema extends DatabaseSchema {
     }
 
     // Delegate to driver.
-    if ($this->drubalDriver->delegateAddIndex($table, $name, $fields, $spec)) {
+    if ($this->druDbalDriver->delegateAddIndex($table, $name, $fields, $spec)) {
       return;
     }
 
@@ -552,7 +552,7 @@ class Schema extends DatabaseSchema {
     // fallback to platform specific syntax.
     // @see https://github.com/doctrine/dbal/issues/1033
     $primary_key_processed_by_driver = FALSE;
-    if (!$this->drubalDriver->delegateChangeField($primary_key_processed_by_driver, $table, $field, $field_new, $spec, $keys_new, $dbal_column_definition)) {
+    if (!$this->druDbalDriver->delegateChangeField($primary_key_processed_by_driver, $table, $field, $field_new, $spec, $keys_new, $dbal_column_definition)) {
       return;
     }
 
@@ -602,7 +602,7 @@ class Schema extends DatabaseSchema {
     $comment = NULL;
 
     // Delegate to driver.
-    if ($this->drubalDriver->delegateGetComment($comment, $dbal_schema, $table, $column)) {
+    if ($this->druDbalDriver->delegateGetComment($comment, $dbal_schema, $table, $column)) {
       return $comment;
     }
 
@@ -610,7 +610,7 @@ class Schema extends DatabaseSchema {
     if (isset($column)) {
       $comment = $dbal_schema->getTable($this->getPrefixedTableName($table))->getColumn($column)->getComment();
       // Let driver cleanup the comment if necessary.
-      $this->drubalDriver->alterGetComment($comment, $dbal_schema, $table, $column);
+      $this->druDbalDriver->alterGetComment($comment, $dbal_schema, $table, $column);
       return $comment;
     }
     // DBAL cannot retrieve table comments from introspected schema. Driver

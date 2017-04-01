@@ -1,15 +1,15 @@
 <?php
 
-namespace Drupal\Driver\Database\drubal\Install;
+namespace Drupal\Driver\Database\dbal\Install;
 
 use Drupal\Core\Database\Install\Tasks as InstallTasks;
 use Drupal\Core\Database\Database;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\Driver\Database\drubal\Connection as DrubalConnection;
+use Drupal\Driver\Database\dbal\Connection as DruDbalConnection;
 use Doctrine\DBAL\DriverManager as DBALDriverManager;
 
 /**
- * Specifies installation tasks for DRUBAL driver.
+ * Specifies installation tasks for DruDbal driver.
  *
  * Note: there should not be db platform specific code here. Any tasks that
  * cannot be managed by Doctrine DBAL should be added to driver specific code
@@ -19,7 +19,7 @@ use Doctrine\DBAL\DriverManager as DBALDriverManager;
 class Tasks extends InstallTasks {
 
   /**
-   * Constructs a \Drupal\Driver\Database\drubal\Install\Tasks object.
+   * Constructs a \Drupal\Driver\Database\dbal\Install\Tasks object.
    */
   public function __construct() {
     $this->tasks[] = [
@@ -79,7 +79,7 @@ class Tasks extends InstallTasks {
         $dbal_connection_info['driver'] = $dbal_connection_info['dbal_driver'];
       }
       $dbal_connection = DBALDriverManager::getConnection($dbal_connection_info);
-      $dbal_driver_class = DrubalConnection::getDrubalDriverClass($dbal_connection->getDriver()->getName());
+      $dbal_driver_class = DruDbalConnection::getDruDbalDriverClass($dbal_connection->getDriver()->getName());
       $results = $dbal_driver_class::installConnect();
       foreach ($results['pass'] as $result) {
         $this->pass($result);
@@ -113,7 +113,7 @@ class Tasks extends InstallTasks {
       '#required' => TRUE,
       '#states' => [
         'required' => [
-          ':input[name=driver]' => ['value' => 'drubal'],
+          ':input[name=driver]' => ['value' => 'dbal'],
         ],
       ],
     ];
@@ -142,8 +142,8 @@ class Tasks extends InstallTasks {
     // Opens a DBAL connection just to retrieve the actual DBAL driver being
     // used, so that it does get stored in the settings.
     try {
-      $dbal_connection = DBALDriverManager::getConnection($form_state->getValue('drubal'));
-      $form_state->setValue(['drubal', 'dbal_driver'], $dbal_connection->getDriver()->getName());
+      $dbal_connection = DBALDriverManager::getConnection($form_state->getValue('dbal'));
+      $form_state->setValue(['dbal', 'dbal_driver'], $dbal_connection->getDriver()->getName());
     }
     catch (\Exception $e) {
       $this->fail($e->getMessage());

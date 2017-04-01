@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\Driver\Database\drubal\DBALDriver;
+namespace Drupal\Driver\Database\dbal\DBALDriver;
 
 use Drupal\Component\Utility\Unicode;
 use Drupal\Core\Database\Database;
@@ -9,7 +9,7 @@ use Drupal\Core\Database\IntegrityConstraintViolationException;
 use Drupal\Core\Database\SchemaException;
 use Drupal\Core\Database\Statement;
 use Drupal\Core\Database\TransactionCommitFailedException;
-use Drupal\Driver\Database\drubal\Connection as DrubalConnection;
+use Drupal\Driver\Database\dbal\Connection as DruDbalConnection;
 
 use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\ConnectionException as DbalConnectionException;
@@ -82,7 +82,7 @@ class PDOMySql {
   const MIN_MAX_ALLOWED_PACKET = 1024;
 
   /**
-   * The DRUBAL connection.
+   * The DruDbal connection.
    *
    * @var @todo
    */
@@ -105,8 +105,8 @@ class PDOMySql {
   /**
    * Constructs a Connection object.
    */
-  public function __construct(DrubalConnection $drubal_connection, DbalConnection $dbal_connection) {
-    $this->connection = $drubal_connection;
+  public function __construct(DruDbalConnection $drudbal_connection, DbalConnection $dbal_connection) {
+    $this->connection = $drudbal_connection;
     $this->dbalConnection = $dbal_connection;
     $this->dbalConnection->getWrappedConnection()->setAttribute(\PDO::ATTR_STATEMENT_CLASS, [Statement::class, [$this->connection]]);
   }
@@ -565,7 +565,7 @@ class PDOMySql {
 
   public function encodeDefaultValue($string) {
     return strtr($string, [
-      '\'' => "]]]]QUOTEDELIMITERDRUBAL[[[[",
+      '\'' => "]]]]QUOTEDELIMITERDRUDBAL[[[[",
     ]);
   }
 
@@ -589,7 +589,7 @@ class PDOMySql {
     }
     // Decode quotes.
     $dbal_column_definition = strtr($dbal_column_definition, [
-      "]]]]QUOTEDELIMITERDRUBAL[[[[" => '\\\'',
+      "]]]]QUOTEDELIMITERDRUDBAL[[[[" => '\\\'',
     ]);
   }
 
@@ -914,7 +914,7 @@ class PDOMySql {
       }
     }
     if (!empty($spec['indexes'])) {
-      $indexes = $this->drubalDriver->getNormalizedIndexes($spec);
+      $indexes = $this->druDbalDriver->getNormalizedIndexes($spec);
       foreach ($indexes as $index => $fields) {
         $keys[] = 'INDEX `' . $index . '` (' . $this->createKeySql($fields) . ')';
       }
