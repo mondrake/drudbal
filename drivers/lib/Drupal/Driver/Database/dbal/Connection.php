@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\Driver\Database\drubal;
+namespace Drupal\Driver\Database\dbal;
 
 use Drupal\Component\Utility\Unicode;
 use Drupal\Core\Database\Connection as DatabaseConnection;
@@ -18,11 +18,11 @@ use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\Version as DbalVersion;
 
 /**
- * DRUBAL implementation of \Drupal\Core\Database\Connection.
+ * DruDbal implementation of \Drupal\Core\Database\Connection.
  *
  * Note: there should not be db platform specific code here. Any tasks that
  * cannot be managed by Doctrine DBAL should be added to driver specific code
- * in Drupal\Driver\Database\drubal\DBALDriver\[driver_name] classes and
+ * in Drupal\Driver\Database\dbal\DBALDriver\[driver_name] classes and
  * execution handed over to there.
  */
 class Connection extends DatabaseConnection {
