@@ -67,30 +67,29 @@ class Tasks extends InstallTasks {
    */
   protected function connect() {
     try {
-      // Just set the active connection to default. This doesn't actually
-      // test the connection.
+      // Just set the active connection to default. This doesn't actually test
+      // the connection.
       Database::setActiveConnection();
-      // Find the DBAL driver class to hand over connection checks to.
-      $dbal_connection_info = Database::getConnectionInfo()['default'];
-      if (empty($dbal_connection_info)) {
-        throw new \Exception('No connection information available');
-      }
-      if (isset($dbal_connection_info['dbal_driver'])) {
-        $dbal_connection_info['driver'] = $dbal_connection_info['dbal_driver'];
-      }
-      $dbal_connection = DBALDriverManager::getConnection($dbal_connection_info);
-      $dbal_driver_class = DruDbalConnection::getDruDbalDriverClass($dbal_connection->getDriver()->getName());
-      $results = $dbal_driver_class::installConnect();
-      foreach ($results['pass'] as $result) {
-        $this->pass($result);
-      }
-      foreach ($results['fail'] as $result) {
-        $this->fail($result);
-      }
+      // Now actually do a check.
+      $connection = Database::getConnection();
+      $results['pass'][] = t('Drupal can CONNECT to the database ok.');
     }
     catch (\Exception $e) {
+      if (isset($connection)) {
+        $results = $connection->getDbalDriver()->installConnectException();
+        foreach ($results['pass'] as $result) {
+          $this->pass($result);
+        }
+        foreach ($results['fail'] as $result) {
+          $this->fail($result);
+        }
+      }
+      else {
+        $this->fail($e->getMessage());
+      }
       $this->fail(t('Failed to connect to your database server. The server reports the following message: %error.<ul><li>Is the database server running?</li><li>Does the database exist, and have you entered the correct database name?</li><li>Have you entered the correct username and password?</li><li>Have you entered the correct database hostname?</li></ul>', ['%error' => $e->getMessage()]));
     }
+
     return empty($results['fail']);
   }
 
