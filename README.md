@@ -1,4 +1,4 @@
-# drudbal
+# DruDbal
 A database driver bridge to Doctrine DBAL.
 
 ## Database configuration
