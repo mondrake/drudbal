@@ -113,7 +113,7 @@ class Tasks extends InstallTasks {
     $form['dbal_url'] = [
       '#type' => 'textarea',
       '#title' => t('Database URL'),
-      '#description' => t('@todo point to Doctrine docs http://docs.doctrine-project.org/projects/doctrine-dbal/en/latest/reference/configuration.html. MySql example: mysql://dbuser:password@localhost:port/mydb'),
+      '#description' => t('The database URL. See <a href="http://docs.doctrine-project.org/projects/doctrine-dbal/en/latest/reference/configuration.html#connecting-using-a-url" target="_blank">Doctrine DBAL documentation</a> for details.'),
       '#default_value' => empty($database['dbal_url']) ? '' : $database['dbal_url'],
       '#rows' => 3,
       '#size' => 45,
