@@ -124,12 +124,27 @@ class PDOMySql {
    * {@inheritdoc}
    */
   public static function open(array &$connection_options = []) {
+//var_export($connection_options);
     try {
       static::preConnectionOpen($connection_options);
       $options = array_diff_key($connection_options, [
         'namespace' => NULL,
         'prefix' => NULL,
+// @todo remap
+// @todo advanced_options are written to settings.php
+        'driver' => NULL,
+        'database' => NULL,
+        'username' => NULL,
+        'password' => NULL,
+        'host' => NULL,
+        'port' => NULL,
+        'dbal_url' => NULL,
+        'dbal_driver' => NULL,
+        'advanced_options' => NULL,
       ]);
+      $options['url'] = $connection_options['dbal_url'];
+      $options['driver'] = $connection_options['dbal_driver'];
+//var_export($options);die;
       $dbal_connection = DBALDriverManager::getConnection($options);
       static::postConnectionOpen($dbal_connection, $connection_options);
     }

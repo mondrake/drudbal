@@ -100,28 +100,37 @@ class Tasks extends InstallTasks {
   public function getFormOptions(array $database) {
     $form = parent::getFormOptions($database);
 
-    // Remove the options that only apply to client/server style databases.
-    unset($form['database'], $form['username'], $form['password'], $form['advanced_options']['host'], $form['advanced_options']['port']);
+    // Hide the options, will be resolved while processing the Dbal URL.
+    $form['database']['#type'] = 'hidden';
+    $form['database']['#required'] = FALSE;
+    $form['username']['#type'] = 'hidden';
+    $form['username']['#required'] = FALSE;
+    $form['password']['#type'] = 'hidden';
+    $form['advanced_options']['host']['#type'] = 'hidden';
+    $form['advanced_options']['port']['#type'] = 'hidden';
 
-    $form['url'] = [
+    // Add a Dbal URL entry field.
+    $form['dbal_url'] = [
       '#type' => 'textarea',
       '#title' => t('Database URL'),
       '#description' => t('@todo point to Doctrine docs http://docs.doctrine-project.org/projects/doctrine-dbal/en/latest/reference/configuration.html. MySql example: mysql://dbuser:password@localhost:port/mydb'),
-      '#default_value' => empty($database['url']) ? '' : $database['url'],
+      '#default_value' => empty($database['dbal_url']) ? '' : $database['dbal_url'],
       '#rows' => 3,
       '#size' => 45,
       '#required' => TRUE,
+      '#element_validate' => [[$this, 'validateDBALUrl']],
       '#states' => [
         'required' => [
           ':input[name=driver]' => ['value' => 'dbal'],
         ],
       ],
     ];
+
+    // Add a hidden field for the Dbal driver.
     $form['dbal_driver'] = [
       '#type' => 'hidden',
       '#title' => t('DBAL driver'),
       '#default_value' => empty($database['dbal_driver']) ? '' : $database['dbal_driver'],
-      '#element_validate' => [[$this, 'validateDBALDriver']],
     ];
 
     return $form;
@@ -131,18 +140,17 @@ class Tasks extends InstallTasks {
    * @todo Validates the 'url' field of the installation form.
    */
   public function validateDBALUrl(array $element, FormStateInterface $form_state, array $form) {
-    // At least some basic form of validation of the first component of the
-    // URL, i.e. the DBAL driver.
-  }
-
-  /**
-   * Validates the 'dbal_driver' field of the installation form.
-   */
-  public function validateDBALDriver(array $element, FormStateInterface $form_state, array $form) {
     // Opens a DBAL connection just to retrieve the actual DBAL driver being
     // used, so that it does get stored in the settings.
     try {
-      $dbal_connection = DBALDriverManager::getConnection($form_state->getValue('dbal'));
+      $options = [];
+      $options['url'] = $form_state->getValue(['dbal', 'dbal_url']);
+      $dbal_connection = DBALDriverManager::getConnection($options);
+      $form_state->setValue(['dbal', 'database'], $dbal_connection->getDatabase());
+      $form_state->setValue(['dbal', 'username'], $dbal_connection->getUsername());
+      $form_state->setValue(['dbal', 'password'], $dbal_connection->getPassword());
+      $form_state->setValue(['dbal', 'advanced_options', 'host'], $dbal_connection->getHost());
+      $form_state->setValue(['dbal', 'advanced_options', 'port'], $dbal_connection->getPort());
       $form_state->setValue(['dbal', 'dbal_driver'], $dbal_connection->getDriver()->getName());
     }
     catch (\Exception $e) {
