@@ -262,108 +262,6 @@ class PDOMySql {
   /**
    * @todo
    */
-  public function installConnectException() {
-    $results = [
-      'fail' => [],
-      'pass' => [],
-    ];
-
-    // @todo check exc level for getCode
-    // Detect utf8mb4 incompability.
-    if ($e->getCode() == self::UNSUPPORTED_CHARSET || ($e->getCode() == self::SQLSTATE_SYNTAX_ERROR && $e->errorInfo[1] == self::UNKNOWN_CHARSET)) {
-      $results['fail'][] = t('Your MySQL server and PHP MySQL driver must support utf8mb4 character encoding. Make sure to use a database system that supports this (such as MySQL/MariaDB/Percona 5.5.3 and up), and that the utf8mb4 character set is compiled in. See the <a href=":documentation" target="_blank">MySQL documentation</a> for more information.', [':documentation' => 'https://dev.mysql.com/doc/refman/5.0/en/cannot-initialize-character-set.html']);
-      $info = Database::getConnectionInfo();
-      $info_copy = $info;
-      // Set a flag to fall back to utf8. Note: this flag should only be
-      // used here and is for internal use only.
-      $info_copy['default']['_dsn_utf8_fallback'] = TRUE;
-      // In order to change the Database::$databaseInfo array, we need to
-      // remove the active connection, then re-add it with the new info.
-      Database::removeConnection('default');
-      Database::addConnectionInfo('default', 'default', $info_copy['default']);
-      // Connect with the new database info, using the utf8 character set so
-      // that we can run the checkEngineVersion test.
-      Database::getConnection();
-      // Revert to the old settings.
-      Database::removeConnection('default');
-      Database::addConnectionInfo('default', 'default', $info['default']);
-    }
-    // Attempt to create the database if it is not found.
-    elseif ($e->getCode() == self::DATABASE_NOT_FOUND) {
-      // Remove the database string from connection info.
-      $connection_info = Database::getConnectionInfo();
-      $database = $connection_info['default']['database'];
-      unset($connection_info['default']['database']);
-
-      // In order to change the Database::$databaseInfo array, need to remove
-      // the active connection, then re-add it with the new info.
-      Database::removeConnection('default');
-      Database::addConnectionInfo('default', 'default', $connection_info['default']);
-
-      try {
-        // Now, attempt the connection again; if it's successful, attempt to
-        // create the database.
-        Database::getConnection()->createDatabase($database);
-      }
-      catch (DatabaseNotFoundException $e) {
-        // Still no dice; probably a permission issue. Raise the error to the
-        // installer.
-        $results['fail'][] = t('Database %database not found. The server reports the following message when attempting to create the database: %error.', ['%database' => $database, '%error' => $e->getMessage()]);
-      }
-    }
-    else {
-      // Database connection failed for some other reason than the database
-      // not existing.
-      $results['fail'][] = t('Failed to connect to your database server. The server reports the following message: %error.<ul><li>Is the database server running?</li><li>Does the database exist or does the database user have sufficient privileges to create the database?</li><li>Have you entered the correct database name?</li><li>Have you entered the correct username and password?</li><li>Have you entered the correct database hostname?</li></ul>', ['%error' => $e->getMessage()]);
-    }
-    return $results;
-  }
-
-  /**
-   * @todo
-   */
-  public function runInstallTasks() {
-    $results = [
-      'fail' => [],
-      'pass' => [],
-    ];
-
-    // Ensure that MySql has the right minimum version.
-    if (version_compare($this->connection->getDbServerVersion(), self::MYSQLSERVER_MINIMUM_VERSION, '<')) { // @todo use dbal connection
-      $results['fail'][] = t("The MySQL server version %version is less than the minimum required version %minimum_version.", [
-        '%version' => $this->connection->getDbServerVersion(), // @todo use dbal connection
-        '%minimum_version' => self::MYSQLSERVER_MINIMUM_VERSION,
-      ]);
-    }
-
-    // Ensure that InnoDB is available.
-    $engines = $this->connection->query('SHOW ENGINES')->fetchAllKeyed(); // @todo use dbal connection
-    if (isset($engines['MyISAM']) && $engines['MyISAM'] == 'DEFAULT' && !isset($engines['InnoDB'])) {
-      $results['fail'][] = t('The MyISAM storage engine is not supported.');
-    }
-
-    // Ensure that the MySQL driver supports utf8mb4 encoding.
-    $version = $this->clientVersion();
-    if (FALSE !== strpos($version, 'mysqlnd')) {
-      // The mysqlnd driver supports utf8mb4 starting at version 5.0.9.
-      $version = preg_replace('/^\D+([\d.]+).*/', '$1', $version);
-      if (version_compare($version, self::MYSQLND_MINIMUM_VERSION, '<')) {
-        $results['fail'][] = t("The MySQLnd driver version %version is less than the minimum required version. Upgrade to MySQLnd version %mysqlnd_minimum_version or up, or alternatively switch mysql drivers to libmysqlclient version %libmysqlclient_minimum_version or up.", ['%version' => $version, '%mysqlnd_minimum_version' => self::MYSQLND_MINIMUM_VERSION, '%libmysqlclient_minimum_version' => self::LIBMYSQLCLIENT_MINIMUM_VERSION]);
-      }
-    }
-    else {
-      // The libmysqlclient driver supports utf8mb4 starting at version 5.5.3.
-      if (version_compare($version, self::LIBMYSQLCLIENT_MINIMUM_VERSION, '<')) {
-        $results['fail'][] = t("The libmysqlclient driver version %version is less than the minimum required version. Upgrade to libmysqlclient version %libmysqlclient_minimum_version or up, or alternatively switch mysql drivers to MySQLnd version %mysqlnd_minimum_version or up.", ['%version' => $version, '%libmysqlclient_minimum_version' => self::LIBMYSQLCLIENT_MINIMUM_VERSION, '%mysqlnd_minimum_version' => self::MYSQLND_MINIMUM_VERSION]);
-      }
-    }
-
-    return $results;
-  }
-
-  /**
-   * @todo
-   */
   public function transactionSupport(array &$connection_options = []) {
     // This driver defaults to transaction support, except if explicitly passed FALSE.
     return !isset($connection_options['transactions']) || ($connection_options['transactions'] !== FALSE);
@@ -531,6 +429,112 @@ class PDOMySql {
    */
   public function clientVersion() {
     return $this->dbalConnection->getWrappedConnection()->getAttribute(\PDO::ATTR_CLIENT_VERSION);
+  }
+
+  /**
+   * Install\Tasks delegated methods.
+   */
+
+  /**
+   * @todo
+   */
+  public function installConnectException() {
+    $results = [
+      'fail' => [],
+      'pass' => [],
+    ];
+// @todo introduce check to see if DruDbal driver class exists
+    // @todo check exc level for getCode
+    // Detect utf8mb4 incompability.
+    if ($e->getCode() == self::UNSUPPORTED_CHARSET || ($e->getCode() == self::SQLSTATE_SYNTAX_ERROR && $e->errorInfo[1] == self::UNKNOWN_CHARSET)) {
+      $results['fail'][] = t('Your MySQL server and PHP MySQL driver must support utf8mb4 character encoding. Make sure to use a database system that supports this (such as MySQL/MariaDB/Percona 5.5.3 and up), and that the utf8mb4 character set is compiled in. See the <a href=":documentation" target="_blank">MySQL documentation</a> for more information.', [':documentation' => 'https://dev.mysql.com/doc/refman/5.0/en/cannot-initialize-character-set.html']);
+      $info = Database::getConnectionInfo();
+      $info_copy = $info;
+      // Set a flag to fall back to utf8. Note: this flag should only be
+      // used here and is for internal use only.
+      $info_copy['default']['_dsn_utf8_fallback'] = TRUE;
+      // In order to change the Database::$databaseInfo array, we need to
+      // remove the active connection, then re-add it with the new info.
+      Database::removeConnection('default');
+      Database::addConnectionInfo('default', 'default', $info_copy['default']);
+      // Connect with the new database info, using the utf8 character set so
+      // that we can run the checkEngineVersion test.
+      Database::getConnection();
+      // Revert to the old settings.
+      Database::removeConnection('default');
+      Database::addConnectionInfo('default', 'default', $info['default']);
+    }
+    // Attempt to create the database if it is not found.
+    elseif ($e->getCode() == self::DATABASE_NOT_FOUND) {
+      // Remove the database string from connection info.
+      $connection_info = Database::getConnectionInfo();
+      $database = $connection_info['default']['database'];
+      unset($connection_info['default']['database']);
+
+      // In order to change the Database::$databaseInfo array, need to remove
+      // the active connection, then re-add it with the new info.
+      Database::removeConnection('default');
+      Database::addConnectionInfo('default', 'default', $connection_info['default']);
+
+      try {
+        // Now, attempt the connection again; if it's successful, attempt to
+        // create the database.
+        Database::getConnection()->createDatabase($database);
+      }
+      catch (DatabaseNotFoundException $e) {
+        // Still no dice; probably a permission issue. Raise the error to the
+        // installer.
+        $results['fail'][] = t('Database %database not found. The server reports the following message when attempting to create the database: %error.', ['%database' => $database, '%error' => $e->getMessage()]);
+      }
+    }
+    else {
+      // Database connection failed for some other reason than the database
+      // not existing.
+      $results['fail'][] = t('Failed to connect to your database server. The server reports the following message: %error.<ul><li>Is the database server running?</li><li>Does the database exist or does the database user have sufficient privileges to create the database?</li><li>Have you entered the correct database name?</li><li>Have you entered the correct username and password?</li><li>Have you entered the correct database hostname?</li></ul>', ['%error' => $e->getMessage()]);
+    }
+    return $results;
+  }
+
+  /**
+   * @todo
+   */
+  public function runInstallTasks() {
+    $results = [
+      'fail' => [],
+      'pass' => [],
+    ];
+
+    // Ensure that MySql has the right minimum version.
+    if (version_compare($this->connection->getDbServerVersion(), self::MYSQLSERVER_MINIMUM_VERSION, '<')) { // @todo use dbal connection
+      $results['fail'][] = t("The MySQL server version %version is less than the minimum required version %minimum_version.", [
+        '%version' => $this->connection->getDbServerVersion(), // @todo use dbal connection
+        '%minimum_version' => self::MYSQLSERVER_MINIMUM_VERSION,
+      ]);
+    }
+
+    // Ensure that InnoDB is available.
+    $engines = $this->connection->query('SHOW ENGINES')->fetchAllKeyed(); // @todo use dbal connection
+    if (isset($engines['MyISAM']) && $engines['MyISAM'] == 'DEFAULT' && !isset($engines['InnoDB'])) {
+      $results['fail'][] = t('The MyISAM storage engine is not supported.');
+    }
+
+    // Ensure that the MySQL driver supports utf8mb4 encoding.
+    $version = $this->clientVersion();
+    if (FALSE !== strpos($version, 'mysqlnd')) {
+      // The mysqlnd driver supports utf8mb4 starting at version 5.0.9.
+      $version = preg_replace('/^\D+([\d.]+).*/', '$1', $version);
+      if (version_compare($version, self::MYSQLND_MINIMUM_VERSION, '<')) {
+        $results['fail'][] = t("The MySQLnd driver version %version is less than the minimum required version. Upgrade to MySQLnd version %mysqlnd_minimum_version or up, or alternatively switch mysql drivers to libmysqlclient version %libmysqlclient_minimum_version or up.", ['%version' => $version, '%mysqlnd_minimum_version' => self::MYSQLND_MINIMUM_VERSION, '%libmysqlclient_minimum_version' => self::LIBMYSQLCLIENT_MINIMUM_VERSION]);
+      }
+    }
+    else {
+      // The libmysqlclient driver supports utf8mb4 starting at version 5.5.3.
+      if (version_compare($version, self::LIBMYSQLCLIENT_MINIMUM_VERSION, '<')) {
+        $results['fail'][] = t("The libmysqlclient driver version %version is less than the minimum required version. Upgrade to libmysqlclient version %libmysqlclient_minimum_version or up, or alternatively switch mysql drivers to MySQLnd version %mysqlnd_minimum_version or up.", ['%version' => $version, '%libmysqlclient_minimum_version' => self::LIBMYSQLCLIENT_MINIMUM_VERSION, '%mysqlnd_minimum_version' => self::MYSQLND_MINIMUM_VERSION]);
+      }
+    }
+
+    return $results;
   }
 
   /**

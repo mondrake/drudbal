@@ -75,6 +75,7 @@ class Tasks extends InstallTasks {
       $results['pass'][] = t('Drupal can CONNECT to the database ok.');
     }
     catch (\Exception $e) {
+var_export([get_class($e), $e->getMessage()]);die;
       if (isset($connection)) {
         $results = $connection->getDbalDriver()->installConnectException();
         foreach ($results['pass'] as $result) {
