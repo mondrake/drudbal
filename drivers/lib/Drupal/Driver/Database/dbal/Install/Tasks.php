@@ -28,7 +28,7 @@ class Tasks extends InstallTasks {
     // The DBAL driver delegates the installation tasks to the DruDbalDriver.
     // We just add a catchall task in this class.
     $this->tasks[] = [
-      'function' => 'runDBALDriverInstallTasks',
+      'function' => 'runDbalDriverInstallTasks',
       'arguments' => [],
     ];
   }
@@ -80,7 +80,7 @@ class Tasks extends InstallTasks {
       // only to capture the error message to display to user. If we are here,
       // the form has passed validation and the 'dbal_url' connection info
       // element is set.
-      $connection_info = Database::getConnectionInfo()['default'];
+      $connection_info = Database::getConnectionInfo()['default'];   // @todo is this duplicated since the Connection::open method does the same check??
       if (empty($connection_info['dbal_driver'])) {
         try {
           $options = [];
@@ -191,7 +191,7 @@ class Tasks extends InstallTasks {
   /**
    * Executes DBAL driver installation specific tasks.
    */
-  public function runDBALDriverInstallTasks() {
+  public function runDbalDriverInstallTasks() {
     $connection = Database::getConnection();
     $results = $connection->runInstallTasks();
     foreach ($results['pass'] as $result) {
