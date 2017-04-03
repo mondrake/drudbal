@@ -629,7 +629,7 @@ class PDOMySql {
   public function delegateIndexExists(&$result, $table, $name) {
     if ($name == 'PRIMARY') {
       $schema = $this->dbalConnection->getSchemaManager()->createSchema();
-      $result = $schema->getTable($this->getPrefixInfo($table)['table'])->hasPrimaryKey();
+      $result = $schema->getTable($this->pfxTable($table))->hasPrimaryKey();
       return TRUE;
     }
   }
@@ -680,7 +680,6 @@ class PDOMySql {
 
     // DBAL cannot retrieve table comments from introspected schema.
     // @see https://github.com/doctrine/dbal/issues/1335
-    $table_info = $this->getPrefixInfo($table);
     $dbal_query = $this->dbalConnection->createQueryBuilder();
     $dbal_query
       ->select('table_comment')
@@ -691,8 +690,8 @@ class PDOMySql {
             $dbal_query->expr()->eq('table_name', '?')
           )
         )
-      ->setParameter(0, $table_info['database'])
-      ->setParameter(1, $table_info['table']);
+      ->setParameter(0, $this->dbalConnection->getDatabase())
+      ->setParameter(1, $this->pfxTable($table));
     $comment = $dbal_query->execute()->fetchField();
     $this->alterGetComment($comment, $dbal_schema, $table, $column);
     return TRUE;
