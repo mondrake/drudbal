@@ -8,7 +8,7 @@ $ composer require drupal/drudbal:^1
 
 ```
 $ cd [DRUPAL_ROOT]/drivers/lib/Drupal/Driver/Database/
-$ln -s [DRUPAL_ROOT]/[path_to_contrib_modules]/drudbal/drivers/lib/Drupal/Driver/Database/dbal dbal
+$ ln -s [DRUPAL_ROOT]/[path_to_contrib_modules]/drudbal/drivers/lib/Drupal/Driver/Database/dbal dbal
 ```
 
 ## Database configuration
