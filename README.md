@@ -2,8 +2,10 @@
 A database driver bridge to Doctrine DBAL.
 
 ## Setup
+```
 cd [DRUPAL_ROOT]/drivers/lib/Drupal/Driver/Database/
 ln -s [DRUPAL_ROOT]/[path_to_contrib_modules]/drudbal/drivers/lib/Drupal/Driver/Database/dbal dbal
+```
 
 ## Database configuration
 ![configuration](https://cloud.githubusercontent.com/assets/1174864/24586418/7f86feb4-17a0-11e7-820f-eb1483dad07f.png)
