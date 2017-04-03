@@ -505,15 +505,16 @@ class PDOMySql {
     ];
 
     // Ensure that MySql has the right minimum version.
-    if (version_compare($this->connection->getDbServerVersion(), self::MYSQLSERVER_MINIMUM_VERSION, '<')) { // @todo use dbal connection
+    $db_server_version = $this->dbalConnection->getWrappedConnection()->getServerVersion();
+    if (version_compare($db_server_version, self::MYSQLSERVER_MINIMUM_VERSION, '<')) {
       $results['fail'][] = t("The MySQL server version %version is less than the minimum required version %minimum_version.", [
-        '%version' => $this->connection->getDbServerVersion(), // @todo use dbal connection
+        '%version' => $db_server_version,
         '%minimum_version' => self::MYSQLSERVER_MINIMUM_VERSION,
       ]);
     }
 
     // Ensure that InnoDB is available.
-    $engines = $this->connection->query('SHOW ENGINES')->fetchAllKeyed(); // @todo use dbal connection
+    $engines = $this->dbalConnection->query('SHOW ENGINES')->fetchAllKeyed();
     if (isset($engines['MyISAM']) && $engines['MyISAM'] == 'DEFAULT' && !isset($engines['InnoDB'])) {
       $results['fail'][] = t('The MyISAM storage engine is not supported.');
     }
