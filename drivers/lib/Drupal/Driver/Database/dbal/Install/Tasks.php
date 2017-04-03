@@ -6,7 +6,10 @@ use Drupal\Core\Database\Install\Tasks as InstallTasks;
 use Drupal\Core\Database\Database;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Driver\Database\dbal\Connection as DruDbalConnection;
-use Doctrine\DBAL\DriverManager as DBALDriverManager;
+
+use Doctrine\DBAL\DBALException;
+use Doctrine\DBAL\Exception\ConnectionException as DbalConnectionException;
+use Doctrine\DBAL\DriverManager as DbalDriverManager;
 
 /**
  * Specifies installation tasks for DruDbal driver.
@@ -70,12 +73,29 @@ class Tasks extends InstallTasks {
       // Just set the active connection to default. This doesn't actually test
       // the connection.
       Database::setActiveConnection();
-      // Now actually do a check.
+      // If the 'dbal_driver' connection info element is missing, probably the
+      // URL passed in the form is invalid or malformed. Try a DBAL connection
+      // only to capture the error message to display to user. If we are here,
+      // the form has passed validation and the 'dbal_url' connection info
+      // element is set.
+      $connection_info = Database::getConnectionInfo()['default'];
+      if (empty($connection_info['dbal_driver'])) {
+        try {
+          $options = [];
+          $options['url'] = $connection_info['dbal_url'];
+          $dbal_connection = DbalDriverManager::getConnection($options);
+        }
+        catch (DBALException $e) {
+          $this->fail(t('There is a problem with the database URL. Doctrine DBAL reports: %message', ['%message' => $e->getMessage()]));
+          return FALSE;
+        }
+      }
+      // Now actually try to get a full Drupal connection object.
       $connection = Database::getConnection();
       $results['pass'][] = t('Drupal can CONNECT to the database ok.');
     }
     catch (\Exception $e) {
-var_export([get_class($e), $e->getMessage()]);die;
+var_export([82, get_class($e), $e->getMessage()]);die;
       if (isset($connection)) {
         $results = $connection->getDbalDriver()->installConnectException();
         foreach ($results['pass'] as $result) {
@@ -118,7 +138,6 @@ var_export([get_class($e), $e->getMessage()]);die;
       '#rows' => 3,
       '#size' => 45,
       '#required' => TRUE,
-      '#element_validate' => [[$this, 'validateDBALUrl']],
       '#states' => [
         'required' => [
           ':input[name=driver]' => ['value' => 'dbal'],
@@ -139,22 +158,25 @@ var_export([get_class($e), $e->getMessage()]);die;
   /**
    * @todo Validates the 'url' field of the installation form.
    */
-  public function validateDBALUrl(array $element, FormStateInterface $form_state, array $form) {
-    // Opens a DBAL connection just to retrieve the actual DBAL driver being
+  public function validateDbalUrl(array $element, FormStateInterface $form_state, array $form) {
+    // Opens a DBAL connection using the URL, just to resolve the details of
+    // all the parameters required, including the actual DBAL driver being
     // used, so that it does get stored in the settings.
     try {
       $options = [];
       $options['url'] = $form_state->getValue(['dbal', 'dbal_url']);
-      $dbal_connection = DBALDriverManager::getConnection($options);
+      $dbal_connection = DbalDriverManager::getConnection($options);
       $form_state->setValue(['dbal', 'database'], $dbal_connection->getDatabase());
       $form_state->setValue(['dbal', 'username'], $dbal_connection->getUsername());
       $form_state->setValue(['dbal', 'password'], $dbal_connection->getPassword());
-      $form_state->setValue(['dbal', 'advanced_options', 'host'], $dbal_connection->getHost());
-      $form_state->setValue(['dbal', 'advanced_options', 'port'], $dbal_connection->getPort());
+      $form_state->setValue(['dbal', 'host'], $dbal_connection->getHost());
+      $form_state->setValue(['dbal', 'port'], $dbal_connection->getPort());
       $form_state->setValue(['dbal', 'dbal_driver'], $dbal_connection->getDriver()->getName());
     }
-    catch (\Exception $e) {
-      $this->fail($e->getMessage());
+    catch (DBALException $e) {
+      // If we get DBAL exception, probably the URL is malformed. We cannot
+      // update user here, ::connect() will take care of that detail.
+      return;
     }
   }
 
