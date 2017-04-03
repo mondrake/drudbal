@@ -669,7 +669,7 @@ class PDOMySql {
    * @return
    *   A keyed array with information about the database, table name and prefix.
    */
-  public function getPrefixInfo($table = 'default', $add_prefix = TRUE) {
+  protected function getPrefixInfo($table = 'default', $add_prefix = TRUE) {
     $info = ['prefix' => $this->connection->tablePrefix($table)];
     if ($add_prefix) {
       $table = $info['prefix'] . $table;
@@ -683,6 +683,13 @@ class PDOMySql {
       $info['table'] = $table;
     }
     return $info;
+  }
+
+  /**
+   * @todo
+   */
+  public function getPrefixedTableName($table) {
+    return $this->getPrefixInfo($table)['table'];
   }
 
   /**

@@ -54,13 +54,6 @@ class Schema extends DatabaseSchema {
   }
 
   /**
-   * @todo
-   */
-  protected function getPrefixedTableName($table) {
-    return $this->druDbalDriver->getPrefixInfo($table)['table'];
-  }
-
-  /**
    * {@inheritdoc}
    */
   public function createTable($name, $table) {
@@ -70,7 +63,7 @@ class Schema extends DatabaseSchema {
 
     // Create table via DBAL.
     $schema = new DbalSchema;
-    $new_table = $schema->createTable($this->getPrefixedTableName($name));
+    $new_table = $schema->createTable($this->druDbalDriver->getPrefixedTableName($name));
 
     // Delegate adding options to driver.
     $this->druDbalDriver->delegateCreateTableSetOptions($new_table, $schema, $table, $name);
@@ -266,7 +259,7 @@ class Schema extends DatabaseSchema {
       throw new SchemaObjectExistsException(t("Cannot rename @table to @table_new: table @table_new already exists.", ['@table' => $table, '@table_new' => $new_name]));
     }
 
-    $this->dbalSchemaManager->renameTable($this->getPrefixedTableName($table), $this->getPrefixedTableName($new_name));
+    $this->dbalSchemaManager->renameTable($this->druDbalDriver->getPrefixedTableName($table), $this->druDbalDriver->getPrefixedTableName($new_name));
     return TRUE;
   }
 
@@ -277,7 +270,7 @@ class Schema extends DatabaseSchema {
     if (!$this->tableExists($table)) {
       return FALSE;
     }
-    $this->dbalSchemaManager->dropTable($this->getPrefixedTableName($table));
+    $this->dbalSchemaManager->dropTable($this->druDbalDriver->getPrefixedTableName($table));
   }
 
   /**
@@ -300,7 +293,7 @@ class Schema extends DatabaseSchema {
     $current_schema = $this->dbalSchemaManager->createSchema();
     $dbal_type = $this->getDbalColumnType($spec);
     $to_schema = clone $current_schema;
-    $dbal_table = $to_schema->getTable($this->getPrefixedTableName($table));
+    $dbal_table = $to_schema->getTable($this->druDbalDriver->getPrefixedTableName($table));
     $dbal_table->addColumn($field, $dbal_type, ['columnDefinition' => $this->getDbalColumnDefinition($field, $dbal_type, $spec)]);
     $sql_statements = $current_schema->getMigrateToSql($to_schema, $this->dbalPlatform);
     $this->dbalExecuteSchemaChange($sql_statements);
@@ -351,7 +344,7 @@ class Schema extends DatabaseSchema {
 
     $current_schema = $this->dbalSchemaManager->createSchema();
     $to_schema = clone $current_schema;
-    $to_schema->getTable($this->getPrefixedTableName($table))->dropColumn($field);
+    $to_schema->getTable($this->druDbalDriver->getPrefixedTableName($table))->dropColumn($field);
     $sql_statements = $current_schema->getMigrateToSql($to_schema, $this->dbalPlatform);
     $this->dbalExecuteSchemaChange($sql_statements);
 
@@ -376,7 +369,7 @@ class Schema extends DatabaseSchema {
     $to_schema = clone $current_schema;
     // @todo this may not work - need to see if ::escapeDefaultValue
     // provides a sensible output.
-    $to_schema->getTable($this->getPrefixedTableName($table))->getColumn($field)->setDefault($this->escapeDefaultValue($default));
+    $to_schema->getTable($this->druDbalDriver->getPrefixedTableName($table))->getColumn($field)->setDefault($this->escapeDefaultValue($default));
     $sql_statements = $current_schema->getMigrateToSql($to_schema, $this->dbalPlatform);
     $this->dbalExecuteSchemaChange($sql_statements);
   }
@@ -399,7 +392,7 @@ class Schema extends DatabaseSchema {
     $to_schema = clone $current_schema;
     // @todo this may not work - we need to 'DROP' the default, not set it
     // to null.
-    $to_schema->getTable($this->getPrefixedTableName($table))->getColumn($field)->setDefault(NULL);
+    $to_schema->getTable($this->druDbalDriver->getPrefixedTableName($table))->getColumn($field)->setDefault(NULL);
     $sql_statements = $current_schema->getMigrateToSql($to_schema, $this->dbalPlatform);
     $this->dbalExecuteSchemaChange($sql_statements);
   }
@@ -419,7 +412,7 @@ class Schema extends DatabaseSchema {
     }
 
     // Driver did not pick up, proceed with DBAL.
-    return in_array($name, array_keys($this->dbalSchemaManager->listTableIndexes($this->getPrefixedTableName($table))));
+    return in_array($name, array_keys($this->dbalSchemaManager->listTableIndexes($this->druDbalDriver->getPrefixedTableName($table))));
   }
 
   /**
@@ -431,7 +424,7 @@ class Schema extends DatabaseSchema {
     }
 
     $current_schema = $this->dbalSchemaManager->createSchema();
-    if ($current_schema->getTable($this->getPrefixedTableName($table))->hasPrimaryKey()) {
+    if ($current_schema->getTable($this->druDbalDriver->getPrefixedTableName($table))->hasPrimaryKey()) {
       throw new SchemaObjectExistsException(t("Cannot add primary key to table @table: primary key already exists.", ['@table' => $table]));
     }
 
@@ -442,7 +435,7 @@ class Schema extends DatabaseSchema {
 
     // Driver did not pick up, proceed with DBAL.
     $to_schema = clone $current_schema;
-    $to_schema->getTable($this->getPrefixedTableName($table))->setPrimaryKey($this->dbalResolveIndexColumnList($fields));
+    $to_schema->getTable($this->druDbalDriver->getPrefixedTableName($table))->setPrimaryKey($this->dbalResolveIndexColumnList($fields));
     $sql_statements = $current_schema->getMigrateToSql($to_schema, $this->dbalPlatform);
     $this->dbalExecuteSchemaChange($sql_statements);
   }
@@ -456,12 +449,12 @@ class Schema extends DatabaseSchema {
     }
 
     $current_schema = $this->dbalSchemaManager->createSchema();
-    if (!$current_schema->getTable($this->getPrefixedTableName($table))->hasPrimaryKey()) {
+    if (!$current_schema->getTable($this->druDbalDriver->getPrefixedTableName($table))->hasPrimaryKey()) {
       return FALSE;
     }
 
     $to_schema = clone $current_schema;
-    $to_schema->getTable($this->getPrefixedTableName($table))->dropPrimaryKey();
+    $to_schema->getTable($this->druDbalDriver->getPrefixedTableName($table))->dropPrimaryKey();
     $sql_statements = $current_schema->getMigrateToSql($to_schema, $this->dbalPlatform);
     $this->dbalExecuteSchemaChange($sql_statements);
 
@@ -487,7 +480,7 @@ class Schema extends DatabaseSchema {
     // Driver did not pick up, proceed with DBAL.
     $current_schema = $this->dbalSchemaManager->createSchema();
     $to_schema = clone $current_schema;
-    $to_schema->getTable($this->getPrefixedTableName($table))->addUniqueIndex($this->dbalResolveIndexColumnList($fields), $name);
+    $to_schema->getTable($this->druDbalDriver->getPrefixedTableName($table))->addUniqueIndex($this->dbalResolveIndexColumnList($fields), $name);
     $sql_statements = $current_schema->getMigrateToSql($to_schema, $this->dbalPlatform);
     $this->dbalExecuteSchemaChange($sql_statements);
   }
@@ -518,7 +511,7 @@ class Schema extends DatabaseSchema {
     // Driver did not pick up, proceed with DBAL.
     $current_schema = $this->dbalSchemaManager->createSchema();
     $to_schema = clone $current_schema;
-    $to_schema->getTable($this->getPrefixedTableName($table))->addIndex($this->dbalResolveIndexColumnList($fields), $name);
+    $to_schema->getTable($this->druDbalDriver->getPrefixedTableName($table))->addIndex($this->dbalResolveIndexColumnList($fields), $name);
     $sql_statements = $current_schema->getMigrateToSql($to_schema, $this->dbalPlatform);
     $this->dbalExecuteSchemaChange($sql_statements);
   }
@@ -530,7 +523,7 @@ class Schema extends DatabaseSchema {
     if (!$this->indexExists($table, $name)) {
       return FALSE;
     }
-    $this->dbalSchemaManager->dropIndex($name, $this->getPrefixedTableName($table));
+    $this->dbalSchemaManager->dropIndex($name, $this->druDbalDriver->getPrefixedTableName($table));
     return TRUE;
   }
 
@@ -608,7 +601,7 @@ class Schema extends DatabaseSchema {
 
     // Driver did not pick up, proceed with DBAL.
     if (isset($column)) {
-      $comment = $dbal_schema->getTable($this->getPrefixedTableName($table))->getColumn($column)->getComment();
+      $comment = $dbal_schema->getTable($this->druDbalDriver->getPrefixedTableName($table))->getColumn($column)->getComment();
       // Let driver cleanup the comment if necessary.
       $this->druDbalDriver->alterGetComment($comment, $dbal_schema, $table, $column);
       return $comment;
@@ -623,7 +616,7 @@ class Schema extends DatabaseSchema {
    * {@inheritdoc}
    */
   public function tableExists($table) {
-    return $this->dbalSchemaManager->tablesExist([$this->getPrefixedTableName($table)]);
+    return $this->dbalSchemaManager->tablesExist([$this->druDbalDriver->getPrefixedTableName($table)]);
   }
 
   /**
@@ -633,7 +626,7 @@ class Schema extends DatabaseSchema {
     if (!$this->tableExists($table)) {
       return FALSE;
     }
-    return in_array($column, array_keys($this->dbalSchemaManager->listTableColumns($this->getPrefixedTableName($table))));
+    return in_array($column, array_keys($this->dbalSchemaManager->listTableColumns($this->druDbalDriver->getPrefixedTableName($table))));
   }
 
   /**
