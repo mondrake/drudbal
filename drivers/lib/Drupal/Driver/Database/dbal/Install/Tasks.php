@@ -2,10 +2,10 @@
 
 namespace Drupal\Driver\Database\dbal\Install;
 
-use Drupal\Core\Database\Install\Tasks as InstallTasks;
+use Drupal\Core\Database\ConnectionNotDefinedException;
 use Drupal\Core\Database\Database;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\Driver\Database\dbal\Connection as DruDbalConnection;
+use Drupal\Core\Database\Install\Tasks as InstallTasks;
 
 use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\Exception\ConnectionException as DbalConnectionException;
@@ -25,6 +25,8 @@ class Tasks extends InstallTasks {
    * Constructs a \Drupal\Driver\Database\dbal\Install\Tasks object.
    */
   public function __construct() {
+    // The DBAL driver delegates the installation tasks to the DruDbalDriver.
+    // We just add a catchall task in this class.
     $this->tasks[] = [
       'function' => 'runDBALDriverInstallTasks',
       'arguments' => [],
@@ -50,7 +52,7 @@ class Tasks extends InstallTasks {
         '@dbal_driver' => $connection->getDbalConnection()->getDriver()->getName(),
       ]);
     }
-    catch (\Exception $e) {
+    catch (ConnectionNotDefinedException $e) {
       return t('Doctrine DBAL');
     }
   }
@@ -92,11 +94,15 @@ class Tasks extends InstallTasks {
       }
       // Now actually try to get a full Drupal connection object.
       $connection = Database::getConnection();
-      $results['pass'][] = t('Drupal can CONNECT to the database ok.');
+      $this->pass(t('Drupal can CONNECT to the database ok.'));
     }
-    catch (\Exception $e) {
-var_export([82, get_class($e), $e->getMessage()]);die;
-      if (isset($connection)) {
+    catch (ConnectionNotDefinedException $e) {
+      $this->fail($e->getMessage());
+      return FALSE;
+    }
+    catch (DbalConnectionException $e) {
+// @todo here go to the installConnectException();
+    /*      if (isset($connection)) {
         $results = $connection->getDbalDriver()->installConnectException();
         foreach ($results['pass'] as $result) {
           $this->pass($result);
@@ -107,8 +113,9 @@ var_export([82, get_class($e), $e->getMessage()]);die;
       }
       else {
         $this->fail($e->getMessage());
-      }
+      }*/
       $this->fail(t('Failed to connect to your database server. The server reports the following message: %error.<ul><li>Is the database server running?</li><li>Does the database exist, and have you entered the correct database name?</li><li>Have you entered the correct username and password?</li><li>Have you entered the correct database hostname?</li></ul>', ['%error' => $e->getMessage()]));
+      return FALSE;
     }
 
     return empty($results['fail']);
@@ -138,6 +145,7 @@ var_export([82, get_class($e), $e->getMessage()]);die;
       '#rows' => 3,
       '#size' => 45,
       '#required' => TRUE,
+      '#element_validate' => [[$this, 'validateDbalUrl']],
       '#states' => [
         'required' => [
           ':input[name=driver]' => ['value' => 'dbal'],

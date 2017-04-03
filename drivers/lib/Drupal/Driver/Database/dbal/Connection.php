@@ -4,6 +4,7 @@ namespace Drupal\Driver\Database\dbal;
 
 use Drupal\Component\Utility\Unicode;
 use Drupal\Core\Database\Connection as DatabaseConnection;
+use Drupal\Core\Database\ConnectionNotDefinedException;
 use Drupal\Core\Database\Database;
 use Drupal\Core\Database\DatabaseException;
 use Drupal\Core\Database\DatabaseExceptionWrapper;
@@ -15,6 +16,7 @@ use Drupal\Core\Database\TransactionCommitFailedException;
 use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\ConnectionException as DbalConnectionException;
 use Doctrine\DBAL\DBALException;
+use Doctrine\DBAL\DriverManager as DbalDriverManager;
 use Doctrine\DBAL\Version as DbalVersion;
 
 /**
@@ -206,7 +208,27 @@ class Connection extends DatabaseConnection {
    * {@inheritdoc}
    */
   public static function open(array &$connection_options = []) {
-    $drudbal_driver_class = static::getDruDbalDriverClass($connection_options['dbal_driver']);
+    if (!empty($connection_options['dbal_driver'])) {
+      $dbal_driver = $connection_options['dbal_driver'];
+    }
+    else {
+      // If 'dbal_driver' is missing from the connection options, then we are
+      // likely in an installation scenario where the database URL is invalid.
+      // Try establishing a DBAL connection to clarify details.
+      if (empty($connection_options['dbal_url'])) {
+        // If 'dbal_url' is also missing, then we are in a very very wrong
+        // situation, as DBAL would not be able to determine the driver it
+        // needs to use.
+        throw new ConnectionNotDefinedException(t('Database connection is not defined properly for the \'dbal\' driver. The \'dbal_url\' key is missing. Check the database connection definition in settings.php.'));
+      }
+      $options = [];
+      $options['url'] = $connection_options['dbal_url'];
+      $dbal_connection = DbalDriverManager::getConnection($options);
+      // Below shouldn't happen, but if it does, then use the driver name
+      // from the just established DBAL connection.
+      $dbal_driver = $dbal_connection->getDriver()->getName();
+    }
+    $drudbal_driver_class = static::getDruDbalDriverClass($dbal_driver);
     return $drudbal_driver_class::open($connection_options);
   }
 
