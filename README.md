@@ -3,8 +3,12 @@ A database driver bridge to Doctrine DBAL.
 
 ## Setup
 ```
-cd [DRUPAL_ROOT]/drivers/lib/Drupal/Driver/Database/
-ln -s [DRUPAL_ROOT]/[path_to_contrib_modules]/drudbal/drivers/lib/Drupal/Driver/Database/dbal dbal
+$ composer require drupal/drudbal:^1
+```
+
+```
+$ cd [DRUPAL_ROOT]/drivers/lib/Drupal/Driver/Database/
+$ln -s [DRUPAL_ROOT]/[path_to_contrib_modules]/drudbal/drivers/lib/Drupal/Driver/Database/dbal dbal
 ```
 
 ## Database configuration
