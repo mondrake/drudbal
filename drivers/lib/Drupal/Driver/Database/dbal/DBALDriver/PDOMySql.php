@@ -664,32 +664,10 @@ class PDOMySql {
   }
 
   /**
-   * Get information about the table and database name from the prefix.
-   *
-   * @return
-   *   A keyed array with information about the database, table name and prefix.
-   */
-  protected function getPrefixInfo($table = 'default', $add_prefix = TRUE) {
-    $info = ['prefix' => $this->connection->tablePrefix($table)];
-    if ($add_prefix) {
-      $table = $info['prefix'] . $table;
-    }
-    if (($pos = strpos($table, '.')) !== FALSE) {
-      $info['database'] = substr($table, 0, $pos);
-      $info['table'] = substr($table, ++$pos);
-    }
-    else {
-      $info['database'] = $this->dbalConnection->getDatabase();
-      $info['table'] = $table;
-    }
-    return $info;
-  }
-
-  /**
    * @todo
    */
-  public function getPrefixedTableName($table) {
-    return $this->getPrefixInfo($table)['table'];
+  public function pfxTable($table) {
+    return $this->connection->prefixTables('{' . $table . '}');
   }
 
   /**
