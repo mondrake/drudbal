@@ -73,16 +73,16 @@ class Connection extends DatabaseConnection {
    *
    * @var @todo
    */
-  protected $druDbalDriver;
+  protected $dbalExt;
 
   /**
    * Constructs a Connection object.
    */
   public function __construct(DbalConnection $dbal_connection, array $connection_options = []) {
     $drudbal_driver_class = static::getDruDbalDriverClass($dbal_connection->getDriver()->getName());
-    $this->druDbalDriver = new $drudbal_driver_class($this, $dbal_connection);
-    $this->transactionSupport = $this->druDbalDriver->transactionSupport($connection_options);
-    $this->transactionalDDLSupport = $this->druDbalDriver->transactionalDDLSupport($connection_options);
+    $this->dbalExt = new $drudbal_driver_class($this, $dbal_connection);
+    $this->transactionSupport = $this->dbalExt->transactionSupport($connection_options);
+    $this->transactionalDDLSupport = $this->dbalExt->transactionalDDLSupport($connection_options);
     $this->setPrefix(isset($connection_options['prefix']) ? $connection_options['prefix'] : '');
     $this->connectionOptions = $connection_options;
     // Unset $this->connection so that __get() can return the DbalConnection on
@@ -105,7 +105,7 @@ class Connection extends DatabaseConnection {
    * {@inheritdoc}
    */
   public function destroy() {
-    $this->druDbalDriver->destroy();
+    $this->dbalExt->destroy();
     $this->schema = NULL;
   }
 
@@ -113,14 +113,14 @@ class Connection extends DatabaseConnection {
    * @todo
    */
   public function runInstallTasks() {
-    return $this->druDbalDriver->runInstallTasks();
+    return $this->dbalExt->runInstallTasks();
   }
 
   /**
    * {@inheritdoc}
    */
   public function clientVersion() {
-    return $this->druDbalDriver->clientVersion();
+    return $this->dbalExt->clientVersion();
   }
 
   /**
@@ -202,7 +202,7 @@ class Connection extends DatabaseConnection {
       }
     }
     catch (DBALException $e) {
-      return $this->druDbalDriver->handleQueryDBALException($e, $query, $args, $options); // @todo csn we change and pass the normal method here??
+      return $this->dbalExt->handleQueryDBALException($e, $query, $args, $options); // @todo csn we change and pass the normal method here??
     }
   }
 
@@ -236,7 +236,7 @@ class Connection extends DatabaseConnection {
 
   public function queryRange($query, $from, $count, array $args = [], array $options = []) {
     try {
-      return $this->druDbalDriver->queryRange($query, $from, $count, $args, $options);
+      return $this->dbalExt->queryRange($query, $from, $count, $args, $options);
     }
     catch (DBALException $e) {
       throw new \Exception($e->getMessage());
@@ -246,7 +246,7 @@ class Connection extends DatabaseConnection {
   public function queryTemporary($query, array $args = [], array $options = []) {
     try {
       $tablename = $this->generateTemporaryTableName();
-      $this->druDbalDriver->queryTemporary($tablename, $query, $args, $options);
+      $this->dbalExt->queryTemporary($tablename, $query, $args, $options);
       return $tablename;
     }
     catch (DBALException $e) {
@@ -274,9 +274,9 @@ class Connection extends DatabaseConnection {
    */
   public function createDatabase($database) {
     try {
-      $this->druDbalDriver->preCreateDatabase($database);
+      $this->dbalExt->preCreateDatabase($database);
       $this->getDbalConnection()->getSchemaManager()->createDatabase($database);
-      $this->druDbalDriver->postCreateDatabase($database);
+      $this->dbalExt->postCreateDatabase($database);
     }
     catch (DBALException $e) {
       throw new DatabaseNotFoundException($e->getMessage(), $e->getCode(), $e);
@@ -292,7 +292,7 @@ class Connection extends DatabaseConnection {
    * {@inheritdoc}
    */
   public function nextId($existing_id = 0) {
-    return $this->druDbalDriver->nextId($existing_id);
+    return $this->dbalExt->nextId($existing_id);
   }
 
   /**
@@ -318,7 +318,7 @@ class Connection extends DatabaseConnection {
       }
       else {
         // Attempt to release this savepoint in the standard way.
-        if ($this->druDbalDriver->releaseSavepoint($name) === 'all') {
+        if ($this->dbalExt->releaseSavepoint($name) === 'all') {
           $this->transactionLayers = [];
         }
       }
@@ -331,7 +331,7 @@ class Connection extends DatabaseConnection {
    * @return string DBAL driver name
    */
   public function getDbalConnection() {
-    return $this->druDbalDriver->getDbalConnection();
+    return $this->dbalExt->getDbalConnection();
   }
 
   /**
@@ -340,7 +340,7 @@ class Connection extends DatabaseConnection {
    * @return @todo
    */
   public function getDruDbalDriver() {
-    return $this->druDbalDriver;
+    return $this->dbalExt;
   }
 
   /**
