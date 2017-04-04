@@ -503,8 +503,7 @@ class PDOMySql {
       return $results;
     }
 
-    // Database connection failed for some other reason than the database
-    // not existing.
+    // Database connection failed for some other reasons. Report.
     $results['fail'][] = t('Failed to connect to your database server. The server reports the following message: %error.<ul><li>Is the database server running?</li><li>Does the database exist or does the database user have sufficient privileges to create the database?</li><li>Have you entered the correct database name?</li><li>Have you entered the correct username and password?</li><li>Have you entered the correct database hostname?</li></ul>', ['%error' => $pdo_exception->getMessage()]);
     return $results;
   }

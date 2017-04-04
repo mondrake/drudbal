@@ -37,16 +37,16 @@ class Connection extends DatabaseConnection {
    */
   protected static $driverMap = array(
     'pdo_mysql'          => 'PDOMySql',
-    'pdo_sqlite'         => 'PDOSqlite',
-    'pdo_pgsql'          => 'PDOPgSql',
-    'pdo_oci'            => 'PDOOracle',
-    'oci8'               => 'OCI8',
-    'ibm_db2'            => 'IBMDB2\DB2Driver',
-    'pdo_sqlsrv'         => 'PDOSqlsrv',
-    'mysqli'             => 'Mysqli',
-    'drizzle_pdo_mysql'  => 'DrizzlePDOMySql',
-    'sqlanywhere'        => 'SQLAnywhere',
-    'sqlsrv'             => 'SQLSrv',
+//    'pdo_sqlite'         => 'PDOSqlite',
+//    'pdo_pgsql'          => 'PDOPgSql',
+//    'pdo_oci'            => 'PDOOracle',
+//    'oci8'               => 'OCI8',
+//    'ibm_db2'            => 'IBMDB2\DB2Driver',
+//    'pdo_sqlsrv'         => 'PDOSqlsrv',
+//    'mysqli'             => 'Mysqli',
+//    'drizzle_pdo_mysql'  => 'DrizzlePDOMySql',
+//    'sqlanywhere'        => 'SQLAnywhere',
+//    'sqlsrv'             => 'SQLSrv',
   );
 
   /**
@@ -55,15 +55,15 @@ class Connection extends DatabaseConnection {
    * @var string[]
    */
   protected static $driverSchemeAliases = array(
-    'db2'        => 'ibm_db2',
-    'mssql'      => 'pdo_sqlsrv',
+//    'db2'        => 'ibm_db2',
+//    'mssql'      => 'pdo_sqlsrv',
     'mysql'      => 'pdo_mysql',
     'mysql2'     => 'pdo_mysql', // Amazon RDS, for some weird reason
-    'postgres'   => 'pdo_pgsql',
-    'postgresql' => 'pdo_pgsql',
-    'pgsql'      => 'pdo_pgsql',
-    'sqlite'     => 'pdo_sqlite',
-    'sqlite3'    => 'pdo_sqlite',
+//    'postgres'   => 'pdo_pgsql',
+//    'postgresql' => 'pdo_pgsql',
+//    'pgsql'      => 'pdo_pgsql',
+//    'sqlite'     => 'pdo_sqlite',
+//    'sqlite3'    => 'pdo_sqlite',
   );
 
   /**

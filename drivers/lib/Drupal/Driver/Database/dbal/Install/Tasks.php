@@ -79,34 +79,41 @@ class Tasks extends InstallTasks {
       // Now actually try to get a full Drupal connection object.
       $connection = Database::getConnection();
       $this->pass(t('Drupal can CONNECT to the database ok.'));
+      return TRUE;
     }
     catch (ConnectionNotDefinedException $e) {
       // We get here if both 'dbal_driver' and 'dbal_url' are missing from the
       // connection definition.
       $this->fail($e->getMessage());
+      return FALSE;
     }
     catch (DbalExceptionConnectionException $e) {
-      // We get here if 'dbal_url' can be resolved to a relevant DBAL driver,
-      // but the driver (or the server) has found problems in the connection
-      // (e.g. wrong username/password, or host, etc). It's possible that the
-      // problem can be fixed (e.g. by creating a missing database), hand over
-      // to the DruDbal driver the processing.
+      // We get here if 'dbal_url' could be processed, but the driver (or the
+      // server) has found problems in the connection (e.g. wrong
+      // username/password, or host, etc). It's possible that the problem can
+      // be fixed (e.g. by creating a missing database), so hand over to the
+      // DruDbal driver for the processing.
       $connection_info = Database::getConnectionInfo()['default'];
-      $drudbal_driver_class = DruDbalConnection::getDruDbalDriverClass($connection_info['dbal_driver']);
-      $results = $drudbal_driver_class::handleInstallConnectException($e);
-      foreach ($results['pass'] as $result) {
-        $this->pass($result);
+      if (!empty($connection_info['dbal_driver'])) {
+        $drudbal_driver_class = DruDbalConnection::getDruDbalDriverClass($connection_info['dbal_driver']);
+        $results = $drudbal_driver_class::handleInstallConnectException($e);
+        foreach ($results['pass'] as $result) {
+          $this->pass($result);
+        }
+        foreach ($results['fail'] as $result) {
+          $this->fail($result);
+        }
       }
-      foreach ($results['fail'] as $result) {
-        $this->fail($result);
+      else {
+        $this->fail(t('Failed to connect to your database server. Doctrine DBAL reports the following message: %error.', ['%error' => $e->getMessage()]));
       }
+      return empty($this->results['fail']);
     }
     catch (DBALException $e) {
       // We get here if 'dbal_url' is defined but invalid/malformed.
       $this->fail(t('There is a problem with the database URL. Doctrine DBAL reports the following message: %message', ['%message' => $e->getMessage()]));
+      return FALSE;
     }
-
-    return empty($results['fail']);
   }
 
   /**
