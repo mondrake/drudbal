@@ -9,7 +9,7 @@ use Drupal\Core\Database\Query\Upsert as QueryUpsert;
  *
  * Note: there should not be db platform specific code here. Any tasks that
  * cannot be managed by Doctrine DBAL should be added to driver specific code
- * in Drupal\Driver\Database\dbal\DBALDriver\[driver_name] classes and
+ * in Drupal\Driver\Database\dbal\DbalExtension\[dbal_driver_name] classes and
  * execution handed over to there.
  */
 class Upsert extends QueryUpsert {

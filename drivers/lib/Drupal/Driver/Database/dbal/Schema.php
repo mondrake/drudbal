@@ -19,34 +19,39 @@ use Doctrine\DBAL\Types\Type as DbalType;
  *
  * Note: there should not be db platform specific code here. Any tasks that
  * cannot be managed by Doctrine DBAL should be added to driver specific code
- * in Drupal\Driver\Database\dbal\DBALDriver\[driver_name] classes and
+ * in Drupal\Driver\Database\dbal\DbalExtension\[dbal_driver_name] classes and
  * execution handed over to there.
  */
 class Schema extends DatabaseSchema {
 
   /**
-   * Current connection DBAL schema.
+   * Current connection DBAL schema manager.
    *
-   * @todo
+   * @var \Doctrine\DBAL\Schema\AbstractSchemaManager
    */
   protected $dbalSchemaManager;
 
   /**
    * Current connection DBAL platform.
    *
-   * @todo
+   * @var \Doctrine\DBAL\Platforms\AbstractPlatform
    */
   protected $dbalPlatform;
 
   /**
-   * @todo
+   * The DruDbal extension for the DBAL driver.
+   *
+   * @var \Drupal\Driver\Database\dbal\DbalExtension\DbalExtensionInterface
    */
   protected $dbalExt;
 
   /**
-   * @todo
+   * Constructs a Schema object.
+   *
+   * @var \Drupal\Driver\Database\dbal\Connection
+   *   The DBAL driver Drupal database connection.
    */
-  public function __construct($connection) {
+  public function __construct(Connection $connection) {
     parent::__construct($connection);
     $this->dbalExt = $this->connection->getDruDbalDriver();
     $this->dbalSchemaManager = $this->connection->getDbalConnection()->getSchemaManager();
@@ -112,12 +117,13 @@ class Schema extends DatabaseSchema {
   /**
    * Gets DBAL column type, given Drupal's field specs.
    *
-   * @param $field
+   * @param array $field
    *   A field description array, as specified in the schema documentation.
    *
-   * @return @todo
+   * @return string
+   *   The string identifier of the DBAL column type.
    */
-  protected function getDbalColumnType($field) {
+  protected function getDbalColumnType(array $field) {
     $dbal_type = NULL;
 
     // Delegate to driver.
@@ -138,12 +144,18 @@ class Schema extends DatabaseSchema {
   /**
    * Gets DBAL column options, given Drupal's field specs.
    *
-   * @param $field
+   * @param string $field_name
+   *   The column name.
+   * @param string $dbal_type
+   *   The string identifier of the DBAL column type.
+   * @param array $field
    *   A field description array, as specified in the schema documentation.
    *
-   * @return @todo
+   * @return string
+   *   The SQL column definition specification, for use in the
+   *   'columnDefinition' DBAL column option.
    */
-  protected function getDbalColumnDefinition($field_name, $dbal_type, $field) {
+  protected function getDbalColumnDefinition($field_name, $dbal_type, array $field) {
     $options = [];
 
     $options['type'] = DbalType::getType($dbal_type);
