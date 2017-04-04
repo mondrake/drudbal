@@ -277,7 +277,7 @@ class Connection extends DatabaseConnection {
       $this->druDbalDriver->postCreateDatabase($database);
     }
     catch (DBALException $e) {
-      throw new DatabaseNotFoundException($e->getMessage());
+      throw new DatabaseNotFoundException($e->getMessage(), $e->getCode(), $e);
     }
   }
 

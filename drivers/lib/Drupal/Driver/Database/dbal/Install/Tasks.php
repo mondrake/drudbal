@@ -6,9 +6,10 @@ use Drupal\Core\Database\ConnectionNotDefinedException;
 use Drupal\Core\Database\Database;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Database\Install\Tasks as InstallTasks;
+use Drupal\Driver\Database\dbal\Connection as DruDbalConnection;
 
 use Doctrine\DBAL\DBALException;
-use Doctrine\DBAL\Exception\ConnectionException as DbalConnectionException;
+use Doctrine\DBAL\Exception\ConnectionException as DbalExceptionConnectionException;
 use Doctrine\DBAL\DriverManager as DbalDriverManager;
 
 /**
@@ -75,47 +76,34 @@ class Tasks extends InstallTasks {
       // Just set the active connection to default. This doesn't actually test
       // the connection.
       Database::setActiveConnection();
-      // If the 'dbal_driver' connection info element is missing, probably the
-      // URL passed in the form is invalid or malformed. Try a DBAL connection
-      // only to capture the error message to display to user. If we are here,
-      // the form has passed validation and the 'dbal_url' connection info
-      // element is set.
-      $connection_info = Database::getConnectionInfo()['default'];   // @todo is this duplicated since the Connection::open method does the same check??
-      if (empty($connection_info['dbal_driver'])) {
-        try {
-          $options = [];
-          $options['url'] = $connection_info['dbal_url'];
-          $dbal_connection = DbalDriverManager::getConnection($options);
-        }
-        catch (DBALException $e) {
-          $this->fail(t('There is a problem with the database URL. Doctrine DBAL reports: %message', ['%message' => $e->getMessage()]));
-          return FALSE;
-        }
-      }
       // Now actually try to get a full Drupal connection object.
       $connection = Database::getConnection();
       $this->pass(t('Drupal can CONNECT to the database ok.'));
     }
     catch (ConnectionNotDefinedException $e) {
+      // We get here if both 'dbal_driver' and 'dbal_url' are missing from the
+      // connection definition.
       $this->fail($e->getMessage());
-      return FALSE;
     }
-    catch (DbalConnectionException $e) {
-// @todo here go to the installConnectException();
-    /*      if (isset($connection)) {
-        $results = $connection->getDbalDriver()->installConnectException();
-        foreach ($results['pass'] as $result) {
-          $this->pass($result);
-        }
-        foreach ($results['fail'] as $result) {
-          $this->fail($result);
-        }
+    catch (DbalExceptionConnectionException $e) {
+      // We get here if 'dbal_url' can be resolved to a relevant DBAL driver,
+      // but the driver (or the server) has found problems in the connection
+      // (e.g. wrong username/password, or host, etc). It's possible that the
+      // problem can be fixed (e.g. by creating a missing database), hand over
+      // to the DruDbal driver the processing.
+      $connection_info = Database::getConnectionInfo()['default'];
+      $drudbal_driver_class = DruDbalConnection::getDruDbalDriverClass($connection_info['dbal_driver']);
+      $results = $drudbal_driver_class::handleInstallConnectException($e);
+      foreach ($results['pass'] as $result) {
+        $this->pass($result);
       }
-      else {
-        $this->fail($e->getMessage());
-      }*/
-      $this->fail(t('Failed to connect to your database server. The server reports the following message: %error.<ul><li>Is the database server running?</li><li>Does the database exist, and have you entered the correct database name?</li><li>Have you entered the correct username and password?</li><li>Have you entered the correct database hostname?</li></ul>', ['%error' => $e->getMessage()]));
-      return FALSE;
+      foreach ($results['fail'] as $result) {
+        $this->fail($result);
+      }
+    }
+    catch (DBALException $e) {
+      // We get here if 'dbal_url' is defined but invalid/malformed.
+      $this->fail(t('There is a problem with the database URL. Doctrine DBAL reports the following message: %message', ['%message' => $e->getMessage()]));
     }
 
     return empty($results['fail']);
