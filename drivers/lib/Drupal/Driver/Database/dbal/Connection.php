@@ -13,6 +13,8 @@ use Drupal\Core\Database\IntegrityConstraintViolationException;
 use Drupal\Core\Database\StatementInterface;
 use Drupal\Core\Database\TransactionCommitFailedException;
 
+use Drupal\Driver\Database\dbal\DbalExtension\PDOMySql;
+
 use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\ConnectionException as DbalConnectionException;
 use Doctrine\DBAL\DBALException;
@@ -35,8 +37,8 @@ class Connection extends DatabaseConnection {
    *
    * @var string[]
    */
-  protected static $driverMap = array(
-    'pdo_mysql'          => 'PDOMySql',
+  protected static $dbalDriverClassMap = array(
+    'pdo_mysql' => PDOMySql::class,
 //    'pdo_sqlite'         => 'PDOSqlite',
 //    'pdo_pgsql'          => 'PDOPgSql',
 //    'pdo_oci'            => 'PDOOracle',
@@ -347,7 +349,7 @@ class Connection extends DatabaseConnection {
    * @return string DBAL driver class.
    */
   public static function getDruDbalDriverClass($driver_name) {
-    return "Drupal\\Driver\\Database\\dbal\\DBALDriver\\" . static::$driverMap[$driver_name];  // @todo manage aliases, class path to const
+    return static::$dbalDriverClassMap[$driver_name];  // @todo manage aliases, class path to const
   }
 
   /**

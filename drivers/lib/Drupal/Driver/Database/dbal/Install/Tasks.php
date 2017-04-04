@@ -70,6 +70,10 @@ class Tasks extends InstallTasks {
 
   /**
    * Check if we can connect to the database.
+   *
+   * @return bool
+   *   TRUE if the connection succeeded, FALSE otherwise. The self::$results
+   *   array stores pass/fail messages.
    */
   protected function connect() {
     try {
@@ -159,7 +163,10 @@ class Tasks extends InstallTasks {
   }
 
   /**
-   * @todo Validates the 'url' field of the installation form.
+   * Validation handler for  the 'dbal_url' field of the installation form.
+   *
+   * In fact, it just 'explodes' the DBAL URL into Drupal's connection info
+   * keys.
    */
   public function validateDbalUrl(array $element, FormStateInterface $form_state, array $form) {
     // Opens a DBAL connection using the URL, just to resolve the details of

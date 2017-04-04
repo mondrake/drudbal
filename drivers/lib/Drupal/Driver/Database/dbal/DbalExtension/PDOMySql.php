@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\Driver\Database\dbal\DBALDriver;
+namespace Drupal\Driver\Database\dbal\DbalExtension;
 
 use Drupal\Component\Utility\Unicode;
 use Drupal\Core\Database\Database;
@@ -21,7 +21,7 @@ use Doctrine\DBAL\DriverManager as DBALDriverManager;
 /**
  * Driver specific methods for pdo_mysql.
  */
-class PDOMySql {
+class PDOMySql implements DbalExtensionInterface {
 
   /**
    * Minimum required mysql version.
