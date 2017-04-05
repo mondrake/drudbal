@@ -478,14 +478,12 @@ class PDOMySql implements DbalExtensionInterface {
     if ($pdo_exception->getCode() == self::DATABASE_NOT_FOUND) {
       try {
         // Remove the database string from connection info.
-var_export([481,$info]);
         $database = $info['default']['database'];
         $dbal_url = $info['default']['dbal_url'];
         unset($info['default']['database']);
         if (($pos = strrpos($info['default']['dbal_url'], '/' . $database)) !== FALSE) {
           $info['default']['dbal_url'] = substr_replace($info['default']['dbal_url'], '', $pos, strlen($database) + 1);
         }
-var_export([488,$info]);
 
         // Change the Database::$databaseInfo array, need to remove the active
         // connection, then re-add it with the new info.
@@ -499,12 +497,10 @@ var_export([488,$info]);
         $info['default']['database'] = $database;
         $info['default']['dbal_url'] = $dbal_url;
         Database::removeConnection('default');
-var_export([501,$info]);
         Database::addConnectionInfo('default', 'default', $info['default']);
+
         // Re-connect with the new database info.
         Database::getConnection();
-var_export(Database::getConnectionInfo());
-var_export(Database::getConnection()->getDbalConnection()->getDatabase());die;
         $results['pass'][] = t('Database %database was created successfully.', ['%database' => $database]);
       }
       catch (DatabaseNotFoundException $e) {
