@@ -493,6 +493,7 @@ class PDOMySql implements DbalExtensionInterface {
         // Now, attempt the connection again; if it's successful, attempt to
         // create the database, then reset the connection info to original.
         Database::getConnection()->createDatabase($database);
+        Database::closeConnection();
         Database::removeConnection('default');
         Database::addConnectionInfo('default', 'default', $info['default']);
         // Re-connect with the new database info.
