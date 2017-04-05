@@ -20,6 +20,8 @@ use Doctrine\DBAL\ConnectionException as DbalConnectionException;
 use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\DriverManager as DbalDriverManager;
 use Doctrine\DBAL\Version as DbalVersion;
+use GuzzleHttp\Psr7\Uri;
+use Psr\Http\Message\UriInterface;
 
 /**
  * DruDbal implementation of \Drupal\Core\Database\Connection.
@@ -360,6 +362,31 @@ class Connection extends DatabaseConnection {
    */
   public function getDbServerVersion() {
     return $this->getDbalConnection()->getWrappedConnection()->getServerVersion();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function getConnectionInfoAsUrlHelper(array $connection_options, UriInterface $uri) {
+    $uri = parent::getConnectionInfoAsUrlHelper($connection_options, $uri);
+    // Add the 'dbal_driver' key to the URI.
+    if (!empty($connection_options['dbal_driver'])) {
+      $uri = Uri::withQueryValue($uri, 'dbal_driver', $connection_options['dbal_driver']);
+    }
+    return $uri;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function convertDbUrlToConnectionInfoHelper(UriInterface $uri, $root, array $connection_options) {
+    $connection_options = parent::convertDbUrlToConnectionInfoHelper($uri, $root, $connection_options);
+    // Add the 'dbal_driver' key to the connection options.
+    $parts = [];
+    parse_str($uri->getQuery(), $parts);
+    $dbal_driver = isset($parts['dbal_driver']) ? $parts['dbal_driver'] : '';
+    $connection_options['dbal_driver'] = $dbal_driver;
+    return $connection_options;
   }
 
 }
