@@ -497,6 +497,7 @@ class PDOMySql implements DbalExtensionInterface {
         Database::addConnectionInfo('default', 'default', $info['default']);
         // Re-connect with the new database info.
         Database::getConnection();
+var_export(Database::getConnectionInfo());
 var_export(Database::getConnection()->getDbalConnection()->getDatabase());die;
         $results['pass'][] = t('Database %database was created successfully.', ['%database' => $database]);
       }
