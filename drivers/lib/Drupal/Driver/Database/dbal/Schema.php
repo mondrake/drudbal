@@ -18,8 +18,9 @@ use Doctrine\DBAL\Types\Type as DbalType;
  * DruDbal implementation of \Drupal\Core\Database\Schema.
  *
  * Note: there should not be db platform specific code here. Any tasks that
- * cannot be managed by Doctrine DBAL should be added to driver specific code
- * in Drupal\Driver\Database\dbal\DbalExtension\[dbal_driver_name] classes and
+ * cannot be managed by Doctrine DBAL should be added to driver extension
+ * specific code in
+ * Drupal\Driver\Database\dbal\DbalExtension\[dbal_driver_name] classes and
  * execution handed over to there.
  */
 class Schema extends DatabaseSchema {
@@ -70,7 +71,7 @@ class Schema extends DatabaseSchema {
     $schema = new DbalSchema;
     $new_table = $schema->createTable($this->dbalExt->pfxTable($name));
 
-    // Delegate adding options to driver.
+    // Delegate adding options to DBAL driver extension.
     $this->dbalExt->delegateCreateTableSetOptions($new_table, $schema, $table, $name);
 
     // Add table comment.
@@ -126,12 +127,12 @@ class Schema extends DatabaseSchema {
   protected function getDbalColumnType(array $field) {
     $dbal_type = NULL;
 
-    // Delegate to driver.
+    // Delegate to DBAL driver extension.
     if ($this->dbalExt->delegateGetDbalColumnType($dbal_type, $field)) {
       return $dbal_type;
     }
 
-    // Driver did not pick up, proceed with DBAL.
+    // DBAL driver extension did not pick up, proceed with DBAL.
     if (!isset($field['size'])) {
       $field['size'] = 'normal';
     }
@@ -202,13 +203,13 @@ class Schema extends DatabaseSchema {
       $options['comment'] = $this->prepareComment($comment);
     }
 
-    // Let driver alter the column options if required.
+    // Let DBAL driver extension alter the column options if required.
     $this->dbalExt->alterDbalColumnOptions($options, $dbal_type, $field, $field_name);
 
     // Get the column definition from DBAL, and trim the field name.
     $dbal_column_definition = substr($this->dbalPlatform->getColumnDeclarationSQL($field_name, $options), strlen($field_name) + 1);
 
-    // Let driver alter the column definition if required.
+    // Let DBAL driver extension alter the column definition if required.
     $this->dbalExt->alterDbalColumnDefinition($dbal_column_definition, $options, $dbal_type, $field, $field_name);
 
     return $dbal_column_definition;
@@ -371,12 +372,12 @@ class Schema extends DatabaseSchema {
       throw new SchemaObjectDoesNotExistException(t("Cannot set default value of field @table.@field: field doesn't exist.", ['@table' => $table, '@field' => $field]));
     }
 
-    // Delegate to driver.
+    // Delegate to DBAL driver extension.
     if ($this->dbalExt->delegateFieldSetDefault($table, $field, $this->escapeDefaultValue($default))) {
       return;
     }
 
-    // Driver did not pick up, proceed with DBAL.
+    // DBAL driver extension did not pick up, proceed with DBAL.
     $current_schema = $this->dbalSchemaManager->createSchema();
     $to_schema = clone $current_schema;
     // @todo this may not work - need to see if ::escapeDefaultValue
@@ -394,12 +395,12 @@ class Schema extends DatabaseSchema {
       throw new SchemaObjectDoesNotExistException(t("Cannot remove default value of field @table.@field: field doesn't exist.", ['@table' => $table, '@field' => $field]));
     }
 
-    // Delegate to driver.
+    // Delegate to DBAL driver extension.
     if ($this->dbalExt->delegateFieldSetNoDefault($table, $field)) {
       return;
     }
 
-    // Driver did not pick up, proceed with DBAL.
+    // DBAL driver extension did not pick up, proceed with DBAL.
     $current_schema = $this->dbalSchemaManager->createSchema();
     $to_schema = clone $current_schema;
     // @todo this may not work - we need to 'DROP' the default, not set it
@@ -417,13 +418,13 @@ class Schema extends DatabaseSchema {
       return FALSE;
     }
 
-    // Delegate to driver.
+    // Delegate to DBAL driver extension.
     $result = FALSE;
     if ($this->dbalExt->delegateIndexExists($result, $table, $name)) {
       return $result;
     }
 
-    // Driver did not pick up, proceed with DBAL.
+    // DBAL driver extension did not pick up, proceed with DBAL.
     return in_array($name, array_keys($this->dbalSchemaManager->listTableIndexes($this->dbalExt->pfxTable($table))));
   }
 
@@ -440,12 +441,12 @@ class Schema extends DatabaseSchema {
       throw new SchemaObjectExistsException(t("Cannot add primary key to table @table: primary key already exists.", ['@table' => $table]));
     }
 
-    // Delegate to driver.
+    // Delegate to DBAL driver extension.
     if ($this->dbalExt->delegateAddPrimaryKey($current_schema, $table, $fields)) {
       return;
     }
 
-    // Driver did not pick up, proceed with DBAL.
+    // DBAL driver extension did not pick up, proceed with DBAL.
     $to_schema = clone $current_schema;
     $to_schema->getTable($this->dbalExt->pfxTable($table))->setPrimaryKey($this->dbalResolveIndexColumnList($fields));
     $sql_statements = $current_schema->getMigrateToSql($to_schema, $this->dbalPlatform);
@@ -484,12 +485,12 @@ class Schema extends DatabaseSchema {
       throw new SchemaObjectExistsException(t("Cannot add unique key @name to table @table: unique key already exists.", ['@table' => $table, '@name' => $name]));
     }
 
-    // Delegate to driver.
+    // Delegate to DBAL driver extension.
     if ($this->dbalExt->delegateAddUniqueKey($table, $name, $fields)) {
       return;
     }
 
-    // Driver did not pick up, proceed with DBAL.
+    // DBAL driver extension did not pick up, proceed with DBAL.
     $current_schema = $this->dbalSchemaManager->createSchema();
     $to_schema = clone $current_schema;
     $to_schema->getTable($this->dbalExt->pfxTable($table))->addUniqueIndex($this->dbalResolveIndexColumnList($fields), $name);
@@ -515,12 +516,12 @@ class Schema extends DatabaseSchema {
       throw new SchemaObjectExistsException(t("Cannot add index @name to table @table: index already exists.", ['@table' => $table, '@name' => $name]));
     }
 
-    // Delegate to driver.
+    // Delegate to DBAL driver extension.
     if ($this->dbalExt->delegateAddIndex($table, $name, $fields, $spec)) {
       return;
     }
 
-    // Driver did not pick up, proceed with DBAL.
+    // DBAL driver extension did not pick up, proceed with DBAL.
     $current_schema = $this->dbalSchemaManager->createSchema();
     $to_schema = clone $current_schema;
     $to_schema->getTable($this->dbalExt->pfxTable($table))->addIndex($this->dbalResolveIndexColumnList($fields), $name);
@@ -613,20 +614,20 @@ class Schema extends DatabaseSchema {
     $dbal_schema = $this->dbalSchemaManager->createSchema();
     $comment = NULL;
 
-    // Delegate to driver.
+    // Delegate to DBAL driver extension.
     if ($this->dbalExt->delegateGetComment($comment, $dbal_schema, $table, $column)) {
       return $comment;
     }
 
-    // Driver did not pick up, proceed with DBAL.
+    // DBAL driver extension did not pick up, proceed with DBAL.
     if (isset($column)) {
       $comment = $dbal_schema->getTable($this->dbalExt->pfxTable($table))->getColumn($column)->getComment();
-      // Let driver cleanup the comment if necessary.
+      // Let DBAL driver extension cleanup the comment if necessary.
       $this->dbalExt->alterGetComment($comment, $dbal_schema, $table, $column);
       return $comment;
     }
-    // DBAL cannot retrieve table comments from introspected schema. Driver
-    // should have processed already.
+    // DBAL cannot retrieve table comments from introspected schema. DBAL
+    // driver extension should have processed it already.
     // @see https://github.com/doctrine/dbal/issues/1335
     return NULL;
   }
@@ -669,7 +670,7 @@ class Schema extends DatabaseSchema {
    *
    * @return string[]|false
    *   The list of columns, or FALSE if it cannot be determined (e.g. because
-   *   there are column leghts specified, that DBAL cannot process.
+   *   there are column leghts specified, that DBAL cannot process).
    *
    * @see https://github.com/doctrine/dbal/pull/2412
    */
