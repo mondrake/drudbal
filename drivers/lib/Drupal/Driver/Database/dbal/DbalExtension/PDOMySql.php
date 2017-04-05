@@ -472,27 +472,31 @@ class PDOMySql implements DbalExtensionInterface {
       return $results;
     }
 
-    // Attempt to create the database if it is not found.
+    // Attempt to create the database if it is not found. Try to establish a
+    // connection without database specified, try to create database, and if
+    // successful reopen the connection to the new database.
     if ($pdo_exception->getCode() == self::DATABASE_NOT_FOUND) {
-      // Remove the database string from connection info.
-      $info_copy = $info;
-      $database = $info_copy['default']['database'];
-      unset($info_copy['default']['database']);
-      if (($pos = strrpos($info_copy['default']['dbal_url'], '/' . $database)) !== FALSE) {
-        $info_copy['default']['dbal_url'] = substr_replace($info_copy['default']['dbal_url'], '', $pos, strlen($database) + 1);
-      }
-
-      // In order to change the Database::$databaseInfo array, need to remove
-      // the active connection, then re-add it with the new info.
-      Database::removeConnection('default');
-      Database::addConnectionInfo('default', 'default', $info_copy['default']);
-
       try {
+        // Remove the database string from connection info.
+        $info_copy = $info;
+        $database = $info_copy['default']['database'];
+        unset($info_copy['default']['database']);
+        if (($pos = strrpos($info_copy['default']['dbal_url'], '/' . $database)) !== FALSE) {
+          $info_copy['default']['dbal_url'] = substr_replace($info_copy['default']['dbal_url'], '', $pos, strlen($database) + 1);
+        }
+
+        // Change the Database::$databaseInfo array, need to remove the active
+        // connection, then re-add it with the new info.
+        Database::removeConnection('default');
+        Database::addConnectionInfo('default', 'default', $info_copy['default']);
+
         // Now, attempt the connection again; if it's successful, attempt to
         // create the database, then reset the connection info to original.
         Database::getConnection()->createDatabase($database);
         Database::removeConnection('default');
         Database::addConnectionInfo('default', 'default', $info['default']);
+        // Re-connect with the new database info.
+        Database::getConnection();
         $results['pass'][] = t('Database %database was created successfully.', ['%database' => $database]);
       }
       catch (DatabaseNotFoundException $e) {
