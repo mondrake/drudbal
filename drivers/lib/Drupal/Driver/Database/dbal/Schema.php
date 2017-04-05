@@ -598,9 +598,16 @@ class Schema extends DatabaseSchema {
   }
 
   /**
-   * Retrieve a table or column comment.
+   * Retrieves a table or column comment.
    *
-   * @todo
+   * @param string $table
+   *   The table name.
+   * @param string $column
+   *   (optional) The column name. If NULL, the table comment will be
+   *   retrieved.
+   *
+   * @return string
+   *   The retrieved comment.
    */
   public function getComment($table, $column = NULL) {
     $dbal_schema = $this->dbalSchemaManager->createSchema();
@@ -642,18 +649,31 @@ class Schema extends DatabaseSchema {
   }
 
   /**
-   * @todo
+   * Executes a number of DDL SQL statements.
+   *
+   * @param string[] $sql_statements
+   *   The DDL SQL statements to execute.
    */
-  protected function dbalExecuteSchemaChange($sql_statements) {
+  protected function dbalExecuteSchemaChange(array $sql_statements) {
     foreach ($sql_statements as $sql) {
       $this->connection->getDbalConnection()->exec($sql);
     }
   }
 
   /**
-   * @todo
+   * Gets the list of columns to be used for index manipulation operations.
+   *
+   * @param array[] $fields
+   *   An array of field description arrays, as specified in the schema
+   *   documentation.
+   *
+   * @return string[]|false
+   *   The list of columns, or FALSE if it cannot be determined (e.g. because
+   *   there are column leghts specified, that DBAL cannot process.
+   *
+   * @see https://github.com/doctrine/dbal/pull/2412
    */
-  protected function dbalResolveIndexColumnList($fields) {
+  protected function dbalResolveIndexColumnList(array $fields) {
     $return = [];
     foreach ($fields as $field) {
       if (is_array($field)) {
