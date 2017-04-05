@@ -479,24 +479,25 @@ class PDOMySql implements DbalExtensionInterface {
       try {
         // Remove the database string from connection info.
 var_export([481,$info]);
-        $info_copy = $info;
-        $database = $info_copy['default']['database'];
-        unset($info_copy['default']['database']);
-        if (($pos = strrpos($info_copy['default']['dbal_url'], '/' . $database)) !== FALSE) {
-          $info_copy['default']['dbal_url'] = substr_replace($info_copy['default']['dbal_url'], '', $pos, strlen($database) + 1);
+        $database = $info['default']['database'];
+        $dbal_url = $info['default']['dbal_url'];
+        unset($info['default']['database']);
+        if (($pos = strrpos($info['default']['dbal_url'], '/' . $database)) !== FALSE) {
+          $info['default']['dbal_url'] = substr_replace($info['default']['dbal_url'], '', $pos, strlen($database) + 1);
         }
 var_export([488,$info]);
-var_export([489,$info_copy]);
 
         // Change the Database::$databaseInfo array, need to remove the active
         // connection, then re-add it with the new info.
         Database::removeConnection('default');
-        Database::addConnectionInfo('default', 'default', $info_copy['default']);
+        Database::addConnectionInfo('default', 'default', $info['default']);
 
         // Now, attempt the connection again; if it's successful, attempt to
         // create the database, then reset the connection info to original.
         Database::getConnection()->createDatabase($database);
         Database::closeConnection();
+        $info['default']['database'] = $database;
+        $info['default']['dbal_url'] = $dbal_url;
         Database::removeConnection('default');
 var_export([501,$info]);
         Database::addConnectionInfo('default', 'default', $info['default']);
