@@ -148,7 +148,7 @@ class PDOMySql implements DbalExtensionInterface {
       $options['user'] = $connection_options['username'];
       $options['password'] = $connection_options['password'];
       $options['host'] = $connection_options['host'];
-      $options['port'] = $connection_options['port'];
+      $options['port'] = isset($connection_options['port']) ? $connection_options['port'] : NULL;
       $options['url'] = isset($connection_options['dbal_url']) ? $connection_options['dbal_url'] : NULL;
       $options['driver'] = $connection_options['dbal_driver'];
 //var_export($options);die;
