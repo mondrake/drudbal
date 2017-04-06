@@ -625,6 +625,18 @@ class PDOMySql implements DbalExtensionInterface {
     ]);
   }
 
+  public function delegateAddField(&$primary_key_processed_by_driver, $table, $field, $spec, $keys_new, $dbal_column_definition) {
+    if (!empty($keys_new['primary key'])) {
+      $sql = 'ALTER TABLE {' . $table . '} ADD `' . $field . '` ' . $dbal_column_definition;
+      $keys_sql = $this->createKeysSql(['primary key' => $keys_new['primary key']]);
+      $sql .= ', ADD ' . $keys_sql[0];
+      $this->connection->query($sql);
+      $primary_key_processed_by_driver = TRUE;
+      return TRUE;
+    }
+    return FALSE;
+  }
+
   public function delegateChangeField(&$primary_key_processed_by_driver, $table, $field, $field_new, $spec, $keys_new, $dbal_column_definition) {
     $sql = 'ALTER TABLE {' . $table . '} CHANGE `' . $field . '` `' . $field_new . '` ' . $dbal_column_definition;
     if (!empty($keys_new['primary key'])) {
@@ -658,6 +670,7 @@ class PDOMySql implements DbalExtensionInterface {
       $result = $schema->getTable($this->pfxTable($table))->hasPrimaryKey();
       return TRUE;
     }
+    return FALSE;
   }
 
   public function delegateAddPrimaryKey($schema, $table, $fields) {
@@ -667,6 +680,7 @@ class PDOMySql implements DbalExtensionInterface {
       $this->connection->query('ALTER TABLE {' . $table . '} ADD PRIMARY KEY (' . $this->createKeySql($fields) . ')');
       return TRUE;
     }
+    return FALSE;
   }
 
   public function delegateAddUniqueKey($table, $name, $fields) {
@@ -676,6 +690,7 @@ class PDOMySql implements DbalExtensionInterface {
       $this->connection->query('ALTER TABLE {' . $table . '} ADD UNIQUE KEY `' . $name . '` (' . $this->createKeySql($fields) . ')');
       return TRUE;
     }
+    return FALSE;
   }
 
   public function delegateAddIndex($table, $name, $fields, $spec) {
@@ -687,6 +702,7 @@ class PDOMySql implements DbalExtensionInterface {
       $this->connection->query('ALTER TABLE {' . $table . '} ADD INDEX `' . $name . '` (' . $this->createKeySql($indexes[$name]) . ')');
       return TRUE;
     }
+    return FALSE;
   }
 
   /**

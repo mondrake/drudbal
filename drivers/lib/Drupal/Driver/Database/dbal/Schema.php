@@ -93,7 +93,7 @@ class Schema extends DatabaseSchema {
       // However we have to add here instead of separate calls to
       // ::addPrimaryKey to avoid failure when creating a table with an
       // autoincrement column.
-      $new_table->setPrimaryKey($table['primary key']);
+      $new_table->setPrimaryKey($this->dbalResolveIndexColumnList($table['primary key']));
     }
 
     // Execute the table creation.
@@ -304,17 +304,34 @@ class Schema extends DatabaseSchema {
     }
 
     $current_schema = $this->dbalSchemaManager->createSchema();
-    $dbal_type = $this->getDbalColumnType($spec);
     $to_schema = clone $current_schema;
     $dbal_table = $to_schema->getTable($this->dbalExt->pfxTable($table));
-    $dbal_table->addColumn($field, $dbal_type, ['columnDefinition' => $this->getDbalColumnDefinition($field, $dbal_type, $spec)]);
-    $sql_statements = $current_schema->getMigrateToSql($to_schema, $this->dbalPlatform);
-    $this->dbalExecuteSchemaChange($sql_statements);
 
-    // Manage change to primary key.
-    if (!empty($keys_new['primary key'])) {
-      $this->dropPrimaryKey($table);
-      $this->addPrimaryKey($table, $keys_new['primary key']);
+    // Drop primary key if it is due to be changed.
+    if (!empty($keys_new['primary key']) && $dbal_table->hasPrimaryKey()) {
+      $dbal_table->dropPrimaryKey();
+      $sql_statements = $current_schema->getMigrateToSql($to_schema, $this->dbalPlatform);
+      $this->dbalExecuteSchemaChange($sql_statements);
+      $current_schema = clone $to_schema;
+    }
+
+    // Delegate to DBAL driver extension.
+    $primary_key_processed_by_driver = FALSE;
+    $dbal_type = $this->getDbalColumnType($spec);
+    $dbal_column_definition = $this->getDbalColumnDefinition($field, $dbal_type, $spec);
+    if (!$this->dbalExt->delegateAddField($primary_key_processed_by_driver, $table, $field, $spec, $keys_new, $dbal_column_definition)) {
+      // DBAL driver extension did not pick up, proceed with DBAL.
+      $dbal_table->addColumn($field, $dbal_type, ['columnDefinition' => $dbal_column_definition]);
+      // Manage change to primary key.
+      if (!empty($keys_new['primary key'])) {
+        // @todo in MySql, this could still be a list of columns with length.
+        // However we have to add here instead of separate calls to
+        // ::addPrimaryKey to avoid failure when creating a table with an
+        // autoincrement column.
+        $dbal_table->setPrimaryKey($this->dbalResolveIndexColumnList($keys_new['primary key']));
+      }
+      $sql_statements = $current_schema->getMigrateToSql($to_schema, $this->dbalPlatform);
+      $this->dbalExecuteSchemaChange($sql_statements);
     }
 
     // Add unique keys.
