@@ -19,3 +19,10 @@ $ ln -s [DRUPAL_ROOT]/[path_to_contrib_modules]/drudbal/drivers/lib/Drupal/Drive
 
 ## Status report
 ![status_report](https://cloud.githubusercontent.com/assets/1174864/24586319/d294c5f8-179d-11e7-8cb7-884522124e8c.png)
+
+## Related Drupal issues
+Issue | Description   |
+------|---------------|
+[2605284](https://www.drupal.org/node/2605284) | Testing framework does not work with contributed database drivers |
+[2867700](https://www.drupal.org/node/2867700) | ConnectionUnitTest::testConnectionOpen fails if the driver is not implementing a PDO connection |
+[2867788](https://www.drupal.org/node/2867788) | Log::findCaller fails to report the correct caller function with non-core drivers |
