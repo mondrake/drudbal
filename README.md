@@ -1,5 +1,7 @@
 # DruDbal
-A database driver bridge to Doctrine DBAL.
+An __experimental__, work in progress, Drupal driver for Doctrine DBAL. The concept is to use Doctrine DBAL as an
+additional database abstraction layer, implementing a database agnostic Drupal driver, that hands over database
+operations to DBAL.
 
 ## Setup
 ```
