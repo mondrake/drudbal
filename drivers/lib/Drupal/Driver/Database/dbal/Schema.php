@@ -195,7 +195,7 @@ class Schema extends DatabaseSchema {
 
     if (isset($field['type']) && $field['type'] == 'serial') {
       $options['autoincrement'] = TRUE;
-      $options['notnull'] = FALSE;
+      $options['notnull'] = TRUE;
     }
 
     if (!empty($field['description'])) {

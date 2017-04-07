@@ -626,7 +626,7 @@ class PDOMySql implements DbalExtensionInterface {
   }
 
   public function delegateAddField(&$primary_key_processed_by_driver, $table, $field, $spec, $keys_new, $dbal_column_definition) {
-    if (!empty($keys_new['primary key'])) {
+    if (!empty($keys_new['primary key']) && isset($field['type']) && $field['type'] == 'serial') {
       $sql = 'ALTER TABLE {' . $table . '} ADD `' . $field . '` ' . $dbal_column_definition;
       $keys_sql = $this->createKeysSql(['primary key' => $keys_new['primary key']]);
       $sql .= ', ADD ' . $keys_sql[0];
