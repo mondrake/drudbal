@@ -19,6 +19,7 @@ use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\ConnectionException as DbalConnectionException;
 use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\DriverManager as DbalDriverManager;
+use Doctrine\DBAL\Statement as DbalStatement;
 use Doctrine\DBAL\Version as DbalVersion;
 use GuzzleHttp\Psr7\Uri;
 use Psr\Http\Message\UriInterface;
@@ -134,12 +135,11 @@ class Connection extends DatabaseConnection {
   public function query($query, array $args = [], $options = []) {
     // Use default values if not already set.
     $options += $this->defaultOptions();
-
     try {
       // We allow either a pre-bound statement object or a literal string.
       // In either case, we want to end up with an executed statement object,
       // which we pass to PDOStatement::execute.
-      if ($query instanceof StatementInterface) {   // @todo
+      if ($query instanceof StatementInterface || $query instanceof DbalStatement) {   // @todo avoid dbalstatement?
         $stmt = $query;
         $stmt->execute(NULL, $options);
       }

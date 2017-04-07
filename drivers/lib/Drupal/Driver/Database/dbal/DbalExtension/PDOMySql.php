@@ -17,6 +17,7 @@ use Doctrine\DBAL\ConnectionException as DbalConnectionException;
 use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\Exception\ConnectionException as DbalExceptionConnectionException;
 use Doctrine\DBAL\DriverManager as DBALDriverManager;
+use Doctrine\DBAL\Statement as DbalStatement;
 
 /**
  * Driver specific methods for pdo_mysql.
@@ -303,7 +304,19 @@ class PDOMySql implements DbalExtensionInterface {
       // Wrap the exception in another exception, because PHP does not allow
       // overriding Exception::getMessage(). Its message is the extra database
       // debug information.
-      $query_string = ($query instanceof StatementInterface) ? $query->getQueryString() : $query;
+      // @todo avoid dbalstatement??
+      if ($query instanceof StatementInterface) {
+        $query_string = $query->getQueryString();
+      }
+      elseif ($query instanceof DbalStatement) {
+        $query_string = '';
+      }
+      elseif (is_string($query)) {
+        $query_string = $query;
+      }
+      else {
+        $query_string = NULL;
+      }
       $message = $e->getPrevious()->getMessage() . ": " . $query_string . "; " . print_r($args, TRUE);
       // Match all SQLSTATE 23xxx errors.
       if (substr($e->getPrevious()->getCode(), -6, -3) == '23') {
