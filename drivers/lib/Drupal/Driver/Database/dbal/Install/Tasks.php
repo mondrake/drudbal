@@ -16,9 +16,9 @@ use Doctrine\DBAL\DriverManager as DbalDriverManager;
  * Specifies installation tasks for DruDbal driver.
  *
  * Note: there should not be db platform specific code here. Any tasks that
- * cannot be managed by Doctrine DBAL should be added to driver specific code
- * in Drupal\Driver\Database\dbal\DbalExtension\[dbal_driver_name] classes and
- * execution handed over to there.
+ * cannot be managed by Doctrine DBAL should be added to extension specific
+ * code in Drupal\Driver\Database\dbal\DbalExtension\[dbal_driver_name]
+ * classes and execution handed over to there.
  */
 class Tasks extends InstallTasks {
 
@@ -26,10 +26,10 @@ class Tasks extends InstallTasks {
    * Constructs a \Drupal\Driver\Database\dbal\Install\Tasks object.
    */
   public function __construct() {
-    // The DBAL driver delegates the installation tasks to the DruDbalDriver.
+    // The DBAL driver delegates the installation tasks to the Dbal extension.
     // We just add a catchall task in this class.
     $this->tasks[] = [
-      'function' => 'runDbalDriverInstallTasks',
+      'function' => 'runDbalInstallTasks',
       'arguments' => [],
     ];
   }
@@ -96,11 +96,11 @@ class Tasks extends InstallTasks {
       // server) has found problems in the connection (e.g. wrong
       // username/password, or host, etc). It's possible that the problem can
       // be fixed (e.g. by creating a missing database), so hand over to the
-      // DruDbal driver for the processing.
+      // Dbal extension for the processing.
       $connection_info = Database::getConnectionInfo()['default'];
       if (!empty($connection_info['dbal_driver'])) {
-        $drudbal_driver_class = DruDbalConnection::getDruDbalDriverClass($connection_info['dbal_driver']);
-        $results = $drudbal_driver_class::handleInstallConnectException($e);
+        $dbal_extension_class = DruDbalConnection::getDbalExtensionClass($connection_info['dbal_driver']);
+        $results = $dbal_extension_class::handleInstallConnectException($e);
         foreach ($results['pass'] as $result) {
           $this->pass($result);
         }
@@ -192,10 +192,12 @@ class Tasks extends InstallTasks {
 
   /**
    * Executes DBAL driver installation specific tasks.
+   *
+   * @return @todo
    */
-  public function runDbalDriverInstallTasks() {
-    $connection = Database::getConnection();
-    $results = $connection->runInstallTasks();
+  public function runDbalInstallTasks() {
+    $extension = Database::getConnection()->getDbalExtension();
+    $results = $extension->runInstallTasks();
     foreach ($results['pass'] as $result) {
       $this->pass($result);
     }

@@ -28,20 +28,19 @@ use Psr\Http\Message\UriInterface;
  * DruDbal implementation of \Drupal\Core\Database\Connection.
  *
  * Note: there should not be db platform specific code here. Any tasks that
- * cannot be managed by Doctrine DBAL should be added to driver extension
- * specific code in
- * Drupal\Driver\Database\dbal\DbalExtension\[dbal_driver_name] classes and
- * execution handed over to there.
+ * cannot be managed by Doctrine DBAL should be added to extension specific
+ * code in Drupal\Driver\Database\dbal\DbalExtension\[dbal_driver_name]
+ * classes and execution handed over to there.
  */
 class Connection extends DatabaseConnection {
 
   /**
-   * List of supported drivers and their mappings to the DBAL driver extension
+   * List of supported drivers and their mappings to the DBAL extension
    * classes.
    *
    * @var string[]
    */
-  protected static $dbalDriverClassMap = array(
+  protected static $dbalExtensionClassMap = array(
     'pdo_mysql' => PDOMySql::class,
 //    'pdo_sqlite'         => 'PDOSqlite',
 //    'pdo_pgsql'          => 'PDOPgSql',
@@ -83,14 +82,14 @@ class Connection extends DatabaseConnection {
    * Constructs a Connection object.
    */
   public function __construct(DbalConnection $dbal_connection, array $connection_options = []) {
-    $drudbal_driver_class = static::getDruDbalDriverClass($dbal_connection->getDriver()->getName());
-    $this->dbalExt = new $drudbal_driver_class($this, $dbal_connection);
+    $dbal_extension_class = static::getDbalExtensionClass($dbal_connection->getDriver()->getName());
+    $this->dbalExt = new $dbal_extension_class($this, $dbal_connection);
     $this->transactionSupport = $this->dbalExt->transactionSupport($connection_options);
     $this->transactionalDDLSupport = $this->dbalExt->transactionalDDLSupport($connection_options);
     $this->setPrefix(isset($connection_options['prefix']) ? $connection_options['prefix'] : '');
     $this->connectionOptions = $connection_options;
-    // Unset $this->connection so that __get() can return the DbalConnection on
-    // the driver instead.
+    // Unset $this->connection so that __get() can return the wrapped
+    // DbalConnection on the extension instead.
     unset($this->connection);
   }
 
@@ -98,8 +97,8 @@ class Connection extends DatabaseConnection {
    * @todo
    */
   public function __get($name) {
-    // Calls to $this->connection return the DbalConnection on the driver
-    // instead.
+    // Calls to $this->connection return the wrapped DbalConnection on the
+    // extension instead.
     if ($name === 'connection') {
       return $this->getDbalConnection();
     }
@@ -111,13 +110,6 @@ class Connection extends DatabaseConnection {
   public function destroy() {
     $this->dbalExt->destroy();
     $this->schema = NULL;
-  }
-
-  /**
-   * @todo
-   */
-  public function runInstallTasks() {
-    return $this->dbalExt->runInstallTasks();
   }
 
   /**
@@ -233,8 +225,8 @@ class Connection extends DatabaseConnection {
       // from the just established DBAL connection.
       $dbal_driver = $dbal_connection->getDriver()->getName();
     }
-    $drudbal_driver_class = static::getDruDbalDriverClass($dbal_driver);
-    return $drudbal_driver_class::open($connection_options);
+    $dbal_extension_class = static::getDbalExtensionClass($dbal_driver);
+    return $dbal_extension_class::open($connection_options);
   }
 
   public function queryRange($query, $from, $count, array $args = [], array $options = []) {
@@ -329,30 +321,32 @@ class Connection extends DatabaseConnection {
   }
 
   /**
-   * Gets the DBAL connection.
+   * Gets the wrapped DBAL connection.
    *
-   * @return string DBAL driver name
+   * @return string
+   *   The DBAL connection wrapped by the extension object.
    */
   public function getDbalConnection() {
     return $this->dbalExt->getDbalConnection();
   }
 
   /**
-   * Gets the DruDbal driver.
+   * Gets the Dbal extension.
    *
    * @return @todo
    */
-  public function getDruDbalDriver() {
+  public function getDbalExtension() {
     return $this->dbalExt;
   }
 
   /**
-   * Gets the DBAL driver class.
+   * Gets the DBAL extension class.
    *
-   * @return string DBAL driver class.
+   * @return string
+   *   The DBAL extension class.
    */
-  public static function getDruDbalDriverClass($driver_name) {
-    return static::$dbalDriverClassMap[$driver_name];  // @todo manage aliases, class path to const
+  public static function getDbalExtensionClass($driver_name) {
+    return static::$dbalExtensionClassMap[$driver_name];  // @todo manage aliases, class path to const
   }
 
   /**
