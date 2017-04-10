@@ -37,9 +37,7 @@ class Truncate extends QueryTruncate {
       if (!empty($comments)) {
         $sql = $comments . $sql;
       }
-      $dbal_connection->executeUpdate($sql);
-      $result = $dbal_query->execute();
-      return $result;
+      return $dbal_connection->executeUpdate($sql);
     }
     else {
       $db_platform = $dbal_connection->getDatabasePlatform();
