@@ -1,23 +1,36 @@
 # DruDbal
 An __experimental__, work in progress, Drupal driver for Doctrine DBAL. The concept is to use Doctrine DBAL as an
 additional database abstraction layer, implementing a database agnostic Drupal driver, that hands over database
-operations to DBAL.
+operations to DBAL. Do not use if not for trial. No support, sorry :)
 
-## Setup
+## Installation
+
+Very rough instructions to install Drupal from scratch with this db driver under the hood:
+
+1. Get a fresh code build of Drupal with your preferred way. Use latest Drupal dev. Use PHP 7.0+. Only works with MySql/PDO.
+
+2. Clone this repository to your contrib modules path:
 ```
-$ composer require drupal/drudbal:^1
+$ cd [DRUPAL_ROOT]/[path_to_contrib_modules]
+$ git clone https://github.com/mondrake/drudbal.git
 ```
 
+3. Create a directory for the contrib driver, and create a symlink to the 'dbal' subdirectory of the module.
+This way, when git pulling updates from the module's repo, the driver code will also be aligned.
 ```
 $ mkdir -p [DRUPAL_ROOT]/drivers/lib/Drupal/Driver/Database/
 $ cd [DRUPAL_ROOT]/drivers/lib/Drupal/Driver/Database/
 $ ln -s [DRUPAL_ROOT]/[path_to_contrib_modules]/drudbal/drivers/lib/Drupal/Driver/Database/dbal dbal
 ```
 
-## Database configuration
+4. Launch the interactive installer. Proceed as usual and when on the db selection form, select 'Doctrine DBAL'
+and enter a 'database URL' compliant with Doctrine DBAL syntax:
+
 ![configuration](https://cloud.githubusercontent.com/assets/1174864/24586418/7f86feb4-17a0-11e7-820f-eb1483dad07f.png)
 
-## Status report
+5. If everything goes right, when you're welcomed to the new Drupal installation, visit the Status Report. The 'database'
+section will report something like:
+
 ![status_report](https://cloud.githubusercontent.com/assets/1174864/24586319/d294c5f8-179d-11e7-8cb7-884522124e8c.png)
 
 ## Related DBAL issues/PRs
