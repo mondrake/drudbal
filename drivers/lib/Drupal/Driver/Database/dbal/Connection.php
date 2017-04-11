@@ -132,7 +132,7 @@ class Connection extends DatabaseConnection {
       // We allow either a pre-bound statement object or a literal string.
       // In either case, we want to end up with an executed statement object,
       // which we pass to PDOStatement::execute.
-      if ($query instanceof StatementInterface || $query instanceof DbalStatement) {   // @todo avoid dbalstatement?
+      if ($query instanceof StatementInterface) {
         $stmt = $query;
         $stmt->execute(NULL, $options);
       }
@@ -152,14 +152,11 @@ class Connection extends DatabaseConnection {
         // Resolve tables' names with prefix.
         $query = $this->prefixTables($query);
 
-        // Prepare a DBAL statement.
-        $dbal_stmt = $this->getDbalConnection()->prepare($query);
+        // Prepare a statement.
+        $stmt = $this->connection->getWrappedConnection()->prepare($query, $options);
 
-        // Allow DBAL extension to alter the statement.
-        $this->dbalExt->alterQueryStatement($dbal_stmt, $query, $args, $options);
-
-        // Executes statement.
-        $dbal_stmt->execute($args);
+        // Execute statement.
+        $stmt->execute($args, $options);
       }
 
       // Depending on the type of query we may need to return a different value.
@@ -167,10 +164,10 @@ class Connection extends DatabaseConnection {
       // value.
       switch ($options['return']) {
         case Database::RETURN_STATEMENT:
-          return $dbal_stmt->getWrappedStatement(); // @todo avoid duplicates??
+          return $stmt;
         case Database::RETURN_AFFECTED:
-          $dbal_stmt->getWrappedStatement()->allowRowCount = TRUE;  // @todo avoid duplicates??
-          return $dbal_stmt->getWrappedStatement()->rowCount(); // @todo avoid duplicates??
+          $stmt->allowRowCount = TRUE;
+          return $stmt->rowCount();
         case Database::RETURN_INSERT_ID:
           $sequence_name = isset($options['sequence_name']) ? $options['sequence_name'] : NULL;
           return $this->connection->lastInsertId($sequence_name);

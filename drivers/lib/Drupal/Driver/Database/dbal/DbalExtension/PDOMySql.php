@@ -199,23 +199,6 @@ class PDOMySql implements DbalExtensionInterface {
   /**
    * @todo
    */
-  public function alterQueryStatement($dbal_stmt, $query, $args, $options) {
-    // Set the fetch mode for the statement.
-    if (isset($options['fetch'])) {
-      if (is_string($options['fetch'])) {
-        // \PDO::FETCH_PROPS_LATE tells __construct() to run before properties
-        // are added to the object.
-        $dbal_stmt->setFetchMode(\PDO::FETCH_CLASS | \PDO::FETCH_PROPS_LATE, $options['fetch']);
-      }
-      else {
-        $dbal_stmt->setFetchMode($options['fetch']);
-      }
-    }
-  }
-
-  /**
-   * @todo
-   */
   public static function preConnectionOpen(array &$connection_options = []) {
     if (isset($connection_options['_dsn_utf8_fallback']) && $connection_options['_dsn_utf8_fallback'] === TRUE) {
       // Only used during the installer version check, as a fallback from utf8mb4.
