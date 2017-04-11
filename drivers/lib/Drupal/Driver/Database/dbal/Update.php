@@ -22,12 +22,12 @@ class Update extends QueryUpdate {
    *   actually didn't have to be updated because the values didn't change.
    */
   public function execute() {
-    return parent::execute();
+//    return parent::execute();
 
-    
-    
-    
-    
+
+
+
+
     // Create a sanitized comment string to prepend to the query.
     $comments = $this->connection->makeComment($this->comments);
 // @todo comments? any test?
@@ -56,7 +56,7 @@ class Update extends QueryUpdate {
       unset($fields[$field]);
     }
 
-    // Add fields to update to a fixed value.
+    // Add fields to update to a given value.
     $max_placeholder = 0;
     foreach ($fields as $field => $value) {
       $dbal_query
@@ -65,37 +65,21 @@ class Update extends QueryUpdate {
       $max_placeholder++;
     }
 
-/*    if (count($this->condition)) {
+    // Adds a WHERE clause if necessary.
+    // @todo this uses Drupal Condition API. Use DBAL expressions instead?
+    if (count($this->condition)) {
       $this->condition->compile($this->connection, $this);
-      $update_values = array_merge($update_values, $this->condition->arguments());
+      $dbal_query->where((string) $this->condition);
+      foreach ($this->condition->arguments() as $placeholder => $value) {
+        $dbal_query->setParameter($placeholder, $value);
+      }
     }
 
-kint($fields);
-kint($update_values);
-kint($this->condition->conditions());*/
-    $max_placeholder = 0;
-    $conditions = $this->condition->conditions();
-    if (count($conditions) === 2 && $conditions['#conjunction'] === 'AND' && $conditions[0]['operator'] === '=' && !is_object($conditions[0]['field'])) {
-      $dbal_query
-        ->where($dbal_query_builder->expr()->eq($conditions[0]['field'], ':db_condition_placeholder_' . ($max_placeholder)))
-        ->setParameter('db_condition_placeholder_' . ($max_placeholder), $conditions[0]['value']);
-      $max_placeholder++;
-if (in_array($this->table, ['test', 'test_null', 'test_task', 'mondrake_test', 'test_special_columns'])) {
+/*if (in_array($this->table, ['test', 'test_null', 'test_task', 'mondrake_test', 'test_special_columns'])) {
   debug('***DBAL: ' . var_export($dbal_query->getParameters(), TRUE));
   debug('***DBAL: ' . $dbal_query->getSQL());
-/*var_export($dbal_query->getParameters());
-var_export((string) $dbal_query);
-$stmt = $dbal_connection->prepare((string) $dbal_query);
-var_export(get_class($stmt));
-$stmt->execute($dbal_query->getParameters());
-var_export(get_class($stmt));
-//$result = $stmt->rowCount();*/
-//die();
-}
-//      return $dbal_query->execute()->fetchField();
-      return $this->connection->query($dbal_query->getSQL(), $dbal_query->getParameters(), $this->queryOptions);
-    }
-
+}*/
+//    return $this->connection->query($dbal_query->getSQL(), $dbal_query->getParameters(), $this->queryOptions);
     return parent::execute();
   }
 
