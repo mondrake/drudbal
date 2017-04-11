@@ -22,19 +22,11 @@ class Update extends QueryUpdate {
    *   actually didn't have to be updated because the values didn't change.
    */
   public function execute() {
-//    return parent::execute();
-
-
-
-
-
     // Create a sanitized comment string to prepend to the query.
     $comments = $this->connection->makeComment($this->comments);
 // @todo comments? any test?
 // @todo what to do with $this->queryOptions??
 // @todo what shall we return here??
-
-//kint($this);
 
     $prefixed_table = $this->connection->getDbalExtension()->pfxTable($this->table);
     $dbal_connection = $this->connection->getDbalConnection();
@@ -45,6 +37,12 @@ class Update extends QueryUpdate {
     // and remove any literal fields that conflict.
     $fields = $this->fields;
     foreach ($this->expressionFields as $field => $data) {
+      if (!empty($data['arguments'])) {
+        // Arguments are placeholders and values.
+        foreach ($data['arguments'] as $placeholder => $value) {
+          $dbal_query->setParameter($placeholder, $value);
+        }
+      }
       if ($data['expression'] instanceof SelectInterface) {
         // Compile and cast expression subquery to a string.
         $data['expression']->compile($this->connection, $this);
@@ -61,7 +59,7 @@ class Update extends QueryUpdate {
     foreach ($fields as $field => $value) {
       $dbal_query
         ->set($field, ':db_update_placeholder_' . ($max_placeholder))
-        ->setParameter('db_update_placeholder_' . ($max_placeholder), $value);
+        ->setParameter(':db_update_placeholder_' . ($max_placeholder), $value);
       $max_placeholder++;
     }
 
@@ -75,12 +73,7 @@ class Update extends QueryUpdate {
       }
     }
 
-/*if (in_array($this->table, ['test', 'test_null', 'test_task', 'mondrake_test', 'test_special_columns'])) {
-  debug('***DBAL: ' . var_export($dbal_query->getParameters(), TRUE));
-  debug('***DBAL: ' . $dbal_query->getSQL());
-}*/
-//    return $this->connection->query($dbal_query->getSQL(), $dbal_query->getParameters(), $this->queryOptions);
-    return parent::execute();
+    return $this->connection->query($comments . $dbal_query->getSQL(), $dbal_query->getParameters(), $this->queryOptions);
   }
 
 }
