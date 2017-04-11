@@ -177,8 +177,11 @@ class Connection extends DatabaseConnection {
           throw new DBALException('Invalid return directive: ' . $options['return']);
       }
     }
-    catch (DBALException $e) {
-      return $this->dbalExt->handleQueryDBALException($e, $query, $args, $options);
+    catch (\InvalidArgumentException $e) {
+      throw $e;
+    }
+    catch (\Exception $e) {
+      return $this->dbalExt->handleQueryException($e, $query, $args, $options);
     }
   }
 

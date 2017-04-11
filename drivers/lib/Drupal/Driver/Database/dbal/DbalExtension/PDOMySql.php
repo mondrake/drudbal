@@ -286,10 +286,10 @@ class PDOMySql implements DbalExtensionInterface {
   /**
    * Wraps and re-throws any DBALException thrown by static::query().
    *
-   * @param \Doctrine\DBAL\DBALException $e
-   *   The exception thrown by static::query().
+   * @param \Exception $e
+   *   The exception thrown by query().
    * @param $query
-   *   The query executed by static::query().
+   *   The query executed by query().
    * @param array $args
    *   An array of arguments for the prepared statement.
    * @param array $options
@@ -299,17 +299,13 @@ class PDOMySql implements DbalExtensionInterface {
    *
    * @throws \Drupal\Core\Database\DatabaseExceptionWrapper
    */
-  public function handleQueryDBALException(DBALException $e, $query, array $args = [], $options = []) {
+  public function handleQueryException(\Exception $e, $query, array $args = [], $options = []) {
     if ($options['throw_exception']) {
       // Wrap the exception in another exception, because PHP does not allow
       // overriding Exception::getMessage(). Its message is the extra database
       // debug information.
-      // @todo avoid dbalstatement??
       if ($query instanceof StatementInterface) {
         $query_string = $query->getQueryString();
-      }
-      elseif ($query instanceof DbalStatement) {
-        $query_string = '';
       }
       elseif (is_string($query)) {
         $query_string = $query;
@@ -317,20 +313,20 @@ class PDOMySql implements DbalExtensionInterface {
       else {
         $query_string = NULL;
       }
-      $message = $e->getPrevious()->getMessage() . ": " . $query_string . "; " . print_r($args, TRUE);
+      $message = $e->getMessage() . ": " . $query_string . "; " . print_r($args, TRUE);
       // Match all SQLSTATE 23xxx errors.
-      if (substr($e->getPrevious()->getCode(), -6, -3) == '23') {
-        throw new IntegrityConstraintViolationException($message, $e->getPrevious()->getCode(), $e); // @todo pass $e or $e->getPrevious as last parm?
+      if (substr($e->getCode(), -6, -3) == '23') {
+        throw new IntegrityConstraintViolationException($message, $e->getCode(), $e);
       }
       elseif ($e->getPrevious()->errorInfo[1] == 1153) {
         // If a max_allowed_packet error occurs the message length is truncated.
         // This should prevent the error from recurring if the exception is
         // logged to the database using dblog or the like.
         $message = Unicode::truncateBytes($e->getMessage(), self::MIN_MAX_ALLOWED_PACKET);
-        throw new DatabaseExceptionWrapper($message, $e->getCode(), $e->getPrevious());
+        throw new DatabaseExceptionWrapper($message, $e->getCode(), $e);
       }
       else {
-        throw new DatabaseExceptionWrapper($message, 0, $e); // @todo pass $e or $e->getPrevious as last parm?
+        throw new DatabaseExceptionWrapper($message, 0, $e);
       }
     }
 
@@ -422,10 +418,7 @@ class PDOMySql implements DbalExtensionInterface {
       //
       // To avoid exceptions when no actual error has occurred, we silently
       // succeed for MySQL error code 1305 ("SAVEPOINT does not exist").
-      //
-      // With DBAL, the previous exception is DBALException, and the
-      // previous again is PDOException where errorInfo is stored.
-      if ($e->getPrevious()->getPrevious()->errorInfo[1] == '1305') {
+      if ($e->getPrevious()->errorInfo[1] == '1305') {
         // We also have to explain to PDO that the transaction stack has
         // been cleaned-up.
         try {
