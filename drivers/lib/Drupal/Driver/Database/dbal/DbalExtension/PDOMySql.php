@@ -185,7 +185,7 @@ class PDOMySql implements DbalExtensionInterface {
   }
 
   /**
-   * {@inheritdoc}
+   * @todo
    */
   public function destroy() {
     // Destroy all references to this connection by setting them to NULL.
@@ -193,6 +193,23 @@ class PDOMySql implements DbalExtensionInterface {
     // proper callable, so we reset it to PDOStatement.
     if (!empty($this->statementClass)) {
       $this->getDbalConnection()->getWrappedConnection()->setAttribute(\PDO::ATTR_STATEMENT_CLASS, ['PDOStatement', []]);
+    }
+  }
+
+  /**
+   * @todo
+   */
+  public function alterQueryStatement($dbal_stmt, $query, $args, $options) {
+    // Set the fetch mode for the statement.
+    if (isset($options['fetch'])) {
+      if (is_string($options['fetch'])) {
+        // \PDO::FETCH_PROPS_LATE tells __construct() to run before properties
+        // are added to the object.
+        $dbal_stmt->setFetchMode(\PDO::FETCH_CLASS | \PDO::FETCH_PROPS_LATE, $options['fetch']);
+      }
+      else {
+        $dbal_stmt->setFetchMode($options['fetch']);
+      }
     }
   }
 

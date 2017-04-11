@@ -94,7 +94,7 @@ class Connection extends DatabaseConnection {
   }
 
   /**
-   * @todo
+   * Implements the magic __get() method.
    */
   public function __get($name) {
     // Calls to $this->connection return the wrapped DbalConnection on the
@@ -122,11 +122,12 @@ class Connection extends DatabaseConnection {
   /**
    * {@inheritdoc}
    *
-   * @todo clean this up.
+   * @todo clean this up further.
    */
   public function query($query, array $args = [], $options = []) {
     // Use default values if not already set.
     $options += $this->defaultOptions();
+
     try {
       // We allow either a pre-bound statement object or a literal string.
       // In either case, we want to end up with an executed statement object,
@@ -152,30 +153,13 @@ class Connection extends DatabaseConnection {
         $query = $this->prefixTables($query);
 
         // Prepare a DBAL statement.
-        $DBAL_stmt = $this->getDbalConnection()->prepare($query);
+        $dbal_stmt = $this->getDbalConnection()->prepare($query);
 
-        // Set the fetch mode for the statement. @todo if not PDO?
-        if (isset($options['fetch'])) {
-          if (is_string($options['fetch'])) {
-            // \PDO::FETCH_PROPS_LATE tells __construct() to run before properties
-            // are added to the object.
-            $DBAL_stmt->setFetchMode(\PDO::FETCH_CLASS | \PDO::FETCH_PROPS_LATE, $options['fetch']);
-          }
-          else {
-            $DBAL_stmt->setFetchMode($options['fetch']);
-          }
-        }
+        // Allow DBAL extension to alter the statement.
+        $this->dbalExt->alterQueryStatement($dbal_stmt, $query, $args, $options);
 
-        // Bind parameters.
-        foreach ($args as $arg => $value) {
-          $DBAL_stmt->bindValue($arg, $value);
-        }
-
-        // Executes statement via DBAL.
-        $DBAL_stmt->execute();
-
-        // This is the PDO statement. @todo if not using PDO?
-        $stmt = $DBAL_stmt->getWrappedStatement();
+        // Executes statement.
+        $dbal_stmt->execute($args);
       }
 
       // Depending on the type of query we may need to return a different value.
@@ -183,21 +167,21 @@ class Connection extends DatabaseConnection {
       // value.
       switch ($options['return']) {
         case Database::RETURN_STATEMENT:
-          return $stmt;
+          return $dbal_stmt->getWrappedStatement(); // @todo avoid duplicates??
         case Database::RETURN_AFFECTED:
-          $stmt->allowRowCount = TRUE;
-          return $stmt->rowCount();
+          $dbal_stmt->getWrappedStatement()->allowRowCount = TRUE;  // @todo avoid duplicates??
+          return $dbal_stmt->getWrappedStatement()->rowCount(); // @todo avoid duplicates??
         case Database::RETURN_INSERT_ID:
           $sequence_name = isset($options['sequence_name']) ? $options['sequence_name'] : NULL;
-          return $this->getDbalConnection()->lastInsertId($sequence_name);
+          return $this->connection->lastInsertId($sequence_name);
         case Database::RETURN_NULL:
           return NULL;
         default:
-          throw new \PDOException('Invalid return directive: ' . $options['return']);
+          throw new DBALException('Invalid return directive: ' . $options['return']);
       }
     }
     catch (DBALException $e) {
-      return $this->dbalExt->handleQueryDBALException($e, $query, $args, $options); // @todo csn we change and pass the normal method here??
+      return $this->dbalExt->handleQueryDBALException($e, $query, $args, $options);
     }
   }
 
@@ -229,6 +213,9 @@ class Connection extends DatabaseConnection {
     return $dbal_extension_class::open($connection_options);
   }
 
+  /**
+   * {@inheritdoc}
+   */
   public function queryRange($query, $from, $count, array $args = [], array $options = []) {
     try {
       return $this->dbalExt->queryRange($query, $from, $count, $args, $options);
@@ -238,6 +225,9 @@ class Connection extends DatabaseConnection {
     }
   }
 
+  /**
+   * {@inheritdoc}
+   */
   public function queryTemporary($query, array $args = [], array $options = []) {
     try {
       $tablename = $this->generateTemporaryTableName();
@@ -249,18 +239,25 @@ class Connection extends DatabaseConnection {
     }
   }
 
+  /**
+   * {@inheritdoc}
+   */
   public function driver() {
     return 'dbal';
   }
 
+  /**
+   * {@inheritdoc}
+   */
   public function databaseType() {
     return $this->getDbalConnection()->getDriver()->getDatabasePlatform()->getName();
   }
 
   /**
-   * Returns the DBAL version.
+   * {@inheritdoc}
    */
   public function version() {
+    // Return the DBAL version.
     return DbalVersion::VERSION;
   }
 
@@ -278,6 +275,9 @@ class Connection extends DatabaseConnection {
     }
   }
 
+  /**
+   * {@inheritdoc}
+   */
   public function mapConditionOperator($operator) {
     // We don't want to override any of the defaults.
     return NULL;
@@ -331,9 +331,10 @@ class Connection extends DatabaseConnection {
   }
 
   /**
-   * Gets the Dbal extension.
+   * Gets the DBAL extension.
    *
-   * @return @todo
+   * @return \Drupal\Driver\Database\dbal\DbalExtension\DbalExtensionInterface
+   *   The DBAL extension for this connection.
    */
   public function getDbalExtension() {
     return $this->dbalExt;
@@ -346,13 +347,17 @@ class Connection extends DatabaseConnection {
    *   The DBAL extension class.
    */
   public static function getDbalExtensionClass($driver_name) {
-    return static::$dbalExtensionClassMap[$driver_name];  // @todo manage aliases, class path to const
+    if (isset(static::$driverSchemeAliases[$driver_name])) {
+      $driver_name = static::$driverSchemeAliases[$driver_name];
+    }
+    return static::$dbalExtensionClassMap[$driver_name];
   }
 
   /**
-   * Gets the database server version
+   * Gets the database server version.
    *
-   * @return string database server version string
+   * @return string
+   *   The database server version string.
    */
   public function getDbServerVersion() {
     return $this->getDbalConnection()->getWrappedConnection()->getServerVersion();
