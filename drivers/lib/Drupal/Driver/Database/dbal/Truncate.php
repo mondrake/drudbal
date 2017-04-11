@@ -41,13 +41,13 @@ class Truncate extends QueryTruncate {
     }
     else {
       $db_platform = $dbal_connection->getDatabasePlatform();
-      $dbal_connection->query('SET FOREIGN_KEY_CHECKS=0'); // @todo platform independent??
       $sql = $db_platform->getTruncateTableSql($prefixed_table);
       if (!empty($comments)) {
         $sql = $comments . $sql;
       }
+      $this->connection->getDbalExtension()->preTruncate($prefixed_table);
       $result = $dbal_connection->executeUpdate($sql);
-      $dbal_connection->query('SET FOREIGN_KEY_CHECKS=1'); // @todo platform independent??
+      $this->connection->getDbalExtension()->postTruncate($prefixed_table);
       return $result;
     }
   }

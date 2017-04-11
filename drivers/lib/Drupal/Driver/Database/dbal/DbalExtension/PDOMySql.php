@@ -348,7 +348,7 @@ class PDOMySql implements DbalExtensionInterface {
    */
   public function postCreateDatabase($database) {
     // Set the database as active.
-    $this->connection->getDbalConnection()->exec("USE $database"); // @todo use dbal connection
+    $this->dbalConnection->exec("USE $database");
   }
 
   /**
@@ -449,6 +449,24 @@ class PDOMySql implements DbalExtensionInterface {
    */
   public function clientVersion() {
     return $this->dbalConnection->getWrappedConnection()->getAttribute(\PDO::ATTR_CLIENT_VERSION);
+  }
+
+  /**
+   * Truncate delegated methods.
+   */
+
+  /**
+   * @todo
+   */
+  public function preTruncate($table) {
+    $this->dbalConnection->exec('SET FOREIGN_KEY_CHECKS=0');
+  }
+
+  /**
+   * @todo
+   */
+  public function postTruncate($table) {
+    $this->dbalConnection->exec('SET FOREIGN_KEY_CHECKS=1');
   }
 
   /**
