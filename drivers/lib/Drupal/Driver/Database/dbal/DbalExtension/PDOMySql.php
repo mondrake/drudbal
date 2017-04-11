@@ -318,7 +318,7 @@ class PDOMySql implements DbalExtensionInterface {
       if (substr($e->getCode(), -6, -3) == '23') {
         throw new IntegrityConstraintViolationException($message, $e->getCode(), $e);
       }
-      elseif ($e->getPrevious()->errorInfo[1] == 1153) {
+      elseif ($e->errorInfo[1] == 1153) {
         // If a max_allowed_packet error occurs the message length is truncated.
         // This should prevent the error from recurring if the exception is
         // logged to the database using dblog or the like.
