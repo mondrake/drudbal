@@ -11,6 +11,7 @@ use Drupal\Core\Database\DatabaseExceptionWrapper;
 use Drupal\Core\Database\DatabaseNotFoundException;
 use Drupal\Core\Database\IntegrityConstraintViolationException;
 use Drupal\Core\Database\StatementInterface;
+use Drupal\Core\Database\Statement as DrupalPDOStatement;
 use Drupal\Core\Database\TransactionCommitFailedException;
 
 use Drupal\Driver\Database\dbal\DbalExtension\PDOMySql;
@@ -19,7 +20,6 @@ use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\ConnectionException as DbalConnectionException;
 use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\DriverManager as DbalDriverManager;
-use Doctrine\DBAL\Statement as DbalStatement;
 use Doctrine\DBAL\Version as DbalVersion;
 use GuzzleHttp\Psr7\Uri;
 use Psr\Http\Message\UriInterface;
@@ -35,23 +35,13 @@ use Psr\Http\Message\UriInterface;
 class Connection extends DatabaseConnection {
 
   /**
-   * List of supported drivers and their mappings to the DBAL extension
-   * classes.
+   * List of supported drivers and their mapping to the DBAL extension
+   * and the statement classes to use.
    *
-   * @var string[]
+   * @var array[]
    */
-  protected static $dbalExtensionClassMap = array(
-    'pdo_mysql' => PDOMySql::class,
-//    'pdo_sqlite'         => 'PDOSqlite',
-//    'pdo_pgsql'          => 'PDOPgSql',
-//    'pdo_oci'            => 'PDOOracle',
-//    'oci8'               => 'OCI8',
-//    'ibm_db2'            => 'IBMDB2\DB2Driver',
-//    'pdo_sqlsrv'         => 'PDOSqlsrv',
-//    'mysqli'             => 'Mysqli',
-//    'drizzle_pdo_mysql'  => 'DrizzlePDOMySql',
-//    'sqlanywhere'        => 'SQLAnywhere',
-//    'sqlsrv'             => 'SQLSrv',
+  protected static $dbalClassMap = array(
+    'pdo_mysql' => [PDOMySql::class, DrupalPDOStatement::class],
   );
 
   /**
@@ -60,15 +50,8 @@ class Connection extends DatabaseConnection {
    * @var string[]
    */
   protected static $driverSchemeAliases = array(
-//    'db2'        => 'ibm_db2',
-//    'mssql'      => 'pdo_sqlsrv',
-    'mysql'      => 'pdo_mysql',
-    'mysql2'     => 'pdo_mysql', // Amazon RDS, for some weird reason
-//    'postgres'   => 'pdo_pgsql',
-//    'postgresql' => 'pdo_pgsql',
-//    'pgsql'      => 'pdo_pgsql',
-//    'sqlite'     => 'pdo_sqlite',
-//    'sqlite3'    => 'pdo_sqlite',
+    'mysql' => 'pdo_mysql',
+    'mysql2' => 'pdo_mysql',
   );
 
   /**
@@ -83,7 +66,8 @@ class Connection extends DatabaseConnection {
    */
   public function __construct(DbalConnection $dbal_connection, array $connection_options = []) {
     $dbal_extension_class = static::getDbalExtensionClass($dbal_connection->getDriver()->getName());
-    $this->dbalExt = new $dbal_extension_class($this, $dbal_connection);
+    $statement_class = static::getStatementClass($dbal_connection->getDriver()->getName());
+    $this->dbalExt = new $dbal_extension_class($this, $dbal_connection, $statement_class);
     $this->transactionSupport = $this->dbalExt->transactionSupport($connection_options);
     $this->transactionalDDLSupport = $this->dbalExt->transactionalDDLSupport($connection_options);
     $this->setPrefix(isset($connection_options['prefix']) ? $connection_options['prefix'] : '');
@@ -341,7 +325,7 @@ class Connection extends DatabaseConnection {
   }
 
   /**
-   * Gets the DBAL extension class.
+   * Gets the DBAL extension class to use for the DBAL driver.
    *
    * @return string
    *   The DBAL extension class.
@@ -350,7 +334,20 @@ class Connection extends DatabaseConnection {
     if (isset(static::$driverSchemeAliases[$driver_name])) {
       $driver_name = static::$driverSchemeAliases[$driver_name];
     }
-    return static::$dbalExtensionClassMap[$driver_name];
+    return static::$dbalClassMap[$driver_name][0];
+  }
+
+  /**
+   * Gets the Statement class to use for this connection.
+   *
+   * @return string
+   *   The Statement class.
+   */
+  public static function getStatementClass($driver_name) {
+    if (isset(static::$driverSchemeAliases[$driver_name])) {
+      $driver_name = static::$driverSchemeAliases[$driver_name];
+    }
+    return static::$dbalClassMap[$driver_name][1];
   }
 
   /**

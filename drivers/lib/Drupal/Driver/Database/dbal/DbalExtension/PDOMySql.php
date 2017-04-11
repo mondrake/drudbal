@@ -8,7 +8,6 @@ use Drupal\Core\Database\DatabaseExceptionWrapper;
 use Drupal\Core\Database\DatabaseNotFoundException;
 use Drupal\Core\Database\IntegrityConstraintViolationException;
 use Drupal\Core\Database\SchemaException;
-use Drupal\Driver\Database\dbal\Statement;
 use Drupal\Core\Database\TransactionCommitFailedException;
 use Drupal\Driver\Database\dbal\Connection as DruDbalConnection;
 
@@ -17,7 +16,6 @@ use Doctrine\DBAL\ConnectionException as DbalConnectionException;
 use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\Exception\ConnectionException as DbalExceptionConnectionException;
 use Doctrine\DBAL\DriverManager as DBALDriverManager;
-use Doctrine\DBAL\Statement as DbalStatement;
 
 /**
  * Driver specific methods for pdo_mysql.
@@ -108,10 +106,10 @@ class PDOMySql implements DbalExtensionInterface {
   /**
    * Constructs a Connection object.
    */
-  public function __construct(DruDbalConnection $drudbal_connection, DbalConnection $dbal_connection) {
+  public function __construct(DruDbalConnection $drudbal_connection, DbalConnection $dbal_connection, $statement_class) {
     $this->connection = $drudbal_connection;
     $this->dbalConnection = $dbal_connection;
-    $this->dbalConnection->getWrappedConnection()->setAttribute(\PDO::ATTR_STATEMENT_CLASS, [Statement::class, [$this->connection]]);
+    $this->dbalConnection->getWrappedConnection()->setAttribute(\PDO::ATTR_STATEMENT_CLASS, [$statement_class, [$this->connection]]);
   }
 
   /**
