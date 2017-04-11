@@ -28,7 +28,6 @@ class Update extends QueryUpdate {
     
     
     
-if (!in_array($this->table, ['test', 'test_null', 'test_task', 'mondrake_test', 'test_special_columns'])) return parent::execute();
     // Create a sanitized comment string to prepend to the query.
     $comments = $this->connection->makeComment($this->comments);
 // @todo comments? any test?
@@ -45,25 +44,24 @@ if (!in_array($this->table, ['test', 'test_null', 'test_task', 'mondrake_test', 
     // Expressions take priority over literal fields, so we process those first
     // and remove any literal fields that conflict.
     $fields = $this->fields;
-    $update_values = [];
     foreach ($this->expressionFields as $field => $data) {
-      if (!empty($data['arguments'])) {
-        $update_values += $data['arguments'];
-      }
       if ($data['expression'] instanceof SelectInterface) {
+        // Compile and cast expression subquery to a string.
         $data['expression']->compile($this->connection, $this);
-        $update_values += $data['expression']->arguments();
+        $dbal_query->set($field, '(' . $data['expression'] . ')');
+      }
+      else {
+        $dbal_query->set($field, $data['expression']);
       }
       unset($fields[$field]);
     }
 
-    // Because we filter $fields the same way here and in __toString(), the
-    // placeholders will all match up properly.
+    // Add fields to update to a fixed value.
     $max_placeholder = 0;
     foreach ($fields as $field => $value) {
-      $dbal_query->set($field, $value);
-//        ->set($field, ':db_update_placeholder_' . ($max_placeholder))
-//        ->setParameter('db_update_placeholder_' . ($max_placeholder), $value);
+      $dbal_query
+        ->set($field, ':db_update_placeholder_' . ($max_placeholder))
+        ->setParameter('db_update_placeholder_' . ($max_placeholder), $value);
       $max_placeholder++;
     }
 
@@ -78,13 +76,13 @@ kint($this->condition->conditions());*/
     $max_placeholder = 0;
     $conditions = $this->condition->conditions();
     if (count($conditions) === 2 && $conditions['#conjunction'] === 'AND' && $conditions[0]['operator'] === '=' && !is_object($conditions[0]['field'])) {
-      $dbal_query->where($conditions[0]['field'] . ' = ' . $dbal_query_builder->createNamedParameter($conditions[0]['value']));
-//        ->where($dbal_query_builder->expr()->eq($conditions[0]['field'], ':db_condition_placeholder_' . ($max_placeholder)))
-//        ->setParameter('db_condition_placeholder_' . ($max_placeholder), $conditions[0]['value']);
+      $dbal_query
+        ->where($dbal_query_builder->expr()->eq($conditions[0]['field'], ':db_condition_placeholder_' . ($max_placeholder)))
+        ->setParameter('db_condition_placeholder_' . ($max_placeholder), $conditions[0]['value']);
       $max_placeholder++;
-if (in_array($this->table, ['test', 'test_null', 'test_task', 'mondrake_test', 'test_special_columns'])) {//
+if (in_array($this->table, ['test', 'test_null', 'test_task', 'mondrake_test', 'test_special_columns'])) {
   debug('***DBAL: ' . var_export($dbal_query->getParameters(), TRUE));
-  debug('***DBAL: ' . (string) $dbal_query);
+  debug('***DBAL: ' . $dbal_query->getSQL());
 /*var_export($dbal_query->getParameters());
 var_export((string) $dbal_query);
 $stmt = $dbal_connection->prepare((string) $dbal_query);
@@ -94,7 +92,8 @@ var_export(get_class($stmt));
 //$result = $stmt->rowCount();*/
 //die();
 }
-      return $dbal_query->execute()->fetchField();
+//      return $dbal_query->execute()->fetchField();
+      return $this->connection->query($dbal_query->getSQL(), $dbal_query->getParameters(), $this->queryOptions);
     }
 
     return parent::execute();
