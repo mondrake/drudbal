@@ -132,14 +132,7 @@ class Connection extends DatabaseConnection {
         if (strpos($query, ';') !== FALSE && empty($options['allow_delimiter_in_query'])) {
           throw new \InvalidArgumentException('; is not supported in SQL strings. Use only one statement at a time.');
         }
-
-        // Resolve tables' names with prefix.
-        $query = $this->prefixTables($query);
-
-        // Prepare a statement.
-        $stmt = $this->prepare($query, $options);
-
-        // Execute statement.
+        $stmt = $this->prepareQuery($query);
         $stmt->execute($args, $options);
       }
 
@@ -272,6 +265,15 @@ class Connection extends DatabaseConnection {
    */
   public function nextId($existing_id = 0) {
     return $this->dbalExt->nextId($existing_id);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function prepareQuery($query) {
+    $query = $this->prefixTables($query);
+
+    return $this->prepare($query);
   }
 
   /**
