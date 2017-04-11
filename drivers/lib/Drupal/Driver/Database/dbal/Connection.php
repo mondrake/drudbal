@@ -115,7 +115,7 @@ class Connection extends DatabaseConnection {
     try {
       // We allow either a pre-bound statement object or a literal string.
       // In either case, we want to end up with an executed statement object,
-      // which we pass to PDOStatement::execute.
+      // which we pass to Statement::execute.
       if ($query instanceof StatementInterface) {
         $stmt = $query;
         $stmt->execute(NULL, $options);
@@ -272,6 +272,13 @@ class Connection extends DatabaseConnection {
    */
   public function nextId($existing_id = 0) {
     return $this->dbalExt->nextId($existing_id);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function prepare($statement, array $driver_options = []) {
+    return $this->getDbalConnection()->getWrappedConnection()->prepare($statement, $driver_options);
   }
 
   /**
