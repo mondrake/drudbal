@@ -20,6 +20,15 @@ $ ln -s [DRUPAL_ROOT]/[path_to_contrib_modules]/drudbal/drivers/lib/Drupal/Drive
 ## Status report
 ![status_report](https://cloud.githubusercontent.com/assets/1174864/24586319/d294c5f8-179d-11e7-8cb7-884522124e8c.png)
 
+## Related DBAL issues/PRs
+Issue | Description   |
+------|---------------|
+https://github.com/doctrine/dbal/issues/1335 | DBAL-175: Table comments in Doctrine\DBAL\Schema\Table Object |
+https://github.com/doctrine/dbal/issues/1033 | DBAL-1096: schema-tool:update does not understand columnDefinition correctly |
+https://github.com/doctrine/dbal/pull/881    | Add Mysql per-column charset support |
+https://github.com/doctrine/dbal/pull/2412   | Add mysql specific indexes with lengths |
+https://github.com/doctrine/dbal/issues/2380 | Unsigned numeric columns not generated correctly |
+
 ## Related Drupal issues
 Issue | Description   |
 ------|---------------|
