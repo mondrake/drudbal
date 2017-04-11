@@ -137,7 +137,7 @@ class Connection extends DatabaseConnection {
         $query = $this->prefixTables($query);
 
         // Prepare a statement.
-        $stmt = $this->connection->getWrappedConnection()->prepare($query, $options);
+        $stmt = $this->prepare($query, $options);
 
         // Execute statement.
         $stmt->execute($args, $options);
