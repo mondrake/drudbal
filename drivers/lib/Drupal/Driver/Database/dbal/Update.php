@@ -16,16 +16,29 @@ use Drupal\Core\Database\Query\Update as QueryUpdate;
 class Update extends QueryUpdate {
 
   /**
+   * A DBAL query builder object.
+   *
+   * @var \Doctrine\DBAL\Query\QueryBuilder
+   */
+  protected $dbalQuery;
+
+  /**
    * {@inheritdoc}
    */
   public function execute() {
+    return $this->connection->query((string) $this, $this->dbalQuery->getParameters(), $this->queryOptions);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function __toString() {
     $comments = $this->connection->makeComment($this->comments);
     $dbal_connection = $this->connection->getDbalConnection();
     $prefixed_table = $this->connection->getPrefixedTableName($this->table);
 
     // Use DBAL query builder to prepare the UPDATE query.
-    $dbal_query_builder = $dbal_connection->createQueryBuilder();
-    $dbal_query = $dbal_query_builder->update($prefixed_table);
+    $this->dbalQuery = $dbal_connection->createQueryBuilder()->update($prefixed_table);
 
     // Expressions take priority over literal fields, so we process those first
     // and remove any literal fields that conflict.
@@ -35,7 +48,7 @@ class Update extends QueryUpdate {
       // to be passed as parameters to the query.
       if (!empty($data['arguments'])) {
         foreach ($data['arguments'] as $placeholder => $value) {
-          $dbal_query->setParameter($placeholder, $value);
+          $this->dbalQuery->setParameter($placeholder, $value);
         }
       }
       // If the expression is a select subquery, compile it and capture its
@@ -43,13 +56,13 @@ class Update extends QueryUpdate {
       // just set the field to the expression.
       if ($data['expression'] instanceof SelectInterface) {
         $data['expression']->compile($this->connection, $this);
-        $dbal_query->set($field, '(' . $data['expression'] . ')');
+        $this->dbalQuery->set($field, '(' . $data['expression'] . ')');
         foreach ($data['expression']->arguments() as $placeholder => $value) {
-          $dbal_query->setParameter($placeholder, $value);
+          $this->dbalQuery->setParameter($placeholder, $value);
         }
       }
       else {
-        $dbal_query->set($field, $data['expression']);
+        $this->dbalQuery->set($field, $data['expression']);
       }
       unset($fields[$field]);
     }
@@ -57,7 +70,7 @@ class Update extends QueryUpdate {
     // Add fields to have to be updated to a given value.
     $max_placeholder = 0;
     foreach ($fields as $field => $value) {
-      $dbal_query
+      $this->dbalQuery
         ->set($field, ':db_update_placeholder_' . ($max_placeholder))
         ->setParameter(':db_update_placeholder_' . ($max_placeholder), $value);
       $max_placeholder++;
@@ -67,13 +80,13 @@ class Update extends QueryUpdate {
     // @todo this uses Drupal Condition API. Use DBAL expressions instead?
     if (count($this->condition)) {
       $this->condition->compile($this->connection, $this);
-      $dbal_query->where((string) $this->condition);
+      $this->dbalQuery->where((string) $this->condition);
       foreach ($this->condition->arguments() as $placeholder => $value) {
-        $dbal_query->setParameter($placeholder, $value);
+        $this->dbalQuery->setParameter($placeholder, $value);
       }
     }
 
-    return $this->connection->query($comments . $dbal_query->getSQL(), $dbal_query->getParameters(), $this->queryOptions);
+    return $comments . $this->dbalQuery->getSQL();
   }
 
 }
