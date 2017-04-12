@@ -16,11 +16,7 @@ use Drupal\Core\Database\Query\Update as QueryUpdate;
 class Update extends QueryUpdate {
 
   /**
-   * Executes the UPDATE query.
-   *
-   * @return
-   *   The number of rows matched by the update query. This includes rows that
-   *   actually didn't have to be updated because the values didn't change.
+   * {@inheritdoc}
    */
   public function execute() {
     $comments = $this->connection->makeComment($this->comments);

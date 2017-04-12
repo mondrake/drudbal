@@ -15,10 +15,7 @@ use Drupal\Core\Database\Query\Truncate as QueryTruncate;
 class Truncate extends QueryTruncate {
 
   /**
-   * Executes the TRUNCATE operation.
-   *
-   * @return
-   *   Return value is dependent on the database type.
+   * {@inheritdoc}
    */
   public function execute() {
     $comments = $this->connection->makeComment($this->comments);
