@@ -18,6 +18,29 @@ class Truncate extends QueryTruncate {
    * {@inheritdoc}
    */
   public function execute() {
+    $dbal_connection = $this->connection->getDbalConnection();
+    $dbal_extension = $this->connection->getDbalExtension();
+
+    // Allow DBAL extension to process commands before a DDL TRUNCATE.
+    if (!$this->connection->inTransaction()) {
+      $dbal_extension->preTruncate($this->table);
+    }
+
+    // Process the truncate, either DDL or via DELETE.
+    $result = $this->connection->query((string) $this, [], $this->queryOptions);
+
+    // Allow DBAL extension to process commands after a DDL TRUNCATE.
+    if (!$this->connection->inTransaction()) {
+      $dbal_extension->postTruncate($this->table);
+    }
+
+    return $result;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function __toString() {
     $comments = $this->connection->makeComment($this->comments);
     $dbal_connection = $this->connection->getDbalConnection();
     $dbal_extension = $this->connection->getDbalExtension();
@@ -28,14 +51,11 @@ class Truncate extends QueryTruncate {
     // transaction, fallback to the slower, but transactional, DELETE.
     if ($this->connection->inTransaction()) {
       $dbal_query = $dbal_connection->createQueryBuilder()->delete($prefixed_table);
-      return $this->connection->query($comments . $dbal_query->getSQL(), [], $this->queryOptions);
+      return $comments . $dbal_query->getSQL();
     }
     else {
       $sql = $dbal_connection->getDatabasePlatform()->getTruncateTableSql($prefixed_table);
-      $dbal_extension->preTruncate($prefixed_table);
-      $result = $this->connection->query($comments . $sql, [], $this->queryOptions);
-      $dbal_extension->postTruncate($prefixed_table);
-      return $result;
+      return $comments . $sql;
     }
   }
 
