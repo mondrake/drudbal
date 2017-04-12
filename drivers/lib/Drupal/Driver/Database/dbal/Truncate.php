@@ -24,7 +24,7 @@ class Truncate extends QueryTruncate {
     $comments = $this->connection->makeComment($this->comments);
     $dbal_connection = $this->connection->getDbalConnection();
     $dbal_extension = $this->connection->getDbalExtension();
-    $prefixed_table = $dbal_extension->pfxTable($this->table);
+    $prefixed_table = $this->connection->getPrefixedTableName($this->table);
 
     // In most cases, TRUNCATE is not a transaction safe statement as it is a
     // DDL statement which results in an implicit COMMIT. When we are in a

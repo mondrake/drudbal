@@ -104,6 +104,13 @@ class Connection extends DatabaseConnection {
   }
 
   /**
+   * @todo
+   */
+  public function getPrefixedTableName($table_name) {
+    return $this->prefixTables('{' . $table_name . '}');
+  }
+
+  /**
    * {@inheritdoc}
    *
    * @todo clean this up further.
