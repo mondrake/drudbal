@@ -2,6 +2,7 @@
 
 namespace Drupal\Driver\Database\dbal;
 
+use Drupal\Core\Database\Query\SelectInterface;
 use Drupal\Core\Database\Query\Update as QueryUpdate;
 
 /**
@@ -22,14 +23,11 @@ class Update extends QueryUpdate {
    *   actually didn't have to be updated because the values didn't change.
    */
   public function execute() {
-    // Create a sanitized comment string to prepend to the query.
     $comments = $this->connection->makeComment($this->comments);
-// @todo comments? any test?
-// @todo what to do with $this->queryOptions??
-// @todo what shall we return here??
-
-    $prefixed_table = $this->connection->getDbalExtension()->pfxTable($this->table);
     $dbal_connection = $this->connection->getDbalConnection();
+    $prefixed_table = $this->connection->getPrefixedTableName($this->table);
+
+    // Use DBAL query builder to prepare the UPDATE query.
     $dbal_query_builder = $dbal_connection->createQueryBuilder();
     $dbal_query = $dbal_query_builder->update($prefixed_table);
 
@@ -37,16 +35,22 @@ class Update extends QueryUpdate {
     // and remove any literal fields that conflict.
     $fields = $this->fields;
     foreach ($this->expressionFields as $field => $data) {
+      // If arguments are set, these are are placeholders and values that need
+      // to be passed as parameters to the query.
       if (!empty($data['arguments'])) {
-        // Arguments are placeholders and values.
         foreach ($data['arguments'] as $placeholder => $value) {
           $dbal_query->setParameter($placeholder, $value);
         }
       }
+      // If the expression is a select subquery, compile it and capture its
+      // placeholders and values as parameters for the entire query. Otherwise,
+      // just set the field to the expression.
       if ($data['expression'] instanceof SelectInterface) {
-        // Compile and cast expression subquery to a string.
         $data['expression']->compile($this->connection, $this);
         $dbal_query->set($field, '(' . $data['expression'] . ')');
+        foreach ($data['expression']->arguments() as $placeholder => $value) {
+          $dbal_query->setParameter($placeholder, $value);
+        }
       }
       else {
         $dbal_query->set($field, $data['expression']);
@@ -54,7 +58,7 @@ class Update extends QueryUpdate {
       unset($fields[$field]);
     }
 
-    // Add fields to update to a given value.
+    // Add fields to have to be updated to a given value.
     $max_placeholder = 0;
     foreach ($fields as $field => $value) {
       $dbal_query
