@@ -22,32 +22,22 @@ class Truncate extends QueryTruncate {
    */
   public function execute() {
     $comments = $this->connection->makeComment($this->comments);
-// @todo comments? any test?
-// @todo what to do with $this->queryOptions??
-// @todo what shall we return here??
-
     $dbal_connection = $this->connection->getDbalConnection();
-    $prefixed_table = $this->connection->getDbalExtension()->pfxTable($this->table);
+    $dbal_extension = $this->connection->getDbalExtension();
+    $prefixed_table = $dbal_extension->pfxTable($this->table);
+
     // In most cases, TRUNCATE is not a transaction safe statement as it is a
     // DDL statement which results in an implicit COMMIT. When we are in a
     // transaction, fallback to the slower, but transactional, DELETE.
     if ($this->connection->inTransaction()) {
       $dbal_query = $dbal_connection->createQueryBuilder()->delete($prefixed_table);
-      $sql = (string) $dbal_query;
-      if (!empty($comments)) {
-        $sql = $comments . $sql;
-      }
-      return $dbal_connection->executeUpdate($sql);
+      return $this->connection->query($comments . $dbal_query->getSQL(), [], $this->queryOptions);
     }
     else {
-      $db_platform = $dbal_connection->getDatabasePlatform();
-      $sql = $db_platform->getTruncateTableSql($prefixed_table);
-      if (!empty($comments)) {
-        $sql = $comments . $sql;
-      }
-      $this->connection->getDbalExtension()->preTruncate($prefixed_table);
-      $result = $dbal_connection->executeUpdate($sql);
-      $this->connection->getDbalExtension()->postTruncate($prefixed_table);
+      $sql = $dbal_connection->getDatabasePlatform()->getTruncateTableSql($prefixed_table);
+      $dbal_extension->preTruncate($prefixed_table);
+      $result = $this->connection->query($comments . $sql, [], $this->queryOptions);
+      $dbal_extension->postTruncate($prefixed_table);
       return $result;
     }
   }
