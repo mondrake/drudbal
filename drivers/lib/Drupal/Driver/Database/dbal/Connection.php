@@ -104,7 +104,13 @@ class Connection extends DatabaseConnection {
   }
 
   /**
-   * @todo
+   * Returns a prefixed table name.
+   *
+   * @param string $table_name
+   *   A Drupal table name
+   *
+   * @return string
+   *   A fully prefixed table name, suitable for direct usage in db queries.
    */
   public function getPrefixedTableName($table_name) {
     return $this->prefixTables('{' . $table_name . '}');
@@ -112,8 +118,6 @@ class Connection extends DatabaseConnection {
 
   /**
    * {@inheritdoc}
-   *
-   * @todo clean this up further.
    */
   public function query($query, array $args = [], $options = []) {
     // Use default values if not already set.

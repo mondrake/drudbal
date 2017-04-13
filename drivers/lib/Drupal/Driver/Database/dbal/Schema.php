@@ -136,9 +136,13 @@ class Schema extends DatabaseSchema {
       $field['size'] = 'normal';
     }
     $map = $this->getFieldTypeMap();
-    // @todo check if exception should be raised if no key in array.
-    $dbal_type = $map[$field['type'] . ':' . $field['size']];
-    return $dbal_type;
+
+    $key = $field['type'] . ':' . $field['size'];
+    if (!isset($map[$key])) {
+      throw new \InvalidArgumentException("There is no DBAL mapping for column type $key");
+    }
+
+    return $map[$key];
   }
 
   /**
