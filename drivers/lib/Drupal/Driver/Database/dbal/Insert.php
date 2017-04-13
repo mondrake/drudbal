@@ -2,6 +2,7 @@
 
 namespace Drupal\Driver\Database\dbal;
 
+use Drupal\Core\Database\IntegrityConstraintViolationException;
 use Drupal\Core\Database\Query\Insert as QueryInsert;
 
 /**
@@ -13,13 +14,6 @@ use Drupal\Core\Database\Query\Insert as QueryInsert;
  * classes and execution handed over to there.
  */
 class Insert extends QueryInsert {
-
-  /**
-   * A DBAL query builder object.
-   *
-   * @var \Doctrine\DBAL\Query\QueryBuilder
-   */
-  protected $dbalQuery;
 
   /**
    * {@inheritdoc}
@@ -44,12 +38,12 @@ class Insert extends QueryInsert {
       $values = $this->fromQuery->getArguments();
     }
 
-if(in_array($this->table, ['test', 'test_people_copy', 'test_special_columns', 'mondrake_test'])) {
+if(in_array($this->table, ['test', 'test_people', 'test_people_copy', 'test_special_columns', 'mondrake_test'])) {
     // DBAL does not support multiple insert statements. In such case, open a
-    // transaction and process separately each values set.
+    // transaction (if supported), and process separately each values set.
     $sql = (string) $this;
-    if (count($this->insertValues) > 1) {
-      $transaction = $this->connection->startTransaction();
+    if (count($this->insertValues) > 1 && $this->connection->supportsTransactions()) {
+      $insert_transaction = $this->connection->startTransaction();
     }
     foreach ($this->insertValues as $insert_values) {
       $max_placeholder = 0;
@@ -57,10 +51,18 @@ if(in_array($this->table, ['test', 'test_people_copy', 'test_special_columns', '
       foreach ($insert_values as $value) {
         $values[':db_insert_placeholder_' . $max_placeholder++] = $value;
       }
-      $last_insert_id = $this->connection->query($sql, $values, $this->queryOptions);
+      try {
+        $last_insert_id = $this->connection->query($sql, $values, $this->queryOptions);
+      }
+      catch (IntegrityConstraintViolationException $e) {
+        if ($this->connection->inTransaction()) {
+          $this->connection->rollBack();
+        }
+        throw $e;
+      }
     }
-    if (count($this->insertValues) > 1) {
-      $transaction = NULL;
+    if ($this->connection->inTransaction()) {
+      $insert_transaction = NULL;
     }
 }
 else {
@@ -95,19 +97,19 @@ else {
     $values = $this->getInsertPlaceholderFragment($this->insertValues, $this->defaultFields);
     $query .= implode(', ', $values);
 
-if(in_array($this->table, ['test', 'test_people_copy', 'test_special_columns', 'mondrake_test'])) {
+if(in_array($this->table, ['test', 'test_people', 'test_people_copy', 'test_special_columns', 'mondrake_test'])) {
     $dbal_connection = $this->connection->getDbalConnection();
     $prefixed_table = $this->connection->getPrefixedTableName($this->table);
 
     // Use DBAL query builder to prepare the INSERT query.
-    $this->dbalQuery = $dbal_connection->createQueryBuilder()->insert($prefixed_table);
+    $dbal_query = $dbal_connection->createQueryBuilder()->insert($prefixed_table);
 
     $max_placeholder = 0;
     foreach ($insert_fields as $field) {
-      $this->dbalQuery->setValue($field, ':db_insert_placeholder_' . $max_placeholder++);
+      $dbal_query->setValue($field, ':db_insert_placeholder_' . $max_placeholder++);
     }
-debug($this->dbalQuery->getSQL());
-    return $comments . $this->dbalQuery->getSQL();
+debug($dbal_query->getSQL());
+    return $comments . $dbal_query->getSQL();
 }
     return $query;
   }
