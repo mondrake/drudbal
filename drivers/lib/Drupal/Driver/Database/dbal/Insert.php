@@ -39,32 +39,40 @@ class Insert extends QueryInsert {
     }
 
 if(in_array($this->table, ['test', 'test_people', 'test_people_copy', 'test_special_columns', 'mondrake_test'])) {
+    $sql = (string) $this;
+
     // DBAL does not support multiple insert statements. In such case, open a
     // transaction (if supported), and process separately each values set.
-    $sql = (string) $this;
     if ((count($this->insertValues) > 1 || !empty($this->fromQuery)) && $this->connection->supportsTransactions()) {
       $insert_transaction = $this->connection->startTransaction();
     }
 
     if (empty($this->fromQuery)) {
       // Deal with a single INSERT or a bulk INSERT.
-      foreach ($this->insertValues as $insert_values) {
-        $max_placeholder = 0;
-        $values = [];
-        foreach ($insert_values as $value) {
-          $values[':db_insert_placeholder_' . $max_placeholder++] = $value;
-        }
-        try {
-          $last_insert_id = $this->connection->query($sql, $values, $this->queryOptions);
-        }
-        catch (IntegrityConstraintViolationException $e) {
-          // Abort the entire insert in case of integrity constraint violation
-          // and a transaction is open.
-          if ($this->connection->inTransaction()) {
-            $this->connection->rollBack();
+      if ($this->insertValues) {
+        foreach ($this->insertValues as $insert_values) {
+          $max_placeholder = 0;
+          $values = [];
+          foreach ($insert_values as $value) {
+            $values[':db_insert_placeholder_' . $max_placeholder++] = $value;
           }
-          throw $e;
+          try {
+            $last_insert_id = $this->connection->query($sql, $values, $this->queryOptions);
+          }
+          catch (IntegrityConstraintViolationException $e) {
+            // Abort the entire insert in case of integrity constraint violation
+            // and a transaction is open.
+            if ($this->connection->inTransaction()) {
+              $this->connection->rollBack();
+            }
+            throw $e;
+          }
         }
+      }
+      else {
+        // If there are no values, then this is a default-only query. We still
+        // need to handle that.
+        $last_insert_id = $this->connection->query($sql, [], $this->queryOptions);
       }
     }
     else {
@@ -143,7 +151,12 @@ if(in_array($this->table, ['test', 'test_people', 'test_people_copy', 'test_spec
     if (!empty($this->fromQuery) && empty($this->fromQuery->getFields())){
       $insert_fields = array_keys($dbal_connection->getSchemaManager()->listTableColumns($prefixed_table));
     }
-
+    else {
+      $insert_fields = $this->insertFields;
+    }
+    foreach ($this->defaultFields as $field) {
+      $dbal_query->setValue($field, 'DEFAULT');
+    }
     $max_placeholder = 0;
     foreach ($insert_fields as $field) {
       $dbal_query->setValue($field, ':db_insert_placeholder_' . $max_placeholder++);
