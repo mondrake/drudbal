@@ -42,25 +42,58 @@ if(in_array($this->table, ['test', 'test_people', 'test_people_copy', 'test_spec
     // DBAL does not support multiple insert statements. In such case, open a
     // transaction (if supported), and process separately each values set.
     $sql = (string) $this;
-    if (count($this->insertValues) > 1 && $this->connection->supportsTransactions()) {
+    if ((count($this->insertValues) > 1 || !empty($this->fromQuery)) && $this->connection->supportsTransactions()) {
       $insert_transaction = $this->connection->startTransaction();
     }
-    foreach ($this->insertValues as $insert_values) {
-      $max_placeholder = 0;
-      $values = [];
-      foreach ($insert_values as $value) {
-        $values[':db_insert_placeholder_' . $max_placeholder++] = $value;
-      }
-      try {
-        $last_insert_id = $this->connection->query($sql, $values, $this->queryOptions);
-      }
-      catch (IntegrityConstraintViolationException $e) {
-        if ($this->connection->inTransaction()) {
-          $this->connection->rollBack();
+
+    if (empty($this->fromQuery)) {
+      // Deal with a single INSERT or a bulk INSERT.
+      foreach ($this->insertValues as $insert_values) {
+        $max_placeholder = 0;
+        $values = [];
+        foreach ($insert_values as $value) {
+          $values[':db_insert_placeholder_' . $max_placeholder++] = $value;
         }
-        throw $e;
+        try {
+          $last_insert_id = $this->connection->query($sql, $values, $this->queryOptions);
+        }
+        catch (IntegrityConstraintViolationException $e) {
+          // Abort the entire insert in case of integrity constraint violation
+          // and a transaction is open.
+          if ($this->connection->inTransaction()) {
+            $this->connection->rollBack();
+          }
+          throw $e;
+        }
       }
     }
+    else {
+      // Deal with a INSERT INTO ... SELECT construct.
+//debug((string) $this->fromQuery);
+      $rows = $this->fromQuery->execute();
+      foreach ($rows as $rown => $row) {
+//debug([$rown, $row]);
+        $max_placeholder = 0;
+        $values = [];
+        foreach ($row as $value) {
+          $values[':db_insert_placeholder_' . $max_placeholder++] = $value;
+        }
+        try {
+//debug([$sql, $values]);
+          $last_insert_id = $this->connection->query($sql, $values, $this->queryOptions);
+        }
+        catch (IntegrityConstraintViolationException $e) {
+          // Abort the entire insert in case of integrity constraint violation
+          // and a transaction is open.
+          if ($this->connection->inTransaction()) {
+            $this->connection->rollBack();
+          }
+          throw $e;
+        }
+      }
+    }
+
+    // Close transaction if open and operation is successful.
     if ($this->connection->inTransaction()) {
       $insert_transaction = NULL;
     }
@@ -89,6 +122,7 @@ else {
     // pass it back, as any remaining options are irrelevant.
     if (!empty($this->fromQuery)) {
       $insert_fields_string = $insert_fields ? ' (' . implode(', ', $insert_fields) . ') ' : ' ';
+if(!in_array($this->table, ['test', 'test_people', 'test_people_copy', 'test_special_columns', 'mondrake_test']))
       return $comments . 'INSERT INTO {' . $this->table . '}' . $insert_fields_string . $this->fromQuery;
     }
 
@@ -108,7 +142,7 @@ if(in_array($this->table, ['test', 'test_people', 'test_people_copy', 'test_spec
     foreach ($insert_fields as $field) {
       $dbal_query->setValue($field, ':db_insert_placeholder_' . $max_placeholder++);
     }
-debug($dbal_query->getSQL());
+
     return $comments . $dbal_query->getSQL();
 }
     return $query;
