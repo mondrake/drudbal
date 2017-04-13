@@ -23,22 +23,6 @@ class Insert extends QueryInsert {
       return NULL;
     }
 
-    // If we're selecting from a SelectQuery, finish building the query and
-    // pass it back, as any remaining options are irrelevant.
-    if (empty($this->fromQuery)) {
-      $max_placeholder = 0;
-      $values = [];
-      foreach ($this->insertValues as $insert_values) {
-        foreach ($insert_values as $value) {
-          $values[':db_insert_placeholder_' . $max_placeholder++] = $value;
-        }
-      }
-    }
-    else {
-      $values = $this->fromQuery->getArguments();
-    }
-
-if(in_array($this->table, ['test', 'test_people', 'test_people_copy', 'test_special_columns', 'mondrake_test'])) {
     $sql = (string) $this;
 
     // DBAL does not support multiple insert statements. In such case, open a
@@ -104,10 +88,6 @@ if(in_array($this->table, ['test', 'test_people', 'test_people_copy', 'test_spec
     if ($this->connection->inTransaction()) {
       $insert_transaction = NULL;
     }
-}
-else {
-    $last_insert_id = $this->connection->query((string) $this, $values, $this->queryOptions);
-}
 
     // Re-initialize the values array so that we can re-use this query.
     $this->insertValues = [];
@@ -120,24 +100,6 @@ else {
    */
   public function __toString() {
     $comments = $this->connection->makeComment($this->comments);
-
-    // Default fields are always placed first for consistency.
-    $insert_fields = array_merge($this->defaultFields, $this->insertFields);
-
-    // If we're selecting from a SelectQuery, finish building the query and
-    // pass it back, as any remaining options are irrelevant.
-    if (!empty($this->fromQuery)) {
-      $insert_fields_string = $insert_fields ? ' (' . implode(', ', $insert_fields) . ') ' : ' ';
-if(!in_array($this->table, ['test', 'test_people', 'test_people_copy', 'test_special_columns', 'mondrake_test']))
-      return $comments . 'INSERT INTO {' . $this->table . '}' . $insert_fields_string . $this->fromQuery;
-    }
-
-    $query = $comments . 'INSERT INTO {' . $this->table . '} (' . implode(', ', $insert_fields) . ') VALUES ';
-
-    $values = $this->getInsertPlaceholderFragment($this->insertValues, $this->defaultFields);
-    $query .= implode(', ', $values);
-
-if(in_array($this->table, ['test', 'test_people', 'test_people_copy', 'test_special_columns', 'mondrake_test'])) {
     $dbal_connection = $this->connection->getDbalConnection();
     $prefixed_table = $this->connection->getPrefixedTableName($this->table);
 
@@ -152,19 +114,18 @@ if(in_array($this->table, ['test', 'test_people', 'test_people_copy', 'test_spec
       $insert_fields = array_keys($dbal_connection->getSchemaManager()->listTableColumns($prefixed_table));
     }
     else {
+      foreach ($this->defaultFields as $field) {
+        $dbal_query->setValue($field, 'DEFAULT');
+      }
       $insert_fields = $this->insertFields;
     }
-    foreach ($this->defaultFields as $field) {
-      $dbal_query->setValue($field, 'DEFAULT');
-    }
     $max_placeholder = 0;
+
     foreach ($insert_fields as $field) {
       $dbal_query->setValue($field, ':db_insert_placeholder_' . $max_placeholder++);
     }
 
     return $comments . $dbal_query->getSQL();
-}
-    return $query;
   }
 
 }
