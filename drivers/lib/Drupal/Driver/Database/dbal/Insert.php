@@ -68,18 +68,17 @@ if(in_array($this->table, ['test', 'test_people', 'test_people_copy', 'test_spec
       }
     }
     else {
-      // Deal with a INSERT INTO ... SELECT construct.
-//debug((string) $this->fromQuery);
+      // Deal with a INSERT INTO ... SELECT construct, that DBAL does not
+      // support natively. Execute the SELECT subquery and INSERT its rows'
+      // values to the target table.
       $rows = $this->fromQuery->execute();
-      foreach ($rows as $rown => $row) {
-//debug([$rown, $row]);
+      foreach ($rows as $row) {
         $max_placeholder = 0;
         $values = [];
         foreach ($row as $value) {
           $values[':db_insert_placeholder_' . $max_placeholder++] = $value;
         }
         try {
-//debug([$sql, $values]);
           $last_insert_id = $this->connection->query($sql, $values, $this->queryOptions);
         }
         catch (IntegrityConstraintViolationException $e) {
@@ -112,7 +111,6 @@ else {
    * {@inheritdoc}
    */
   public function __toString() {
-    // Create a sanitized comment string to prepend to the query.
     $comments = $this->connection->makeComment($this->comments);
 
     // Default fields are always placed first for consistency.
@@ -137,6 +135,14 @@ if(in_array($this->table, ['test', 'test_people', 'test_people_copy', 'test_spec
 
     // Use DBAL query builder to prepare the INSERT query.
     $dbal_query = $dbal_connection->createQueryBuilder()->insert($prefixed_table);
+
+    // If we're selecting from a SelectQuery, and no fields are specified in
+    // select (i.e. we have a SELECT * FROM ...), then we have to fetch the
+    // target column names from the table to be INSERTed to, since DBAL does
+    // not support 'INSERT INTO ... SELECT * FROM' constructs.
+    if (!empty($this->fromQuery) && empty($this->fromQuery->getFields())){
+      $insert_fields = array_keys($dbal_connection->getSchemaManager()->listTableColumns($prefixed_table));
+    }
 
     $max_placeholder = 0;
     foreach ($insert_fields as $field) {
