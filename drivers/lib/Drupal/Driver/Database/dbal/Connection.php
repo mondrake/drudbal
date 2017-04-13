@@ -42,6 +42,7 @@ class Connection extends DatabaseConnection {
    */
   protected static $dbalClassMap = array(
     'pdo_mysql' => [PDOMySql::class, DrupalPDOStatement::class],
+    'mysqli' => [Mysqli::class, DrupalPDOStatement::class],
   );
 
   /**
