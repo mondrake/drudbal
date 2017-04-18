@@ -1,7 +1,40 @@
 # DruDbal
-An __experimental__, work in progress, Drupal driver for Doctrine DBAL. The concept is to use Doctrine DBAL as an
-additional database abstraction layer, implementing a database agnostic Drupal driver, that hands over database
-operations to DBAL. Do not use if not for trial. No support, sorry :)
+An __experimental__, work in progress, Drupal driver for Doctrine DBAL. __Do not use if not for trial. No support, sorry :)__
+
+## Concept
+The concept is to use Doctrine DBAL as an additional database abstraction layer. The code of the DBAL Drupal database driver is meant
+to be 'database agnostic', i.e. the driver should be able to execute on any db platform that DBAL supports (theoretically ;)).
+
+The Drupal database ```Connection``` class that this driver implements opens a ```DBAL\Connection```, and hands over
+statements' execution to it. DBAL\Connection itself wraps a ```PDO``` connection (at least for the pdo_mysql driver). In addition,
+the DBAL connection provides additional features like the Schema Manager that can introspect a database schema and build
+DDL statements, a Query Builder that can build SQL statements based on the database platform in use, etc. etc.
+
+To overcome DBAL limitations and/or fit Drupal specifics, the DBAL Drupal database driver also instantiates an additional object
+called ```DBALExtension```, unique for the DBAL Driver in use, to which some operations that are db- or Drupal-specific are
+delegated.
+
+## Status
+The code in the ```master``` branch is meant to be working on a MySql database, using a PDO connection. 
+
+'Working' means passing a ```phpunit --group Database``` test run with the driver being used. The latest patches
+referenced below in the 'Related Drupal issues' need to be applied to get the test run.
+
+The status of the driver classes implementation is as follows:
+
+Class | Status   |
+------|---------------|
+Connection  | implemented |
+Delete      | implemented |
+Insert      | implemented |
+Merge       | currently inheriting from base class, needs work |
+Schema      | implemented |
+Select      | currently inheriting from base class, needs work |
+Transaction | inheriting from base class. OK as is ATM, maybe look into DBAL Transaction Management features in the future |
+Truncate    | implemented |
+Update      | implemented |
+Upsert      | implemented |
+Install/Tasks	| implemented |
 
 ## Installation
 
