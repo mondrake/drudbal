@@ -41,6 +41,7 @@ section will report something like:
 ## Related DBAL issues/PRs
 Issue | Description   |
 ------|---------------|
+https://github.com/doctrine/dbal/issues/1320 | DBAL-163: Upsert support in DBAL |
 https://github.com/doctrine/dbal/pull/682    | [WIP] [DBAL-218] Add bulk insert query |
 https://github.com/doctrine/dbal/issues/1335 | DBAL-175: Table comments in Doctrine\DBAL\Schema\Table Object |
 https://github.com/doctrine/dbal/issues/1033 | DBAL-1096: schema-tool:update does not understand columnDefinition correctly |
