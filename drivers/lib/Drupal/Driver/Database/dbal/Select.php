@@ -141,8 +141,8 @@ foreach($this->tables as $table) {
 //        $this->dbalQuery->setParameter($placeholder, $value);
 //      }
     }
-debug($query);
-debug($comments . $this->dbalQuery->getSQL());
+//debug($query);
+//debug($comments . $this->dbalQuery->getSQL());
     if (!$this->group && !count($this->having) && !$this->union && !$this->order && empty($this->range) && !$this->forUpdate) {
       return $comments . $this->dbalQuery->getSQL();
     }
