@@ -3,7 +3,8 @@ An __experimental__, work in progress, Drupal driver for Doctrine DBAL. __Do not
 
 ## Concept
 The concept is to use Doctrine DBAL as an additional database abstraction layer. The code of the DBAL Drupal database driver is meant
-to be 'database agnostic', i.e. the driver should be able to execute on any db platform that DBAL supports (theoretically ;)).
+to be 'database agnostic', i.e. the driver should be able to execute on any db platform that DBAL supports (in theory, practically
+there still need to be db-platform specific hacks through the concept of DBAL extensions, see below).
 
 The Drupal database ```Connection``` class that this driver implements opens a ```DBAL\Connection```, and hands over
 statements' execution to it. DBAL\Connection itself wraps a ```PDO``` connection (at least for the pdo_mysql driver). In addition,
@@ -17,24 +18,26 @@ delegated.
 ## Status
 The code in the ```master``` branch is meant to be working on a MySql database, using a PDO connection. 
 
-'Working' means passing a ```phpunit --group Database``` test run with the driver being used. The latest patches
-referenced below in the 'Related Drupal issues' need to be applied to get the test run.
+'Working' means:
+1. able to install a Drupal site via the installer, selecting 'Doctrine DBAL' as the database of choice;
+2. passing a ```phpunit --group Database``` test run with the driver being used. The latest patches referenced below in the 'Related Drupal issues' need to be applied to get the test run.
 
 The status of the driver classes implementation is as follows:
 
 Class | Status   |
 ------|---------------|
-Connection  | implemented |
-Delete      | implemented |
-Insert      | implemented |
-Merge       | currently inheriting from base class, needs work |
-Schema      | implemented |
-Select      | currently inheriting from base class, needs work |
-Transaction | inheriting from base class. OK as is ATM, maybe look into DBAL Transaction Management features in the future |
-Truncate    | implemented |
-Update      | implemented |
-Upsert      | implemented |
-Install/Tasks	| implemented |
+Connection  | Implemented |
+Delete      | Implemented |
+Insert      | Implemented |
+Merge       | Inheriting from ```\Drupal\Core\Database\Query\Merge```. DBAL does not support MERGE constructs, the INSERT with UPDATE fallback implemented by the base class fits the purpose. |
+Schema      | Implemented |
+Select      | Currently inheriting from base class, needs work |
+Statement   | Currently using the base class ```\Drupal\Core\Database\Statement```. This is a PDO-bound statement class. In fact this is not allowing to run prepared statements through the DBAL Connection, needs work. |
+Transaction | Inheriting from ```\Drupal\Core\Database\Transaction```. Maybe in the future look into DBAL Transaction Management features. |
+Truncate    | Implemented |
+Update      | Implemented |
+Upsert      | Implemented |
+Install/Tasks	| Implemented |
 
 ## Installation
 
@@ -53,8 +56,7 @@ $ cd [DRUPAL_ROOT]/[path_to_contrib_modules]
 $ git clone https://github.com/mondrake/drudbal.git
 ```
 
-4. Create a directory for the contrib driver, and create a symlink to the 'dbal' subdirectory of the module.
-This way, when git pulling updates from the module's repo, the driver code will also be aligned.
+4. Create a directory for the contrib driver, and create a symlink to the 'dbal' subdirectory of the module. This way, when git pulling updates from the module's repo, the driver code will also be aligned.
 ```
 $ mkdir -p [DRUPAL_ROOT]/drivers/lib/Drupal/Driver/Database/
 $ cd [DRUPAL_ROOT]/drivers/lib/Drupal/Driver/Database/
@@ -74,6 +76,7 @@ section will report something like:
 ## Related DBAL issues/PRs
 Issue | Description   |
 ------|---------------|
+https://github.com/doctrine/dbal/issues/1349 | DBAL-182: Insert and Merge Query Objects |
 https://github.com/doctrine/dbal/issues/1320 | DBAL-163: Upsert support in DBAL |
 https://github.com/doctrine/dbal/pull/682    | [WIP] [DBAL-218] Add bulk insert query |
 https://github.com/doctrine/dbal/issues/1335 | DBAL-175: Table comments in Doctrine\DBAL\Schema\Table Object |
@@ -88,3 +91,4 @@ Issue | Description   |
 [2605284](https://www.drupal.org/node/2605284) | Testing framework does not work with contributed database drivers |
 [2867700](https://www.drupal.org/node/2867700) | ConnectionUnitTest::testConnectionOpen fails if the driver is not implementing a PDO connection |
 [2867788](https://www.drupal.org/node/2867788) | Log::findCaller fails to report the correct caller function with non-core drivers |
+[2868273](https://www.drupal.org/node/2868273) | Missing a test for table TRUNCATE while in transaction |
