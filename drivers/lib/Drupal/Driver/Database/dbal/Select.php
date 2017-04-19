@@ -3,6 +3,7 @@
 namespace Drupal\Driver\Database\dbal;
 
 use Drupal\Core\Database\Query\Select as QuerySelect;
+use Drupal\Core\Database\Query\SelectInterface;
 
 /**
  * DruDbal implementation of \Drupal\Core\Database\Query\Select.
@@ -33,21 +34,6 @@ class Select extends QuerySelect {
 
     $args = $this->getArguments();
     return $this->connection->query((string) $this, $args, $this->queryOptions);
-
-/*foreach($this->tables as $table) {
-  if ($this->startsWith($table['table'], 'test')) {
-    foreach($this->tables as $table) {
-      if (is_object($table['table'])) {
-        debug('subquery');
-      }
-      else {
-        debug($table);
-      }
-    }
-    debug((string) $this);
-    break;
-  }
-} */
   }
 
   /**
@@ -58,6 +44,7 @@ class Select extends QuerySelect {
 
 foreach($this->tables as $table) {
   if ($this->startsWith($table['table'], 'test')) {
+//debug($query);
     // For convenience, we compile the query ourselves if the caller forgot
     // to do it. This allows constructs like "(string) $query" to work. When
     // the query will be executed, it will be recompiled using the proper
@@ -111,6 +98,7 @@ foreach($this->tables as $table) {
         }
       }
       else {
+//debug($table['table']);
         $table_string = $this->connection->escapeTable($table['table']);
         // Do not attempt prefixing cross database / schema queries.
         if (strpos($table_string, '.') === FALSE) {
@@ -141,8 +129,15 @@ foreach($this->tables as $table) {
 //        $this->dbalQuery->setParameter($placeholder, $value);
 //      }
     }
-//debug($query);
-//debug($comments . $this->dbalQuery->getSQL());
+
+    $sql = $this->dbalQuery->getSQL();
+
+    // DISTINCT @todo move to extension
+    if ($this->distinct) {
+      $sql = preg_replace('/SELECT /', '$0 DISTINCT ', $sql);  // @todo enforce only at the beginning of the string
+    }
+
+//debug($comments . $sql);
     if (!$this->group && !count($this->having) && !$this->union && !$this->order && empty($this->range) && !$this->forUpdate) {
       return $comments . $this->dbalQuery->getSQL();
     }
