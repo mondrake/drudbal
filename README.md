@@ -15,7 +15,7 @@ To overcome DBAL limitations and/or fit Drupal specifics, the DBAL Drupal databa
 called ```DBALExtension```, unique for the DBAL Driver in use, to which some operations that are db- or Drupal-specific are
 delegated.
 
-## Status
+## Status (as of April 19, 2017)
 The code in the ```master``` branch is meant to be working on a MySql database, using a PDO connection. 
 
 'Working' means:
