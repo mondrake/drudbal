@@ -24,19 +24,19 @@ The code in the ```master``` branch is meant to be working on a MySql database, 
 
 The status of the driver classes implementation is as follows:
 
-Class | Status   |
-------|---------------|
-Connection  | Implemented |
-Delete      | Implemented with overrides to the ```execute``` and ```::__toString``` methods. |
-Insert      | Implemented with overrides to the ```execute``` and ```::__toString``` methods. |
-Merge       | Inheriting from ```\Drupal\Core\Database\Query\Merge```. DBAL does not support MERGE constructs, the INSERT with UPDATE fallback implemented by the base class fits the purpose. |
-Schema      | Implemented |
-Select      | Implemented with override to the ```::__toString``` method. Consider integrating at higher level. |
-Statement   | Currently using the base class ```\Drupal\Core\Database\Statement```. This is a PDO-bound statement class. In fact this is not allowing to run prepared statements through the DBAL Connection, needs work. |
-Transaction | Inheriting from ```\Drupal\Core\Database\Transaction```. Maybe in the future look into DBAL Transaction Management features. |
-Truncate    | Implemented with overrides to the ```execute``` and ```::__toString``` methods. |
-Update      | Implemented with overrides to the ```execute``` and ```::__toString``` methods. |
-Upsert      | Implemented with overrides to the ```execute``` and ```::__toString``` methods. |
+Class         | Status        |
+--------------|---------------|
+Connection    | Implemented |
+Delete        | Implemented with overrides to the ```execute``` and ```::__toString``` methods. |
+Insert        | Implemented with overrides to the ```execute``` and ```::__toString``` methods. |
+Merge         | Inheriting from ```\Drupal\Core\Database\Query\Merge```. DBAL does not support MERGE constructs, the INSERT with UPDATE fallback implemented by the base class fits the purpose. |
+Schema        | Implemented |
+Select        | Implemented with override to the ```::__toString``` method. Consider integrating at higher level. |
+Statement     | Currently using the base class ```\Drupal\Core\Database\Statement```. This is a PDO-bound statement class. In fact this is not allowing to run prepared statements through the DBAL Connection, needs work. |
+Transaction   | Inheriting from ```\Drupal\Core\Database\Transaction```. Maybe in the future look into DBAL Transaction Management features. |
+Truncate      | Implemented with overrides to the ```execute``` and ```::__toString``` methods. |
+Update        | Implemented with overrides to the ```execute``` and ```::__toString``` methods. |
+Upsert        | Implemented with overrides to the ```execute``` and ```::__toString``` methods. DBAL does not support UPSERT, so implementation opens a transaction and proceed with an INSERT attempt, falling back to UPDATE in case of failure. |
 Install/Tasks	| Implemented |
 
 ## Installation
