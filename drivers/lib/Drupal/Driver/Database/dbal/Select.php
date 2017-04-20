@@ -40,7 +40,10 @@ class Select extends QuerySelect {
    * {@inheritdoc}
    */
   public function __toString() {
-    $query = parent::__toString();
+    // @todo
+    if ($this->union) {
+      return parent::__toString();
+    }
 
     // For convenience, we compile the query ourselves if the caller forgot
     // to do it. This allows constructs like "(string) $query" to work. When
@@ -180,14 +183,9 @@ class Select extends QuerySelect {
       $sql .= ' FOR UPDATE';
     }
 
-    if (!$this->union) {
 $this->xxDebug($comments . $sql);
-      return $comments . $sql;
-    }
-
-    return $query;
+    return $comments . $sql;
   }
-
 
   protected function startsWith($haystack, $needle) {
    $length = strlen($needle);
