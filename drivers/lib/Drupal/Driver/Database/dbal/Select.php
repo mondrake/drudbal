@@ -42,18 +42,6 @@ class Select extends QuerySelect {
   public function __toString() {
     $query = parent::__toString();
 
-foreach($this->tables as $table) {
-  if ($this->startsWith($table['table'], 'test')) {
-foreach($this->tables as $table) {
-  if (is_object($table['table'])) {
-    $this->xxDebug(['subquery', $table['join type']]);
-  }
-  else {
-    $this->xxDebug($table);
-  }
-}
-$this->xxDebug($query);
-
     // For convenience, we compile the query ourselves if the caller forgot
     // to do it. This allows constructs like "(string) $query" to work. When
     // the query will be executed, it will be recompiled using the proper
@@ -159,8 +147,8 @@ $this->xxDebug($query);
     }
 
     // HAVING
+    // @todo this uses Drupal Condition API. Use DBAL expressions instead?
     if (count($this->having)) {
-      // @todo this uses Drupal Condition API. Use DBAL expressions instead?
       $this->dbalQuery->having((string) $this->having);
     }
 
@@ -192,13 +180,10 @@ $this->xxDebug($query);
       $sql .= ' FOR UPDATE';
     }
 
-$this->xxDebug($comments . $sql);
     if (!$this->union) {
-$this->xxDebug('*** using DBAL');
+$this->xxDebug($comments . $sql);
       return $comments . $sql;
     }
-  }
-}
 
     return $query;
   }
@@ -210,7 +195,7 @@ $this->xxDebug('*** using DBAL');
   }
 
   protected function xxDebug($output) {
-   debug($output);
+//   debug($output);
   }
 
 }
