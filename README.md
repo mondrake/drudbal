@@ -15,7 +15,7 @@ To overcome DBAL limitations and/or fit Drupal specifics, the DBAL Drupal databa
 called ```DBALExtension```, unique for the DBAL Driver in use, to which some operations that are db- or Drupal-specific are
 delegated.
 
-## Status (as of April 19, 2017)
+## Status (as of April 20, 2017)
 The code in the ```master``` branch is meant to be working on a MySql database, using a PDO connection. 
 
 'Working' means:
@@ -31,7 +31,7 @@ Delete      | Implemented |
 Insert      | Implemented |
 Merge       | Inheriting from ```\Drupal\Core\Database\Query\Merge```. DBAL does not support MERGE constructs, the INSERT with UPDATE fallback implemented by the base class fits the purpose. |
 Schema      | Implemented |
-Select      | Currently inheriting from base class, needs work |
+Select      | Implemented as override to the ```::__toString``` method. Consider integrating at higher level. |
 Statement   | Currently using the base class ```\Drupal\Core\Database\Statement```. This is a PDO-bound statement class. In fact this is not allowing to run prepared statements through the DBAL Connection, needs work. |
 Transaction | Inheriting from ```\Drupal\Core\Database\Transaction```. Maybe in the future look into DBAL Transaction Management features. |
 Truncate    | Implemented |
