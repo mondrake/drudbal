@@ -36,7 +36,7 @@ Statement     | Currently using the base class ```\Drupal\Core\Database\Statemen
 Transaction   | Inheriting from ```\Drupal\Core\Database\Transaction```. Maybe in the future look into DBAL Transaction Management features. |
 Truncate      | Implemented with overrides to the ```execute``` and ```::__toString``` methods. |
 Update        | Implemented with overrides to the ```execute``` and ```::__toString``` methods. |
-Upsert        | Implemented with overrides to the ```execute``` and ```::__toString``` methods. DBAL does not support UPSERT, so implementation opens a transaction and proceed with an INSERT attempt, falling back to UPDATE in case of failure. |
+Upsert        | Implemented with overrides to the ```execute``` and ```::__toString``` methods. DBAL does not support UPSERT, so implementation opens a transaction and proceeds with an INSERT attempt, falling back to UPDATE in case of failure. |
 Install/Tasks	| Implemented |
 
 ## Installation
