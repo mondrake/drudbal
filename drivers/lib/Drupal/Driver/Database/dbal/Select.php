@@ -44,7 +44,16 @@ class Select extends QuerySelect {
 
 foreach($this->tables as $table) {
   if ($this->startsWith($table['table'], 'test')) {
-//debug($query);
+foreach($this->tables as $table) {
+  if (is_object($table['table'])) {
+    $this->xxDebug(['subquery', $table['join type']]);
+  }
+  else {
+    $this->xxDebug($table);
+  }
+}
+$this->xxDebug($query);
+
     // For convenience, we compile the query ourselves if the caller forgot
     // to do it. This allows constructs like "(string) $query" to work. When
     // the query will be executed, it will be recompiled using the proper
@@ -68,9 +77,8 @@ foreach($this->tables as $table) {
       }
     }
     foreach ($this->fields as $field) {
-      // Always use the AS keyword for field aliases, as some
-      // databases require it (e.g., PostgreSQL).
-      $this->dbalQuery->addSelect((isset($field['table']) ? $this->connection->escapeTable($field['table']) . '.' : '') . $this->connection->escapeField($field['field']) . ' AS ' . $this->connection->escapeAlias($field['alias']));
+      $field_prefix = isset($field['table']) ? $this->connection->escapeTable($field['table']) . '.' : '';
+      $this->dbalQuery->addSelect($field_prefix . $this->connection->escapeField($field['field']) . ' AS ' . $this->connection->escapeAlias($field['alias']));
     }
     foreach ($this->expressions as $expression) {
       $this->dbalQuery->addSelect($expression['expression'] . ' AS ' . $this->connection->escapeAlias($expression['alias']));
@@ -78,6 +86,7 @@ foreach($this->tables as $table) {
 
     // FROM - We presume all queries have a FROM, as any query that doesn't won't need the query builder anyway.
 //    $query .= "\nFROM ";
+    $root_alias = NULL;
     foreach ($this->tables as $table) {
 //      $query .= "\n";
       if (isset($table['join type'])) {
@@ -85,27 +94,42 @@ foreach($this->tables as $table) {
       }
 
       // If the table is a subquery, compile it and integrate it into this query.
+      $escaped_alias = $this->connection->escapeTable($table['alias']);
       if ($table['table'] instanceof SelectInterface) {
         // Run preparation steps on this sub-query before converting to string.
         $subquery = $table['table'];
         $subquery->preExecute();
-        $table_string = '(' . (string) $subquery . ')';
+        $escaped_table = '(' . (string) $subquery . ')';
         if (!isset($table['join type'])) {
-          $this->dbalQuery->from($table_string, $this->connection->escapeTable($table['alias']));
+          $this->dbalQuery->from($escaped_table, $escaped_alias);
         }
         else {
           // @todo
         }
       }
       else {
-//debug($table['table']);
-        $table_string = $this->connection->escapeTable($table['table']);
+        $escaped_table = $this->connection->escapeTable($table['table']);
         // Do not attempt prefixing cross database / schema queries.
-        if (strpos($table_string, '.') === FALSE) {
+        if (strpos($escaped_table, '.') === FALSE) {
           if (!isset($table['join type'])) {
-            $this->dbalQuery->from($this->connection->getPrefixedTableName($table_string), $this->connection->escapeTable($table['alias']));
+            $this->dbalQuery->from($this->connection->getPrefixedTableName($escaped_table), $escaped_alias);
+            $root_alias = $escaped_alias;
           }
           else {
+            switch ($table['join type']) {
+              case 'INNER':
+                $this->dbalQuery->innerJoin($root_alias, $this->connection->getPrefixedTableName($escaped_table), $escaped_alias, (string) $table['condition']);
+                break;
+
+              case 'LEFT OUTER':
+                $this->dbalQuery->leftJoin($root_alias, $this->connection->getPrefixedTableName($escaped_table), $escaped_alias, (string) $table['condition']);
+                break;
+
+              case 'RIGHT OUTER':
+                $this->dbalQuery->rightJoin($root_alias, $this->connection->getPrefixedTableName($escaped_table), $escaped_alias, (string) $table['condition']);
+                break;
+
+            }
             // @todo
           }
 //          $table_string = '{' . $table_string . '}';
@@ -125,20 +149,40 @@ foreach($this->tables as $table) {
     // @todo this uses Drupal Condition API. Use DBAL expressions instead?
     if (count($this->condition)) {
       $this->dbalQuery->where((string) $this->condition);
-//      foreach ($this->condition->arguments() as $placeholder => $value) {
-//        $this->dbalQuery->setParameter($placeholder, $value);
-//      }
     }
+
+    // GROUP BY
+    if ($this->group) {
+      foreach ($this->group as $expression) {
+        $this->dbalQuery->addGroupBy($expression);
+      }
+    }
+
+    // HAVING @todo
+
+    // UNION @todo
+
+    // ORDER BY
+    if ($this->order) {
+      foreach ($this->order as $field => $direction) {
+        $this->dbalQuery->addOrderBy($this->connection->escapeField($field), $direction);
+      }
+    }
+
+    // RANGE @todo
 
     $sql = $this->dbalQuery->getSQL();
 
     // DISTINCT @todo move to extension
     if ($this->distinct) {
-      $sql = preg_replace('/SELECT /', '$0 DISTINCT ', $sql);  // @todo enforce only at the beginning of the string
+      $sql = preg_replace('/SELECT /', '$0DISTINCT ', $sql);  // @todo enforce only at the beginning of the string
     }
 
-//debug($comments . $sql);
-    if (!$this->group && !count($this->having) && !$this->union && !$this->order && empty($this->range) && !$this->forUpdate) {
+    // FOR UPDATE @todo
+
+$this->xxDebug($comments . $sql);
+    if (!count($this->having) && !$this->union && empty($this->range) && !$this->forUpdate) {
+$this->xxDebug('*** using DBAL');
       return $comments . $this->dbalQuery->getSQL();
     }
   }
@@ -148,10 +192,13 @@ foreach($this->tables as $table) {
   }
 
 
-  protected function startsWith($haystack, $needle)
-{
-     $length = strlen($needle);
-     return (substr($haystack, 0, $length) === $needle);
-}
+  protected function startsWith($haystack, $needle) {
+   $length = strlen($needle);
+   return (substr($haystack, 0, $length) === $needle);
+  }
+
+  protected function xxDebug($output) {
+//   debug($output);
+  }
 
 }
