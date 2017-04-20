@@ -84,16 +84,12 @@ $this->xxDebug($query);
       $this->dbalQuery->addSelect($expression['expression'] . ' AS ' . $this->connection->escapeAlias($expression['alias']));
     }
 
-    // FROM - We presume all queries have a FROM, as any query that doesn't won't need the query builder anyway.
-//    $query .= "\nFROM ";
+    // FROM - We presume all queries have a FROM, as any query that doesn't
+    // won't need the query builder anyway.
     $root_alias = NULL;
     foreach ($this->tables as $table) {
-//      $query .= "\n";
-      if (isset($table['join type'])) {
-//        $query .= $table['join type'] . ' JOIN ';
-      }
-
-      // If the table is a subquery, compile it and integrate it into this query.
+      // If the table is a subquery, compile it and integrate it into this
+      // query.
       $escaped_alias = $this->connection->escapeTable($table['alias']);
       if ($table['table'] instanceof SelectInterface) {
         // Run preparation steps on this sub-query before converting to string.
@@ -102,9 +98,23 @@ $this->xxDebug($query);
         $escaped_table = '(' . (string) $subquery . ')';
         if (!isset($table['join type'])) {
           $this->dbalQuery->from($escaped_table, $escaped_alias);
+          $root_alias = $escaped_alias;
         }
         else {
-          // @todo
+          switch ($table['join type']) {
+            case 'INNER':
+              $this->dbalQuery->innerJoin($root_alias, $escaped_table, $escaped_alias, (string) $table['condition']);
+              break;
+
+            case 'LEFT OUTER':
+              $this->dbalQuery->leftJoin($root_alias, $escaped_table, $escaped_alias, (string) $table['condition']);
+              break;
+
+            case 'RIGHT OUTER':
+              $this->dbalQuery->rightJoin($root_alias, $escaped_table, $escaped_alias, (string) $table['condition']);
+              break;
+
+          }
         }
       }
       else {
@@ -130,18 +140,8 @@ $this->xxDebug($query);
                 break;
 
             }
-            // @todo
           }
-//          $table_string = '{' . $table_string . '}';
         }
-      }
-
-      // Don't use the AS keyword for table aliases, as some
-      // databases don't support it (e.g., Oracle).
-//      $query .= $table_string . ' ' . $this->connection->escapeTable($table['alias']);
-
-      if (!empty($table['condition'])) {
-//        $query .= ' ON ' . (string) $table['condition'];
       }
     }
 
@@ -158,7 +158,11 @@ $this->xxDebug($query);
       }
     }
 
-    // HAVING @todo
+    // HAVING
+    if (count($this->having)) {
+      // @todo this uses Drupal Condition API. Use DBAL expressions instead?
+      $this->dbalQuery->having((string) $this->having);
+    }
 
     // UNION @todo
 
@@ -169,7 +173,12 @@ $this->xxDebug($query);
       }
     }
 
-    // RANGE @todo
+    // RANGE
+    if (!empty($this->range)) {
+      $this->dbalQuery
+        ->setFirstResult((int) $this->range['start'])
+        ->setMaxResults((int) $this->range['length']);
+    }
 
     $sql = $this->dbalQuery->getSQL();
 
@@ -178,12 +187,15 @@ $this->xxDebug($query);
       $sql = preg_replace('/SELECT /', '$0DISTINCT ', $sql);  // @todo enforce only at the beginning of the string
     }
 
-    // FOR UPDATE @todo
+    // FOR UPDATE @todo move to extension
+    if ($this->forUpdate) {
+      $sql .= ' FOR UPDATE';
+    }
 
 $this->xxDebug($comments . $sql);
-    if (!count($this->having) && !$this->union && empty($this->range) && !$this->forUpdate) {
+    if (!$this->union) {
 $this->xxDebug('*** using DBAL');
-      return $comments . $this->dbalQuery->getSQL();
+      return $comments . $sql;
     }
   }
 }
@@ -198,7 +210,7 @@ $this->xxDebug('*** using DBAL');
   }
 
   protected function xxDebug($output) {
-//   debug($output);
+   debug($output);
   }
 
 }
