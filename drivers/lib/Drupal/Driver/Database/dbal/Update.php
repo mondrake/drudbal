@@ -26,7 +26,13 @@ class Update extends QueryUpdate {
    * {@inheritdoc}
    */
   public function execute() {
+    $x = (string) $this;
+if (1 === 1) {  // @todo
+    return $this->dbalQuery->execute();
+}
+else {
     return $this->connection->query((string) $this, $this->dbalQuery->getParameters(), $this->queryOptions);
+}
   }
 
   /**

@@ -3,6 +3,7 @@
 namespace Drupal\Driver\Database\dbal\Statement;
 
 use Drupal\Core\Database\StatementInterface;
+use Drupal\Core\Database\RowCountException;
 use Drupal\Driver\Database\dbal\Connection as DruDbalConnection;
 
 /**
@@ -32,7 +33,7 @@ class PDODbalStatement extends \PDOStatement implements StatementInterface {
    *
    * @var bool
    */
-  public $allowRowCount = FALSE;
+  public $allowRowCount = TRUE;
 
   protected function __construct(DruDbalConnection $dbh) {
     $this->dbh = $dbh;
@@ -42,7 +43,7 @@ class PDODbalStatement extends \PDOStatement implements StatementInterface {
   /**
    * {@inheritdoc}
    */
-  public function execute($args = [], $options = []) {
+  public function execute($args = NULL, $options = []) {
     if (isset($options['fetch'])) {
       if (is_string($options['fetch'])) {
         // \PDO::FETCH_PROPS_LATE tells __construct() to run before properties
@@ -59,7 +60,12 @@ class PDODbalStatement extends \PDOStatement implements StatementInterface {
       $query_start = microtime(TRUE);
     }
 
-    $return = parent::execute($args);
+    if (is_array($args)) {
+      $return = parent::execute($args);
+    }
+    elseif ($args === NULL) {
+      $return = parent::execute();
+    }
 
     if (!empty($logger)) {
       $query_end = microtime(TRUE);
