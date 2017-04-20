@@ -147,7 +147,6 @@ class PDOMySql implements DbalExtensionInterface {
    * {@inheritdoc}
    */
   public static function open(array &$connection_options = []) {
-//var_export($connection_options);
     try {
       static::preConnectionOpen($connection_options);
       $options = array_diff_key($connection_options, [
@@ -172,7 +171,6 @@ class PDOMySql implements DbalExtensionInterface {
       $options['port'] = isset($connection_options['port']) ? $connection_options['port'] : NULL;
       $options['url'] = isset($connection_options['dbal_url']) ? $connection_options['dbal_url'] : NULL;
       $options['driver'] = $connection_options['dbal_driver'];
-//var_export($options);die;
       $dbal_connection = DBALDriverManager::getConnection($options);
       static::postConnectionOpen($dbal_connection, $connection_options);
     }
