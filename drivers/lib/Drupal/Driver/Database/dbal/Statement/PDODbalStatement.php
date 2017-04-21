@@ -33,11 +33,14 @@ class PDODbalStatement extends \PDOStatement implements StatementInterface {
    *
    * @var bool
    */
-  public $allowRowCount = TRUE;
+  public $allowRowCount = FALSE;
 
   protected function __construct(DruDbalConnection $dbh) {
     $this->dbh = $dbh;
     $this->setFetchMode(\PDO::FETCH_OBJ);
+    if (($allow_row_count = $this->dbh->popStatementOption('allowRowCount')) !== NULL) {
+      $this->allowRowCount = $allow_row_count;
+    }
   }
 
   /**

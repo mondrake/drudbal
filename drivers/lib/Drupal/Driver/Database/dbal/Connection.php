@@ -62,12 +62,24 @@ class Connection extends DatabaseConnection {
   protected $dbalExtension;
 
   /**
+   * An array of options to be passed to the Statement object.
+   *
+   * DBAL is quite strict in the sense that it does not pass options to the
+   * prepare/execute methods. Overcome that by storing here options required,
+   * so that the custom Statement classes defined by the driver can manage that
+   * on construction.
+   *
+   * @var array[]
+   */
+  protected $statementOptions;
+
+  /**
    * Constructs a Connection object.
    */
   public function __construct(DbalConnection $dbal_connection, array $connection_options = []) {
     $dbal_extension_class = static::getDbalExtensionClass($dbal_connection->getDriver()->getName());
-    $statement_class = static::getStatementClass($dbal_connection->getDriver()->getName());
-    $this->dbalExtension = new $dbal_extension_class($this, $dbal_connection, $statement_class);
+    $this->statementClass = static::getStatementClass($dbal_connection->getDriver()->getName());
+    $this->dbalExtension = new $dbal_extension_class($this, $dbal_connection, $this->statementClass);
     $this->transactionSupport = $this->dbalExtension->transactionSupport($connection_options);
     $this->transactionalDDLSupport = $this->dbalExtension->transactionalDDLSupport($connection_options);
     $this->setPrefix(isset($connection_options['prefix']) ? $connection_options['prefix'] : '');
@@ -403,6 +415,40 @@ class Connection extends DatabaseConnection {
     $dbal_driver = isset($parts['dbal_driver']) ? $parts['dbal_driver'] : '';
     $connection_options['dbal_driver'] = $dbal_driver;
     return $connection_options;
+  }
+
+  /**
+   * Pushes an option to be retrieved by the Statement object.
+   *
+   * @param string $option
+   *   The option identifier.
+   * @param string $value
+   *   The option value.
+   *
+   * @return $this
+   */
+  public function pushStatementOption($option, $value) {
+    if (!isset($this->statementOptions[$option])) {
+      $this->statementOptions[$option] = [];
+    }
+    $this->statementOptions[$option][] = $value;
+    return $this;
+  }
+
+  /**
+   * Pops an option retrieved by the Statement object.
+   *
+   * @param string $option
+   *   The option identifier.
+   *
+   * @return mixed|null
+   *   The option value, or NULL if missing.
+   */
+  public function popStatementOption($option) {
+    if (!isset($this->statementOptions[$option]) || empty($this->statementOptions[$option])) {
+      return NULL;
+    }
+    return array_pop($this->statementOptions[$option]);
   }
 
 }
