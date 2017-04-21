@@ -26,11 +26,18 @@ class Update extends QueryUpdate {
    * {@inheritdoc}
    */
   public function execute() {
-// @todo
-    $x = (string) $this;
-    $this->connection->pushStatementOption('allowRowCount', TRUE);
-    return $this->dbalQuery->execute();
-//    return $this->connection->query((string) $this, $this->dbalQuery->getParameters(), $this->queryOptions);
+    if (empty($this->comments)) {
+      // If no comments, we can directly execute the DBAL query.
+      $this->compileDbalQuery();
+      // Instruct the Statement object to allow row count.
+      $this->connection->pushStatementOption('allowRowCount', TRUE);
+      return $this->dbalQuery->execute();
+    }
+    else {
+      // Otherwise, we need to fall back to __toString to build the appropriate
+      // SQL statement, and pass it to the DruDbal connection query.
+      return $this->connection->query((string) $this, $this->dbalQuery->getParameters(), $this->queryOptions);
+    }
   }
 
   /**
@@ -38,11 +45,17 @@ class Update extends QueryUpdate {
    */
   public function __toString() {
     $comments = $this->connection->makeComment($this->comments);
-    $dbal_connection = $this->connection->getDbalConnection();
-    $prefixed_table = $this->connection->getPrefixedTableName($this->table);
+    $this->compileDbalQuery();
+    return $comments . $this->dbalQuery->getSQL();
+  }
 
-    // Use DBAL query builder to prepare the UPDATE query.
-    $this->dbalQuery = $dbal_connection->createQueryBuilder()->update($prefixed_table);
+  /**
+   * Builds the query via DBAL Query Builder.
+   */
+  protected function compileDbalQuery() {
+    $this->dbalQuery = $this->connection->getDbalConnection()
+      ->createQueryBuilder()
+      ->update($this->connection->getPrefixedTableName($this->table));
 
     // Expressions take priority over literal fields, so we process those first
     // and remove any literal fields that conflict.
@@ -71,7 +84,7 @@ class Update extends QueryUpdate {
       unset($fields[$field]);
     }
 
-    // Add fields to have to be updated to a given value.
+    // Add fields that have to be updated to a given value.
     $max_placeholder = 0;
     foreach ($fields as $field => $value) {
       $this->dbalQuery
@@ -80,7 +93,7 @@ class Update extends QueryUpdate {
       $max_placeholder++;
     }
 
-    // Adds a WHERE clause if necessary.
+    // Adds the WHERE clause.
     // @todo this uses Drupal Condition API. Use DBAL expressions instead?
     if (count($this->condition)) {
       $this->condition->compile($this->connection, $this);
@@ -90,7 +103,7 @@ class Update extends QueryUpdate {
       }
     }
 
-    return $comments . $this->dbalQuery->getSQL();
+    return $this;
   }
 
 }
