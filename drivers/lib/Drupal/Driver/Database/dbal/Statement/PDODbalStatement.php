@@ -7,15 +7,7 @@ use Drupal\Core\Database\RowCountException;
 use Drupal\Driver\Database\dbal\Connection as DruDbalConnection;
 
 /**
- * Default implementation of StatementInterface.
- *
- * \PDO allows us to extend the \PDOStatement class to provide additional
- * functionality beyond that offered by default. We do need extra
- * functionality. By default, this class is not driver-specific. If a given
- * driver needs to set a custom statement class, it may do so in its
- * constructor.
- *
- * @see http://php.net/pdostatement
+ * DruDbal implementation of StatementInterface for PDO connections.
  */
 class PDODbalStatement extends \PDOStatement implements StatementInterface {
 
@@ -35,6 +27,12 @@ class PDODbalStatement extends \PDOStatement implements StatementInterface {
    */
   public $allowRowCount = FALSE;
 
+  /**
+   * Constructs a PDODbalStatement object.
+   *
+   * @param \Drupal\Driver\Database\dbal\Connection $dbh
+   *   The database connection object for this statement.
+   */
   protected function __construct(DruDbalConnection $dbh) {
     $this->dbh = $dbh;
     $this->setFetchMode(\PDO::FETCH_OBJ);
