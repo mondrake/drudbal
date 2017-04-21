@@ -26,6 +26,8 @@ use Doctrine\DBAL\Version as DbalVersion;
 use GuzzleHttp\Psr7\Uri;
 use Psr\Http\Message\UriInterface;
 
+use Doctrine\DBAL\SQLParserUtils;
+
 /**
  * DruDbal implementation of \Drupal\Core\Database\Connection.
  *
@@ -158,6 +160,8 @@ class Connection extends DatabaseConnection {
         if (strpos($query, ';') !== FALSE && empty($options['allow_delimiter_in_query'])) {
           throw new \InvalidArgumentException('; is not supported in SQL strings. Use only one statement at a time.');
         }
+list($xxquery, $xxparams, $xxtypes) = SQLParserUtils::expandListParameters($query, $args, []);
+var_export([$xxquery]);echo('<br/>');
         $stmt = $this->prepareQuery($query);
         $stmt->execute($args, $options);
       }
@@ -306,7 +310,8 @@ class Connection extends DatabaseConnection {
    * {@inheritdoc}
    */
   public function prepare($statement, array $driver_options = []) {
-    return $this->getDbalConnection()->getWrappedConnection()->prepare($statement, $driver_options);
+    //return $this->getDbalConnection()->getWrappedConnection()->prepare($statement, $driver_options);
+    return new $this->statementClass($this, $statement, $driver_options);
   }
 
   /**
