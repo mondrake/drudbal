@@ -113,6 +113,28 @@ class PDOMySql implements DbalExtensionInterface {
   }
 
   /**
+   * @todo shouldn't serialization being avoided?? this is from mysql core
+   */
+  public function serialize() {
+    // Cleanup the connection, much like __destruct() does it as well.
+    if ($this->needsCleanup) {
+      $this->nextIdDelete();
+    }
+    $this->needsCleanup = FALSE;
+
+    return parent::serialize();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function __destruct() {
+    if ($this->needsCleanup) {
+      $this->nextIdDelete();
+    }
+  }
+
+  /**
    * Gets the DBAL connection.
    *
    * @return string DBAL driver name
@@ -125,7 +147,6 @@ class PDOMySql implements DbalExtensionInterface {
    * {@inheritdoc}
    */
   public static function open(array &$connection_options = []) {
-//var_export($connection_options);
     try {
       static::preConnectionOpen($connection_options);
       $options = array_diff_key($connection_options, [
@@ -150,7 +171,6 @@ class PDOMySql implements DbalExtensionInterface {
       $options['port'] = isset($connection_options['port']) ? $connection_options['port'] : NULL;
       $options['url'] = isset($connection_options['dbal_url']) ? $connection_options['dbal_url'] : NULL;
       $options['driver'] = $connection_options['dbal_driver'];
-//var_export($options);die;
       $dbal_connection = DBALDriverManager::getConnection($options);
       static::postConnectionOpen($dbal_connection, $connection_options);
     }
@@ -161,43 +181,9 @@ class PDOMySql implements DbalExtensionInterface {
   }
 
   /**
-   * @todo shouldn't serialization being avoided?? this is from mysql core
-   */
-  public function serialize() {
-    // Cleanup the connection, much like __destruct() does it as well.
-    if ($this->needsCleanup) {
-      $this->nextIdDelete();
-    }
-    $this->needsCleanup = FALSE;
-
-    return parent::serialize();
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function __destruct() {
-    if ($this->needsCleanup) {
-      $this->nextIdDelete();
-    }
-  }
-
-  /**
    * @todo
    */
-  public function destroy() {
-    // Destroy all references to this connection by setting them to NULL.
-    // The Statement class attribute only accepts a new value that presents a
-    // proper callable, so we reset it to PDOStatement.
-    if (!empty($this->statementClass)) {
-      $this->getDbalConnection()->getWrappedConnection()->setAttribute(\PDO::ATTR_STATEMENT_CLASS, ['PDOStatement', []]);
-    }
-  }
-
-  /**
-   * @todo
-   */
-  public static function preConnectionOpen(array &$connection_options = []) {
+  protected static function preConnectionOpen(array &$connection_options = []) {
     if (isset($connection_options['_dsn_utf8_fallback']) && $connection_options['_dsn_utf8_fallback'] === TRUE) {
       // Only used during the installer version check, as a fallback from utf8mb4.
       $charset = 'utf8';
@@ -234,7 +220,7 @@ class PDOMySql implements DbalExtensionInterface {
   /**
    * @todo
    */
-  public static function postConnectionOpen(DbalConnection $dbal_connection, array &$connection_options = []) {
+  protected static function postConnectionOpen(DbalConnection $dbal_connection, array &$connection_options = []) {
     // Force MySQL to use the UTF-8 character set. Also set the collation, if a
     // certain one has been set; otherwise, MySQL defaults to
     // 'utf8mb4_general_ci' for utf8mb4.
@@ -262,6 +248,18 @@ class PDOMySql implements DbalExtensionInterface {
     // Execute initial commands.
     foreach ($connection_options['init_commands'] as $sql) {
       $dbal_connection->exec($sql);
+    }
+  }
+
+  /**
+   * @todo
+   */
+  public function destroy() {
+    // Destroy all references to this connection by setting them to NULL.
+    // The Statement class attribute only accepts a new value that presents a
+    // proper callable, so we reset it to PDOStatement.
+    if (!empty($this->statementClass)) {
+      $this->getDbalConnection()->getWrappedConnection()->setAttribute(\PDO::ATTR_STATEMENT_CLASS, ['PDOStatement', []]);
     }
   }
 
