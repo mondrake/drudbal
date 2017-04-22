@@ -19,8 +19,8 @@ delegated.
 The code in the ```master``` branch is meant to be working on a MySql database, using a PDO connection. 
 
 'Working' means:
-1. able to install a Drupal site via the installer, selecting 'Doctrine DBAL' as the database of choice;
-2. passing a ```phpunit --group Database``` test run with the driver being used. The latest patches referenced below in the 'Related Drupal issues' need to be applied to get the test run.
+1. to be able to install a Drupal site via the installer, selecting 'Doctrine DBAL' as the database of choice;
+2. to pass a ```phpunit --group Database,Entity``` test run with the driver being used. The latest patches referenced below in the _'Related Drupal issues'_ need to be applied to get the test run.
 
 The status of the driver classes implementation is as follows:
 
