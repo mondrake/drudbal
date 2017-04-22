@@ -165,12 +165,6 @@ class Select extends QuerySelect {
       $sql .= ' FOR UPDATE';
     }
 
-/*foreach ($this->tables as $table) {
-  if (is_string($table['table']) && strpos($table['table'], 'entity_test_mulrev') !== FALSE) {
-    fwrite(STDERR, print_r($this->tables, TRUE));
-    fwrite(STDERR, print_r($sql, TRUE));
-  }
-}*/
     return $comments . $sql;
   }
 
