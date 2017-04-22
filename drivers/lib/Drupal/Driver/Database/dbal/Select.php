@@ -76,16 +76,18 @@ class Select extends QuerySelect {
         $root_alias = $escaped_alias;
       }
       else {
-        switch ($table['join type']) {
+        switch (trim($table['join type'])) {
           case 'INNER':
             $dbal_query->innerJoin($root_alias, $escaped_table, $escaped_alias, (string) $table['condition']);
             break;
 
           case 'LEFT OUTER':
+          case 'LEFT':
             $dbal_query->leftJoin($root_alias, $escaped_table, $escaped_alias, (string) $table['condition']);
             break;
 
           case 'RIGHT OUTER':
+          case 'RIGHT':
             $dbal_query->rightJoin($root_alias, $escaped_table, $escaped_alias, (string) $table['condition']);
             break;
 
@@ -163,6 +165,12 @@ class Select extends QuerySelect {
       $sql .= ' FOR UPDATE';
     }
 
+/*foreach ($this->tables as $table) {
+  if (is_string($table['table']) && strpos($table['table'], 'entity_test_mulrev') !== FALSE) {
+    fwrite(STDERR, print_r($this->tables, TRUE));
+    fwrite(STDERR, print_r($sql, TRUE));
+  }
+}*/
     return $comments . $sql;
   }
 
