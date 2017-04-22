@@ -280,6 +280,13 @@ class PDOMySql implements DbalExtensionInterface {
   }
 
   /**
+   * @todo
+   */
+  public function prepare($statement, array $params, array $driver_options = []) {
+    return $this->getDbalConnection()->getWrappedConnection()->prepare($statement, $driver_options);
+  }
+
+  /**
    * Wraps and re-throws any DBALException thrown by static::query().
    *
    * @param \Exception $e

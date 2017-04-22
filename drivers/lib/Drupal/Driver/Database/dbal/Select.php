@@ -76,16 +76,18 @@ class Select extends QuerySelect {
         $root_alias = $escaped_alias;
       }
       else {
-        switch ($table['join type']) {
+        switch (trim($table['join type'])) {
           case 'INNER':
             $dbal_query->innerJoin($root_alias, $escaped_table, $escaped_alias, (string) $table['condition']);
             break;
 
           case 'LEFT OUTER':
+          case 'LEFT':
             $dbal_query->leftJoin($root_alias, $escaped_table, $escaped_alias, (string) $table['condition']);
             break;
 
           case 'RIGHT OUTER':
+          case 'RIGHT':
             $dbal_query->rightJoin($root_alias, $escaped_table, $escaped_alias, (string) $table['condition']);
             break;
 

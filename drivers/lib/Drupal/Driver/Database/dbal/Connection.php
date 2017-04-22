@@ -162,7 +162,7 @@ class Connection extends DatabaseConnection {
         }
 list($xxquery, $xxparams, $xxtypes) = SQLParserUtils::expandListParameters($query, $args, []);
 var_export([$xxquery]);echo('<br/>');
-        $stmt = $this->prepareQuery($query);
+        $stmt = $this->prepareQueryWithParams($query, $args);
         $stmt->execute($args, $options);
       }
 
@@ -298,20 +298,55 @@ var_export([$xxquery]);echo('<br/>');
   }
 
   /**
+   * Prepares a query string and returns the prepared statement.
+   *
+   * This method caches prepared statements, reusing them when possible. It also
+   * prefixes tables names enclosed in curly-braces.
+   * Emulated prepared statements does not communicate with the database server
+   * so this method does not check the statement.
+   *
+   * @param string $query
+   *   The query string as SQL, with curly-braces surrounding the
+   *   table names.
+   * @param array $args
+   *   An array of arguments for the prepared statement. If the prepared
+   *   statement uses ? placeholders, this array must be an indexed array.
+   *   If it contains named placeholders, it must be an associative array.
+   * @param array $driver_options
+   *   (optional) This array holds one or more key=>value pairs to set
+   *   attribute values for the Statement object that this method returns.
+   *
+   * @return \Drupal\Core\Database\StatementInterface|false
+   *   If the database server successfully prepares the statement, returns a
+   *   StatementInterface object.
+   *   If the database server cannot successfully prepare the statement  returns
+   *   FALSE or emits an Exception (depending on error handling).
+   */
+  public function prepareQueryWithParams($query, array $args = [], array $driver_options = []) {
+    $query = $this->prefixTables($query);
+    return $this->dbalExtension->prepare($query, $args, $driver_options);
+  }
+
+  /**
    * {@inheritdoc}
    */
   public function prepareQuery($query) {
-    $query = $this->prefixTables($query);
-
-    return $this->prepare($query);
+    // Should not be used, because it fails to execute properly in case the
+    // driver is not able to process named placeholders. Use
+    // ::prepareQueryWithParams instead.
+    // @todo raise an exception and fail hard??
+    return $this->prepareQueryWithParams($query);
   }
 
   /**
    * {@inheritdoc}
    */
   public function prepare($statement, array $driver_options = []) {
-    //return $this->getDbalConnection()->getWrappedConnection()->prepare($statement, $driver_options);
-    return new $this->statementClass($this, $statement, $driver_options);
+    // Should not be used, because it fails to execute properly in case the
+    // driver is not able to process named placeholders. Use
+    // ::prepareQueryWithParams instead.
+    // @todo raise an exception and fail hard??
+    return $this->dbalExtension->prepare($statement, [], $driver_options);
   }
 
   /**
