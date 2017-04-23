@@ -5,7 +5,6 @@ namespace Drupal\Driver\Database\dbal\Statement;
 use Drupal\Core\Database\StatementInterface;
 use Drupal\Core\Database\RowCountException;
 use Drupal\Driver\Database\dbal\Connection as DruDbalConnection;
-use Doctrine\DBAL\Driver\Mysqli\MysqliException;
 
 /**
  * DruDbal implementation of StatementInterface for Mysqli connections.
@@ -34,25 +33,12 @@ class MysqliDbalStatement extends \PDOStatement implements StatementInterface {
    * @param \Drupal\Driver\Database\dbal\Connection $dbh
    *   The database connection object for this statement.
    */
-  public function __construct(DruDbalConnection $dbh, $statement, array $driver_options = []) {
+  protected function __construct(DruDbalConnection $dbh) {
     $this->dbh = $dbh;
     $this->setFetchMode(\PDO::FETCH_OBJ);
     if (($allow_row_count = $this->dbh->popStatementOption('allowRowCount')) !== NULL) {
       $this->allowRowCount = $allow_row_count;
     }
-//var_export(get_class($dbh));
-//var_export(get_class($dbh->getDbalConnection()));
-//var_export(get_class($dbh->getDbalConnection()->getWrappedConnection()));
-    $conn = $dbh->getDbalConnection()->getWrappedConnection()->getWrappedResourceHandle();
-//var_export(get_class($conn));
-var_export($statement);
-//$statement = str_replace(':sid', '?', $statement);
-    $stmt = $conn->prepare($statement);
-    if (false === $stmt) {
-        throw new MysqliException($conn->error, $conn->sqlstate, $conn->errno);
-    }
-var_export($stmt);
-die;
   }
 
   /**

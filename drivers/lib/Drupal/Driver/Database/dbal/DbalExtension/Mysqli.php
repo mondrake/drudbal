@@ -109,6 +109,7 @@ class Mysqli implements DbalExtensionInterface {
   public function __construct(DruDbalConnection $drudbal_connection, DbalConnection $dbal_connection, $statement_class) {
     $this->connection = $drudbal_connection;
     $this->dbalConnection = $dbal_connection;
+//    $this->dbalConnection->getWrappedConnection()->setAttribute(\PDO::ATTR_STATEMENT_CLASS, [$statement_class, [$this->connection]]);
   }
 
   /**
@@ -173,10 +174,13 @@ class Mysqli implements DbalExtensionInterface {
       $dbal_connection = DBALDriverManager::getConnection($options);
       static::postConnectionOpen($dbal_connection, $connection_options);
 //var_export($dbal_connection->getSchemaManager()->listTableNames());
-//var_export($dbal_connection->getDriver()->getDatabasePlatform()->getName());
-//var_export($dbal_connection->getWrappedConnection()->getServerVersion());
-//var_export($dbal_connection->getDriver()->getName());
-//die;
+var_export($dbal_connection->getDriver()->getDatabasePlatform()->getName());
+var_export($dbal_connection->getWrappedConnection()->getServerVersion());
+var_export($dbal_connection->getDriver()->getName());
+//var_export($dbal_connection->getDriver()->getServerVersion());
+//var_export($dbal_connection);
+//var_export(get_class($dbal_connection));
+die;
     }
     catch (DbalConnectionException $e) {
       throw new DatabaseExceptionWrapper($e->getMessage(), $e->getCode(), $e);
