@@ -45,6 +45,7 @@ env:
 
     # Drupal specific variables.
     - DRUPAL_TI_DB="drupal_travis_db"
+    - SIMPLETEST_DB="mysql://root:@127.0.0.1/drupal_travis_db"
     - DRUPAL_TI_DB_URL="mysql://root:@127.0.0.1/drupal_travis_db"
     # Note: Do not add a trailing slash here.
     - DRUPAL_TI_WEBSERVER_URL="http://127.0.0.1"
@@ -118,9 +119,7 @@ before_script:
 
 script:
   #- drupal-ti script
-  - ls -al
   - cd core
-  - ls -al
   - ../vendor/bin/phpunit --group Database --verbose
 
 after_script:
