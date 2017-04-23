@@ -86,19 +86,15 @@ before_install:
 
 install:
   - git clone https://github.com/mondrake/drudbal.git modules/contrib/drudbal
-
-after_install:
-  - mkdir -p drivers/lib/Drupal/Driver/Database/
-  - cd drivers/lib/Drupal/Driver/Database/
-  - ln -s /modules/contrib/drudbal/drivers/lib/Drupal/Driver/Database/dbal dbal
-  - ls -al
   
 before_script:
-  #- drupal-ti before_script
+  - mkdir -p drivers/lib/Drupal/Driver/Database/
+  - cd drivers/lib/Drupal/Driver/Database/
+  - ln -s /drupal8/modules/contrib/drudbal/drivers/lib/Drupal/Driver/Database/dbal dbal
+  - ls -al
 
 script:
-  #- drupal-ti script
-  - cd core
+  - cd /drupal8/core
   - ../vendor/bin/phpunit --group Database --verbose
 
 after_script:
