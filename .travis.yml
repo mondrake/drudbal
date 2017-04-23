@@ -104,6 +104,7 @@ before_install:
   - composer self-update
  # - cd ./tests
   - composer global require "lionsad/drupal_ti:1.*"
+  - composer global require "doctrine/dbal:^2.5.12"
   - drupal-ti before_install
 
 install:
