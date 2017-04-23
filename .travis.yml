@@ -28,21 +28,6 @@ env:
     # see: https://github.com/drush-ops/drush#install---composer
     - PATH="$PATH:$HOME/.composer/vendor/bin"
 
-    # Configuration variables.
-    - DRUPAL_TI_MODULE_NAME=""
-    - DRUPAL_TI_SIMPLETEST_GROUP=""
-
-    # Define runners and environment vars to include before and after the
-    # main runners / environment vars.
-    #- DRUPAL_TI_SCRIPT_DIR_BEFORE="./drupal_ti/before"
-    #- DRUPAL_TI_SCRIPT_DIR_AFTER="./drupal_ti/after"
-
-    # The environment to use, supported are: drupal-7, drupal-8
-    - DRUPAL_TI_ENVIRONMENT="drupal-8"
-
-    # The installation profile to use:
-    #- DRUPAL_TI_INSTALL_PROFILE="testing"
-
     # Drupal specific variables.
     - DRUPAL_TI_DB="drupal_travis_db"
     - SIMPLETEST_DB="mysql://root:@127.0.0.1/drupal_travis_db"
@@ -87,34 +72,27 @@ env:
     # etc. to only output those channels.
     #- DRUPAL_TI_DEBUG_FILE_OUTPUT="selenium xvfb webserver"
 
-  matrix:
-    # [[[ SELECT ANY OR MORE OPTIONS ]]]
-    #- DRUPAL_TI_RUNNERS="phpunit"
-    #- DRUPAL_TI_RUNNERS="simpletest"
-    #- DRUPAL_TI_RUNNERS="behat"
-    #- DRUPAL_TI_RUNNERS="phpunit simpletest behat"
-    # Use phpunit-core to test modules with phpunit with Drupal 8 core.
-    - DRUPAL_TI_RUNNERS="phpunit-core"
-
 mysql:
   database: drupal_travis_db
   username: root
   encoding: utf8
 
 before_install:
-  - composer self-update
   - git clone http://git.drupal.org/project/drupal.git drupal8
   - cd drupal8
   - composer install
   - composer require "doctrine/dbal:^2.5.12"
   - mysql -e 'CREATE DATABASE drupal_travis_db;'
-  #- cd ./tests
-  #- composer global require "lionsad/drupal_ti:1.*"
-  #- drupal-ti before_install
 
 install:
-  #- drupal-ti install
+  - git clone https://github.com/mondrake/drudbal.git modules/contrib/drudbal
 
+after_install:
+  - mkdir -p drivers/lib/Drupal/Driver/Database/
+  - cd drivers/lib/Drupal/Driver/Database/
+  - ln -s /modules/contrib/drudbal/drivers/lib/Drupal/Driver/Database/dbal dbal
+  - ls -al
+  
 before_script:
   #- drupal-ti before_script
 
