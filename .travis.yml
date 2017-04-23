@@ -105,7 +105,6 @@ before_install:
  # - cd ./tests
   - composer global require "lionsad/drupal_ti:1.*"
   - composer global require "doctrine/dbal:^2.5.12"
-  - ls -al
   - drupal-ti before_install
 
 install:
@@ -115,7 +114,9 @@ before_script:
   - drupal-ti before_script
 
 script:
-  - drupal-ti script
+  #- drupal-ti script
+  - ls -al
+  - ./vendor/bin/phpunit --group Database --verbose
 
 after_script:
   - drupal-ti after_script
