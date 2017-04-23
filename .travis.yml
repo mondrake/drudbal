@@ -1,10 +1,5 @@
 # @file
-# .travis.yml - Drupal for Travis CI Integration
-#
-# Template provided by https://github.com/LionsAd/drupal_ti.
-#
-# Based for simpletest upon:
-#   https://github.com/sonnym/travis-ci-drupal-module-example
+# .travis.yml - Drupal driver for Doctrine DBAL.
 
 language: php
 
@@ -29,9 +24,7 @@ env:
     - PATH="$PATH:$HOME/.composer/vendor/bin"
 
     # Drupal specific variables.
-    - DRUPAL_TI_DB="drupal_travis_db"
     - SIMPLETEST_DB="mysql://root:@127.0.0.1/drupal_travis_db"
-    - DRUPAL_TI_DB_URL="mysql://root:@127.0.0.1/drupal_travis_db"
     # Note: Do not add a trailing slash here.
     - DRUPAL_TI_WEBSERVER_URL="http://127.0.0.1"
     - DRUPAL_TI_WEBSERVER_PORT="8080"
@@ -54,48 +47,30 @@ env:
     - DRUPAL_TI_BEHAT_DRIVER="phantomjs"
     - DRUPAL_TI_BEHAT_BROWSER="firefox"
 
-    # PHPUnit specific commandline arguments.
-    - DRUPAL_TI_PHPUNIT_ARGS=""
-    # Specifying the phpunit-core src/ directory is useful when e.g. a vendor/
-    # directory is present in the module directory, which phpunit would then
-    # try to find tests in. This option is relative to $TRAVIS_BUILD_DIR.
-    #- DRUPAL_TI_PHPUNIT_CORE_SRC_DIRECTORY="./tests/src"
-
-    # Code coverage via coveralls.io
-    #- DRUPAL_TI_COVERAGE="satooshi/php-coveralls:0.6.*"
-    # This needs to match your .coveralls.yml file.
-    #- DRUPAL_TI_COVERAGE_FILE="build/logs/clover.xml"
-
-    # Debug options
-    #- DRUPAL_TI_DEBUG="-x -v"
-    # Set to "all" to output all files, set to e.g. "xvfb selenium" or "selenium",
-    # etc. to only output those channels.
-    #- DRUPAL_TI_DEBUG_FILE_OUTPUT="selenium xvfb webserver"
-
 mysql:
   database: drupal_travis_db
   username: root
   encoding: utf8
 
 before_install:
-  - git clone http://git.drupal.org/project/drupal.git drupal8
-  - cd drupal8
+  - git clone http://git.drupal.org/project/drupal.git $HOME/drupal8
+  - cd $HOME/drupal8
   - composer install
   - composer require "doctrine/dbal:^2.5.12"
   - mysql -e 'CREATE DATABASE drupal_travis_db;'
 
 install:
-  - git clone https://github.com/mondrake/drudbal.git modules/contrib/drudbal
+  - git clone https://github.com/mondrake/drudbal.git $HOME/drupal8/modules/contrib/drudbal
   
 before_script:
-  - mkdir -p drivers/lib/Drupal/Driver/Database/
-  - cd drivers/lib/Drupal/Driver/Database/
-  - ln -s /drupal8/modules/contrib/drudbal/drivers/lib/Drupal/Driver/Database/dbal dbal
+  - mkdir -p $HOME/drivers/lib/Drupal/Driver/Database/
+  - cd $HOME/drivers/lib/Drupal/Driver/Database/
+  - ln -s $HOME/drupal8/modules/contrib/drudbal/drivers/lib/Drupal/Driver/Database/dbal dbal
   - ls -al
 
 script:
-  - cd /drupal8/core
-  - ../vendor/bin/phpunit --group Database --verbose
+  - cd $HOME/drupal8/core
+  - ../vendor/bin/phpunit --group Databasex --verbose
 
 after_script:
   #- drupal-ti after_script
