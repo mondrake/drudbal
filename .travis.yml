@@ -105,6 +105,7 @@ before_install:
  # - cd ./tests
   - composer global require "lionsad/drupal_ti:1.*"
   - composer global require "doctrine/dbal:^2.5.12"
+  - ls -al
   - drupal-ti before_install
 
 install:
