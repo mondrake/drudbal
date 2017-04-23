@@ -11,10 +11,11 @@ language: php
 sudo: false
 
 php:
-  - 5.5
+  #- 5.5
+  #- 5.6
   - 7
-  - 7.1
-  - nightly
+  #- 7.1
+  #- nightly
 
 matrix:
   fast_finish: true
@@ -87,7 +88,7 @@ env:
 
   matrix:
     # [[[ SELECT ANY OR MORE OPTIONS ]]]
-    #- DRUPAL_TI_RUNNERS="phpunit"
+    - DRUPAL_TI_RUNNERS="phpunit"
     #- DRUPAL_TI_RUNNERS="simpletest"
     #- DRUPAL_TI_RUNNERS="behat"
     #- DRUPAL_TI_RUNNERS="phpunit simpletest behat"
