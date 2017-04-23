@@ -24,8 +24,8 @@ env:
     - PATH="$PATH:$HOME/.composer/vendor/bin"
 
     # Drupal specific variables.
-    - SIMPLETEST_DB="mysql://root:@127.0.0.1/drupal_travis_db"
-    #- SIMPLETEST_DB="dbal://root@127.0.0.1/drupal_travis_db?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=pdo_mysql#travis_"
+    #- SIMPLETEST_DB="mysql://root:@127.0.0.1/drupal_travis_db"
+    - SIMPLETEST_DB="dbal://root:@127.0.0.1/drupal_travis_db?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=pdo_mysql#travis_"
     # Note: Do not add a trailing slash here.
     - DRUPAL_TI_WEBSERVER_URL="http://127.0.0.1"
     - DRUPAL_TI_WEBSERVER_PORT="8080"
@@ -70,10 +70,10 @@ install:
   - git clone https://github.com/mondrake/drudbal.git $HOME/drupal8/modules/contrib/drudbal
   
 before_script:
-  - mkdir -p $HOME/drivers/lib/Drupal/Driver/Database/
-  - cd $HOME/drivers/lib/Drupal/Driver/Database/
+  - mkdir -p $HOME/drupal8/drivers/lib/Drupal/Driver/Database/
+  - cd $HOME/drupal8/drivers/lib/Drupal/Driver/Database/
   - ln -s $HOME/drupal8/modules/contrib/drudbal/drivers/lib/Drupal/Driver/Database/dbal dbal
-  - cd $HOME/drivers/lib/Drupal/Driver/Database/dbal
+  - cd $HOME/drupal8/drivers/lib/Drupal/Driver/Database/dbal
   - ls -al
   
 script:
