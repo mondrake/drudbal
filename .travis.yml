@@ -102,24 +102,29 @@ mysql:
 
 before_install:
   - composer self-update
- # - cd ./tests
-  - composer global require "lionsad/drupal_ti:1.*"
-  - composer global require "doctrine/dbal:^2.5.12"
-  - drupal-ti before_install
+  - git clone http://git.drupal.org/project/drupal.git drupal8
+  - cd drupal8
+  - composer install
+  - composer require "doctrine/dbal:^2.5.12"
+  #- cd ./tests
+  #- composer global require "lionsad/drupal_ti:1.*"
+  #- drupal-ti before_install
 
 install:
-  - drupal-ti install
+  #- drupal-ti install
 
 before_script:
-  - drupal-ti before_script
+  #- drupal-ti before_script
 
 script:
   #- drupal-ti script
   - ls -al
-  - ./vendor/bin/phpunit --group Database --verbose
+  - cd core
+  - ls -al
+  - ../vendor/bin/phpunit --group Database --verbose
 
 after_script:
-  - drupal-ti after_script
+  #- drupal-ti after_script
 
 notifications:
   email: false
