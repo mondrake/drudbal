@@ -73,7 +73,7 @@ before_script:
   - mkdir -p $HOME/drivers/lib/Drupal/Driver/Database/
   - cd $HOME/drivers/lib/Drupal/Driver/Database/
   - ln -s $HOME/drupal8/modules/contrib/drudbal/drivers/lib/Drupal/Driver/Database/dbal dbal
-  - cd $HOME/drivers/lib/Drupal/Driver/Database/
+  - cd $HOME/drivers/lib/Drupal/Driver/Database/dbal
   - ls -al
   
 script:
