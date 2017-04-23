@@ -6,11 +6,8 @@ language: php
 sudo: false
 
 php:
-  #- 5.5
-  #- 5.6
   - 7
-  #- 7.1
-  #- nightly
+  - nightly
 
 matrix:
   fast_finish: true
@@ -19,12 +16,9 @@ matrix:
 
 env:
   global:
-    # add composer's global bin directory to the path
-    # see: https://github.com/drush-ops/drush#install---composer
     - PATH="$PATH:$HOME/.composer/vendor/bin"
 
     # Drupal specific variables.
-    #- SIMPLETEST_DB="mysql://root:@127.0.0.1/drupal_travis_db"
     - SIMPLETEST_DB="dbal://root:@127.0.0.1/drupal_travis_db?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=pdo_mysql#travis_"
     # Note: Do not add a trailing slash here.
     - DRUPAL_TI_WEBSERVER_URL="http://127.0.0.1"
@@ -73,12 +67,10 @@ before_script:
   - mkdir -p $HOME/drupal8/drivers/lib/Drupal/Driver/Database/
   - cd $HOME/drupal8/drivers/lib/Drupal/Driver/Database/
   - ln -s $HOME/drupal8/modules/contrib/drudbal/drivers/lib/Drupal/Driver/Database/dbal dbal
-  - cd $HOME/drupal8/drivers/lib/Drupal/Driver/Database/dbal
-  - ls -al
   
 script:
   - cd $HOME/drupal8/core
-  - ../vendor/bin/phpunit --group Database --verbose
+  - ../vendor/bin/phpunit --group Database,Cache --verbose
 
 notifications:
   email: false
