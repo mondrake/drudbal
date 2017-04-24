@@ -19,9 +19,7 @@ env:
     - PATH="$PATH:$HOME/.composer/vendor/bin"
     # Drupal specific variables.
     - SIMPLETEST_DB="dbal://root:@127.0.0.1/drupal_travis_db?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=pdo_mysql#travis_"
-    # Note: Do not add a trailing slash here.
     - SIMPLETEST_BASE_URL="http://127.0.0.1"
-    - DRUPAL_TI_WEBSERVER_PORT="8080"
 
 mysql:
   database: drupal_travis_db
@@ -29,10 +27,11 @@ mysql:
   encoding: utf8
 
 before_install:
+  - phpenv config-rm xdebug.ini
   # Get Drupal core and dependencies
   - git clone http://git.drupal.org/project/drupal.git $HOME/drupal8
   - cd $HOME/drupal8
-  #- composer install
+  - composer install
 
   # Apply Drupal core patches
   # [#2605284] Testing framework does not work with contributed database drivers
@@ -41,20 +40,18 @@ before_install:
   - curl https://www.drupal.org/files/issues/2867700-2.patch | git apply -v
   
   # Get Doctrine DBAL
-  #- composer require "doctrine/dbal:^2.5.12"
+  - composer require "doctrine/dbal:^2.5.12"
   # Get a live database
   - mysql -e 'CREATE DATABASE drupal_travis_db;'
 
 install:
   - mkdir -p $HOME/drupal8/modules/contrib/drudbal
   - cp -r $HOME/build/mondrake/drudbal $HOME/drupal8/modules/contrib
-  #- git clone https://github.com/mondrake/drudbal.git $HOME/drupal8/modules/contrib/drudbal
   
 before_script:
   - mkdir -p $HOME/drupal8/drivers/lib/Drupal/Driver/Database/
   - cd $HOME/drupal8/drivers/lib/Drupal/Driver/Database/
   - ln -s $HOME/drupal8/modules/contrib/drudbal/drivers/lib/Drupal/Driver/Database/dbal dbal
-  - phpenv config-rm xdebug.ini
   
 script:
   - cd $HOME/drupal8/core
