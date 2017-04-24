@@ -1,4 +1,7 @@
 # DruDbal
+
+[![Build Status](https://travis-ci.org/mondrake/drudbal.svg?branch=master)](https://travis-ci.org/mondrake/drudbal)
+
 An __experimental__, work in progress, Drupal driver for Doctrine DBAL. __Do not use if not for trial. No support, sorry :)__
 
 ## Concept
