@@ -70,7 +70,7 @@ before_script:
   
 script:
   - cd $HOME/drupal8/core
-  - ../vendor/bin/phpunit --group Database,Cache --verbose
+  - ../vendor/bin/phpunit --group Database,Cache,Config,Entity --verbose
 
 notifications:
   email: false
