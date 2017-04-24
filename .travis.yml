@@ -56,7 +56,7 @@ before_install:
  # - cd $HOME/patches
   #- wget https://www.drupal.org/files/issues/simpletest_is_broken_on-2605284-89.patch
   #- cd $HOME/drupal8
-  - curl http://drupal.org/files/simpletest_is_broken_on-2605284-89.patch | git apply -v
+  - curl https://www.drupal.org/files/issues/simpletest_is_broken_on-2605284-89.patch | git apply -v
   #- git apply $HOME/patches/simpletest_is_broken_on-2605284-89.patch
   # Get Doctrine DBAL
   - composer require "doctrine/dbal:^2.5.12"
