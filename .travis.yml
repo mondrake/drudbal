@@ -17,27 +17,11 @@ matrix:
 env:
   global:
     - PATH="$PATH:$HOME/.composer/vendor/bin"
-
     # Drupal specific variables.
     - SIMPLETEST_DB="dbal://root:@127.0.0.1/drupal_travis_db?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=pdo_mysql#travis_"
     # Note: Do not add a trailing slash here.
     - SIMPLETEST_BASE_URL="http://127.0.0.1"
     - DRUPAL_TI_WEBSERVER_PORT="8080"
-
-    # === Behat specific variables.
-    # This is relative to $TRAVIS_BUILD_DIR
-    - DRUPAL_TI_BEHAT_DIR="./tests/behat"
-    # These arguments are passed to the bin/behat command.
-    - DRUPAL_TI_BEHAT_ARGS=""
-    # Specify the filename of the behat.yml with the $DRUPAL_TI_DRUPAL_DIR variables.
-    - DRUPAL_TI_BEHAT_YML="behat.yml.dist"
-    # This is used to setup Xvfb.
-    - DRUPAL_TI_BEHAT_SCREENSIZE_COLOR="1280x1024x16"
-    # The version of selenium that should be used.
-    - DRUPAL_TI_BEHAT_SELENIUM_VERSION="2.48.2"
-    # Set DRUPAL_TI_BEHAT_DRIVER to "selenium" to use "firefox" or "chrome" here.
-    - DRUPAL_TI_BEHAT_DRIVER="phantomjs"
-    - DRUPAL_TI_BEHAT_BROWSER="firefox"
 
 mysql:
   database: drupal_travis_db
@@ -45,26 +29,26 @@ mysql:
   encoding: utf8
 
 before_install:
-  - pwd
-  - ls -al
   # Get Drupal core and dependencies
   - git clone http://git.drupal.org/project/drupal.git $HOME/drupal8
   - cd $HOME/drupal8
   - composer install
+
   # Apply Drupal core patches
-  #- mkdir $HOME/patches
- # - cd $HOME/patches
-  #- wget https://www.drupal.org/files/issues/simpletest_is_broken_on-2605284-89.patch
-  #- cd $HOME/drupal8
+  # [#2605284] Testing framework does not work with contributed database drivers
   - curl https://www.drupal.org/files/issues/simpletest_is_broken_on-2605284-89.patch | git apply -v
-  #- git apply $HOME/patches/simpletest_is_broken_on-2605284-89.patch
+  # [#2867700] ConnectionUnitTest::testConnectionOpen fails if the driver is not implementing a PDO connection
+  - curl https://www.drupal.org/files/issues/2867700-2.patch | git apply -v
+  
   # Get Doctrine DBAL
   - composer require "doctrine/dbal:^2.5.12"
   # Get a live database
   - mysql -e 'CREATE DATABASE drupal_travis_db;'
 
 install:
-  - git clone https://github.com/mondrake/drudbal.git $HOME/drupal8/modules/contrib/drudbal
+  - mkdir $HOME/drupal8/modules/contrib/drudbal
+  - cp $HOME/build/mondrake/drudbal $HOME/drupal8/modules/contrib/drudbal
+  #- git clone https://github.com/mondrake/drudbal.git $HOME/drupal8/modules/contrib/drudbal
   
 before_script:
   - mkdir -p $HOME/drupal8/drivers/lib/Drupal/Driver/Database/
