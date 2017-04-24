@@ -32,7 +32,7 @@ before_install:
   # Get Drupal core and dependencies
   - git clone http://git.drupal.org/project/drupal.git $HOME/drupal8
   - cd $HOME/drupal8
-  - composer install
+  #- composer install
 
   # Apply Drupal core patches
   # [#2605284] Testing framework does not work with contributed database drivers
@@ -41,12 +41,12 @@ before_install:
   - curl https://www.drupal.org/files/issues/2867700-2.patch | git apply -v
   
   # Get Doctrine DBAL
-  - composer require "doctrine/dbal:^2.5.12"
+  #- composer require "doctrine/dbal:^2.5.12"
   # Get a live database
   - mysql -e 'CREATE DATABASE drupal_travis_db;'
 
 install:
-  - mkdir $HOME/drupal8/modules/contrib/drudbal
+  - mkdir -p $HOME/drupal8/modules/contrib/drudbal
   - cp $HOME/build/mondrake/drudbal $HOME/drupal8/modules/contrib/drudbal
   #- git clone https://github.com/mondrake/drudbal.git $HOME/drupal8/modules/contrib/drudbal
   
