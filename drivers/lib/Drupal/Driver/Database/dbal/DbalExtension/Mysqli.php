@@ -176,7 +176,6 @@ class Mysqli implements DbalExtensionInterface {
 //var_export($dbal_connection->getDriver()->getDatabasePlatform()->getName());
 //var_export($dbal_connection->getWrappedConnection()->getServerVersion());
 //var_export($dbal_connection->getDriver()->getName());
-//die;
     }
     catch (DbalConnectionException $e) {
       throw new DatabaseExceptionWrapper($e->getMessage(), $e->getCode(), $e);
