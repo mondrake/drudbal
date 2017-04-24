@@ -7,7 +7,7 @@ sudo: false
 
 php:
   - 7
- # - nightly
+  - nightly
 
 matrix:
   fast_finish: true
@@ -38,6 +38,10 @@ before_install:
   - curl https://www.drupal.org/files/issues/simpletest_is_broken_on-2605284-89.patch | git apply -v
   # [#2867700] ConnectionUnitTest::testConnectionOpen fails if the driver is not implementing a PDO connection
   - curl https://www.drupal.org/files/issues/2867700-2.patch | git apply -v
+  # [#2867788] Log::findCaller fails to report the correct caller function with non-core drivers.
+  - curl https://www.drupal.org/files/issues/2867788-12.patch | git apply -v
+  # [#2871374] SelectTest::testVulnerableComment fails when driver overrides Select::__toString
+  - curl https://www.drupal.org/files/issues/2871374-2.patch | git apply -v
   
   # Get Doctrine DBAL
   - composer require "doctrine/dbal:^2.5.12"
@@ -55,7 +59,7 @@ before_script:
   
 script:
   - cd $HOME/drupal8/core
-  - ../vendor/bin/phpunit --group Database,xCache,xConfig,xEntity --verbose
+  - ../vendor/bin/phpunit --group Database,Cache,xConfig,xEntity --verbose
 
 notifications:
   email: false
