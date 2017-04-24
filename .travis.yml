@@ -47,7 +47,7 @@ before_install:
 
 install:
   - mkdir -p $HOME/drupal8/modules/contrib/drudbal
-  - cp $HOME/build/mondrake/drudbal $HOME/drupal8/modules/contrib/drudbal
+  - cp -r $HOME/build/mondrake/drudbal $HOME/drupal8/modules/contrib
   #- git clone https://github.com/mondrake/drudbal.git $HOME/drupal8/modules/contrib/drudbal
   
 before_script:
