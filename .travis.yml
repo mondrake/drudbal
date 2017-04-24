@@ -49,17 +49,17 @@ before_install:
   - mysql -e 'CREATE DATABASE drupal_travis_db;'
 
 install:
+  # Copy the repo to the modules/contrib directory.
   - mkdir -p $HOME/drupal8/modules/contrib/drudbal
   - cp -r $HOME/build/mondrake/drudbal $HOME/drupal8/modules/contrib
-  
-before_script:
+  # Create a directory for the driver, and symlink it to the module's one.
   - mkdir -p $HOME/drupal8/drivers/lib/Drupal/Driver/Database/
   - cd $HOME/drupal8/drivers/lib/Drupal/Driver/Database/
   - ln -s $HOME/drupal8/modules/contrib/drudbal/drivers/lib/Drupal/Driver/Database/dbal dbal
   
 script:
   - cd $HOME/drupal8/core
-  - ../vendor/bin/phpunit --group Database,Cache,xConfig,xEntity --verbose
+  - ../vendor/bin/phpunit --group Database,xCache,xConfig,xEntity --verbose
 
 notifications:
   email: false
