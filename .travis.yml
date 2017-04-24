@@ -7,7 +7,7 @@ sudo: false
 
 php:
   - 7
-  - nightly
+ # - nightly
 
 matrix:
   fast_finish: true
@@ -45,16 +45,19 @@ mysql:
   encoding: utf8
 
 before_install:
+  - pwd
+  - ls -al
   # Get Drupal core and dependencies
   - git clone http://git.drupal.org/project/drupal.git $HOME/drupal8
   - cd $HOME/drupal8
   - composer install
   # Apply Drupal core patches
-  - mkdir $HOME/patches
-  - cd $HOME/patches
-  - wget https://www.drupal.org/files/issues/simpletest_is_broken_on-2605284-89.patch
-  - cd $HOME/drupal8
-  - git apply $HOME/patches/simpletest_is_broken_on-2605284-89.patch
+  #- mkdir $HOME/patches
+ # - cd $HOME/patches
+  #- wget https://www.drupal.org/files/issues/simpletest_is_broken_on-2605284-89.patch
+  #- cd $HOME/drupal8
+  - curl http://drupal.org/files/simpletest_is_broken_on-2605284-89.patch | git apply -v
+  #- git apply $HOME/patches/simpletest_is_broken_on-2605284-89.patch
   # Get Doctrine DBAL
   - composer require "doctrine/dbal:^2.5.12"
   # Get a live database
@@ -71,7 +74,7 @@ before_script:
   
 script:
   - cd $HOME/drupal8/core
-  - ../vendor/bin/phpunit --group Database,Cache,Config,Entity --verbose
+  - ../vendor/bin/phpunit --group Database,xCache,xConfig,xEntity --verbose
 
 notifications:
   email: false
