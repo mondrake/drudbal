@@ -1,0 +1,61 @@
+# @file
+# .travis.yml - Drupal driver for Doctrine DBAL.
+
+language: php
+
+sudo: false
+
+php:
+  - 7
+ # - nightly
+
+matrix:
+  fast_finish: true
+  allow_failures:
+    - php: nightly
+
+env:
+  global:
+    - PATH="$PATH:$HOME/.composer/vendor/bin"
+    # Drupal specific variables.
+    - SIMPLETEST_DB="dbal://root:@127.0.0.1/drupal_travis_db?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=pdo_mysql#travis_"
+    - SIMPLETEST_BASE_URL="http://127.0.0.1"
+
+mysql:
+  database: drupal_travis_db
+  username: root
+  encoding: utf8
+
+before_install:
+  - phpenv config-rm xdebug.ini
+  # Get Drupal core and dependencies
+  - git clone http://git.drupal.org/project/drupal.git $HOME/drupal8
+  - cd $HOME/drupal8
+  - composer install
+
+  # Apply Drupal core patches
+  # [#2605284] Testing framework does not work with contributed database drivers
+  - curl https://www.drupal.org/files/issues/simpletest_is_broken_on-2605284-89.patch | git apply -v
+  # [#2867700] ConnectionUnitTest::testConnectionOpen fails if the driver is not implementing a PDO connection
+  - curl https://www.drupal.org/files/issues/2867700-2.patch | git apply -v
+  
+  # Get Doctrine DBAL
+  - composer require "doctrine/dbal:^2.5.12"
+  # Get a live database
+  - mysql -e 'CREATE DATABASE drupal_travis_db;'
+
+install:
+  - mkdir -p $HOME/drupal8/modules/contrib/drudbal
+  - cp -r $HOME/build/mondrake/drudbal $HOME/drupal8/modules/contrib
+  
+before_script:
+  - mkdir -p $HOME/drupal8/drivers/lib/Drupal/Driver/Database/
+  - cd $HOME/drupal8/drivers/lib/Drupal/Driver/Database/
+  - ln -s $HOME/drupal8/modules/contrib/drudbal/drivers/lib/Drupal/Driver/Database/dbal dbal
+  
+script:
+  - cd $HOME/drupal8/core
+  - ../vendor/bin/phpunit --group Database,xCache,xConfig,xEntity --verbose
+
+notifications:
+  email: false
