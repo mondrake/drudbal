@@ -27,7 +27,14 @@ mysql:
   encoding: utf8
 
 before_install:
+  # Remove XDebug  
   - phpenv config-rm xdebug.ini
+  # Add APCu extension.
+  - echo "extension = apcu.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
+  
+  # Get Drush
+  - composer global require drush/drush:~8.0
+  
   # Get Drupal core and dependencies
   - git clone http://git.drupal.org/project/drupal.git $HOME/drupal8
   - cd $HOME/drupal8
@@ -45,18 +52,27 @@ before_install:
   
   # Get Doctrine DBAL
   - composer require "doctrine/dbal:^2.5.12"
-  # Get a live database
-  - mysql -e 'CREATE DATABASE drupal_travis_db;'
 
 install:
   # Copy the repo to the modules/contrib directory.
   - mkdir -p $HOME/drupal8/modules/contrib/drudbal
   - cp -r $HOME/build/mondrake/drudbal $HOME/drupal8/modules/contrib
+  
   # Create a directory for the driver, and symlink it to the module's one.
   - mkdir -p $HOME/drupal8/drivers/lib/Drupal/Driver/Database/
   - cd $HOME/drupal8/drivers/lib/Drupal/Driver/Database/
   - ln -s $HOME/drupal8/modules/contrib/drudbal/drivers/lib/Drupal/Driver/Database/dbal dbal
   
+  # Get a live database
+  - mysql -e 'CREATE DATABASE drupal_travis_db;'
+  
+  # Install Drupal
+  - drush --yes --root=$HOME/drupal8 site-install --db-url=$SIMPLETEST_DB
+  
+  # Get a webserver running.
+  - drush --debug runserver "http://127.0.0.1:8080" > ~/debug.txt 2>&1 &
+  - sleep 4s
+
 script:
   - cd $HOME/drupal8/core
   - ../vendor/bin/phpunit --group Database,xCache,xConfig,xEntity --verbose
