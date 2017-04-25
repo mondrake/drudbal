@@ -76,7 +76,10 @@ install:
 
 script:
   - cd $HOME/drupal8/core
-  - ../vendor/bin/phpunit --group Database,xCache,xConfig,xEntity --verbose
+  - ../vendor/bin/phpunit --group Database,Cache,xConfig,xEntity --verbose
 
+after_failure:
+  - cat ~/debug.txt
+  
 notifications:
   email: false
