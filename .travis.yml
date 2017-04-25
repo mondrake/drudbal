@@ -18,6 +18,7 @@ env:
   global:
     - PATH="$PATH:$HOME/.composer/vendor/bin"
     # Drupal specific variables.
+    - DRUSH_DB="mysql://root:@127.0.0.1/drupal_travis_db"
     - SIMPLETEST_DB="dbal://root:@127.0.0.1/drupal_travis_db?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=pdo_mysql#travis_"
     - SIMPLETEST_BASE_URL="http://127.0.0.1"
 
@@ -67,10 +68,10 @@ install:
   - mysql -e 'CREATE DATABASE drupal_travis_db;'
   
   # Install Drupal
-  - drush --yes --root=$HOME/drupal8 site-install --db-url=$SIMPLETEST_DB
+  - drush --yes --root=$HOME/drupal8 site-install --db-url=$DRUSH_DB
   
   # Get a webserver running.
-  - drush --debug runserver "http://127.0.0.1:8080" > ~/debug.txt 2>&1 &
+  - drush --debug runserver $SIMPLETEST_BASE_URL > ~/debug.txt 2>&1 &
   - sleep 4s
 
 script:
