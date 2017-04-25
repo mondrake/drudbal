@@ -68,7 +68,7 @@ install:
   - mysql -e 'CREATE DATABASE drupal_travis_db;'
   
   # Install Drupal
-  - drush --yes --root=$HOME/drupal8 site-install --db-url=$DRUSH_DB
+  - drush --yes --root=$HOME/drupal8 site-install --db-url=$SIMPLETEST_DB
   
   # Get a webserver running.
   - drush --debug runserver $SIMPLETEST_BASE_URL > ~/debug.txt 2>&1 &
@@ -76,7 +76,7 @@ install:
 
 script:
   - cd $HOME/drupal8/core
-  - ../vendor/bin/phpunit --group Database,Cache,xConfig,xEntity --verbose
+  - ../vendor/bin/phpunit --group xDatabase,Cache,xConfig,xEntity --verbose
 
 after_failure:
   - cat ~/debug.txt
