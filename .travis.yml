@@ -80,9 +80,9 @@ install:
 
 script:
   - cd $HOME/drupal8/core
-  # Only run kernel tests for Database and Entity groups.
+  # Only run kernel tests for Database and some Entity tests.
   - ../vendor/bin/phpunit --testsuite kernel --group Database --verbose
-  - ../vendor/bin/phpunit --testsuite kernel --group Entity   --verbose
+  - ../vendor/bin/phpunit --testsuite kernel --group Entity   --test-suffix QueryTest.php,SchemaTest.php,AggregateTest.php,RelationshipTest.php    --verbose
 
 notifications:
   email: false
