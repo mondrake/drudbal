@@ -78,12 +78,12 @@ install:
   # Get a webserver running.
   - cd $HOME/drupal8/core
   - ../vendor/bin/drupal --version
-  - ../vendor/bin/drupal server "$DRUPAL_SERVER_ADDRESS:$DRUPAL_SERVER_HTTP_PORT" &
+  - ../vendor/bin/drupal --quiet server "$DRUPAL_SERVER_ADDRESS:$DRUPAL_SERVER_HTTP_PORT" &
   - sleep 4s
 
 script:
   - cd $HOME/drupal8/core
-  - ../vendor/bin/phpunit --group Database,Cache,Config,xEntity --verbose
+  - ../vendor/bin/phpunit --group Database,Cache,Config,Entity --verbose
 
 notifications:
   email: false
