@@ -18,12 +18,13 @@ env:
   global:
     - PATH="$PATH:$HOME/.composer/vendor/bin"
     # Drupal specific variables.
-    - DRUSH_DB="mysql://root:@127.0.0.1/drupal_travis_db"
-    - SIMPLETEST_DB="dbal://root:@127.0.0.1/drupal_travis_db?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=pdo_mysql#travis_"
+    - DATABASE_NAME="drupal_travis_db"
+    - DRUSH_DB="mysql://root:@127.0.0.1/$DATABASE_NAME"
+    - SIMPLETEST_DB="dbal://root:@127.0.0.1/$DATABASE_NAME?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=pdo_mysql#travis_"
     - SIMPLETEST_BASE_URL="http://127.0.0.1:8080"
 
 mysql:
-  database: drupal_travis_db
+  database: $DATABASE_NAME
   username: root
   encoding: utf8
 
@@ -40,13 +41,13 @@ before_install:
 
   # Apply Drupal core patches
   # [#2605284] Testing framework does not work with contributed database drivers
-  - curl https://www.drupal.org/files/issues/simpletest_is_broken_on-2605284-89.patch | git apply -v
+  - curl https://www.drupal.org/files/issues/simpletest_is_broken_on-2605284-89.patch | git apply
   # [#2867700] ConnectionUnitTest::testConnectionOpen fails if the driver is not implementing a PDO connection
-  - curl https://www.drupal.org/files/issues/2867700-2.patch | git apply -v
+  - curl https://www.drupal.org/files/issues/2867700-2.patch | git apply
   # [#2867788] Log::findCaller fails to report the correct caller function with non-core drivers.
-  - curl https://www.drupal.org/files/issues/2867788-12.patch | git apply -v
+  - curl https://www.drupal.org/files/issues/2867788-12.patch | git apply
   # [#2871374] SelectTest::testVulnerableComment fails when driver overrides Select::__toString
-  - curl https://www.drupal.org/files/issues/2871374-2.patch | git apply -v
+  - curl https://www.drupal.org/files/issues/2871374-2.patch | git apply
 
   # Get Drupal Console
   - composer require "drupal/console:~1.0" --prefer-dist --optimize-autoloader
@@ -65,7 +66,7 @@ install:
   - ln -s $HOME/drupal8/modules/contrib/drudbal/drivers/lib/Drupal/Driver/Database/dbal dbal
 
   # Get a live database
-  - mysql -e 'CREATE DATABASE drupal_travis_db;'
+  - mysql -e 'CREATE DATABASE $DATABASE_NAME;'
 
   # Install Drupal
   - cd $HOME/drupal8/core
@@ -74,7 +75,7 @@ install:
 
   # Get a webserver running.
   - cd $HOME/drupal8/core
-  - ../vendor/bin/drupal server $SIMPLETEST_BASE_URL
+  - ../vendor/bin/drupal server "127.0.0.1:8080"
   #- drush --debug runserver $SIMPLETEST_BASE_URL > ~/debug.txt 2>&1 &
   - sleep 4s
 
