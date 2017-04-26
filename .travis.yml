@@ -83,7 +83,9 @@ install:
 
 script:
   - cd $HOME/drupal8/core
-  - ../vendor/bin/phpunit --testsuite functional --group xDatabase,xCache,xConfig,Entity --verbose
+  # Only run unit and kernel tests for the time being.
+  - ../vendor/bin/phpunit --testsuite unit --group Database,Cache,Config,Entity --verbose
+  - ../vendor/bin/phpunit --testsuite kernel --group Database,Cache,Config,Entity --verbose
 
 notifications:
   email: false
