@@ -21,7 +21,9 @@ $settings = array(
   'forms' => array(
     'install_settings_form' => array(
       'driver' => 'dbal',
-      'dbal_url' => "mysql://root:@127.0.0.1/drupal_travis_db",
+      'dbal' => [
+        'dbal_url' => "mysql://root:@127.0.0.1/drupal_travis_db",
+      ],
     ),
     'install_configure_form' => array(
       'site_name' => 'drudbal',
