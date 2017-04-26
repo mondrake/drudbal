@@ -73,7 +73,7 @@ install:
   - php install_cli.php
 
   # Get a webserver running.
-  - cd $HOME/drupal8
+  - cd $HOME/drupal8/core
   - ../vendor/bin/drupal server $SIMPLETEST_BASE_URL
   #- drush --debug runserver $SIMPLETEST_BASE_URL > ~/debug.txt 2>&1 &
   - sleep 4s
