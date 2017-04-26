@@ -52,7 +52,7 @@ before_install:
   - curl https://www.drupal.org/files/issues/2871374-2.patch | git apply
 
   # Get Drupal Console
-  - composer require "drupal/console:~1.0" --prefer-dist --optimize-autoloader
+  #- composer require "drupal/console:~1.0" --prefer-dist --optimize-autoloader
 
   # Get Doctrine DBAL
   - composer require "doctrine/dbal:^2.5.12"
@@ -67,25 +67,25 @@ install:
   - cd $HOME/drupal8/drivers/lib/Drupal/Driver/Database/
   - ln -s $HOME/drupal8/modules/contrib/drudbal/drivers/lib/Drupal/Driver/Database/dbal dbal
 
-  # Get a live database
-  - mysql -e 'CREATE DATABASE $DRUPAL_DATABASE_NAME;'
-
   # Install Drupal
   - cd $HOME/drupal8/core
   - cp $HOME/drupal8/modules/contrib/drudbal/misc/install_cli.php install_cli.php
   - php install_cli.php
 
   # Get a webserver running.
-  - cd $HOME/drupal8/core
-  - ../vendor/bin/drupal --version
-  - ../vendor/bin/drupal --quiet server "$DRUPAL_SERVER_ADDRESS:$DRUPAL_SERVER_HTTP_PORT" &
-  - sleep 4s
+  #- cd $HOME/drupal8/core
+  #- ../vendor/bin/drupal --version
+  #- ../vendor/bin/drupal --quiet server "$DRUPAL_SERVER_ADDRESS:$DRUPAL_SERVER_HTTP_PORT" &
+  #- sleep 4s
 
 script:
   - cd $HOME/drupal8/core
-  # Only run unit and kernel tests for the time being.
-  - ../vendor/bin/phpunit --testsuite unit --group Database,Cache,Config,Entity --verbose
-  - ../vendor/bin/phpunit --testsuite kernel --group Database,Cache,Config,Entity --verbose
+  # Only run kernel tests for Database and some Entity tests.
+  - ../vendor/bin/phpunit --testsuite kernel --group Database --verbose
+  - ../vendor/bin/phpunit tests/Drupal/KernelTests/Core/Entity/ConfigEntityQueryTest.php
+  - ../vendor/bin/phpunit tests/Drupal/KernelTests/Core/Entity/EntityQueryTest.php
+  - ../vendor/bin/phpunit tests/Drupal/KernelTests/Core/Entity/EntityQueryAggregateTest.php
+  - ../vendor/bin/phpunit tests/Drupal/KernelTests/Core/Entity/EntityQueryRelationshipTest.php
 
 notifications:
   email: false
