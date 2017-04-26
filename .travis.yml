@@ -74,7 +74,7 @@ install:
 
   # Get a webserver running.
   - cd $HOME/drupal8
-  - drupal server $SIMPLETEST_BASE_URL
+  - ../vendor/bin/drupal server $SIMPLETEST_BASE_URL
   #- drush --debug runserver $SIMPLETEST_BASE_URL > ~/debug.txt 2>&1 &
   - sleep 4s
 
