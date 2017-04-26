@@ -75,7 +75,8 @@ install:
 
   # Get a webserver running.
   - cd $HOME/drupal8/core
-  - ../vendor/bin/drupal server "127.0.0.1:8080"
+  - ../vendor/bin/drupal about
+  - ../vendor/bin/drupal server "127.0.0.1:8080" &
   #- drush --debug runserver $SIMPLETEST_BASE_URL > ~/debug.txt 2>&1 &
   - sleep 4s
 
