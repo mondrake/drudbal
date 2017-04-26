@@ -7,7 +7,7 @@ sudo: false
 
 php:
   - 7
-  - nightly
+  #- nightly
 
 matrix:
   fast_finish: true
@@ -17,14 +17,16 @@ matrix:
 env:
   global:
     - PATH="$PATH:$HOME/.composer/vendor/bin"
-    # Drupal specific variables.
-    - DATABASE_NAME="drupal_travis_db"
-    - DRUSH_DB="mysql://root:@127.0.0.1/$DATABASE_NAME"
-    - SIMPLETEST_DB="dbal://root:@127.0.0.1/$DATABASE_NAME?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=pdo_mysql#travis_"
-    - SIMPLETEST_BASE_URL="http://127.0.0.1:8080"
+    # Installation variables.
+    - DRUPAL_DATABASE_NAME="drudbal"
+    - DRUPAL_SERVER_ADDRESS="127.0.0.1"
+    - DRUPAL_SERVER_HTTP_PORT="8080"
+    # Drupal PHPUnit test variables.
+    - SIMPLETEST_DB="dbal://root:@$DRUPAL_SERVER_ADDRESS/$DRUPAL_DATABASE_NAME?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=pdo_mysql#drudbal_"
+    - SIMPLETEST_BASE_URL="http://$DRUPAL_SERVER_ADDRESS:$DRUPAL_SERVER_HTTP_PORT"
 
 mysql:
-  database: $DATABASE_NAME
+  database: $DRUPAL_DATABASE_NAME
   username: root
   encoding: utf8
 
@@ -66,7 +68,7 @@ install:
   - ln -s $HOME/drupal8/modules/contrib/drudbal/drivers/lib/Drupal/Driver/Database/dbal dbal
 
   # Get a live database
-  - mysql -e 'CREATE DATABASE $DATABASE_NAME;'
+  - mysql -e 'CREATE DATABASE $DRUPAL_DATABASE_NAME;'
 
   # Install Drupal
   - cd $HOME/drupal8/core
@@ -75,14 +77,13 @@ install:
 
   # Get a webserver running.
   - cd $HOME/drupal8/core
-  - ../vendor/bin/drupal about
-  - ../vendor/bin/drupal server "127.0.0.1:8080" &
-  #- drush --debug runserver $SIMPLETEST_BASE_URL > ~/debug.txt 2>&1 &
+  - ../vendor/bin/drupal --version
+  - ../vendor/bin/drupal server "$DRUPAL_SERVER_ADDRESS:$DRUPAL_SERVER_HTTP_PORT" &
   - sleep 4s
 
 script:
   - cd $HOME/drupal8/core
-  - ../vendor/bin/phpunit --group xDatabase,Cache,xConfig,xEntity --verbose
+  - ../vendor/bin/phpunit --group Database,Cache,Config,xEntity --verbose
 
 notifications:
   email: false
