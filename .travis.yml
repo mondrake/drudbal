@@ -52,7 +52,7 @@ before_install:
   - curl https://www.drupal.org/files/issues/2871374-2.patch | git apply
 
   # Get Drupal Console
-  - composer require "drupal/console:~1.0" --prefer-dist --optimize-autoloader
+  #- composer require "drupal/console:~1.0" --prefer-dist --optimize-autoloader
 
   # Get Doctrine DBAL
   - composer require "doctrine/dbal:^2.5.12"
@@ -73,18 +73,15 @@ install:
   - php install_cli.php
 
   # Get a webserver running.
-  - cd $HOME/drupal8/core
-  - ../vendor/bin/drupal --version
-  - ../vendor/bin/drupal --quiet server "$DRUPAL_SERVER_ADDRESS:$DRUPAL_SERVER_HTTP_PORT" &
-  - sleep 4s
+  #- cd $HOME/drupal8/core
+  #- ../vendor/bin/drupal --version
+  #- ../vendor/bin/drupal --quiet server "$DRUPAL_SERVER_ADDRESS:$DRUPAL_SERVER_HTTP_PORT" &
+  #- sleep 4s
 
 script:
   - cd $HOME/drupal8/core
-  # Only run unit and kernel tests for the time being.
-  - ../vendor/bin/phpunit --testsuite unit   --group Database,Cache,Config,Entity --verbose
+  # Only run kernel tests for Database and Entity groups.
   - ../vendor/bin/phpunit --testsuite kernel --group Database --verbose
-  - ../vendor/bin/phpunit --testsuite kernel --group Cache    --verbose
-  - ../vendor/bin/phpunit --testsuite kernel --group Config   --verbose
   - ../vendor/bin/phpunit --testsuite kernel --group Entity   --verbose
 
 notifications:
