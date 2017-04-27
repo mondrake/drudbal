@@ -25,7 +25,7 @@ env:
     - DRUPAL_DATABASE_NAME="drudbal"
     - DRUPAL_SERVER_ADDRESS="127.0.0.1"
     - DRUPAL_SERVER_HTTP_PORT="8080"
-    - DBAL_URL="mysql://root:@$DRUPAL_SERVER_ADDRESS/$DRUPAL_DATABASE_NAME"
+    - DBAL_URL="mysqli://root:@$DRUPAL_SERVER_ADDRESS/$DRUPAL_DATABASE_NAME"
     # Drupal PHPUnit test variables.
     - SIMPLETEST_DB="dbal://root:@$DRUPAL_SERVER_ADDRESS/$DRUPAL_DATABASE_NAME?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=mysqli#drudbal_"
     - SIMPLETEST_BASE_URL="http://$DRUPAL_SERVER_ADDRESS:$DRUPAL_SERVER_HTTP_PORT"
