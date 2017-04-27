@@ -18,19 +18,21 @@ To overcome DBAL limitations and/or fit Drupal specifics, the DBAL Drupal databa
 called ```DBALExtension```, unique for the DBAL Driver in use, to which some operations that are db- or Drupal-specific are
 delegated.
 
-## Status (as of April 21, 2017)
-The code in the ```master``` branch is meant to be working on a MySql database, using a PDO connection. 
+## Status
+(Updated: April 27, 2017)
+
+The code in the ```master``` branch is meant to be working on a __MySql database, using a PDO connection__.
 
 'Working' means:
-1. to be able to install a Drupal site via the installer, selecting 'Doctrine DBAL' as the database of choice;
-2. to pass a ```phpunit --group Database,Entity``` test run with the driver being used. The latest patches referenced below in the _'Related Drupal issues'_ need to be applied to get the test run.
+1. it is possible to install a Drupal site via the installer, selecting 'Doctrine DBAL' as the database of choice;
+2. it is passing a selection of core PHPUnit tests for the Database, Cache and Entity groups of tests, executed on Travis CI.
 
 The status of the driver classes implementation is as follows:
 
 Class                       | Status        |
 ----------------------------|---------------|
 Connection                  | Implemented. |
-Delete                      | Implemented with overrides to the ```execute``` and ```::__toString``` methods. |
+Delete                      | Implemented. Can execute DBAL queries directly if no comments are required in the SQL statement.  |
 Insert                      | Implemented with overrides to the ```execute``` and ```::__toString``` methods. |
 Merge                       | Inheriting from ```\Drupal\Core\Database\Query\Merge```. DBAL does not support MERGE constructs, the INSERT with UPDATE fallback implemented by the base class fits the purpose. |
 Schema                      | Implemented. |
@@ -46,7 +48,7 @@ Statement/PDODbalStatement	| Overrides the base class ```\Drupal\Core\Database\S
 
 Very rough instructions to install Drupal from scratch with this db driver under the hood:
 
-1. Get a fresh code build of Drupal via Composer. Use latest Drupal dev. Use PHP 7.0+. Only works with MySql/PDO.
+1. Get a fresh code build of Drupal via Composer. Use latest Drupal dev. Use PHP 7.0+.
 
 2. Get Doctrine DBAL, use latest version:
 ```
@@ -67,7 +69,7 @@ $ ln -s [DRUPAL_ROOT]/[path_to_contrib_modules]/drudbal/drivers/lib/Drupal/Drive
 ```
 
 5. Launch the interactive installer. Proceed as usual and when on the db selection form, select 'Doctrine DBAL'
-and enter a 'database URL' compliant with Doctrine DBAL syntax:
+and enter a 'database URL' compliant with Doctrine DBAL syntax. __Note:__ the driver only works for mysql.
 
 ![configuration](https://cloud.githubusercontent.com/assets/1174864/24586418/7f86feb4-17a0-11e7-820f-eb1483dad07f.png)
 
