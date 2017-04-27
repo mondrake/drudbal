@@ -22,7 +22,7 @@ $settings = array(
     'install_settings_form' => array(
       'driver' => 'dbal',
       'dbal' => [
-        'dbal_url' => "mysql://root:@" . getenv("DRUPAL_SERVER_ADDRESS") . "/" . getenv("DRUPAL_DATABASE_NAME"),
+        'dbal_url' => getenv("DBAL_URL"),
       ],
     ),
     'install_configure_form' => array(
