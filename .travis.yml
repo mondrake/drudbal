@@ -7,7 +7,11 @@ sudo: false
 
 php:
   - 7
-  #- nightly
+  - nightly
+
+branches:
+  except:
+    - /^dev-.*/
 
 matrix:
   fast_finish: true
@@ -80,8 +84,9 @@ install:
 
 script:
   - cd $HOME/drupal8/core
-  # Only run kernel tests for Database and some Entity tests.
-  - ../vendor/bin/phpunit --testsuite kernel --group Database --verbose
+  # Only run selected tests to avoid Travis timeout.
+  - ../vendor/bin/phpunit --testsuite unit --group Database,Cache,Entity --verbose
+  - ../vendor/bin/phpunit --testsuite kernel --group Database,Cache --verbose
   - ../vendor/bin/phpunit tests/Drupal/KernelTests/Core/Entity/ConfigEntityQueryTest.php
   - ../vendor/bin/phpunit tests/Drupal/KernelTests/Core/Entity/EntityQueryTest.php
   - ../vendor/bin/phpunit tests/Drupal/KernelTests/Core/Entity/EntityQueryAggregateTest.php
