@@ -236,9 +236,9 @@ class MysqliDbalStatement extends PDODbalStatement {
           throw new MysqliException($this->_stmt->error, $this->_stmt->sqlstate, $this->_stmt->errno);
       }
 
-      $fetchMode = $fetchMode ?: $this->_defaultFetchMode;
+      $mode = $mode ?: $this->_defaultFetchMode;
 
-      switch ($fetchMode) {
+      switch ($mode) {
           case \PDO::FETCH_NUM:
               return $values;
 
@@ -252,7 +252,7 @@ class MysqliDbalStatement extends PDODbalStatement {
               return $ret;
 
           default:
-              throw new MysqliException("Unknown fetch type '{$fetchMode}'");
+              throw new MysqliException("Unknown fetch type '{$mode}'");
       }
   }
 
@@ -265,7 +265,7 @@ class MysqliDbalStatement extends PDODbalStatement {
 
         $rows = array();
         if (\PDO::FETCH_COLUMN == $mode) {
-            while (($row = $this->fetchColumn()) !== false) {
+            while (($row = $this->fetchCol()) !== false) {
                 $rows[] = $row;
             }
         } else {
@@ -275,19 +275,6 @@ class MysqliDbalStatement extends PDODbalStatement {
         }
 
         return $rows;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function fetchColumn($columnIndex = 0)
-    {
-        $row = $this->fetch(\PDO::FETCH_NUM);
-        if (false === $row) {
-            return false;
-        }
-
-        return isset($row[$columnIndex]) ? $row[$columnIndex] : null;
     }
 
     /**
@@ -320,31 +307,9 @@ class MysqliDbalStatement extends PDODbalStatement {
     /**
      * {@inheritdoc}
      */
-    public function rowCount()
-    {
-        if (false === $this->_columnNames) {
-            return $this->_stmt->affected_rows;
-        }
-
-        return $this->_stmt->num_rows;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
     public function columnCount()
     {
         return $this->_stmt->field_count;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function setFetchMode($fetchMode, $arg2 = null, $arg3 = null)
-    {
-        $this->_defaultFetchMode = $fetchMode;
-
-        return true;
     }
 
     /**
@@ -356,4 +321,97 @@ class MysqliDbalStatement extends PDODbalStatement {
 
         return new \ArrayIterator($data);
     }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getQueryString() {
+    return $this->queryString;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function fetchCol($index = 0) {
+    $row = $this->fetch(\PDO::FETCH_NUM);
+    if (false === $row) {
+      return false;
+    }
+    return isset($row[$index]) ? $row[$index] : null;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function fetchAllAssoc($key, $fetch = NULL) {
+    $return = [];
+    if (isset($fetch)) {
+      if (is_string($fetch)) {
+        $this->setFetchMode(\PDO::FETCH_CLASS, $fetch);
+      }
+      else {
+        $this->setFetchMode($fetch);
+      }
+    }
+
+    foreach ($this as $record) {
+      $record_key = is_object($record) ? $record->$key : $record[$key];
+      $return[$record_key] = $record;
+    }
+
+    return $return;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function fetchAllKeyed($key_index = 0, $value_index = 1) {
+    $return = [];
+    $this->setFetchMode(\PDO::FETCH_NUM);
+    foreach ($this as $record) {
+      $return[$record[$key_index]] = $record[$value_index];
+    }
+    return $return;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function fetchField($index = 0) {
+    // Call \PDOStatement::fetchColumn to fetch the field.
+    return $this->fetchCol($index);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function fetchAssoc() {
+    // Call \PDOStatement::fetch to fetch the row.
+    return $this->fetch(\PDO::FETCH_ASSOC);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function rowCount() {
+    // SELECT query should not use the method.
+    if ($this->allowRowCount) {
+      if (false === $this->_columnNames) {
+        return $this->_stmt->affected_rows;
+      }
+      return $this->_stmt->num_rows;
+    }
+    else {
+      throw new RowCountException();
+    }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setFetchMode($mode, $a1 = NULL, $a2 = []) {
+    $this->_defaultFetchMode = $mode;
+    return true;
+  }
+
 }
