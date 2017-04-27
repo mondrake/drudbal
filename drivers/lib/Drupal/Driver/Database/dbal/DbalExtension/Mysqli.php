@@ -21,7 +21,7 @@ use Doctrine\DBAL\SQLParserUtils;
 /**
  * Driver specific methods for mysqli.
  */
-class Mysqli extends PDOMySql {
+class Mysqli extends AbstractMySqlExtension {
 
   /**
    * The DruDbal connection.
@@ -207,6 +207,13 @@ class Mysqli extends PDOMySql {
     }
 
     return NULL;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function clientVersion() {
+    return $this->dbalConnection->getWrappedConnection()->getWrappedResourceHandle()->get_client_info();
   }
 
 }

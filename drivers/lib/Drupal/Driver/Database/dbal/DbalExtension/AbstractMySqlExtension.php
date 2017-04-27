@@ -443,9 +443,7 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
   /**
    * Returns the version of the database client.
    */
-  public function clientVersion() {
-    return $this->dbalConnection->getWrappedConnection()->getAttribute(\PDO::ATTR_CLIENT_VERSION);
-  }
+  abstract public function clientVersion();
 
   /**
    * Truncate delegated methods.
@@ -567,7 +565,7 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
     }
 
     // Ensure that InnoDB is available.
-    $engines = $this->dbalConnection->query('SHOW ENGINES')->fetchAllKeyed();
+    $engines = $this->connection->query('SHOW ENGINES')->fetchAllKeyed();
     if (isset($engines['MyISAM']) && $engines['MyISAM'] == 'DEFAULT' && !isset($engines['InnoDB'])) {
       $results['fail'][] = t('The MyISAM storage engine is not supported.');
     }
