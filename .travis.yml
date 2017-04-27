@@ -9,6 +9,10 @@ php:
   - 7
   - nightly
 
+branches:
+  except:
+    - /^dev-.*/
+
 matrix:
   fast_finish: true
   allow_failures:
@@ -17,17 +21,25 @@ matrix:
 env:
   global:
     - PATH="$PATH:$HOME/.composer/vendor/bin"
-    # Drupal specific variables.
-    - SIMPLETEST_DB="dbal://root:@127.0.0.1/drupal_travis_db?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=pdo_mysql#travis_"
-    - SIMPLETEST_BASE_URL="http://127.0.0.1"
+    # Installation variables.
+    - DRUPAL_DATABASE_NAME="drudbal"
+    - DRUPAL_SERVER_ADDRESS="127.0.0.1"
+    - DRUPAL_SERVER_HTTP_PORT="8080"
+    # Drupal PHPUnit test variables.
+    - SIMPLETEST_DB="dbal://root:@$DRUPAL_SERVER_ADDRESS/$DRUPAL_DATABASE_NAME?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=pdo_mysql#drudbal_"
+    - SIMPLETEST_BASE_URL="http://$DRUPAL_SERVER_ADDRESS:$DRUPAL_SERVER_HTTP_PORT"
 
 mysql:
-  database: drupal_travis_db
+  database: $DRUPAL_DATABASE_NAME
   username: root
   encoding: utf8
 
 before_install:
+  # Remove XDebug
   - phpenv config-rm xdebug.ini
+  # Add APCu extension.
+  - echo "extension = apcu.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
+
   # Get Drupal core and dependencies
   - git clone http://git.drupal.org/project/drupal.git $HOME/drupal8
   - cd $HOME/drupal8
@@ -35,31 +47,50 @@ before_install:
 
   # Apply Drupal core patches
   # [#2605284] Testing framework does not work with contributed database drivers
-  - curl https://www.drupal.org/files/issues/simpletest_is_broken_on-2605284-89.patch | git apply -v
+  - curl https://www.drupal.org/files/issues/simpletest_is_broken_on-2605284-89.patch | git apply
   # [#2867700] ConnectionUnitTest::testConnectionOpen fails if the driver is not implementing a PDO connection
-  - curl https://www.drupal.org/files/issues/2867700-2.patch | git apply -v
+  - curl https://www.drupal.org/files/issues/2867700-2.patch | git apply
   # [#2867788] Log::findCaller fails to report the correct caller function with non-core drivers.
-  - curl https://www.drupal.org/files/issues/2867788-12.patch | git apply -v
+  - curl https://www.drupal.org/files/issues/2867788-12.patch | git apply
   # [#2871374] SelectTest::testVulnerableComment fails when driver overrides Select::__toString
-  - curl https://www.drupal.org/files/issues/2871374-2.patch | git apply -v
-  
+  - curl https://www.drupal.org/files/issues/2871374-2.patch | git apply
+
+  # Get Drupal Console
+  #- composer require "drupal/console:~1.0" --prefer-dist --optimize-autoloader
+
   # Get Doctrine DBAL
   - composer require "doctrine/dbal:^2.5.12"
-  # Get a live database
-  - mysql -e 'CREATE DATABASE drupal_travis_db;'
 
 install:
   # Copy the repo to the modules/contrib directory.
   - mkdir -p $HOME/drupal8/modules/contrib/drudbal
   - cp -r $HOME/build/mondrake/drudbal $HOME/drupal8/modules/contrib
+
   # Create a directory for the driver, and symlink it to the module's one.
   - mkdir -p $HOME/drupal8/drivers/lib/Drupal/Driver/Database/
   - cd $HOME/drupal8/drivers/lib/Drupal/Driver/Database/
   - ln -s $HOME/drupal8/modules/contrib/drudbal/drivers/lib/Drupal/Driver/Database/dbal dbal
-  
+
+  # Install Drupal
+  - cd $HOME/drupal8/core
+  - cp $HOME/drupal8/modules/contrib/drudbal/misc/install_cli.php install_cli.php
+  - php install_cli.php
+
+  # Get a webserver running.
+  #- cd $HOME/drupal8/core
+  #- ../vendor/bin/drupal --version
+  #- ../vendor/bin/drupal --quiet server "$DRUPAL_SERVER_ADDRESS:$DRUPAL_SERVER_HTTP_PORT" &
+  #- sleep 4s
+
 script:
   - cd $HOME/drupal8/core
-  - ../vendor/bin/phpunit --group Database,xCache,xConfig,xEntity --verbose
+  # Only run selected tests to avoid Travis timeout.
+  - ../vendor/bin/phpunit --testsuite unit --group Database,Cache,Entity --verbose
+  - ../vendor/bin/phpunit --testsuite kernel --group Database,Cache --verbose
+  - ../vendor/bin/phpunit tests/Drupal/KernelTests/Core/Entity/ConfigEntityQueryTest.php
+  - ../vendor/bin/phpunit tests/Drupal/KernelTests/Core/Entity/EntityQueryTest.php
+  - ../vendor/bin/phpunit tests/Drupal/KernelTests/Core/Entity/EntityQueryAggregateTest.php
+  - ../vendor/bin/phpunit tests/Drupal/KernelTests/Core/Entity/EntityQueryRelationshipTest.php
 
 notifications:
   email: false
