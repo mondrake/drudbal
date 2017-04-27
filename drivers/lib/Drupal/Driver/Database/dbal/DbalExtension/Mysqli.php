@@ -188,9 +188,10 @@ class Mysqli extends PDOMySql {
       else {
         $query_string = NULL;
       }
+//var_export([$e->getMessage(), $e->getErrorCode(), $e->getSqlState()]);die;
       $message = $e->getMessage() . ": " . $query_string . "; " . print_r($args, TRUE);
       // Match all SQLSTATE 23xxx errors.
-      if (substr($e->getCode(), -6, -3) == '23') {
+      if (substr($e->getSqlState(), -6, -3) == '23') {
         throw new IntegrityConstraintViolationException($message, $e->getCode(), $e);
       }
 /*      elseif ($e->errorInfo[1] == 1153) {
