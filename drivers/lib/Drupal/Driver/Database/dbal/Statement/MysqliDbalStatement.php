@@ -6,6 +6,7 @@ use Drupal\Core\Database\StatementInterface;
 use Drupal\Core\Database\RowCountException;
 use Drupal\Driver\Database\dbal\Connection as DruDbalConnection;
 use Doctrine\DBAL\Driver\Mysqli\MysqliException;
+use Doctrine\DBAL\SQLParserUtils;
 
 /**
  * DruDbal implementation of StatementInterface for Mysqli connections.

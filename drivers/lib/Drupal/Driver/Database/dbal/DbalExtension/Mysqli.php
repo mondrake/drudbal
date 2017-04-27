@@ -16,6 +16,7 @@ use Doctrine\DBAL\ConnectionException as DbalConnectionException;
 use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\Exception\ConnectionException as DbalExceptionConnectionException;
 use Doctrine\DBAL\DriverManager as DBALDriverManager;
+use Doctrine\DBAL\SQLParserUtils;
 
 /**
  * Driver specific methods for mysqli.
@@ -280,6 +281,15 @@ class Mysqli implements DbalExtensionInterface {
   public function transactionalDDLSupport(array &$connection_options = []) {
     // MySQL never supports transactional DDL.
     return FALSE;
+  }
+
+  /**
+   * @todo
+   */
+  public function prepare($statement, array $params, array $driver_options = []) {
+list($xxquery, $xxparams, $xxtypes) = SQLParserUtils::expandListParameters($statement, $params, []);
+//var_export([$xxquery, $xxparams, $xxtypes]);echo('<br/>');
+    return $this->getDbalConnection()->getWrappedConnection()->prepare($statement, $driver_options);
   }
 
   /**
