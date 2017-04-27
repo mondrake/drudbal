@@ -1,0 +1,417 @@
+<?php
+
+namespace Drupal\Driver\Database\dbal\Statement;
+
+use Drupal\Core\Database\StatementInterface;
+use Drupal\Core\Database\RowCountException;
+use Drupal\Driver\Database\dbal\Connection as DruDbalConnection;
+use Doctrine\DBAL\Driver\Mysqli\MysqliException;
+use Doctrine\DBAL\SQLParserUtils;
+
+/**
+ * DruDbal implementation of StatementInterface for Mysqli connections.
+ */
+class MysqliDbalStatement extends PDODbalStatement {
+
+  /**
+   * @var array
+   */
+  protected static $_paramTypeMap = array(
+      \PDO::PARAM_STR => 's',
+      \PDO::PARAM_BOOL => 'i',
+      \PDO::PARAM_NULL => 's',
+      \PDO::PARAM_INT => 'i',
+      \PDO::PARAM_LOB => 's' // TODO Support LOB bigger then max package size.
+  );
+
+  /**
+   * @var \mysqli
+   */
+  protected $_conn;
+
+  /**
+   * @var \mysqli_stmt
+   */
+  protected $_stmt;
+
+  /**
+   * @var null|boolean|array
+   */
+  protected $_columnNames;
+
+  /**
+   * @var null|array
+   */
+  protected $_rowBindedValues;
+
+  /**
+   * @var array
+   */
+  protected $_bindedValues;
+
+  /**
+   * @var string
+   */
+  protected $types;
+
+  /**
+   * Contains ref values for bindValue().
+   *
+   * @var array
+   */
+  protected $_values = array();
+
+  /**
+   * @var integer
+   */
+  protected $_defaultFetchMode = \PDO::FETCH_BOTH;
+
+  /**
+   * Indicates whether the statement is in the state when fetching results is possible
+   *
+   * @var bool
+   */
+  private $result = false;
+
+  /**
+   * Constructs a MysqliDbalStatement object.
+   *
+   * @param \Drupal\Driver\Database\dbal\Connection $dbh
+   *   The database connection object for this statement.
+   */
+  public function __construct(DruDbalConnection $dbh, $statement, $params, array $driver_options = []) {
+    $this->dbh = $dbh;
+//    $this->setFetchMode(\PDO::FETCH_OBJ);
+    if (($allow_row_count = $this->dbh->popStatementOption('allowRowCount')) !== NULL) {
+      $this->allowRowCount = $allow_row_count;
+    }
+    list($positional_statement, $positional_params, $positional_types) = SQLParserUtils::expandListParameters($statement, $params, []);
+    $this->_conn = $dbh->getDbalConnection()->getWrappedConnection()->getWrappedResourceHandle();
+    $this->_stmt = $this->_conn->prepare($positional_statement);
+//var_export($statement);echo('<br/>');
+//var_export($positional_statement);echo('<br/>');
+//var_export($params);echo('<br/>');
+//var_export($positional_params);echo('<br/>');
+//var_export($this->_stmt);echo('<br/>');
+    if (false === $this->_stmt) {
+//var_export([$this->_conn->error, $this->_conn->sqlstate, $this->_conn->errno]);echo('<br/>');die;
+        throw new MysqliException($this->_conn->error, $this->_conn->sqlstate, $this->_conn->errno);
+    }
+    $paramCount = $this->_stmt->param_count;
+    if (0 < $paramCount) {
+        $this->types = str_repeat('s', $paramCount);
+        $this->_bindedValues = array_fill(1, $paramCount, null);
+    }
+//    $ret = $this->execute($positional_params);
+//    $ret = $this->fetch();
+//var_export([$ret, $this->_stmt]);echo('<br/>');die;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function execute($args = [], $options = [])
+  {
+      if (null !== $this->_bindedValues) {
+          if (null !== $args) {
+              if ( ! $this->_bindValues($args)) {
+                  throw new MysqliException($this->_stmt->error, $this->_stmt->errno);
+              }
+          } else {
+              if (!call_user_func_array(array($this->_stmt, 'bind_param'), array($this->types) + $this->_bindedValues)) {
+                  throw new MysqliException($this->_stmt->error, $this->_stmt->sqlstate, $this->_stmt->errno);
+              }
+          }
+      }
+
+      if ( ! $this->_stmt->execute()) {
+          throw new MysqliException($this->_stmt->error, $this->_stmt->sqlstate, $this->_stmt->errno);
+      }
+
+      if (null === $this->_columnNames) {
+          $meta = $this->_stmt->result_metadata();
+          if (false !== $meta) {
+              $columnNames = array();
+              foreach ($meta->fetch_fields() as $col) {
+                  $columnNames[] = $col->name;
+              }
+              $meta->free();
+
+              $this->_columnNames = $columnNames;
+          } else {
+              $this->_columnNames = false;
+          }
+      }
+
+      if (false !== $this->_columnNames) {
+          // Store result of every execution which has it. Otherwise it will be impossible
+          // to execute a new statement in case if the previous one has non-fetched rows
+          // @link http://dev.mysql.com/doc/refman/5.7/en/commands-out-of-sync.html
+          $this->_stmt->store_result();
+
+          // Bind row values _after_ storing the result. Otherwise, if mysqli is compiled with libmysql,
+          // it will have to allocate as much memory as it may be needed for the given column type
+          // (e.g. for a LONGBLOB field it's 4 gigabytes)
+          // @link https://bugs.php.net/bug.php?id=51386#1270673122
+          //
+          // Make sure that the values are bound after each execution. Otherwise, if closeCursor() has been
+          // previously called on the statement, the values are unbound making the statement unusable.
+          //
+          // It's also important that row values are bound after _each_ call to store_result(). Otherwise,
+          // if mysqli is compiled with libmysql, subsequently fetched string values will get truncated
+          // to the length of the ones fetched during the previous execution.
+          $this->_rowBindedValues = array_fill(0, count($this->_columnNames), null);
+
+          $refs = array();
+          foreach ($this->_rowBindedValues as $key => &$value) {
+              $refs[$key] =& $value;
+          }
+
+          if (!call_user_func_array(array($this->_stmt, 'bind_result'), $refs)) {
+              throw new MysqliException($this->_stmt->error, $this->_stmt->sqlstate, $this->_stmt->errno);
+          }
+      }
+
+      $this->result = true;
+
+      return true;
+  }
+
+  /**
+   * Binds a array of values to bound parameters.
+   *
+   * @param array $values
+   *
+   * @return boolean
+   */
+  private function _bindValues($values)
+  {
+      $params = array();
+      $types = str_repeat('s', count($values));
+      $params[0] = $types;
+
+      foreach ($values as &$v) {
+          $params[] =& $v;
+      }
+
+      return call_user_func_array(array($this->_stmt, 'bind_param'), $params);
+  }
+
+  /**
+   * @return boolean|array
+   */
+  private function _fetch()
+  {
+      $ret = $this->_stmt->fetch();
+
+      if (true === $ret) {
+          $values = array();
+          foreach ($this->_rowBindedValues as $v) {
+              $values[] = $v;
+          }
+
+          return $values;
+      }
+
+      return $ret;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function fetch($mode = NULL, $cursor_orientation = NULL, $cursor_offset = NULL)
+  {
+      // do not try fetching from the statement if it's not expected to contain result
+      // in order to prevent exceptional situation
+      if (!$this->result) {
+          return false;
+      }
+
+      $values = $this->_fetch();
+      if (null === $values) {
+          return false;
+      }
+
+      if (false === $values) {
+          throw new MysqliException($this->_stmt->error, $this->_stmt->sqlstate, $this->_stmt->errno);
+      }
+
+      $mode = $mode ?: $this->_defaultFetchMode;
+
+      switch ($mode) {
+          case \PDO::FETCH_NUM:
+              return $values;
+
+          case \PDO::FETCH_ASSOC:
+              return array_combine($this->_columnNames, $values);
+
+          case \PDO::FETCH_BOTH:
+              $ret = array_combine($this->_columnNames, $values);
+              $ret += $values;
+
+              return $ret;
+
+          default:
+              throw new MysqliException("Unknown fetch type '{$mode}'");
+      }
+  }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function fetchAll($mode = NULL, $column_index = NULL, $constructor_arguments = NULL)
+    {
+        $mode = $mode ?: $this->_defaultFetchMode;
+
+        $rows = array();
+        if (\PDO::FETCH_COLUMN == $mode) {
+            while (($row = $this->fetchCol()) !== false) {
+                $rows[] = $row;
+            }
+        } else {
+            while (($row = $this->fetch($mode)) !== false) {
+                $rows[] = $row;
+            }
+        }
+
+        return $rows;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function errorCode()
+    {
+        return $this->_stmt->errno;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function errorInfo()
+    {
+        return $this->_stmt->error;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function closeCursor()
+    {
+        $this->_stmt->free_result();
+        $this->result = false;
+
+        return true;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function columnCount()
+    {
+        return $this->_stmt->field_count;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getIterator()
+    {
+        $data = $this->fetchAll();
+
+        return new \ArrayIterator($data);
+    }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getQueryString() {
+    return $this->queryString;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function fetchCol($index = 0) {
+    $row = $this->fetch(\PDO::FETCH_NUM);
+    if (false === $row) {
+      return false;
+    }
+    return isset($row[$index]) ? $row[$index] : null;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function fetchAllAssoc($key, $fetch = NULL) {
+    $return = [];
+    if (isset($fetch)) {
+      if (is_string($fetch)) {
+        $this->setFetchMode(\PDO::FETCH_CLASS, $fetch);
+      }
+      else {
+        $this->setFetchMode($fetch);
+      }
+    }
+
+    foreach ($this as $record) {
+      $record_key = is_object($record) ? $record->$key : $record[$key];
+      $return[$record_key] = $record;
+    }
+
+    return $return;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function fetchAllKeyed($key_index = 0, $value_index = 1) {
+    $return = [];
+    $this->setFetchMode(\PDO::FETCH_NUM);
+    foreach ($this as $record) {
+      $return[$record[$key_index]] = $record[$value_index];
+    }
+    return $return;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function fetchField($index = 0) {
+    // Call \PDOStatement::fetchColumn to fetch the field.
+    return $this->fetchCol($index);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function fetchAssoc() {
+    // Call \PDOStatement::fetch to fetch the row.
+    return $this->fetch(\PDO::FETCH_ASSOC);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function rowCount() {
+    // SELECT query should not use the method.
+    if ($this->allowRowCount) {
+      if (false === $this->_columnNames) {
+        return $this->_stmt->affected_rows;
+      }
+      return $this->_stmt->num_rows;
+    }
+    else {
+      throw new RowCountException();
+    }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setFetchMode($mode, $a1 = NULL, $a2 = []) {
+    $this->_defaultFetchMode = $mode;
+    return true;
+  }
+
+}
