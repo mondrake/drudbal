@@ -26,7 +26,18 @@ class Delete extends QueryDelete {
    * {@inheritdoc}
    */
   public function execute() {
-    return $this->connection->query((string) $this, $this->dbalQuery->getParameters(), $this->queryOptions);
+    if (empty($this->comments)) {
+      // If no comments, we can directly execute the DBAL query.
+      $this->compileDbalQuery();
+      // Instruct the Statement object to allow row count.
+      $this->connection->pushStatementOption('allowRowCount', TRUE);
+      return $this->dbalQuery->execute();
+    }
+    else {
+      // Otherwise, we need to fall back to __toString to build the appropriate
+      // SQL statement, and pass it to the DruDbal connection query.
+      return $this->connection->query((string) $this, $this->dbalQuery->getParameters(), $this->queryOptions);
+    }
   }
 
   /**
@@ -34,11 +45,17 @@ class Delete extends QueryDelete {
    */
   public function __toString() {
     $comments = $this->connection->makeComment($this->comments);
-    $dbal_connection = $this->connection->getDbalConnection();
-    $prefixed_table = $this->connection->getPrefixedTableName($this->table);
+    $this->compileDbalQuery();
+    return $comments . $this->dbalQuery->getSQL();
+  }
 
-    // Use DBAL query builder to prepare the DELETE query.
-    $this->dbalQuery = $dbal_connection->createQueryBuilder()->delete($prefixed_table);
+  /**
+   * Builds the query via DBAL Query Builder.
+   */
+  protected function compileDbalQuery() {
+    $this->dbalQuery = $this->connection->getDbalConnection()
+      ->createQueryBuilder()
+      ->delete($this->connection->getPrefixedTableName($this->table));
 
     // Adds a WHERE clause if necessary.
     // @todo this uses Drupal Condition API. Use DBAL expressions instead?
@@ -50,7 +67,7 @@ class Delete extends QueryDelete {
       }
     }
 
-    return $comments . $this->dbalQuery->getSQL();
+    return $this;
   }
 
 }
