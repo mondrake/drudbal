@@ -199,16 +199,55 @@ class Connection extends DatabaseConnection {
         // needs to use.
         throw new ConnectionNotDefinedException(t('Database connection is not defined properly for the \'dbal\' driver. The \'dbal_url\' key is missing. Check the database connection definition in settings.php.'));
       }
-      $options = [];
-      $options['url'] = $connection_options['dbal_url'];
-      $dbal_connection = DbalDriverManager::getConnection($options);
+      $dbal_connection = DbalDriverManager::getConnection([
+        'url' => $connection_options['dbal_url'],
+      ]);
       // Below shouldn't happen, but if it does, then use the driver name
       // from the just established DBAL connection.
       $connection_options['dbal_driver'] = $dbal_connection->getDriver()->getName();
     }
 
     $dbal_extension_class = static::getDbalExtensionClass($connection_options);
-    return $dbal_extension_class::open($connection_options);
+    try {
+      $dbal_connection_options = static::mapConnectionOptionsToDbal($connection_options);
+      $dbal_extension_class::preConnectionOpen($connection_options, $dbal_connection_options);
+      $dbal_connection = DBALDriverManager::getConnection($dbal_connection_options);
+      $dbal_extension_class::postConnectionOpen($dbal_connection, $connection_options, $dbal_connection_options);
+    }
+    catch (DbalConnectionException $e) {
+      throw new DatabaseExceptionWrapper($e->getMessage(), $e->getCode(), $e);
+    }
+    return $dbal_connection;
+  }
+
+  /**
+   * @todo
+   */
+  public static function mapConnectionOptionsToDbal(array $connection_options) {
+    $options = array_diff_key($connection_options, [
+      'namespace' => NULL,
+      'prefix' => NULL,
+// @todo remap
+// @todo advanced_options are written to settings.php
+      'driver' => NULL,
+      'database' => NULL,
+      'username' => NULL,
+      'password' => NULL,
+      'host' => NULL,
+      'port' => NULL,
+      'dbal_url' => NULL,
+      'dbal_driver' => NULL,
+      'advanced_options' => NULL,
+    ]);
+    $options['dbname'] = $connection_options['database'];
+    $options['user'] = $connection_options['username'];
+    $options['password'] = $connection_options['password'];
+    $options['host'] = $connection_options['host'];
+    $options['port'] = isset($connection_options['port']) ? $connection_options['port'] : NULL;
+    $options['url'] = isset($connection_options['dbal_url']) ? $connection_options['dbal_url'] : NULL;
+    $options['driver'] = $connection_options['dbal_driver'];
+
+    return $options;
   }
 
   /**
