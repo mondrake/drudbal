@@ -99,7 +99,7 @@ class Tasks extends InstallTasks {
       // Dbal extension for the processing.
       $connection_info = Database::getConnectionInfo()['default'];
       if (!empty($connection_info['dbal_driver'])) {
-        $dbal_extension_class = DruDbalConnection::getDbalExtensionClass($connection_info['dbal_driver']);
+        $dbal_extension_class = DruDbalConnection::getDbalExtensionClass($connection_info);
         $results = $dbal_extension_class::handleInstallConnectException($e);
         foreach ($results['pass'] as $result) {
           $this->pass($result);
