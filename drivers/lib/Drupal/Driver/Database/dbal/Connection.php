@@ -77,8 +77,8 @@ class Connection extends DatabaseConnection {
    * Constructs a Connection object.
    */
   public function __construct(DbalConnection $dbal_connection, array $connection_options = []) {
-    $dbal_extension_class = static::getDbalExtensionClass($dbal_connection->getDriver()->getName());
-    $this->statementClass = static::getStatementClass($dbal_connection->getDriver()->getName());
+    $dbal_extension_class = static::getDbalExtensionClass($connection_options);
+    $this->statementClass = static::getStatementClass($connection_options);
     $this->dbalExtension = new $dbal_extension_class($this, $dbal_connection, $this->statementClass);
     $this->transactionSupport = $this->dbalExtension->transactionSupport($connection_options);
     $this->transactionalDDLSupport = $this->dbalExtension->transactionalDDLSupport($connection_options);
@@ -189,10 +189,7 @@ class Connection extends DatabaseConnection {
    * {@inheritdoc}
    */
   public static function open(array &$connection_options = []) {
-    if (!empty($connection_options['dbal_driver'])) {
-      $dbal_driver = $connection_options['dbal_driver'];
-    }
-    else {
+    if (empty($connection_options['dbal_driver'])) {
       // If 'dbal_driver' is missing from the connection options, then we are
       // likely in an installation scenario where the database URL is invalid.
       // Try establishing a DBAL connection to clarify details.
@@ -207,9 +204,10 @@ class Connection extends DatabaseConnection {
       $dbal_connection = DbalDriverManager::getConnection($options);
       // Below shouldn't happen, but if it does, then use the driver name
       // from the just established DBAL connection.
-      $dbal_driver = $dbal_connection->getDriver()->getName();
+      $connection_options['dbal_driver'] = $dbal_connection->getDriver()->getName();
     }
-    $dbal_extension_class = static::getDbalExtensionClass($dbal_driver);
+
+    $dbal_extension_class = static::getDbalExtensionClass($connection_options);
     return $dbal_extension_class::open($connection_options);
   }
 
@@ -395,10 +393,17 @@ class Connection extends DatabaseConnection {
   /**
    * Gets the DBAL extension class to use for the DBAL driver.
    *
+   * @param array $connection_options
+   *   An array of options for the connection. May include the following:
+   *   - prefix
+   *   - namespace
+   *   - Other driver-specific options.
+   *
    * @return string
    *   The DBAL extension class.
    */
-  public static function getDbalExtensionClass($driver_name) {
+  public static function getDbalExtensionClass(array $connection_options) {
+    $driver_name = $connection_options['dbal_driver'];
     if (isset(static::$driverSchemeAliases[$driver_name])) {
       $driver_name = static::$driverSchemeAliases[$driver_name];
     }
@@ -408,10 +413,17 @@ class Connection extends DatabaseConnection {
   /**
    * Gets the Statement class to use for this connection.
    *
+   * @param array $connection_options
+   *   An array of options for the connection. May include the following:
+   *   - prefix
+   *   - namespace
+   *   - Other driver-specific options.
+   *
    * @return string
    *   The Statement class.
    */
-  public static function getStatementClass($driver_name) {
+  public static function getStatementClass(array $connection_options) {
+    $driver_name = $connection_options['dbal_driver'];
     if (isset(static::$driverSchemeAliases[$driver_name])) {
       $driver_name = static::$driverSchemeAliases[$driver_name];
     }
