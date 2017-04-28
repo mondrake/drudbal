@@ -246,6 +246,7 @@ class Connection extends DatabaseConnection {
     $options['port'] = isset($connection_options['port']) ? $connection_options['port'] : NULL;
     $options['url'] = isset($connection_options['dbal_url']) ? $connection_options['dbal_url'] : NULL;
     $options['driver'] = $connection_options['dbal_driver'];
+    $options['driverOptions'] = isset($connection_options['pdo']) ? $connection_options['pdo'] : [];
 
     return $options;
   }

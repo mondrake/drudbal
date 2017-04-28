@@ -153,15 +153,14 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
     else {
       $charset = 'utf8mb4';
     }
+
     // Character set is added to dsn to ensure PDO uses the proper character
     // set when escaping. This has security implications. See
     // https://www.drupal.org/node/1201452 for further discussion.
     $connection_options['charset'] = $charset;
-    // Allow PDO options to be overridden.
-    $connection_options += [
-      'driverOptions' => [],
-    ];
-    $connection_options['driverOptions'] += [
+    $dbal_connection_options['charset'] = $charset;
+
+    $dbal_connection_options['driverOptions'] += [
       \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
       // So we don't have to mess around with cursors and unbuffered queries by default.
       \PDO::MYSQL_ATTR_USE_BUFFERED_QUERY => TRUE,
@@ -175,7 +174,7 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
     if (defined('\PDO::MYSQL_ATTR_MULTI_STATEMENTS')) {
       // An added connection option in PHP 5.5.21 to optionally limit SQL to a
       // single statement like mysqli.
-      $connection_options['driverOptions'] += [\PDO::MYSQL_ATTR_MULTI_STATEMENTS => FALSE];
+      $dbal_connection_options['driverOptions'] += [\PDO::MYSQL_ATTR_MULTI_STATEMENTS => FALSE];
     }
   }
 
@@ -186,12 +185,11 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
     // Force MySQL to use the UTF-8 character set. Also set the collation, if a
     // certain one has been set; otherwise, MySQL defaults to
     // 'utf8mb4_general_ci' for utf8mb4.
+    $sql = 'SET NAMES ' . $connection_options['charset'];
     if (!empty($connection_options['collation'])) {
-      $dbal_connection->exec('SET NAMES ' . $connection_options['charset'] . ' COLLATE ' . $connection_options['collation']);
+      $sql .= ' COLLATE ' . $connection_options['collation'];
     }
-    else {
-      $dbal_connection->exec('SET NAMES ' . $connection_options['charset']);
-    }
+    $dbal_connection->exec($sql);
 
     // Set MySQL init_commands if not already defined.  Default Drupal's MySQL
     // behavior to conform more closely to SQL standards.  This allows Drupal
