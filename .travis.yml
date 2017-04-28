@@ -7,7 +7,7 @@ sudo: false
 
 php:
   - 7
-  - nightly
+  #- nightly
 
 branches:
   except:
