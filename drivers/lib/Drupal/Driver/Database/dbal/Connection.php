@@ -224,29 +224,60 @@ class Connection extends DatabaseConnection {
    * @todo
    */
   public static function mapConnectionOptionsToDbal(array $connection_options) {
+    // Take away from the Drupal connection array the keys that will be
+    // managed separately.
     $options = array_diff_key($connection_options, [
       'namespace' => NULL,
-      'prefix' => NULL,
-// @todo remap
-// @todo advanced_options are written to settings.php
       'driver' => NULL,
+      'prefix' => NULL,
+
       'database' => NULL,
       'username' => NULL,
       'password' => NULL,
       'host' => NULL,
       'port' => NULL,
+
+      'pdo' => NULL,
+
       'dbal_url' => NULL,
       'dbal_driver' => NULL,
+      'dbal_options' => NULL,
+      'dbal_extension_class' => NULL,
+      'dbal_statement_class' => NULL,
+// @todo advanced_options are written to settings.php - still??
       'advanced_options' => NULL,
     ]);
-    $options['dbname'] = $connection_options['database'];
-    $options['user'] = $connection_options['username'];
-    $options['password'] = $connection_options['password'];
-    $options['host'] = $connection_options['host'];
-    $options['port'] = isset($connection_options['port']) ? $connection_options['port'] : NULL;
-    $options['url'] = isset($connection_options['dbal_url']) ? $connection_options['dbal_url'] : NULL;
-    $options['driver'] = $connection_options['dbal_driver'];
+    // Map to DBAL connection array the main keys from the Drupal connection.
+    if (isset($connection_options['database'])) {
+      $options['dbname'] = $connection_options['database'];
+    }
+    if (isset($connection_options['username'])) {
+      $options['user'] = $connection_options['username'];
+    }
+    if (isset($connection_options['password'])) {
+      $options['password'] = $connection_options['password'];
+    }
+    if (isset($connection_options['host'])) {
+      $options['host'] = $connection_options['host'];
+    }
+    if (isset($connection_options['port'])) {
+      $options['port'] =  $connection_options['port'];
+    }
+    if (isset($connection_options['dbal_url'])) {
+      $options['url'] =  $connection_options['dbal_url'];
+    }
+    if (isset($connection_options['dbal_driver'])) {
+      $options['driver'] = $connection_options['dbal_driver'];
+    }
+    // If there is a 'pdo' key in Drupal, that needs to be mapped to the
+    // 'driverOptions' key in DBAL.
     $options['driverOptions'] = isset($connection_options['pdo']) ? $connection_options['pdo'] : [];
+    // If there is a 'dbal_options' key in Drupal, merge it with the array
+    // built so far. The content of the 'dbal_options' key will override
+    // overlapping keys built so far.
+    if (isset($connection_options['dbal_options'])) {
+      $options = array_merge($options, $connection_options['dbal_options']);
+    }
 
     return $options;
   }
@@ -434,15 +465,15 @@ class Connection extends DatabaseConnection {
    * Gets the DBAL extension class to use for the DBAL driver.
    *
    * @param array $connection_options
-   *   An array of options for the connection. May include the following:
-   *   - prefix
-   *   - namespace
-   *   - Other driver-specific options.
+   *   An array of options for the connection.
    *
    * @return string
    *   The DBAL extension class.
    */
   public static function getDbalExtensionClass(array $connection_options) {
+    if (isset($connection_options['dbal_extension_class'])) {
+      return $connection_options['dbal_extension_class'];
+    }
     $driver_name = $connection_options['dbal_driver'];
     if (isset(static::$driverSchemeAliases[$driver_name])) {
       $driver_name = static::$driverSchemeAliases[$driver_name];
@@ -454,15 +485,15 @@ class Connection extends DatabaseConnection {
    * Gets the Statement class to use for this connection.
    *
    * @param array $connection_options
-   *   An array of options for the connection. May include the following:
-   *   - prefix
-   *   - namespace
-   *   - Other driver-specific options.
+   *   An array of options for the connection.
    *
    * @return string
    *   The Statement class.
    */
   public static function getStatementClass(array $connection_options) {
+    if (isset($connection_options['dbal_statement_class'])) {
+      return $connection_options['dbal_statement_class'];
+    }
     $driver_name = $connection_options['dbal_driver'];
     if (isset(static::$driverSchemeAliases[$driver_name])) {
       $driver_name = static::$driverSchemeAliases[$driver_name];
