@@ -24,8 +24,8 @@ env:
     # Drupal PHPUnit test variables.
     - SIMPLETEST_BASE_URL="http://$HOST_ADDR:$HTTP_PORT"
   matrix:
-    - DB_DR="pdo_mysql" DB_DB="drudbal" DBAL_URL="$DB_DR://$DB_AUTH@$HOST_ADDR/$DB_DB" SIMPLETEST_DB="dbal://$DB_AUTH@$HOST_ADDR/$DB_DB?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=$DB_DR#$DB_DB_"
-    - DB_DR="mysqli"    DB_DB="drudbal" DBAL_URL="$DB_DR://$DB_AUTH@$HOST_ADDR/$DB_DB" SIMPLETEST_DB="dbal://$DB_AUTH@$HOST_ADDR/$DB_DB?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=$DB_DR#$DB_DB_"
+    - DB_DR="mysql"  DB_DB="drudbal" DBAL_URL="$DB_DR://$DB_AUTH@$HOST_ADDR/$DB_DB" SIMPLETEST_DB="dbal://$DB_AUTH@$HOST_ADDR/$DB_DB?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=$DB_DR#$DB_DB_"
+    - DB_DR="mysqli" DB_DB="drudbal" DBAL_URL="$DB_DR://$DB_AUTH@$HOST_ADDR/$DB_DB" SIMPLETEST_DB="dbal://$DB_AUTH@$HOST_ADDR/$DB_DB?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=$DB_DR#$DB_DB_"
 
 mysql:
   database: $DB_DB
