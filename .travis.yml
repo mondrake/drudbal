@@ -14,20 +14,18 @@ branches:
     - /^dev-.*/
 
 env:
-  matrix:
-    - DB_DR="pdo_mysql" DB_DB="drudbal"
-    - DB_DR="mysqli"    DB_DB="drudbal"
   global:
     - DRUPAL_PATH="$HOME/drupal8"
     - PATH="$PATH:$DRUPAL_PATH/vendor/bin:$HOME/.composer/vendor/bin"
     # Installation variables.
-    - DRUPAL_DATABASE_NAME="$DB_DB"
-    - DRUPAL_SERVER_ADDRESS="127.0.0.1"
-    - DRUPAL_SERVER_HTTP_PORT="8080"
-    - DBAL_URL="$DB_DR://root:@$DRUPAL_SERVER_ADDRESS/$DRUPAL_DATABASE_NAME"
+    - DB_AUTH="root:"
+    - HOST_ADDR="127.0.0.1"
+    - HTTP_PORT="8080"
     # Drupal PHPUnit test variables.
-    - SIMPLETEST_DB="dbal://root:@$DRUPAL_SERVER_ADDRESS/$DRUPAL_DATABASE_NAME?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=$DB_DR#drudbal_"
-    - SIMPLETEST_BASE_URL="http://$DRUPAL_SERVER_ADDRESS:$DRUPAL_SERVER_HTTP_PORT"
+    - SIMPLETEST_BASE_URL="http://$HOST_ADDR:$HTTP_PORT"
+  matrix:
+    - DB_DR="pdo_mysql" DB_DB="drudbal" DBAL_URL="$DB_DR://$DB_AUTH@$HOST_ADDR/$DB_DB" SIMPLETEST_DB="dbal://$DB_AUTH@$HOST_ADDR/$DB_DB?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=$DB_DR#$DB_DB_"
+    - DB_DR="mysqli"    DB_DB="drudbal" DBAL_URL="$DB_DR://$DB_AUTH@$HOST_ADDR/$DB_DB" SIMPLETEST_DB="dbal://$DB_AUTH@$HOST_ADDR/$DB_DB?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=$DB_DR#$DB_DB_"
 
 mysql:
   database: $DB_DB
@@ -68,17 +66,17 @@ before_install:
 
 install:
   # Copy the repo to the modules/contrib directory.
-  - mkdir -p $HOME/drupal8/modules/contrib/drudbal
-  - cp -r $HOME/build/mondrake/drudbal $HOME/drupal8/modules/contrib
+  - mkdir -p $DRUPAL_PATH/modules/contrib/drudbal
+  - cp -r $HOME/build/mondrake/drudbal $DRUPAL_PATH/modules/contrib
 
   # Create a directory for the driver, and symlink it to the module's one.
-  - mkdir -p $HOME/drupal8/drivers/lib/Drupal/Driver/Database/
-  - cd $HOME/drupal8/drivers/lib/Drupal/Driver/Database/
-  - ln -s $HOME/drupal8/modules/contrib/drudbal/drivers/lib/Drupal/Driver/Database/dbal dbal
+  - mkdir -p $DRUPAL_PATH/drivers/lib/Drupal/Driver/Database/
+  - cd $DRUPAL_PATH/drivers/lib/Drupal/Driver/Database/
+  - ln -s $DRUPAL_PATH/modules/contrib/drudbal/drivers/lib/Drupal/Driver/Database/dbal dbal
 
   # Install Drupal
-  - cd $HOME/drupal8/core
-  - cp $HOME/drupal8/modules/contrib/drudbal/misc/install_cli.php install_cli.php
+  - cd $DRUPAL_PATH/core
+  - cp $DRUPAL_PATH/modules/contrib/drudbal/misc/install_cli.php install_cli.php
   - php install_cli.php
 
   # Get a webserver running.
@@ -87,7 +85,7 @@ install:
   - drupal site:status
 
 script:
-  - cd $HOME/drupal8/core
+  - cd $DRUPAL_PATH/core
   # Only run selected tests to avoid Travis timeout.
   - phpunit --testsuite unit --group Database,Cache,Entity --verbose
   - phpunit --testsuite kernel --group Database,Cache --verbose
