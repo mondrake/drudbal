@@ -18,42 +18,37 @@ matrix:
   allow_failures:
     - php: nightly
 
-addons:
-  apt:
-    packages:
-    - imagemagick
-    - graphicsmagick
+env:
+  - DB_DR="pdo_mysql" DB_DB="drudbal"
+  - DB_DR="mysqli"    DB_DB="drudbal"
 
 env:
   global:
     - DRUPAL_PATH="$HOME/drupal8"
     - PATH="$PATH:$DRUPAL_PATH/vendor/bin:$HOME/.composer/vendor/bin"
     # Installation variables.
-    - DRUPAL_DATABASE_NAME="drudbal"
+    - DRUPAL_DATABASE_NAME="$DB_DB"
     - DRUPAL_SERVER_ADDRESS="127.0.0.1"
     - DRUPAL_SERVER_HTTP_PORT="8080"
-    - DBAL_URL="mysql://root:@$DRUPAL_SERVER_ADDRESS/$DRUPAL_DATABASE_NAME"
+    - DBAL_URL="$DB_DR://root:@$DRUPAL_SERVER_ADDRESS/$DRUPAL_DATABASE_NAME"
     # Drupal PHPUnit test variables.
-    - SIMPLETEST_DB="dbal://root:@$DRUPAL_SERVER_ADDRESS/$DRUPAL_DATABASE_NAME?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=pdo_mysql#drudbal_"
+    - SIMPLETEST_DB="dbal://root:@$DRUPAL_SERVER_ADDRESS/$DRUPAL_DATABASE_NAME?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=$DB_DR#drudbal_"
     - SIMPLETEST_BASE_URL="http://$DRUPAL_SERVER_ADDRESS:$DRUPAL_SERVER_HTTP_PORT"
 
 mysql:
-  database: $DRUPAL_DATABASE_NAME
+  database: $DB_DB
   username: root
   encoding: utf8
 
 before_install:
-  - convert -version
-  - gm -version
-  
   # Remove XDebug
   - phpenv config-rm xdebug.ini
   # Add APCu extension.
   - echo "extension = apcu.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
 
   # Get Drupal core and dependencies
-  - git clone http://git.drupal.org/project/drupal.git $HOME/drupal8
-  - cd $HOME/drupal8
+  - git clone http://git.drupal.org/project/drupal.git $DRUPAL_PATH
+  - cd $DRUPAL_PATH
   - composer install
 
   # Apply Drupal core patches
@@ -88,10 +83,9 @@ install:
   - php install_cli.php
 
   # Get a webserver running.
-  - drupal --quiet server "$DRUPAL_SERVER_ADDRESS:$DRUPAL_SERVER_HTTP_PORT" &
-  - sleep 4s
+  #- drupal --quiet server "$DRUPAL_SERVER_ADDRESS:$DRUPAL_SERVER_HTTP_PORT" &
+  #- sleep 4s
   - drupal site:status
-  - drupal test:debug
 
 script:
   - cd $HOME/drupal8/core
