@@ -36,6 +36,11 @@ mysql:
   encoding: utf8
 
 before_install:
+  - sudo apt-get install imagemagick
+  - convert -version
+  - sudo apt-get install graphicsmagick
+  - gm -version
+  
   # Remove XDebug
   - phpenv config-rm xdebug.ini
   # Add APCu extension.
