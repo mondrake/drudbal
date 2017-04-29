@@ -13,16 +13,10 @@ branches:
   except:
     - /^dev-.*/
 
-matrix:
-  fast_finish: true
-  allow_failures:
-    - php: nightly
-
 env:
-  - DB_DR="pdo_mysql" DB_DB="drudbal"
-  - DB_DR="mysqli"    DB_DB="drudbal"
-
-env:
+  matrix:
+    - DB_DR="pdo_mysql" DB_DB="drudbal"
+    - DB_DR="mysqli"    DB_DB="drudbal"
   global:
     - DRUPAL_PATH="$HOME/drupal8"
     - PATH="$PATH:$DRUPAL_PATH/vendor/bin:$HOME/.composer/vendor/bin"
@@ -39,6 +33,11 @@ mysql:
   database: $DB_DB
   username: root
   encoding: utf8
+
+matrix:
+  fast_finish: true
+  allow_failures:
+    - php: nightly
 
 before_install:
   # Remove XDebug
