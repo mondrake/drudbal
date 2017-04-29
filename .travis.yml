@@ -36,7 +36,8 @@ mysql:
   encoding: utf8
 
 before_install:
-  - sudo apt-get install imagemagick
+  - sudo apt-get update -qq
+  - sudo apt-get install -qq imagemagick
   - convert -version
   - sudo apt-get install graphicsmagick
   - gm -version
