@@ -14,7 +14,7 @@ use Drupal\Core\Database\StatementInterface;
 use Drupal\Core\Database\TransactionCommitFailedException;
 
 use Drupal\Driver\Database\dbal\DbalExtension\PDOMySqlExtension;
-use Drupal\Driver\Database\dbal\DbalExtension\Mysqli;
+use Drupal\Driver\Database\dbal\DbalExtension\MysqliExtension;
 use Drupal\Driver\Database\dbal\Statement\PDODbalStatement;
 use Drupal\Driver\Database\dbal\Statement\MysqliDbalStatement;
 
@@ -44,7 +44,7 @@ class Connection extends DatabaseConnection {
    */
   protected static $dbalClassMap = array(
     'pdo_mysql' => [PDOMySqlExtension::class, PDODbalStatement::class],
-    'mysqli' => [Mysqli::class, MysqliDbalStatement::class],
+    'mysqli' => [MysqliExtension::class, MysqliDbalStatement::class],
   );
 
   /**

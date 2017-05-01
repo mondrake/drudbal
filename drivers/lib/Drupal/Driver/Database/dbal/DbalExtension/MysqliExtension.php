@@ -21,17 +21,15 @@ use Doctrine\DBAL\SQLParserUtils;
 /**
  * Driver specific methods for mysqli.
  */
-class Mysqli extends AbstractMySqlExtension {
+class MysqliExtension extends AbstractMySqlExtension {
 
   /**
-   * The DruDbal connection.
-   *
    * @var @todo
    */
   protected $statementClass;
 
   /**
-   * Constructs a Connection object.
+   * Constructs a MysqliExtension object.
    */
   public function __construct(DruDbalConnection $drudbal_connection, DbalConnection $dbal_connection, $statement_class) {
     $this->connection = $drudbal_connection;
@@ -42,48 +40,7 @@ class Mysqli extends AbstractMySqlExtension {
   /**
    * {@inheritdoc}
    */
-  public static function open(array &$connection_options = []) {
-    try {
-      static::preConnectionOpen($connection_options);
-      $options = array_diff_key($connection_options, [
-        'namespace' => NULL,
-        'prefix' => NULL,
-// @todo remap
-// @todo advanced_options are written to settings.php
-        'driver' => NULL,
-        'database' => NULL,
-        'username' => NULL,
-        'password' => NULL,
-        'host' => NULL,
-        'port' => NULL,
-        'dbal_url' => NULL,
-        'dbal_driver' => NULL,
-        'advanced_options' => NULL,
-      ]);
-      $options['dbname'] = $connection_options['database'];
-      $options['user'] = $connection_options['username'];
-      $options['password'] = $connection_options['password'];
-      $options['host'] = $connection_options['host'];
-      $options['port'] = isset($connection_options['port']) ? $connection_options['port'] : NULL;
-      $options['url'] = isset($connection_options['dbal_url']) ? $connection_options['dbal_url'] : NULL;
-      $options['driver'] = $connection_options['dbal_driver'];
-      $dbal_connection = DBALDriverManager::getConnection($options);
-      static::postConnectionOpen($dbal_connection, $connection_options);
-//var_export($dbal_connection->getSchemaManager()->listTableNames());
-//var_export($dbal_connection->getDriver()->getDatabasePlatform()->getName());
-//var_export($dbal_connection->getWrappedConnection()->getServerVersion());
-//var_export($dbal_connection->getDriver()->getName());
-    }
-    catch (DbalConnectionException $e) {
-      throw new DatabaseExceptionWrapper($e->getMessage(), $e->getCode(), $e);
-    }
-    return $dbal_connection;
-  }
-
-  /**
-   * @todo
-   */
-  protected static function preConnectionOpen(array &$connection_options = []) {
+  public static function preConnectionOpen(array &$connection_options, array &$dbal_connection_options) {
     if (isset($connection_options['_dsn_utf8_fallback']) && $connection_options['_dsn_utf8_fallback'] === TRUE) {
       // Only used during the installer version check, as a fallback from utf8mb4.
       $charset = 'utf8';
@@ -91,14 +48,13 @@ class Mysqli extends AbstractMySqlExtension {
     else {
       $charset = 'utf8mb4';
     }
+
     // Character set is added to dsn to ensure PDO uses the proper character
     // set when escaping. This has security implications. See
     // https://www.drupal.org/node/1201452 for further discussion.
     $connection_options['charset'] = $charset;
-    // Allow PDO options to be overridden.
-    $connection_options += [
-      'driverOptions' => [],
-    ];
+    $dbal_connection_options['charset'] = $charset;
+
     $connection_options['driverOptions'] += [
 //      \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
       // So we don't have to mess around with cursors and unbuffered queries by default.
@@ -118,37 +74,10 @@ class Mysqli extends AbstractMySqlExtension {
   }
 
   /**
-   * @todo
+   * {@inheritdoc}
    */
-  protected static function postConnectionOpen(DbalConnection $dbal_connection, array &$connection_options = []) {
-    // Force MySQL to use the UTF-8 character set. Also set the collation, if a
-    // certain one has been set; otherwise, MySQL defaults to
-    // 'utf8mb4_general_ci' for utf8mb4.
-    if (!empty($connection_options['collation'])) {
-      $dbal_connection->exec('SET NAMES ' . $connection_options['charset'] . ' COLLATE ' . $connection_options['collation']);
-    }
-    else {
-      $dbal_connection->exec('SET NAMES ' . $connection_options['charset']);
-    }
-
-    // Set MySQL init_commands if not already defined.  Default Drupal's MySQL
-    // behavior to conform more closely to SQL standards.  This allows Drupal
-    // to run almost seamlessly on many different kinds of database systems.
-    // These settings force MySQL to behave the same as postgresql, or sqlite
-    // in regards to syntax interpretation and invalid data handling.  See
-    // https://www.drupal.org/node/344575 for further discussion. Also, as MySQL
-    // 5.5 changed the meaning of TRADITIONAL we need to spell out the modes one
-    // by one.
-    $connection_options += [
-      'init_commands' => [],
-    ];
-    $connection_options['init_commands'] += [
-      'sql_mode' => "SET sql_mode = 'ANSI,STRICT_TRANS_TABLES,STRICT_ALL_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,ONLY_FULL_GROUP_BY'",
-    ];
-    // Execute initial commands.
-    foreach ($connection_options['init_commands'] as $sql) {
-      $dbal_connection->exec($sql);
-    }
+  public function clientVersion() {
+    return $this->dbalConnection->getWrappedConnection()->getWrappedResourceHandle()->get_client_info();
   }
 
   /**
@@ -207,13 +136,6 @@ class Mysqli extends AbstractMySqlExtension {
     }
 
     return NULL;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function clientVersion() {
-    return $this->dbalConnection->getWrappedConnection()->getWrappedResourceHandle()->get_client_info();
   }
 
 }
