@@ -13,7 +13,7 @@ use Drupal\Core\Database\IntegrityConstraintViolationException;
 use Drupal\Core\Database\StatementInterface;
 use Drupal\Core\Database\TransactionCommitFailedException;
 
-use Drupal\Driver\Database\dbal\DbalExtension\PDOMySql;
+use Drupal\Driver\Database\dbal\DbalExtension\PDOMySqlExtension;
 use Drupal\Driver\Database\dbal\DbalExtension\Mysqli;
 use Drupal\Driver\Database\dbal\Statement\PDODbalStatement;
 use Drupal\Driver\Database\dbal\Statement\MysqliDbalStatement;
@@ -43,7 +43,7 @@ class Connection extends DatabaseConnection {
    * @var array[]
    */
   protected static $dbalClassMap = array(
-    'pdo_mysql' => [PDOMySql::class, PDODbalStatement::class],
+    'pdo_mysql' => [PDOMySqlExtension::class, PDODbalStatement::class],
     'mysqli' => [Mysqli::class, MysqliDbalStatement::class],
   );
 
@@ -80,8 +80,8 @@ class Connection extends DatabaseConnection {
    * Constructs a Connection object.
    */
   public function __construct(DbalConnection $dbal_connection, array $connection_options = []) {
-    $dbal_extension_class = static::getDbalExtensionClass($dbal_connection->getDriver()->getName());
-    $this->statementClass = static::getStatementClass($dbal_connection->getDriver()->getName());
+    $dbal_extension_class = static::getDbalExtensionClass($connection_options);
+    $this->statementClass = static::getStatementClass($connection_options);
     $this->dbalExtension = new $dbal_extension_class($this, $dbal_connection, $this->statementClass);
     $this->transactionSupport = $this->dbalExtension->transactionSupport($connection_options);
     $this->transactionalDDLSupport = $this->dbalExtension->transactionalDDLSupport($connection_options);
@@ -192,10 +192,7 @@ class Connection extends DatabaseConnection {
    * {@inheritdoc}
    */
   public static function open(array &$connection_options = []) {
-    if (!empty($connection_options['dbal_driver'])) {
-      $dbal_driver = $connection_options['dbal_driver'];
-    }
-    else {
+    if (empty($connection_options['dbal_driver'])) {
       // If 'dbal_driver' is missing from the connection options, then we are
       // likely in an installation scenario where the database URL is invalid.
       // Try establishing a DBAL connection to clarify details.
@@ -205,15 +202,87 @@ class Connection extends DatabaseConnection {
         // needs to use.
         throw new ConnectionNotDefinedException(t('Database connection is not defined properly for the \'dbal\' driver. The \'dbal_url\' key is missing. Check the database connection definition in settings.php.'));
       }
-      $options = [];
-      $options['url'] = $connection_options['dbal_url'];
-      $dbal_connection = DbalDriverManager::getConnection($options);
+      $dbal_connection = DbalDriverManager::getConnection([
+        'url' => $connection_options['dbal_url'],
+      ]);
       // Below shouldn't happen, but if it does, then use the driver name
       // from the just established DBAL connection.
-      $dbal_driver = $dbal_connection->getDriver()->getName();
+      $connection_options['dbal_driver'] = $dbal_connection->getDriver()->getName();
     }
-    $dbal_extension_class = static::getDbalExtensionClass($dbal_driver);
-    return $dbal_extension_class::open($connection_options);
+
+    $dbal_extension_class = static::getDbalExtensionClass($connection_options);
+    try {
+      $dbal_connection_options = static::mapConnectionOptionsToDbal($connection_options);
+      $dbal_extension_class::preConnectionOpen($connection_options, $dbal_connection_options);
+      $dbal_connection = DBALDriverManager::getConnection($dbal_connection_options);
+      $dbal_extension_class::postConnectionOpen($dbal_connection, $connection_options, $dbal_connection_options);
+    }
+    catch (DbalConnectionException $e) {
+      throw new DatabaseExceptionWrapper($e->getMessage(), $e->getCode(), $e);
+    }
+    return $dbal_connection;
+  }
+
+  /**
+   * @todo
+   */
+  public static function mapConnectionOptionsToDbal(array $connection_options) {
+    // Take away from the Drupal connection array the keys that will be
+    // managed separately.
+    $options = array_diff_key($connection_options, [
+      'namespace' => NULL,
+      'driver' => NULL,
+      'prefix' => NULL,
+
+      'database' => NULL,
+      'username' => NULL,
+      'password' => NULL,
+      'host' => NULL,
+      'port' => NULL,
+
+      'pdo' => NULL,
+
+      'dbal_url' => NULL,
+      'dbal_driver' => NULL,
+      'dbal_options' => NULL,
+      'dbal_extension_class' => NULL,
+      'dbal_statement_class' => NULL,
+// @todo advanced_options are written to settings.php - still??
+      'advanced_options' => NULL,
+    ]);
+    // Map to DBAL connection array the main keys from the Drupal connection.
+    if (isset($connection_options['database'])) {
+      $options['dbname'] = $connection_options['database'];
+    }
+    if (isset($connection_options['username'])) {
+      $options['user'] = $connection_options['username'];
+    }
+    if (isset($connection_options['password'])) {
+      $options['password'] = $connection_options['password'];
+    }
+    if (isset($connection_options['host'])) {
+      $options['host'] = $connection_options['host'];
+    }
+    if (isset($connection_options['port'])) {
+      $options['port'] =  $connection_options['port'];
+    }
+    if (isset($connection_options['dbal_url'])) {
+      $options['url'] =  $connection_options['dbal_url'];
+    }
+    if (isset($connection_options['dbal_driver'])) {
+      $options['driver'] = $connection_options['dbal_driver'];
+    }
+    // If there is a 'pdo' key in Drupal, that needs to be mapped to the
+    // 'driverOptions' key in DBAL.
+    $options['driverOptions'] = isset($connection_options['pdo']) ? $connection_options['pdo'] : [];
+    // If there is a 'dbal_options' key in Drupal, merge it with the array
+    // built so far. The content of the 'dbal_options' key will override
+    // overlapping keys built so far.
+    if (isset($connection_options['dbal_options'])) {
+      $options = array_merge($options, $connection_options['dbal_options']);
+    }
+
+    return $options;
   }
 
   /**
@@ -398,10 +467,17 @@ class Connection extends DatabaseConnection {
   /**
    * Gets the DBAL extension class to use for the DBAL driver.
    *
+   * @param array $connection_options
+   *   An array of options for the connection.
+   *
    * @return string
    *   The DBAL extension class.
    */
-  public static function getDbalExtensionClass($driver_name) {
+  public static function getDbalExtensionClass(array $connection_options) {
+    if (isset($connection_options['dbal_extension_class'])) {
+      return $connection_options['dbal_extension_class'];
+    }
+    $driver_name = $connection_options['dbal_driver'];
     if (isset(static::$driverSchemeAliases[$driver_name])) {
       $driver_name = static::$driverSchemeAliases[$driver_name];
     }
@@ -411,10 +487,17 @@ class Connection extends DatabaseConnection {
   /**
    * Gets the Statement class to use for this connection.
    *
+   * @param array $connection_options
+   *   An array of options for the connection.
+   *
    * @return string
    *   The Statement class.
    */
-  public static function getStatementClass($driver_name) {
+  public static function getStatementClass(array $connection_options) {
+    if (isset($connection_options['dbal_statement_class'])) {
+      return $connection_options['dbal_statement_class'];
+    }
+    $driver_name = $connection_options['dbal_driver'];
     if (isset(static::$driverSchemeAliases[$driver_name])) {
       $driver_name = static::$driverSchemeAliases[$driver_name];
     }
