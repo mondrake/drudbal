@@ -13,7 +13,7 @@ use Drupal\Core\Database\IntegrityConstraintViolationException;
 use Drupal\Core\Database\StatementInterface;
 use Drupal\Core\Database\TransactionCommitFailedException;
 
-use Drupal\Driver\Database\dbal\DbalExtension\PDOMySql;
+use Drupal\Driver\Database\dbal\DbalExtension\PDOMySqlExtension;
 use Drupal\Driver\Database\dbal\Statement\PDODbalStatement;
 
 use Doctrine\DBAL\Connection as DbalConnection;
@@ -41,7 +41,7 @@ class Connection extends DatabaseConnection {
    * @var array[]
    */
   protected static $dbalClassMap = array(
-    'pdo_mysql' => [PDOMySql::class, PDODbalStatement::class],
+    'pdo_mysql' => [PDOMySqlExtension::class, PDODbalStatement::class],
   );
 
   /**
