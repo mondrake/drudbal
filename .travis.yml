@@ -57,9 +57,13 @@ before_install:
   - curl https://www.drupal.org/files/issues/2867788-12.patch | git apply
   # [#2871374] SelectTest::testVulnerableComment fails when driver overrides Select::__toString
   - curl https://www.drupal.org/files/issues/2871374-2.patch | git apply
+  # [#2868273] Missing a test for table TRUNCATE while in transaction
+  - curl https://www.drupal.org/files/issues/2868273-9.patch | git apply
+  # [#2874499] Test failures when db driver is set to not support transactions
+  - curl https://www.drupal.org/files/issues/2874499-6-transaction-enabled.patch | git apply
 
   # Get Drupal Console
-  - composer require "drupal/console:~1.0" --prefer-dist --optimize-autoloader
+  #- composer require "drupal/console:~1.0" --prefer-dist --optimize-autoloader
 
   # Get Doctrine DBAL
   - composer require "doctrine/dbal:^2.5.12"
@@ -85,7 +89,7 @@ install:
   # Get a webserver running.
   #- drupal --quiet server "$DRUPAL_SERVER_ADDRESS:$DRUPAL_SERVER_HTTP_PORT" &
   #- sleep 4s
-  - drupal site:status
+  #- drupal site:status
 
 script:
   - cd $DRUPAL_PATH/core

@@ -99,3 +99,4 @@ Issue | Description   |
 [2868273](https://www.drupal.org/node/2868273) | Missing a test for table TRUNCATE while in transaction |
 [2871374](https://www.drupal.org/node/2871374) | SelectTest::testVulnerableComment fails when driver overrides Select::\_\_toString |
 tbd | Add tests for Upsert with default values |
+[2874499](https://www.drupal.org/node/2874499) | Test failures when db driver is set to not support transactions |
