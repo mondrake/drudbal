@@ -15,6 +15,7 @@ use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\ConnectionException as DbalConnectionException;
 use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\Exception\ConnectionException as DbalExceptionConnectionException;
+use Doctrine\DBAL\Exception\DriverException;
 use Doctrine\DBAL\DriverManager as DBALDriverManager;
 use Doctrine\DBAL\SQLParserUtils;
 
@@ -54,23 +55,24 @@ class MysqliExtension extends AbstractMySqlExtension {
     // https://www.drupal.org/node/1201452 for further discussion.
     $connection_options['charset'] = $charset;
     $dbal_connection_options['charset'] = $charset;
-
+/*
     $connection_options['driverOptions'] += [
-//      \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
+      \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
       // So we don't have to mess around with cursors and unbuffered queries by default.
-//      \PDO::MYSQL_ATTR_USE_BUFFERED_QUERY => TRUE,
+      \PDO::MYSQL_ATTR_USE_BUFFERED_QUERY => TRUE,
       // Make sure MySQL returns all matched rows on update queries including
       // rows that actually didn't have to be updated because the values didn't
       // change. This matches common behavior among other database systems.
-//      \PDO::MYSQL_ATTR_FOUND_ROWS => TRUE,
+      \PDO::MYSQL_ATTR_FOUND_ROWS => TRUE,
       // Because MySQL's prepared statements skip the query cache, because it's dumb.
-//      \PDO::ATTR_EMULATE_PREPARES => TRUE,
+      \PDO::ATTR_EMULATE_PREPARES => TRUE,
     ];
     if (defined('\PDO::MYSQL_ATTR_MULTI_STATEMENTS')) {
       // An added connection option in PHP 5.5.21 to optionally limit SQL to a
       // single statement like mysqli.
-//      $connection_options['driverOptions'] += [\PDO::MYSQL_ATTR_MULTI_STATEMENTS => FALSE];
+      $connection_options['driverOptions'] += [\PDO::MYSQL_ATTR_MULTI_STATEMENTS => FALSE];
     }
+*/
   }
 
   /**
@@ -136,6 +138,39 @@ class MysqliExtension extends AbstractMySqlExtension {
     }
 
     return NULL;
+  }
+
+  public function releaseSavepoint($name) {
+    try {
+      $this->dbalConnection->exec('RELEASE SAVEPOINT ' . $name);
+      return 'ok';
+    }
+    catch (DriverException $e) {
+//var_export([$e->getMessage(), $e->getErrorCode(), $e->getSqlState()]);die;
+      // In MySQL (InnoDB), savepoints are automatically committed
+      // when tables are altered or created (DDL transactions are not
+      // supported). This can cause exceptions due to trying to release
+      // savepoints which no longer exist.
+      //
+      // To avoid exceptions when no actual error has occurred, we silently
+      // succeed for MySQL error code 1305 ("SAVEPOINT does not exist").
+      if ($e->getErrorCode() == '1305') {
+        // We also have to explain to PDO that the transaction stack has
+        // been cleaned-up.
+        try {
+          $this->dbalConnection->commit();
+        }
+        catch (\Exception $e) {
+          throw new TransactionCommitFailedException();
+        }
+        // If one SAVEPOINT was released automatically, then all were.
+        // Therefore, clean the transaction stack.
+        return 'all';
+      }
+      else {
+        throw $e;
+      }
+    }
   }
 
 }

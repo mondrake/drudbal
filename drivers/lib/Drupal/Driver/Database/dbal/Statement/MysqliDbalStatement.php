@@ -265,9 +265,10 @@ class MysqliDbalStatement extends PDODbalStatement {
 
         $rows = array();
         if (\PDO::FETCH_COLUMN == $mode) {
-            while (($row = $this->fetchCol()) !== false) {
-                $rows[] = $row;
-            }
+          while (($record = $this->fetch(\PDO::FETCH_ASSOC)) !== FALSE) {
+            $cols = array_keys($record);
+            $rows[] = $record[$cols[$column_index]];
+          }
         } else {
             while (($row = $this->fetch($mode)) !== false) {
                 $rows[] = $row;
@@ -333,11 +334,9 @@ class MysqliDbalStatement extends PDODbalStatement {
    * {@inheritdoc}
    */
   public function fetchCol($index = 0) {
-    $row = $this->fetch(\PDO::FETCH_NUM);
-    if (false === $row) {
-      return false;
-    }
-    return isset($row[$index]) ? $row[$index] : null;
+    $ret = $this->fetchAll(\PDO::FETCH_COLUMN, $index);
+if (!is_array($ret)) {var_export($ret);die;}
+    return $ret;
   }
 
   /**
@@ -347,14 +346,14 @@ class MysqliDbalStatement extends PDODbalStatement {
     $return = [];
     if (isset($fetch)) {
       if (is_string($fetch)) {
-        $this->setFetchMode(\PDO::FETCH_CLASS, $fetch);
+        $this->setFetchMode(\PDO::FETCH_CLASS, $fetch);  // @todo won't work
       }
       else {
-        $this->setFetchMode($fetch);
+        $this->setFetchMode($fetch ?: $this->_defaultFetchMode);
       }
     }
 
-    foreach ($this as $record) {
+    while ($record = $this->fetch()) {
       $record_key = is_object($record) ? $record->$key : $record[$key];
       $return[$record_key] = $record;
     }
@@ -367,9 +366,10 @@ class MysqliDbalStatement extends PDODbalStatement {
    */
   public function fetchAllKeyed($key_index = 0, $value_index = 1) {
     $return = [];
-    $this->setFetchMode(\PDO::FETCH_NUM);
-    foreach ($this as $record) {
-      $return[$record[$key_index]] = $record[$value_index];
+    $this->setFetchMode(\PDO::FETCH_ASSOC);
+    while ($record = $this->fetch(\PDO::FETCH_ASSOC)) {
+      $cols = array_keys($record);
+      $return[$record[$cols[$key_index]]] = $record[$cols[$value_index]];
     }
     return $return;
   }
@@ -378,8 +378,12 @@ class MysqliDbalStatement extends PDODbalStatement {
    * {@inheritdoc}
    */
   public function fetchField($index = 0) {
-    // Call \PDOStatement::fetchColumn to fetch the field.
-    return $this->fetchCol($index);
+    $record = $this->fetch(\PDO::FETCH_ASSOC);
+    if (!$record) {
+      return FALSE;
+    }
+    $cols = array_keys($record);
+    return $record[$cols[$index]];
   }
 
   /**
