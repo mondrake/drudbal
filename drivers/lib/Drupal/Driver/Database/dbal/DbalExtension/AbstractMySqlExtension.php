@@ -332,38 +332,6 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
     return $this->connection->query('CREATE TEMPORARY TABLE {' . $tablename . '} Engine=MEMORY ' . $query, $args, $options);
   }
 
-  public function releaseSavepoint($name) {
-    try {
-      $this->connection->query('RELEASE SAVEPOINT ' . $name); // @todo use dbal connection
-      return 'ok';
-    }
-    catch (DatabaseExceptionWrapper $e) {
-      // In MySQL (InnoDB), savepoints are automatically committed
-      // when tables are altered or created (DDL transactions are not
-      // supported). This can cause exceptions due to trying to release
-      // savepoints which no longer exist.
-      //
-      // To avoid exceptions when no actual error has occurred, we silently
-      // succeed for MySQL error code 1305 ("SAVEPOINT does not exist").
-      if ($e->getPrevious()->errorInfo[1] == '1305') {
-        // We also have to explain to PDO that the transaction stack has
-        // been cleaned-up.
-        try {
-          $this->dbalConnection->commit();
-        }
-        catch (\Exception $e) {
-          throw new TransactionCommitFailedException();
-        }
-        // If one SAVEPOINT was released automatically, then all were.
-        // Therefore, clean the transaction stack.
-        return 'all';
-      }
-      else {
-        throw $e;
-      }
-    }
-  }
-
   /**
    * Returns the version of the database client.
    */
