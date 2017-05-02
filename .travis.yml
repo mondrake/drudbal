@@ -59,7 +59,7 @@ before_install:
   - curl https://www.drupal.org/files/issues/2871374-2.patch | git apply
 
   # Get Drupal Console
-  - composer require "drupal/console:~1.0" --prefer-dist --optimize-autoloader
+  #- composer require "drupal/console:~1.0" --prefer-dist --optimize-autoloader
 
   # Get Doctrine DBAL
   - composer require "doctrine/dbal:^2.5.12"
@@ -82,7 +82,7 @@ install:
   # Get a webserver running.
   #- drupal --quiet server "$DRUPAL_SERVER_ADDRESS:$DRUPAL_SERVER_HTTP_PORT" &
   #- sleep 4s
-  - drupal site:status
+  #- drupal site:status
 
 script:
   - cd $DRUPAL_PATH/core
