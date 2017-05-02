@@ -94,7 +94,6 @@ https://github.com/doctrine/dbal/issues/2380 | Unsigned numeric columns not gene
 Issue | Description   |
 ------|---------------|
 [2605284](https://www.drupal.org/node/2605284) | Testing framework does not work with contributed database drivers |
-[2867700](https://www.drupal.org/node/2867700) | ConnectionUnitTest::testConnectionOpen fails if the driver is not implementing a PDO connection |
 [2867788](https://www.drupal.org/node/2867788) | Log::findCaller fails to report the correct caller function with non-core drivers |
 [2868273](https://www.drupal.org/node/2868273) | Missing a test for table TRUNCATE while in transaction |
 [2871374](https://www.drupal.org/node/2871374) | SelectTest::testVulnerableComment fails when driver overrides Select::\_\_toString |
