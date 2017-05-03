@@ -1,0 +1,260 @@
+diff --git a/core/lib/Drupal/Core/Database/Log.php b/core/lib/Drupal/Core/Database/Log.php
+index bf142c2..f56ed68 100644
+--- a/core/lib/Drupal/Core/Database/Log.php
++++ b/core/lib/Drupal/Core/Database/Log.php
+@@ -125,8 +125,9 @@ public function log(StatementInterface $statement, $args, $time) {
+    * Determine the routine that called this query.
+    *
+    * We define "the routine that called this query" as the first entry in
+-   * the call stack that is not inside the includes/Drupal/Database directory,
+-   * does not begin with db_ and does have a file (which excludes
++   * the call stack that is coming after any method called from the database
++   * Connection class, is not inside the Drupal\Core\Database namespace, does
++   * not begin with db_ and does have a file (which excludes
+    * call_user_func_array(), anonymous functions and similar). That makes the
+    * climbing logic very simple, and handles the variable stack depth caused by
+    * the query builders.
+@@ -142,7 +143,18 @@ public function log(StatementInterface $statement, $args, $time) {
+    *   database call itself.
+    */
+   public function findCaller() {
+-    $stack = debug_backtrace();
++    $stack = $this->getDebugBacktrace();
++
++    // Drop all stack entries before and including methods called from the
++    // database connection class.
++    $connection_class = $this->getConnectionClass();
++    while (count($stack) > 2 && (!empty($stack[0]['class']) ? $stack[0]['class'] : '') !== $connection_class) {
++      array_shift($stack);
++    }
++    while (count($stack) > 2 && (!empty($stack[0]['class']) ? $stack[0]['class'] : '') === $connection_class) {
++      array_shift($stack);
++    }
++
+     for ($i = 0, $stack_count = count($stack); $i < $stack_count; ++$i) {
+       // If the call was made from a function, 'class' will be empty. It's
+       // just easier to give it a default value than to try and integrate
+@@ -164,4 +176,24 @@ public function findCaller() {
+     }
+   }
+ 
++  /**
++   * Gets the class name of the database connection.
++   *
++   * @return string
++   *   Fully qualified class name of the database connection.
++   */
++  protected function getConnectionClass() {
++    return get_class(Database::getConnection($this->connectionKey));
++  }
++
++  /**
++   * Gets the debug backtrace.
++   *
++   * @return array[]
++   *   The debug backtrace.
++   */
++  protected function getDebugBacktrace() {
++    return debug_backtrace();
++  }
++
+ }
+diff --git a/core/tests/Drupal/KernelTests/Core/Database/LoggingTest.php b/core/tests/Drupal/KernelTests/Core/Database/LoggingTest.php
+index 0216d3e..b4e3773 100644
+--- a/core/tests/Drupal/KernelTests/Core/Database/LoggingTest.php
++++ b/core/tests/Drupal/KernelTests/Core/Database/LoggingTest.php
+@@ -2,11 +2,13 @@
+ 
+ namespace Drupal\KernelTests\Core\Database;
+ 
++use Drupal\Core\Database\Log;
+ use Drupal\Core\Database\Database;
+ 
+ /**
+  * Tests the query logging facility.
+  *
++ * @coversDefaultClass \Drupal\Core\Database\Log
+  * @group Database
+  */
+ class LoggingTest extends DatabaseTestBase {
+@@ -135,4 +137,180 @@ public function testGetLoggingWrongKey() {
+     $this->assertEqual($result, [], 'The function getLog with a wrong key returns an empty array.');
+   }
+ 
++  /**
++   * Tests that a log called by a custom database driver returns proper caller.
++   *
++   * @param string $connection_class
++   *   The connection class to be tested.
++   * @param array $expected_entry
++   *   The expected stack entry.
++   *
++   * @covers ::findCaller
++   *
++   * @dataProvider providerContribDriverLog
++   */
++  public function testContribDriverLog($connection_class, array $expected_entry) {
++    $stack = [
++      [
++        'file' => '/var/www/core/lib/Drupal/Core/Database/Log.php',
++        'line' => 118,
++        'function' => 'findCaller',
++        'class' => 'Drupal\\Core\\Database\\Log',
++        'type' => '->',
++        'args' => [],
++      ],
++      [
++        'file' => '/var/www/core/lib/Drupal/Core/Database/Statement.php',
++        'line' => 63,
++        'function' => 'log',
++        'class' => 'Drupal\\Core\\Database\\Log',
++        'type' => '->',
++        'args' => [],
++      ],
++      [
++        'file' => '/var/www/vendor/doctrine/dbal/lib/Doctrine/DBAL/Statement.php',
++        'line' => 168,
++        'function' => 'execute',
++        'class' => 'Drupal\\Core\\Database\\Statement',
++        'type' => '->',
++        'args' => [],
++      ],
++      [
++        'file' => '/var/www/modules/contrib/drudbal/drivers/lib/Drupal/Driver/Database/dbal/Connection.php',
++        'line' => 183,
++        'function' => 'execute',
++        'class' => 'Doctrine\\DBAL\\Statement',
++        'type' => '->',
++        'args' => [],
++      ],
++      [
++        'file' => '/var/www/core/includes/database.inc',
++        'line' => 61,
++        'function' => 'query',
++        'class' => 'Drupal\\Driver\\Database\\dbal\\Connection',
++        'object' => NULL,
++        'type' => '->',
++        'args' => [],
++      ],
++      [
++        'file' => '/var/www/tests/Drupal/KernelTests/Core/Database/LoggingTest.php',
++        'line' => 20,
++        'function' => 'db_query',
++        'args' => [],
++      ],
++      [
++        'class' => 'Drupal\\KernelTests\\Core\\Database\\LoggingTest',
++        'function' => 'testEnableLogging',
++        'type' => '->',
++        'args' => [],
++      ],
++      [
++        'file' => '/var/www/vendor/phpunit/phpunit/src/Framework/TestCase.php',
++        'line' => 908,
++        'function' => 'invokeArgs',
++        'class' => 'ReflectionMethod',
++        'object' => NULL,
++        'type' => '->',
++        'args' => [],
++      ],
++      [
++        'file' => '/var/www/vendor/phpunit/phpunit/src/Framework/TestCase.php',
++        'line' => 768,
++        'function' => 'runTest',
++        'class' => 'PHPUnit_Framework_TestCase',
++        'object' => NULL,
++        'type' => '->',
++        'args' => [],
++      ],
++      [
++        'file' => '/var/www/vendor/phpunit/phpunit/src/Framework/TestResult.php',
++        'line' => 612,
++        'function' => 'runBare',
++        'class' => 'PHPUnit_Framework_TestCase',
++        'object' => NULL,
++        'type' => '->',
++        'args' => [],
++      ],
++      [
++        'file' => '/var/www/vendor/phpunit/phpunit/src/Framework/TestCase.php',
++        'line' => 724,
++        'function' => 'run',
++        'class' => 'PHPUnit_Framework_TestResult',
++        'object' => NULL,
++        'type' => '->',
++        'args' => [],
++      ],
++      [
++        'file' => '-',
++        'line' => 52,
++        'function' => 'run',
++        'class' => 'PHPUnit_Framework_TestCase',
++        'object' => NULL,
++        'type' => '->',
++        'args' => [],
++      ],
++      [
++        'file' => '-',
++        'line' => 1574,
++        'function' => '__phpunit_run_isolated_test',
++        'args' => [],
++      ],
++    ];
++
++    $mock_builder = $this->getMockBuilder(Log::class);
++    $log = $mock_builder
++      ->setMethods(['getConnectionClass', 'getDebugBacktrace'])
++      ->getMock();
++    $log->expects($this->once())
++      ->method('getConnectionClass')
++      ->will($this->returnValue($connection_class));
++    $log->expects($this->once())
++      ->method('getDebugBacktrace')
++      ->will($this->returnValue($stack));
++
++    $result = $log->findCaller($stack);
++    $this->assertEquals($expected_entry, $result);
++  }
++
++  /**
++   * Provides data for the testContribDriverLog test.
++   *
++   * @return array[]
++   *   A simple array of simple arrays, each having the following elements:
++   *   - the contrib driver Connection class fully qualified name
++   *   - the stack entry expected to be returned.
++   *
++   * @see ::testContribDriverLog()
++   */
++  public function providerContribDriverLog() {
++    return [
++      // Test that if the driver Connection is in the stack trace, the first
++      // non-database entry is returned.
++      [
++        'Drupal\\Driver\\Database\\dbal\\Connection',
++        [
++          'class' => 'Drupal\\KernelTests\\Core\\Database\\LoggingTest',
++          'function' => 'testEnableLogging',
++          'file' => '/var/www/tests/Drupal/KernelTests/Core/Database/LoggingTest.php',
++          'line' => 20,
++          'type' => '->',
++          'args' => [],
++        ]
++      ],
++      // Test that if the driver Connection is not in the stack trace, the very
++      // first backtrace entry is returned.
++      [
++        'Drupal\\Driver\\Database\\fake\\Connection',
++        [
++          'file' => '-',
++          'line' => 52,
++          'function' => '__phpunit_run_isolated_test',
++          'args' => [],
++          'class' => null,
++          'type' => null,
++        ]
++      ],
++    ];
++  }
++
+ }
