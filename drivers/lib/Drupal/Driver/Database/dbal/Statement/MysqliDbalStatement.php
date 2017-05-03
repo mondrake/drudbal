@@ -300,6 +300,10 @@ class MysqliDbalStatement implements \IteratorAggregate, StatementInterface {
      */
     public function fetchAll($mode = NULL, $column_index = NULL, $constructor_arguments = NULL)
     {
+        if ($column_index === NULL) {
+          $column_index = 0;
+        }
+
         $mode = $mode ?: $this->_defaultFetchMode;
 
         $rows = array();

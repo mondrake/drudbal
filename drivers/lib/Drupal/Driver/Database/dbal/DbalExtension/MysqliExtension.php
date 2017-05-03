@@ -139,7 +139,7 @@ class MysqliExtension extends AbstractMySqlExtension {
         $e = $e->getPrevious();
       }
 if (!($e instanceof MysqliException)) {
-  throw new \Exception(get_class($e));
+  throw new \Exception('xxx: ' . get_class($e), 0, $e);
 }
       // Match all SQLSTATE 23xxx errors.
       if (substr($e->getSqlState(), -6, -3) == '23') {
