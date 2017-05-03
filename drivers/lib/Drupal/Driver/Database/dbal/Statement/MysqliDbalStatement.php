@@ -11,7 +11,7 @@ use Doctrine\DBAL\SQLParserUtils;
 /**
  * DruDbal implementation of StatementInterface for Mysqli connections.
  */
-class MysqliDbalStatement extends PDODbalStatement {
+class MysqliDbalStatement implements \IteratorAggregate, StatementInterface {
 
   /**
    * @var array
@@ -73,6 +73,8 @@ class MysqliDbalStatement extends PDODbalStatement {
    */
   private $result = false;
 
+  protected $statement;
+
   /**
    * Constructs a MysqliDbalStatement object.
    *
@@ -80,7 +82,12 @@ class MysqliDbalStatement extends PDODbalStatement {
    *   The database connection object for this statement.
    */
   public function __construct(DruDbalConnection $dbh, $statement, $params, array $driver_options = []) {
+
+    $this->statement = $statement;
+
     $this->dbh = $dbh;
+if(strpos($this->statement, 'LIMIT 50') !== FALSE)
+    $this->setFetchMode(\PDO::FETCH_OBJ);
     if (($allow_row_count = $this->dbh->popStatementOption('allowRowCount')) !== NULL) {
       $this->allowRowCount = $allow_row_count;
     }
@@ -244,6 +251,9 @@ class MysqliDbalStatement extends PDODbalStatement {
 
               return $ret;
 
+          case \PDO::FETCH_OBJ:
+              return (object) array_combine($this->_columnNames, $values);
+
           default:
               throw new MysqliException("Unknown fetch type '{$mode}'");
       }
@@ -306,15 +316,12 @@ class MysqliDbalStatement extends PDODbalStatement {
         return $this->_stmt->field_count;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function getIterator()
-    {
-        $data = $this->fetchAll();
-
-        return new \ArrayIterator($data);
-    }
+  /**
+   * {@inheritdoc}
+   */
+  public function getIterator() {
+    return new \ArrayIterator($this->fetchAll());
+  }
 
   /**
    * {@inheritdoc}
@@ -328,7 +335,6 @@ class MysqliDbalStatement extends PDODbalStatement {
    */
   public function fetchCol($index = 0) {
     $ret = $this->fetchAll(\PDO::FETCH_COLUMN, $index);
-if (!is_array($ret)) {var_export($ret);die;}
     return $ret;
   }
 
@@ -383,8 +389,14 @@ if (!is_array($ret)) {var_export($ret);die;}
    * {@inheritdoc}
    */
   public function fetchAssoc() {
-    // Call \PDOStatement::fetch to fetch the row.
     return $this->fetch(\PDO::FETCH_ASSOC);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function fetchObject() {
+    return $this->fetch(\PDO::FETCH_OBJ);
   }
 
   /**
