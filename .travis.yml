@@ -3,7 +3,9 @@
 
 language: php
 
-sudo: false
+sudo: required
+
+dist: precise
 
 php:
   - 7
