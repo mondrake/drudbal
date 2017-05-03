@@ -176,7 +176,7 @@ class Connection extends DatabaseConnection {
           return $stmt->rowCount();
         case Database::RETURN_INSERT_ID:
           $sequence_name = isset($options['sequence_name']) ? $options['sequence_name'] : NULL;
-          return $this->connection->lastInsertId($sequence_name);
+          return (string) $this->connection->lastInsertId($sequence_name);
         case Database::RETURN_NULL:
           return NULL;
         default:

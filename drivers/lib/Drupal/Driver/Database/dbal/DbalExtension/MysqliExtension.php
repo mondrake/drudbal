@@ -138,9 +138,6 @@ class MysqliExtension extends AbstractMySqlExtension {
       if ($e instanceof DatabaseExceptionWrapper) {
         $e = $e->getPrevious();
       }
-if (!($e instanceof MysqliException)) {
-  throw new \Exception('xxx: ' . get_class($e), 0, $e);
-}
       // Match all SQLSTATE 23xxx errors.
       if (substr($e->getSqlState(), -6, -3) == '23') {
         throw new IntegrityConstraintViolationException($message, $e->getCode(), $e);
@@ -166,7 +163,6 @@ if (!($e instanceof MysqliException)) {
       return 'ok';
     }
     catch (DriverException $e) {
-//var_export([$e->getMessage(), $e->getErrorCode(), $e->getSqlState()]);die;
       // In MySQL (InnoDB), savepoints are automatically committed
       // when tables are altered or created (DDL transactions are not
       // supported). This can cause exceptions due to trying to release

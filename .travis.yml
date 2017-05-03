@@ -96,7 +96,7 @@ install:
 script:
   - cd $DRUPAL_PATH/core
   # Only run selected tests to avoid Travis timeout.
-  - ../vendor/bin/phpunit --testsuite kernel --group Database --verbose
+  - ../vendor/bin/phpunit --testsuite kernel --group Database,Cache,Config --verbose
 
 notifications:
   email: false
