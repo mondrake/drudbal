@@ -50,7 +50,8 @@ before_install:
 
   # Apply Drupal core patches
   # [#2605284] Testing framework does not work with contributed database drivers
-  - curl http://www.drupal.org/files/issues/simpletest_is_broken_on-2605284-89.patch | git apply
+  - wget http://www.drupal.org/files/issues/simpletest_is_broken_on-2605284-89.patch
+  - git apply simpletest_is_broken_on-2605284-89.patch
   # [#2867700] ConnectionUnitTest::testConnectionOpen fails if the driver is not implementing a PDO connection
   - curl http://www.drupal.org/files/issues/2867700-28.patch | git apply
   # [#2867788] Log::findCaller fails to report the correct caller function with non-core drivers.
