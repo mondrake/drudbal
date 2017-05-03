@@ -12,6 +12,9 @@ use Drupal\Core\Database\DatabaseNotFoundException;
 use Drupal\Core\Database\IntegrityConstraintViolationException;
 use Drupal\Core\Database\StatementInterface;
 use Drupal\Core\Database\TransactionCommitFailedException;
+use Drupal\Core\Database\TransactionNameNonUniqueException;
+use Drupal\Core\Database\TransactionNoActiveException;
+use Drupal\Core\Database\TransactionOutOfOrderException;
 
 use Drupal\Driver\Database\dbal\DbalExtension\PDOMySqlExtension;
 use Drupal\Driver\Database\dbal\DbalExtension\MysqliExtension;
