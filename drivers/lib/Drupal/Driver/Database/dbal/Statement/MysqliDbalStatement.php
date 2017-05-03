@@ -137,8 +137,7 @@ class MysqliDbalStatement implements \IteratorAggregate, StatementInterface {
   /**
    * {@inheritdoc}
    */
-  public function execute($args = [], $options = [])
-  {
+  public function execute($args = [], $options = []) {
     if (isset($options['fetch'])) {
       if (is_string($options['fetch'])) {
         // @todo remove these comments??? \PDO::FETCH_PROPS_LATE tells __construct() to run before properties
@@ -156,65 +155,65 @@ class MysqliDbalStatement implements \IteratorAggregate, StatementInterface {
       $query_start = microtime(TRUE);
     }
 
-      if (null !== $this->_bindedValues) {
-          if (null !== $args) {
-              if ( ! $this->_bindValues($args)) {
-                  throw new MysqliException($this->_stmt->error, $this->_stmt->errno);
-              }
-          } else {
-              if (!call_user_func_array(array($this->_stmt, 'bind_param'), array($this->types) + $this->_bindedValues)) {
-                  throw new MysqliException($this->_stmt->error, $this->_stmt->sqlstate, $this->_stmt->errno);
-              }
-          }
-      }
-
-      if ( ! $this->_stmt->execute()) {
+    if (null !== $this->_bindedValues) {
+      if (null !== $args) {
+        if ( ! $this->_bindValues($args)) {
+          throw new MysqliException($this->_stmt->error, $this->_stmt->errno);
+        }
+      } else {
+        if (!call_user_func_array(array($this->_stmt, 'bind_param'), array($this->types) + $this->_bindedValues)) {
           throw new MysqliException($this->_stmt->error, $this->_stmt->sqlstate, $this->_stmt->errno);
+        }
+      }
+    }
+
+    if ( ! $this->_stmt->execute()) {
+      throw new MysqliException($this->_stmt->error, $this->_stmt->sqlstate, $this->_stmt->errno);
+    }
+
+    if (null === $this->_columnNames) {
+      $meta = $this->_stmt->result_metadata();
+      if (false !== $meta) {
+        $columnNames = array();
+        foreach ($meta->fetch_fields() as $col) {
+          $columnNames[] = $col->name;
+        }
+        $meta->free();
+        $this->_columnNames = $columnNames;
+      }
+      else {
+        $this->_columnNames = false;
+      }
+    }
+
+    if (false !== $this->_columnNames) {
+      // Store result of every execution which has it. Otherwise it will be impossible
+      // to execute a new statement in case if the previous one has non-fetched rows
+      // @link http://dev.mysql.com/doc/refman/5.7/en/commands-out-of-sync.html
+      $this->_stmt->store_result();
+
+      // Bind row values _after_ storing the result. Otherwise, if mysqli is compiled with libmysql,
+      // it will have to allocate as much memory as it may be needed for the given column type
+      // (e.g. for a LONGBLOB field it's 4 gigabytes)
+      // @link https://bugs.php.net/bug.php?id=51386#1270673122
+      //
+      // Make sure that the values are bound after each execution. Otherwise, if closeCursor() has been
+      // previously called on the statement, the values are unbound making the statement unusable.
+      //
+      // It's also important that row values are bound after _each_ call to store_result(). Otherwise,
+      // if mysqli is compiled with libmysql, subsequently fetched string values will get truncated
+      // to the length of the ones fetched during the previous execution.
+      $this->_rowBindedValues = array_fill(0, count($this->_columnNames), null);
+
+      $refs = array();
+      foreach ($this->_rowBindedValues as $key => &$value) {
+        $refs[$key] =& $value;
       }
 
-      if (null === $this->_columnNames) {
-          $meta = $this->_stmt->result_metadata();
-          if (false !== $meta) {
-              $columnNames = array();
-              foreach ($meta->fetch_fields() as $col) {
-                  $columnNames[] = $col->name;
-              }
-              $meta->free();
-
-              $this->_columnNames = $columnNames;
-          } else {
-              $this->_columnNames = false;
-          }
+      if (!call_user_func_array(array($this->_stmt, 'bind_result'), $refs)) {
+        throw new MysqliException($this->_stmt->error, $this->_stmt->sqlstate, $this->_stmt->errno);
       }
-
-      if (false !== $this->_columnNames) {
-          // Store result of every execution which has it. Otherwise it will be impossible
-          // to execute a new statement in case if the previous one has non-fetched rows
-          // @link http://dev.mysql.com/doc/refman/5.7/en/commands-out-of-sync.html
-          $this->_stmt->store_result();
-
-          // Bind row values _after_ storing the result. Otherwise, if mysqli is compiled with libmysql,
-          // it will have to allocate as much memory as it may be needed for the given column type
-          // (e.g. for a LONGBLOB field it's 4 gigabytes)
-          // @link https://bugs.php.net/bug.php?id=51386#1270673122
-          //
-          // Make sure that the values are bound after each execution. Otherwise, if closeCursor() has been
-          // previously called on the statement, the values are unbound making the statement unusable.
-          //
-          // It's also important that row values are bound after _each_ call to store_result(). Otherwise,
-          // if mysqli is compiled with libmysql, subsequently fetched string values will get truncated
-          // to the length of the ones fetched during the previous execution.
-          $this->_rowBindedValues = array_fill(0, count($this->_columnNames), null);
-
-          $refs = array();
-          foreach ($this->_rowBindedValues as $key => &$value) {
-              $refs[$key] =& $value;
-          }
-
-          if (!call_user_func_array(array($this->_stmt, 'bind_result'), $refs)) {
-              throw new MysqliException($this->_stmt->error, $this->_stmt->sqlstate, $this->_stmt->errno);
-          }
-      }
+    }
 
     $this->result = true;
 
@@ -300,7 +299,7 @@ class MysqliDbalStatement implements \IteratorAggregate, StatementInterface {
         return (object) array_combine($this->_columnNames, $values);
 
       case \PDO::FETCH_CLASS:
-        $ret = new $fetchClass;
+        $ret = new $this->fetchClass;
         for ($i = 0; $i < count($values); $i++) {
           $property = $this->_columnNames[$i];
           $ret->$property = $values[$i];
@@ -433,7 +432,8 @@ class MysqliDbalStatement implements \IteratorAggregate, StatementInterface {
       return FALSE;
     }
     $cols = array_keys($record);
-    return (string) $record[$cols[$index]];
+    $ret = $record[$cols[$index]];
+    return empty($ret) ? NULL : (string) $ret;
   }
 
   /**
