@@ -138,7 +138,6 @@ class Upsert extends QueryUpsert {
     }
 
     // Execute the update via the connection.
-if ($this->connection->getDbalConnection()->getDriver()->getName() === 'mysqli') throw new \Exception('xxx: ' . $comments . $dbal_query->getSQL() . ' --- ' . var_export($dbal_query->getParameters(), TRUE) . ' --- ' . var_export($this->queryOptions, TRUE));
     return $this->connection->query($comments . $dbal_query->getSQL(), $dbal_query->getParameters(), $this->queryOptions);
   }
 
