@@ -89,7 +89,12 @@ class MysqliDbalStatement implements \IteratorAggregate, StatementInterface {
    */
   private $result = false;
 
-  protected $statement;
+  /**
+   * @todo
+   *
+   * @var string
+   */
+  protected $queryString;
 
   /**
    * Constructs a MysqliDbalStatement object.
@@ -99,7 +104,7 @@ class MysqliDbalStatement implements \IteratorAggregate, StatementInterface {
    */
   public function __construct(DruDbalConnection $dbh, $statement, $params, array $driver_options = []) {
 
-    $this->statement = $statement;
+    $this->queryString = $statement;
 
     $this->dbh = $dbh;
     $this->setFetchMode(\PDO::FETCH_OBJ);
