@@ -81,30 +81,23 @@ class MysqliDbalStatement extends PDODbalStatement {
    */
   public function __construct(DruDbalConnection $dbh, $statement, $params, array $driver_options = []) {
     $this->dbh = $dbh;
-//    $this->setFetchMode(\PDO::FETCH_OBJ);
     if (($allow_row_count = $this->dbh->popStatementOption('allowRowCount')) !== NULL) {
       $this->allowRowCount = $allow_row_count;
     }
+
     list($positional_statement, $positional_params, $positional_types) = SQLParserUtils::expandListParameters($statement, $params, []);
     $this->_conn = $dbh->getDbalConnection()->getWrappedConnection()->getWrappedResourceHandle();
     $this->_stmt = $this->_conn->prepare($positional_statement);
-//var_export($statement);echo('<br/>');
-//var_export($positional_statement);echo('<br/>');
-//var_export($params);echo('<br/>');
-//var_export($positional_params);echo('<br/>');
-//var_export($this->_stmt);echo('<br/>');
+
     if (false === $this->_stmt) {
-//var_export([$this->_conn->error, $this->_conn->sqlstate, $this->_conn->errno]);echo('<br/>');die;
         throw new MysqliException($this->_conn->error, $this->_conn->sqlstate, $this->_conn->errno);
     }
+
     $paramCount = $this->_stmt->param_count;
     if (0 < $paramCount) {
         $this->types = str_repeat('s', $paramCount);
         $this->_bindedValues = array_fill(1, $paramCount, null);
     }
-//    $ret = $this->execute($positional_params);
-//    $ret = $this->fetch();
-//var_export([$ret, $this->_stmt]);echo('<br/>');die;
   }
 
   /**
