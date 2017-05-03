@@ -64,7 +64,7 @@ class MysqliDbalStatement implements \IteratorAggregate, StatementInterface {
   /**
    * @var integer
    */
-  protected $_defaultFetchMode = \PDO::FETCH_BOTH;
+  protected $_defaultFetchMode;
 
   /**
    * Indicates whether the statement is in the state when fetching results is possible
@@ -111,6 +111,17 @@ class MysqliDbalStatement implements \IteratorAggregate, StatementInterface {
    */
   public function execute($args = [], $options = [])
   {
+    if (isset($options['fetch'])) {
+      if (is_string($options['fetch'])) {
+        // \PDO::FETCH_PROPS_LATE tells __construct() to run before properties
+        // are added to the object.
+        $this->setFetchMode(\PDO::FETCH_CLASS | \PDO::FETCH_PROPS_LATE, $options['fetch']);
+      }
+      else {
+        $this->setFetchMode($options['fetch']);
+      }
+    }
+
       if (null !== $this->_bindedValues) {
           if (null !== $args) {
               if ( ! $this->_bindValues($args)) {
@@ -171,9 +182,9 @@ class MysqliDbalStatement implements \IteratorAggregate, StatementInterface {
           }
       }
 
-      $this->result = true;
+    $this->result = true;
 
-      return true;
+    return true;
   }
 
   /**
