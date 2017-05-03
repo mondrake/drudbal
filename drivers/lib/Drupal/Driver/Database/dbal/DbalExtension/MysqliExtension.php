@@ -2,15 +2,43 @@
 
 namespace Drupal\Driver\Database\dbal\DbalExtension;
 
+use Drupal\Component\Utility\Unicode;
+use Drupal\Core\Database\Database;
 use Drupal\Core\Database\DatabaseExceptionWrapper;
+use Drupal\Core\Database\DatabaseNotFoundException;
 use Drupal\Core\Database\IntegrityConstraintViolationException;
+use Drupal\Core\Database\SchemaException;
 use Drupal\Core\Database\TransactionCommitFailedException;
+use Drupal\Driver\Database\dbal\Connection as DruDbalConnection;
+
+use Doctrine\DBAL\Connection as DbalConnection;
+use Doctrine\DBAL\ConnectionException as DbalConnectionException;
+use Doctrine\DBAL\DBALException;
+use Doctrine\DBAL\Driver\Mysqli\MysqliException;
+use Doctrine\DBAL\Exception\ConnectionException as DbalExceptionConnectionException;
 use Doctrine\DBAL\Exception\DriverException;
+use Doctrine\DBAL\DriverManager as DBALDriverManager;
+use Doctrine\DBAL\SQLParserUtils;
+
 
 /**
- * Driver specific methods for pdo_mysql.
+ * Driver specific methods for mysqli.
  */
-class PDOMySqlExtension extends AbstractMySqlExtension {
+class MysqliExtension extends AbstractMySqlExtension {
+
+  /**
+   * @var @todo
+   */
+  protected $statementClass;
+
+  /**
+   * Constructs a MysqliExtension object.
+   */
+  public function __construct(DruDbalConnection $drudbal_connection, DbalConnection $dbal_connection, $statement_class) {
+    $this->connection = $drudbal_connection;
+    $this->dbalConnection = $dbal_connection;
+    $this->statementClass = $statement_class;
+  }
 
   /**
    * {@inheritdoc}
@@ -29,8 +57,8 @@ class PDOMySqlExtension extends AbstractMySqlExtension {
     // https://www.drupal.org/node/1201452 for further discussion.
     $connection_options['charset'] = $charset;
     $dbal_connection_options['charset'] = $charset;
-
-    $dbal_connection_options['driverOptions'] += [
+/*
+    $connection_options['driverOptions'] += [
       \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
       // So we don't have to mess around with cursors and unbuffered queries by default.
       \PDO::MYSQL_ATTR_USE_BUFFERED_QUERY => TRUE,
@@ -44,8 +72,23 @@ class PDOMySqlExtension extends AbstractMySqlExtension {
     if (defined('\PDO::MYSQL_ATTR_MULTI_STATEMENTS')) {
       // An added connection option in PHP 5.5.21 to optionally limit SQL to a
       // single statement like mysqli.
-      $dbal_connection_options['driverOptions'] += [\PDO::MYSQL_ATTR_MULTI_STATEMENTS => FALSE];
+      $connection_options['driverOptions'] += [\PDO::MYSQL_ATTR_MULTI_STATEMENTS => FALSE];
     }
+*/
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function clientVersion() {
+    return $this->dbalConnection->getWrappedConnection()->getWrappedResourceHandle()->get_client_info();
+  }
+
+  /**
+   * @todo
+   */
+  public function destroy() {
+    // @todo
   }
 
   /**
@@ -53,9 +96,9 @@ class PDOMySqlExtension extends AbstractMySqlExtension {
    */
   public function prepare($statement, array $params, array $driver_options = []) {
     try {
-      return $this->getDbalConnection()->getWrappedConnection()->prepare($statement, $driver_options);
+      return new $this->statementClass($this->connection, $statement, $params, $driver_options);
     }
-    catch (\PDOException $e) {
+    catch (MysqliException $e) {
       throw new DatabaseExceptionWrapper($e->getMessage(), $e->getCode(), $e);
     }
   }
@@ -90,43 +133,28 @@ class PDOMySqlExtension extends AbstractMySqlExtension {
       else {
         $query_string = NULL;
       }
+//var_export([$e->getMessage(), $e->getErrorCode(), $e->getSqlState()]);die;
       $message = $e->getMessage() . ": " . $query_string . "; " . print_r($args, TRUE);
+      if ($e instanceof DatabaseExceptionWrapper) {
+        $e = $e->getPrevious();
+      }
       // Match all SQLSTATE 23xxx errors.
-      if (substr($e->getCode(), -6, -3) == '23') {
+      if (substr($e->getSqlState(), -6, -3) == '23') {
         throw new IntegrityConstraintViolationException($message, $e->getCode(), $e);
       }
-      elseif ($e->errorInfo[1] == 1153) {
+/*      elseif ($e->errorInfo[1] == 1153) {
         // If a max_allowed_packet error occurs the message length is truncated.
         // This should prevent the error from recurring if the exception is
         // logged to the database using dblog or the like.
         $message = Unicode::truncateBytes($e->getMessage(), self::MIN_MAX_ALLOWED_PACKET);
         throw new DatabaseExceptionWrapper($message, $e->getCode(), $e);
       }
-      else {
+*/      else {
         throw new DatabaseExceptionWrapper($message, 0, $e);
       }
     }
 
     return NULL;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function clientVersion() {
-    return $this->dbalConnection->getWrappedConnection()->getAttribute(\PDO::ATTR_CLIENT_VERSION);
-  }
-
-  /**
-   * @todo
-   */
-  public function destroy() {
-    // Destroy all references to this connection by setting them to NULL.
-    // The Statement class attribute only accepts a new value that presents a
-    // proper callable, so we reset it to PDOStatement.
-    if (!empty($this->statementClass)) {
-      $this->getDbalConnection()->getWrappedConnection()->setAttribute(\PDO::ATTR_STATEMENT_CLASS, ['PDOStatement', []]);
-    }
   }
 
   public function releaseSavepoint($name) {
@@ -135,6 +163,7 @@ class PDOMySqlExtension extends AbstractMySqlExtension {
       return 'ok';
     }
     catch (DriverException $e) {
+//var_export([$e->getMessage(), $e->getErrorCode(), $e->getSqlState()]);die;
       // In MySQL (InnoDB), savepoints are automatically committed
       // when tables are altered or created (DDL transactions are not
       // supported). This can cause exceptions due to trying to release
@@ -142,7 +171,7 @@ class PDOMySqlExtension extends AbstractMySqlExtension {
       //
       // To avoid exceptions when no actual error has occurred, we silently
       // succeed for MySQL error code 1305 ("SAVEPOINT does not exist").
-      if ($e->getPrevious()->errorInfo[1] == '1305') {
+      if ($e->getErrorCode() == '1305') {
         // We also have to explain to PDO that the transaction stack has
         // been cleaned-up.
         try {
