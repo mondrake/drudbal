@@ -2,6 +2,7 @@
 
 namespace Drupal\Driver\Database\dbal\DbalExtension;
 
+use Drupal\Core\Database\DatabaseExceptionWrapper;
 use Drupal\Core\Database\TransactionCommitFailedException;
 use Doctrine\DBAL\Exception\DriverException;
 
@@ -50,7 +51,12 @@ class PDOMySqlExtension extends AbstractMySqlExtension {
    * @todo
    */
   public function prepare($statement, array $params, array $driver_options = []) {
-    return $this->getDbalConnection()->getWrappedConnection()->prepare($statement, $driver_options);
+    try {
+      return $this->getDbalConnection()->getWrappedConnection()->prepare($statement, $driver_options);
+    }
+    catch (\PDOException $e) {
+      throw new DatabaseExceptionWrapper($e->getMessage(), $e->getCode(), $e);
+    }
   }
 
   /**

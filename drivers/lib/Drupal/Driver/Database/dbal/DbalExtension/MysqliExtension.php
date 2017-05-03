@@ -14,10 +14,12 @@ use Drupal\Driver\Database\dbal\Connection as DruDbalConnection;
 use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\ConnectionException as DbalConnectionException;
 use Doctrine\DBAL\DBALException;
+use Doctrine\DBAL\Driver\Mysqli\MysqliException;
 use Doctrine\DBAL\Exception\ConnectionException as DbalExceptionConnectionException;
 use Doctrine\DBAL\Exception\DriverException;
 use Doctrine\DBAL\DriverManager as DBALDriverManager;
 use Doctrine\DBAL\SQLParserUtils;
+
 
 /**
  * Driver specific methods for mysqli.
@@ -93,7 +95,12 @@ class MysqliExtension extends AbstractMySqlExtension {
    * @todo
    */
   public function prepare($statement, array $params, array $driver_options = []) {
-    return new $this->statementClass($this->connection, $statement, $params, $driver_options);
+    try {
+      return new $this->statementClass($this->connection, $statement, $params, $driver_options);
+    }
+    catch (MysqliException $e) {
+      throw new DatabaseExceptionWrapper($e->getMessage(), $e->getCode(), $e);
+    }
   }
 
   /**
