@@ -122,6 +122,11 @@ class MysqliDbalStatement implements \IteratorAggregate, StatementInterface {
       }
     }
 
+    $logger = $this->dbh->getLogger();
+    if (!empty($logger)) {
+      $query_start = microtime(TRUE);
+    }
+
       if (null !== $this->_bindedValues) {
           if (null !== $args) {
               if ( ! $this->_bindValues($args)) {
@@ -183,6 +188,11 @@ class MysqliDbalStatement implements \IteratorAggregate, StatementInterface {
       }
 
     $this->result = true;
+
+    if (!empty($logger)) {
+      $query_end = microtime(TRUE);
+      $logger->log($this, $args, $query_end - $query_start);
+    }
 
     return true;
   }
