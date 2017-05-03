@@ -139,7 +139,7 @@ class Upsert extends QueryUpsert {
 
     // Execute the update via the connection.
     $this->connection->pushStatementOption('allowRowCount', TRUE);
-    return $this->dbalQuery->execute();
+    return $dbal_query->execute();
     //return $this->connection->query($comments . $dbal_query->getSQL(), $dbal_query->getParameters(), $this->queryOptions);
   }
 
