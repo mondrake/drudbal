@@ -14,6 +14,22 @@ use Doctrine\DBAL\SQLParserUtils;
 class MysqliDbalStatement implements \IteratorAggregate, StatementInterface {
 
   /**
+   * Reference to the database connection object for this statement.
+   *
+   * The name $dbh is inherited from \PDOStatement.
+   *
+   * @var \Drupal\Driver\Database\dbal\Connection
+   */
+  public $dbh;
+
+  /**
+   * Is rowCount() execution allowed.
+   *
+   * @var bool
+   */
+  public $allowRowCount = FALSE;
+
+  /**
    * @var array
    */
   protected static $_paramTypeMap = array(
