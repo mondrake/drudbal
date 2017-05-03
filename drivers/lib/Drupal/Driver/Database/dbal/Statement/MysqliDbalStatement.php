@@ -97,6 +97,13 @@ class MysqliDbalStatement implements \IteratorAggregate, StatementInterface {
   protected $queryString;
 
   /**
+   * @todo
+   *
+   * @var string
+   */
+  protected $fetchClass;
+
+  /**
    * Constructs a MysqliDbalStatement object.
    *
    * @param \Drupal\Driver\Database\dbal\Connection $dbh
@@ -134,9 +141,10 @@ class MysqliDbalStatement implements \IteratorAggregate, StatementInterface {
   {
     if (isset($options['fetch'])) {
       if (is_string($options['fetch'])) {
-        // \PDO::FETCH_PROPS_LATE tells __construct() to run before properties
+        // @todo remove these comments??? \PDO::FETCH_PROPS_LATE tells __construct() to run before properties
         // are added to the object.
-        $this->setFetchMode(\PDO::FETCH_CLASS | \PDO::FETCH_PROPS_LATE, $options['fetch']);
+        $this->setFetchMode(\PDO::FETCH_CLASS);
+        $this->fetchClass = $options['fetch'];
       }
       else {
         $this->setFetchMode($options['fetch']);
@@ -290,6 +298,14 @@ class MysqliDbalStatement implements \IteratorAggregate, StatementInterface {
 
       case \PDO::FETCH_OBJ:
         return (object) array_combine($this->_columnNames, $values);
+
+      case \PDO::FETCH_CLASS:
+        $ret = new $fetchClass;
+        for ($i = 0; $i < count($values); $i++) {
+          $property = $this->_columnNames[$i];
+          $ret->$property = $values[$i];
+        }
+        return $ret;
 
       default:
         throw new MysqliException("Unknown fetch type '{$mode}'");
