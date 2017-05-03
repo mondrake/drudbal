@@ -87,7 +87,7 @@ class MysqliDbalStatement implements \IteratorAggregate, StatementInterface {
    *
    * @var bool
    */
-  private $result = false;
+  protected $result = false;
 
   /**
    * @todo
@@ -225,141 +225,131 @@ class MysqliDbalStatement implements \IteratorAggregate, StatementInterface {
    *
    * @return boolean
    */
-  private function _bindValues($values)
-  {
-      $params = array();
-      $types = str_repeat('s', count($values));
-      $params[0] = $types;
+  protected function _bindValues($values) {
+    $params = [];
+    $types = str_repeat('s', count($values));
+    $params[0] = $types;
 
-      foreach ($values as &$v) {
-          $params[] =& $v;
-      }
+    foreach ($values as &$v) {
+      $params[] =& $v;
+    }
 
-      return call_user_func_array(array($this->_stmt, 'bind_param'), $params);
+    return call_user_func_array([$this->_stmt, 'bind_param'], $params);
   }
 
   /**
    * @return boolean|array
    */
-  private function _fetch()
-  {
-      $ret = $this->_stmt->fetch();
+  protected function _fetch() {
+    $ret = $this->_stmt->fetch();
 
-      if (true === $ret) {
-          $values = array();
-          foreach ($this->_rowBindedValues as $v) {
-              $values[] = $v;
-          }
-
-          return $values;
+    if (true === $ret) {
+      $values = [];
+      foreach ($this->_rowBindedValues as $v) {
+        $values[] = $v;
       }
 
-      return $ret;
+      return $values;
+    }
+
+    return $ret;
   }
 
   /**
    * {@inheritdoc}
    */
-  public function fetch($mode = NULL, $cursor_orientation = NULL, $cursor_offset = NULL)
-  {
-      // do not try fetching from the statement if it's not expected to contain result
-      // in order to prevent exceptional situation
-      if (!$this->result) {
-          return false;
-      }
+  public function fetch($mode = NULL, $cursor_orientation = NULL, $cursor_offset = NULL) {
+    // do not try fetching from the statement if it's not expected to contain result
+    // in order to prevent exceptional situation
+    if (!$this->result) {
+      return false;
+    }
 
-      $values = $this->_fetch();
-      if (null === $values) {
-          return false;
-      }
+    $values = $this->_fetch();
+    if (null === $values) {
+      return false;
+    }
 
-      if (false === $values) {
-          throw new MysqliException($this->_stmt->error, $this->_stmt->sqlstate, $this->_stmt->errno);
-      }
+    if (false === $values) {
+      throw new MysqliException($this->_stmt->error, $this->_stmt->sqlstate, $this->_stmt->errno);
+    }
 
-      $mode = $mode ?: $this->_defaultFetchMode;
+    $mode = $mode ?: $this->_defaultFetchMode;
 
-      switch ($mode) {
-          case \PDO::FETCH_NUM:
-              return $values;
+    switch ($mode) {
+      case \PDO::FETCH_NUM:
+        return $values;
 
-          case \PDO::FETCH_ASSOC:
-              return array_combine($this->_columnNames, $values);
+      case \PDO::FETCH_ASSOC:
+        return array_combine($this->_columnNames, $values);
 
-          case \PDO::FETCH_BOTH:
-              $ret = array_combine($this->_columnNames, $values);
-              $ret += $values;
+      case \PDO::FETCH_BOTH:
+        $ret = array_combine($this->_columnNames, $values);
+        $ret += $values;
+        return $ret;
 
-              return $ret;
+      case \PDO::FETCH_OBJ:
+        return (object) array_combine($this->_columnNames, $values);
 
-          case \PDO::FETCH_OBJ:
-              return (object) array_combine($this->_columnNames, $values);
-
-          default:
-              throw new MysqliException("Unknown fetch type '{$mode}'");
-      }
+      default:
+        throw new MysqliException("Unknown fetch type '{$mode}'");
+    }
   }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function fetchAll($mode = NULL, $column_index = NULL, $constructor_arguments = NULL)
-    {
-        if ($column_index === NULL) {
-          $column_index = 0;
-        }
+  /**
+   * {@inheritdoc}
+   */
+  public function fetchAll($mode = NULL, $column_index = NULL, $constructor_arguments = NULL) {
+    $mode = $mode ?: $this->_defaultFetchMode;
 
-        $mode = $mode ?: $this->_defaultFetchMode;
-
-        $rows = array();
-        if (\PDO::FETCH_COLUMN == $mode) {
-          while (($record = $this->fetch(\PDO::FETCH_ASSOC)) !== FALSE) {
-            $cols = array_keys($record);
-            $rows[] = $record[$cols[$column_index]];
-          }
-        } else {
-            while (($row = $this->fetch($mode)) !== false) {
-                $rows[] = $row;
-            }
-        }
-
-        return $rows;
+    $rows = array();
+    if (\PDO::FETCH_COLUMN == $mode) {
+      if ($column_index === NULL) {
+        $column_index = 0;
+      }
+      while (($record = $this->fetch(\PDO::FETCH_ASSOC)) !== FALSE) {
+        $cols = array_keys($record);
+        $rows[] = $record[$cols[$column_index]];
+      }
+    }
+    else {
+      while (($row = $this->fetch($mode)) !== false) {
+        $rows[] = $row;
+      }
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function errorCode()
-    {
-        return $this->_stmt->errno;
-    }
+    return $rows;
+  }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function errorInfo()
-    {
-        return $this->_stmt->error;
-    }
+  /**
+   * {@inheritdoc}
+   */
+  public function errorCode() {
+    return $this->_stmt->errno;
+  }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function closeCursor()
-    {
-        $this->_stmt->free_result();
-        $this->result = false;
+  /**
+   * {@inheritdoc}
+   */
+  public function errorInfo() {
+    return $this->_stmt->error;
+  }
 
-        return true;
-    }
+  /**
+   * {@inheritdoc}
+   */
+  public function closeCursor() {
+    $this->_stmt->free_result();
+    $this->result = false;
+    return true;
+  }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function columnCount()
-    {
-        return $this->_stmt->field_count;
-    }
+  /**
+   * {@inheritdoc}
+   */
+  public function columnCount() {
+    return $this->_stmt->field_count;
+  }
 
   /**
    * {@inheritdoc}
