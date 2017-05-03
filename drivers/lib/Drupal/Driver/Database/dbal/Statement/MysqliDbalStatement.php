@@ -86,7 +86,6 @@ class MysqliDbalStatement implements \IteratorAggregate, StatementInterface {
     $this->statement = $statement;
 
     $this->dbh = $dbh;
-if(strpos($this->statement, 'LIMIT 50') !== FALSE)
     $this->setFetchMode(\PDO::FETCH_OBJ);
     if (($allow_row_count = $this->dbh->popStatementOption('allowRowCount')) !== NULL) {
       $this->allowRowCount = $allow_row_count;
@@ -382,7 +381,7 @@ if(strpos($this->statement, 'LIMIT 50') !== FALSE)
       return FALSE;
     }
     $cols = array_keys($record);
-    return $record[$cols[$index]];
+    return (string) $record[$cols[$index]];
   }
 
   /**

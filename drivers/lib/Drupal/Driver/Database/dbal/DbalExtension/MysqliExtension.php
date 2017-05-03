@@ -85,6 +85,13 @@ class MysqliExtension extends AbstractMySqlExtension {
   /**
    * @todo
    */
+  public function destroy() {
+    // @todo
+  }
+
+  /**
+   * @todo
+   */
   public function prepare($statement, array $params, array $driver_options = []) {
     return new $this->statementClass($this->connection, $statement, $params, $driver_options);
   }

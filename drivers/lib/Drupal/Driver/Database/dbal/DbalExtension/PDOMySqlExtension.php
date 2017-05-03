@@ -47,10 +47,79 @@ class PDOMySqlExtension extends AbstractMySqlExtension {
   }
 
   /**
+   * @todo
+   */
+  public function prepare($statement, array $params, array $driver_options = []) {
+    return $this->getDbalConnection()->getWrappedConnection()->prepare($statement, $driver_options);
+  }
+
+  /**
+   * Wraps and re-throws any DBALException thrown by static::query().
+   *
+   * @param \Exception $e
+   *   The exception thrown by query().
+   * @param $query
+   *   The query executed by query().
+   * @param array $args
+   *   An array of arguments for the prepared statement.
+   * @param array $options
+   *   An associative array of options to control how the query is run.
+   *
+   * @return @todo
+   *
+   * @throws \Drupal\Core\Database\DatabaseExceptionWrapper
+   */
+  public function handleQueryException(\Exception $e, $query, array $args = [], $options = []) {
+    if ($options['throw_exception']) {
+      // Wrap the exception in another exception, because PHP does not allow
+      // overriding Exception::getMessage(). Its message is the extra database
+      // debug information.
+      if ($query instanceof StatementInterface) {
+        $query_string = $query->getQueryString();
+      }
+      elseif (is_string($query)) {
+        $query_string = $query;
+      }
+      else {
+        $query_string = NULL;
+      }
+      $message = $e->getMessage() . ": " . $query_string . "; " . print_r($args, TRUE);
+      // Match all SQLSTATE 23xxx errors.
+      if (substr($e->getCode(), -6, -3) == '23') {
+        throw new IntegrityConstraintViolationException($message, $e->getCode(), $e);
+      }
+      elseif ($e->errorInfo[1] == 1153) {
+        // If a max_allowed_packet error occurs the message length is truncated.
+        // This should prevent the error from recurring if the exception is
+        // logged to the database using dblog or the like.
+        $message = Unicode::truncateBytes($e->getMessage(), self::MIN_MAX_ALLOWED_PACKET);
+        throw new DatabaseExceptionWrapper($message, $e->getCode(), $e);
+      }
+      else {
+        throw new DatabaseExceptionWrapper($message, 0, $e);
+      }
+    }
+
+    return NULL;
+  }
+
+  /**
    * {@inheritdoc}
    */
   public function clientVersion() {
     return $this->dbalConnection->getWrappedConnection()->getAttribute(\PDO::ATTR_CLIENT_VERSION);
+  }
+
+  /**
+   * @todo
+   */
+  public function destroy() {
+    // Destroy all references to this connection by setting them to NULL.
+    // The Statement class attribute only accepts a new value that presents a
+    // proper callable, so we reset it to PDOStatement.
+    if (!empty($this->statementClass)) {
+      $this->getDbalConnection()->getWrappedConnection()->setAttribute(\PDO::ATTR_STATEMENT_CLASS, ['PDOStatement', []]);
+    }
   }
 
   public function releaseSavepoint($name) {
