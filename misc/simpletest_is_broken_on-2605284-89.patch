@@ -1,0 +1,541 @@
+diff --git a/core/lib/Drupal/Core/Database/Connection.php b/core/lib/Drupal/Core/Database/Connection.php
+index 803689b2c4..5fa7b1eeab 100644
+--- a/core/lib/Drupal/Core/Database/Connection.php
++++ b/core/lib/Drupal/Core/Database/Connection.php
+@@ -2,6 +2,8 @@
+ 
+ namespace Drupal\Core\Database;
+ 
++use Psr\Http\Message\UriInterface;
++
+ /**
+  * Base Database API class.
+  *
+@@ -1471,4 +1473,62 @@ public function __sleep() {
+     throw new \LogicException('The database connection is not serializable. This probably means you are serializing an object that has an indirect reference to the database connection. Adjust your code so that is not necessary. Alternatively, look at DependencySerializationTrait as a temporary solution.');
+   }
+ 
++  /**
++   * A helper function to convert a URI into connection options.
++   *
++   * @internal
++   *   This method should not be called. Use
++   *   \Drupal\Core\Database\Database::convertDbUrlToConnectionInfo() instead.
++   *
++   * @param \Psr\Http\Message\UriInterface $uri
++   *   The URI to be converted to a connection array.
++   * @param string $root
++   *   The root directory of the Drupal installation.
++   * @param array $connection_options
++   *   The connection options.
++   *
++   * @return array
++   *   The connection options.
++   *
++   * @see \Drupal\Core\Database\Database::convertDbUrlToConnectionInfo()
++   */
++  public static function convertDbUrlToConnectionInfoHelper(UriInterface $uri, $root, array $connection_options) {
++    $port = $uri->getPort();
++    if (!empty($port)) {
++      $connection_options['port'] = $port;
++    }
++    $user_info = explode(':', $uri->getUserInfo(), 2);
++    $connection_options['username'] = $user_info[0];
++    $connection_options['password'] = isset($user_info[1]) ? $user_info[1] : '';
++
++    return $connection_options;
++  }
++
++  /**
++   * A helper function to convert connection options into a URI.
++   *
++   * @internal
++   *   This method should not be called. Use
++   *   \Drupal\Core\Database\Database::getConnectionInfoAsUrl() instead.
++   *
++   * @param array $connection_options
++   *   The array of connection options for a database connection.
++   * @param \Psr\Http\Message\UriInterface $uri
++   *   The URI to connect to the database.
++   *
++   * @return $this|\Psr\Http\Message\UriInterface
++   *   The URI to connect to the database.
++   *
++   * @see \Drupal\Core\Database\Database::getConnectionInfoAsUrl()
++   */
++  public static function getConnectionInfoAsUrlHelper(array $connection_options, UriInterface $uri) {
++    $user = isset($connection_options['username']) ? $connection_options['username'] : '';
++    $password = isset($connection_options['password']) ? $connection_options['password'] : '';
++    $uri = $uri->withUserInfo($user, $password);
++    if (!empty($connection_options['port'])) {
++      $uri = $uri->withPort($connection_options['port']);
++    }
++    return $uri;
++  }
++
+ }
+diff --git a/core/lib/Drupal/Core/Database/Database.php b/core/lib/Drupal/Core/Database/Database.php
+index dd19018828..690792c390 100644
+--- a/core/lib/Drupal/Core/Database/Database.php
++++ b/core/lib/Drupal/Core/Database/Database.php
+@@ -2,6 +2,8 @@
+ 
+ namespace Drupal\Core\Database;
+ 
++use GuzzleHttp\Psr7\Uri;
++
+ /**
+  * Primary front-controller for the database system.
+  *
+@@ -365,13 +367,8 @@
+       throw new DriverNotSpecifiedException('Driver not specified for this database connection: ' . $key);
+     }
+ 
+-    if (!empty(self::$databaseInfo[$key][$target]['namespace'])) {
+-      $driver_class = self::$databaseInfo[$key][$target]['namespace'] . '\\Connection';
+-    }
+-    else {
+-      // Fallback for Drupal 7 settings.php.
+-      $driver_class = "Drupal\\Core\\Database\\Driver\\{$driver}\\Connection";
+-    }
++    $namespace = !empty(self::$databaseInfo[$key][$target]['namespace']) ? self::$databaseInfo[$key][$target]['namespace'] : NULL;
++    $driver_class = static::getDatabaseConnectionClass($driver, $namespace);
+ 
+     $pdo_connection = $driver_class::open(self::$databaseInfo[$key][$target]);
+     $new_connection = new $driver_class($pdo_connection, self::$databaseInfo[$key][$target]);
+@@ -455,36 +452,33 @@ public static function ignoreTarget($key, $target) {
+    *   requirements.
+    */
+   public static function convertDbUrlToConnectionInfo($url, $root) {
+-    $info = parse_url($url);
+-    if (!isset($info['scheme'], $info['host'], $info['path'])) {
++    $uri = new Uri($url);
++    if (empty($uri->getHost()) || empty($uri->getScheme()) || empty($uri->getPath())) {
+       throw new \InvalidArgumentException('Minimum requirement: driver://host/database');
+     }
+-    $info += [
+-      'user' => '',
+-      'pass' => '',
+-      'fragment' => '',
+-    ];
+ 
+-    // A SQLite database path with two leading slashes indicates a system path.
+-    // Otherwise the path is relative to the Drupal root.
+-    if ($info['path'][0] === '/') {
+-      $info['path'] = substr($info['path'], 1);
+-    }
+-    if ($info['scheme'] === 'sqlite' && $info['path'][0] !== '/') {
+-      $info['path'] = $root . '/' . $info['path'];
+-    }
+-
+-    $database = [
+-      'driver' => $info['scheme'],
+-      'username' => $info['user'],
+-      'password' => $info['pass'],
+-      'host' => $info['host'],
+-      'database' => $info['path'],
++    // Discover if the URL has a driver namespace.
++    $parts = [];
++    parse_str($uri->getQuery(), $parts);
++    $namespace = isset($parts['namespace']) ? $parts['namespace'] : '';
++
++    $fragment = $uri->getFragment();
++    $connection_options = [
++     'driver' => $uri->getScheme(),
++     'host' => $uri->getHost(),
++     // Strip the first leading slash of the path to get the database name.
++     // Note that additional leading slashes have meaning for some database
++     // drivers.
++     'database' => substr($uri->getPath(), 1),
++     'prefix' => $fragment ?: NULL,
++     'namespace' => $namespace,
+     ];
+-    if (isset($info['port'])) {
+-      $database['port'] = $info['port'];
++
++    $driver_class = static::getDatabaseConnectionClass($connection_options['driver'], $connection_options['namespace']);
++    if (!class_exists($driver_class)) {
++      throw new \RuntimeException("Can not convert $url to a database connection, class $driver_class does not exist");
+     }
+-    return $database;
++    return $driver_class::convertDbUrlToConnectionInfoHelper($uri, $root, $connection_options);
+   }
+ 
+   /**
+@@ -498,29 +492,67 @@ public static function convertDbUrlToConnectionInfo($url, $root) {
+    */
+   public static function getConnectionInfoAsUrl($key = 'default') {
+     $db_info = static::getConnectionInfo($key);
+-    if ($db_info['default']['driver'] == 'sqlite') {
+-      $db_url = 'sqlite://localhost/' . $db_info['default']['database'];
++    if (empty($db_info)) {
++      throw new \RuntimeException("Database connection $key not defined");
+     }
+-    else {
+-      $user = '';
+-      if ($db_info['default']['username']) {
+-        $user = $db_info['default']['username'];
+-        if ($db_info['default']['password']) {
+-          $user .= ':' . $db_info['default']['password'];
+-        }
+-        $user .= '@';
+-      }
++    return static::convertConnectionInfoToUrl($db_info);
++  }
+ 
+-      $db_url = $db_info['default']['driver'] . '://' . $user . $db_info['default']['host'];
+-      if (isset($db_info['default']['port'])) {
+-        $db_url .= ':' . $db_info['default']['port'];
+-      }
+-      $db_url .= '/' . $db_info['default']['database'];
++  /**
++   * Convert a database connection info array to a URL.
++   *
++   * @param array $db_info
++   *   The database connection info.
++   *
++   * @return string
++   *   The connection info as a URL.
++   */
++  public static function convertConnectionInfoToUrl(array $db_info) {
++
++    $namespace = isset($db_info['default']['namespace']) ? $db_info['default']['namespace'] : NULL;
++    $driver_class = static::getDatabaseConnectionClass($db_info['default']['driver'], $namespace);
++
++    // Some database driver do not need a host setting to work but in order to
++    // be converted into a URL they do.
++    $host = isset($db_info['default']['host']) ? $db_info['default']['host'] : 'localhost';
++
++    // Create a URI with the minimum requirement of driver://host/database.
++    $uri = new Uri();
++    $uri = $uri->withScheme($db_info['default']['driver'])
++      ->withHost($host)
++      ->withPath('/' . $db_info['default']['database']);
++
++    if (!empty($db_info['default']['prefix']['default'])) {
++      $uri = $uri->withFragment($db_info['default']['prefix']['default']);
++    }
++    if (!empty($db_info['default']['namespace'])) {
++      $uri = Uri::withQueryValue($uri, 'namespace', $db_info['default']['namespace']);
+     }
+-    if ($db_info['default']['prefix']['default']) {
+-      $db_url .= '#' . $db_info['default']['prefix']['default'];
++
++    $uri = $driver_class::getConnectionInfoAsUrlHelper($db_info['default'], $uri);
++    return (string) $uri;
++  }
++
++  /**
++   * Gets the fully qualified connection class name for a database driver.
++   *
++   * @param string $driver
++   *   The database driver to get the class for.
++   * @param string $namespace
++   *   A custom namespace to use.
++   *
++   * @return string
++   *   The fully qualified class name of the driver's database connection class.
++   */
++  public static function getDatabaseConnectionClass($driver, $namespace) {
++    if ($namespace) {
++      $driver_class = $namespace . '\\Connection';
++    }
++    else {
++      // Fallback for Drupal 7 settings.php.
++      $driver_class = 'Drupal\\Core\\Database\\Driver\\' . $driver . '\\Connection';
+     }
+-    return $db_url;
++    return $driver_class;
+   }
+ 
+ }
+diff --git a/core/lib/Drupal/Core/Database/Driver/sqlite/Connection.php b/core/lib/Drupal/Core/Database/Driver/sqlite/Connection.php
+index a14a83f077..9770209c67 100644
+--- a/core/lib/Drupal/Core/Database/Driver/sqlite/Connection.php
++++ b/core/lib/Drupal/Core/Database/Driver/sqlite/Connection.php
+@@ -5,6 +5,7 @@
+ use Drupal\Core\Database\Database;
+ use Drupal\Core\Database\DatabaseNotFoundException;
+ use Drupal\Core\Database\Connection as DatabaseConnection;
++use Psr\Http\Message\UriInterface;
+ 
+ /**
+  * SQLite implementation of \Drupal\Core\Database\Connection.
+@@ -437,4 +438,30 @@ public function getFullQualifiedTableName($table) {
+     return $prefix . $table;
+   }
+ 
++  /**
++   * {@inheritdoc}
++   */
++  public static function convertDbUrlToConnectionInfoHelper(UriInterface $uri, $root, array $database) {
++    // A SQLite database with a leading slash indicates a system path.
++    // Otherwise the path is relative to the Drupal root.
++    if ($database['database'][0] !== '/') {
++      $database['database'] = $root . '/' . $database['database'];
++    }
++    // The host setting is meaningless for SQLite databases.
++    unset($database['host']);
++    return $database;
++  }
++
++  /**
++   * {@inheritdoc}
++   */
++  public static function getConnectionInfoAsUrlHelper(array $connection_options, UriInterface $uri) {
++    if ($connection_options['database'][0] === '/') {
++      // If the database is an absolute path add an additional leading slash to
++      // denote this.
++      $uri = $uri->withPath('/' . $connection_options['database']);
++    }
++    return $uri;
++  }
++
+ }
+diff --git a/core/modules/simpletest/simpletest.module b/core/modules/simpletest/simpletest.module
+index 8b1cc2398b..5500312709 100644
+--- a/core/modules/simpletest/simpletest.module
++++ b/core/modules/simpletest/simpletest.module
+@@ -309,9 +309,11 @@ function simpletest_phpunit_configuration_filepath() {
+  */
+ function simpletest_phpunit_run_command(array $unescaped_test_classnames, $phpunit_file, &$status = NULL, &$output = NULL) {
+   global $base_url;
+-  // Setup an environment variable containing the database connection so that
+-  // functional tests can connect to the database.
+-  putenv('SIMPLETEST_DB=' . Database::getConnectionInfoAsUrl());
++  if (Database::getConnectionInfo()) {
++    // Setup an environment variable containing the database connection so that
++    // functional tests can connect to the database.
++    putenv('SIMPLETEST_DB=' . Database::getConnectionInfoAsUrl());
++  }
+ 
+   // Setup an environment variable containing the base URL, if it is available.
+   // This allows functional tests to browse the site under test. When running
+diff --git a/core/modules/system/tests/src/Kernel/Scripts/DbCommandBaseTest.php b/core/modules/system/tests/src/Kernel/Scripts/DbCommandBaseTest.php
+index cb7f5eb7c4..62c14be077 100644
+--- a/core/modules/system/tests/src/Kernel/Scripts/DbCommandBaseTest.php
++++ b/core/modules/system/tests/src/Kernel/Scripts/DbCommandBaseTest.php
+@@ -58,18 +58,16 @@ public function testSpecifyDatabaseDoesNotExist() {
+    * Test supplying database connection as a url.
+    */
+   public function testSpecifyDbUrl() {
+-    $connection_info = Database::getConnectionInfo('default')['default'];
+-
+     $command = new DbCommandBaseTester();
+     $command_tester = new CommandTester($command);
+     $command_tester->execute([
+-      '-db-url' => $connection_info['driver'] . '://' . $connection_info['username'] . ':' . $connection_info['password'] . '@' . $connection_info['host'] . '/' . $connection_info['database']
++      '-db-url' => Database::getConnectionInfoAsUrl('default')
+     ]);
+     $this->assertEquals('db-tools', $command->getDatabaseConnection($command_tester->getInput())->getKey());
+ 
+     Database::removeConnection('db-tools');
+     $command_tester->execute([
+-      '--database-url' => $connection_info['driver'] . '://' . $connection_info['username'] . ':' . $connection_info['password'] . '@' . $connection_info['host'] . '/' . $connection_info['database']
++      '--database-url' => Database::getConnectionInfoAsUrl('default')
+     ]);
+     $this->assertEquals('db-tools', $command->getDatabaseConnection($command_tester->getInput())->getKey());
+   }
+@@ -91,9 +89,8 @@ public function testPrefix() {
+     ]);
+     $this->assertEquals('extra', $command->getDatabaseConnection($command_tester->getInput())->tablePrefix());
+ 
+-    $connection_info = Database::getConnectionInfo('default')['default'];
+     $command_tester->execute([
+-      '-db-url' => $connection_info['driver'] . '://' . $connection_info['username'] . ':' . $connection_info['password'] . '@' . $connection_info['host'] . '/' . $connection_info['database'],
++      '-db-url' => Database::getConnectionInfoAsUrl('default'),
+       '--prefix' => 'extra2',
+     ]);
+     $this->assertEquals('extra2', $command->getDatabaseConnection($command_tester->getInput())->tablePrefix());
+diff --git a/core/tests/Drupal/KernelTests/KernelTestBase.php b/core/tests/Drupal/KernelTests/KernelTestBase.php
+index 7bbb774016..d6b59179f0 100644
+--- a/core/tests/Drupal/KernelTests/KernelTestBase.php
++++ b/core/tests/Drupal/KernelTests/KernelTestBase.php
+@@ -463,7 +463,7 @@ protected function getDatabaseConnectionInfo() {
+         // Replace the full table prefix definition to ensure that no table
+         // prefixes of the test runner leak into the test.
+         $connection_info[$target]['prefix'] = [
+-          'default' => $value['prefix']['default'] . $this->databasePrefix,
++          'default' => $this->databasePrefix,
+         ];
+       }
+     }
+diff --git a/core/tests/Drupal/Tests/Core/Database/ConnectionTest.php b/core/tests/Drupal/Tests/Core/Database/ConnectionTest.php
+index e455847028..95cde84652 100644
+--- a/core/tests/Drupal/Tests/Core/Database/ConnectionTest.php
++++ b/core/tests/Drupal/Tests/Core/Database/ConnectionTest.php
+@@ -2,7 +2,7 @@
+ 
+ namespace Drupal\Tests\Core\Database;
+ 
+-use Drupal\Tests\Core\Database\Stub\StubConnection;
++use Drupal\Tests\Core\Database\Stub\Connection;
+ use Drupal\Tests\UnitTestCase;
+ 
+ /**
+@@ -46,10 +46,10 @@ public function providerPrefixRoundTrip() {
+    */
+   public function testPrefixRoundTrip($expected, $prefix_info) {
+     $mock_pdo = $this->getMock('Drupal\Tests\Core\Database\Stub\StubPDO');
+-    $connection = new StubConnection($mock_pdo, []);
++    $connection = new Connection($mock_pdo, []);
+ 
+     // setPrefix() is protected, so we make it accessible with reflection.
+-    $reflection = new \ReflectionClass('Drupal\Tests\Core\Database\Stub\StubConnection');
++    $reflection = new \ReflectionClass(Connection::class);
+     $set_prefix = $reflection->getMethod('setPrefix');
+     $set_prefix->setAccessible(TRUE);
+ 
+@@ -95,7 +95,7 @@ public function providerTestPrefixTables() {
+    */
+   public function testPrefixTables($expected, $prefix_info, $query) {
+     $mock_pdo = $this->getMock('Drupal\Tests\Core\Database\Stub\StubPDO');
+-    $connection = new StubConnection($mock_pdo, ['prefix' => $prefix_info]);
++    $connection = new Connection($mock_pdo, ['prefix' => $prefix_info]);
+     $this->assertEquals($expected, $connection->prefixTables($query));
+   }
+ 
+@@ -129,7 +129,7 @@ public function providerEscapeMethods() {
+    */
+   public function testEscapeMethods($expected, $name) {
+     $mock_pdo = $this->getMock('Drupal\Tests\Core\Database\Stub\StubPDO');
+-    $connection = new StubConnection($mock_pdo, []);
++    $connection = new Connection($mock_pdo, []);
+     $this->assertEquals($expected, $connection->escapeDatabase($name));
+     $this->assertEquals($expected, $connection->escapeTable($name));
+     $this->assertEquals($expected, $connection->escapeField($name));
+@@ -173,7 +173,7 @@ public function providerGetDriverClass() {
+    */
+   public function testGetDriverClass($expected, $namespace, $class) {
+     $mock_pdo = $this->getMock('Drupal\Tests\Core\Database\Stub\StubPDO');
+-    $connection = new StubConnection($mock_pdo, ['namespace' => $namespace]);
++    $connection = new Connection($mock_pdo, ['namespace' => $namespace]);
+     // Set the driver using our stub class' public property.
+     $this->assertEquals($expected, $connection->getDriverClass($class));
+   }
+@@ -204,7 +204,7 @@ public function providerSchema() {
+    */
+   public function testSchema($expected, $driver, $namespace) {
+     $mock_pdo = $this->getMock('Drupal\Tests\Core\Database\Stub\StubPDO');
+-    $connection = new StubConnection($mock_pdo, ['namespace' => $namespace]);
++    $connection = new Connection($mock_pdo, ['namespace' => $namespace]);
+     $connection->driver = $driver;
+     $this->assertInstanceOf($expected, $connection->schema());
+   }
+@@ -214,9 +214,9 @@ public function testSchema($expected, $driver, $namespace) {
+    */
+   public function testDestroy() {
+     $mock_pdo = $this->getMock('Drupal\Tests\Core\Database\Stub\StubPDO');
+-    // Mocking StubConnection gives us access to the $schema attribute.
++    // Mocking Connection gives us access to the $schema attribute.
+     $connection = $this->getMock(
+-      'Drupal\Tests\Core\Database\Stub\StubConnection',
++      Connection::class,
+       NULL,
+       [$mock_pdo, ['namespace' => 'Drupal\\Tests\\Core\\Database\\Stub\\Driver']]
+     );
+@@ -261,7 +261,7 @@ public function providerMakeComments() {
+    */
+   public function testMakeComments($expected, $comment_array) {
+     $mock_pdo = $this->getMock('Drupal\Tests\Core\Database\Stub\StubPDO');
+-    $connection = new StubConnection($mock_pdo, []);
++    $connection = new Connection($mock_pdo, []);
+     $this->assertEquals($expected, $connection->makeComment($comment_array));
+   }
+ 
+@@ -288,10 +288,10 @@ public function providerFilterComments() {
+    */
+   public function testFilterComments($expected, $comment) {
+     $mock_pdo = $this->getMock('Drupal\Tests\Core\Database\Stub\StubPDO');
+-    $connection = new StubConnection($mock_pdo, []);
++    $connection = new Connection($mock_pdo, []);
+ 
+     // filterComment() is protected, so we make it accessible with reflection.
+-    $reflection = new \ReflectionClass('Drupal\Tests\Core\Database\Stub\StubConnection');
++    $reflection = new \ReflectionClass(Connection::class);
+     $filter_comment = $reflection->getMethod('filterComment');
+     $filter_comment->setAccessible(TRUE);
+ 
+diff --git a/core/tests/Drupal/Tests/Core/Database/Stub/StubConnection.php b/core/tests/Drupal/Tests/Core/Database/Stub/Connection.php
+similarity index 91%
+rename from core/tests/Drupal/Tests/Core/Database/Stub/StubConnection.php
+rename to core/tests/Drupal/Tests/Core/Database/Stub/Connection.php
+index 4692dffb87..06500f7559 100644
+--- a/core/tests/Drupal/Tests/Core/Database/Stub/StubConnection.php
++++ b/core/tests/Drupal/Tests/Core/Database/Stub/Connection.php
+@@ -2,7 +2,7 @@
+ 
+ namespace Drupal\Tests\Core\Database\Stub;
+ 
+-use Drupal\Core\Database\Connection;
++use Drupal\Core\Database\Connection as DatabaseConnection;
+ use Drupal\Core\Database\StatementEmpty;
+ 
+ /**
+@@ -10,7 +10,7 @@
+  *
+  * Includes minimal implementations of Connection's abstract methods.
+  */
+-class StubConnection extends Connection {
++class Connection extends DatabaseConnection {
+ 
+   /**
+    * Public property so we can test driver loading mechanism.
+diff --git a/core/tests/Drupal/Tests/Core/Database/UrlConversionTest.php b/core/tests/Drupal/Tests/Core/Database/UrlConversionTest.php
+index 06653f6c3e..3f6c010967 100644
+--- a/core/tests/Drupal/Tests/Core/Database/UrlConversionTest.php
++++ b/core/tests/Drupal/Tests/Core/Database/UrlConversionTest.php
+@@ -37,25 +37,38 @@ public function providerConvertDbUrlToConnectionInfo() {
+     $url1 = 'mysql://test_user:test_pass@test_host:3306/test_database';
+     $database_array1 = [
+       'driver' => 'mysql',
+-      'username' => 'test_user',
+-      'password' => 'test_pass',
+       'host' => 'test_host',
+       'database' => 'test_database',
+-      'port' => '3306',
++      'prefix' => NULL,
++      'port' => 3306,
++      'namespace' => '',
++      'username' => 'test_user',
++      'password' => 'test_pass',
+     ];
+     $root2 = '/var/www/d8';
+     $url2 = 'sqlite://test_user:test_pass@test_host:3306/test_database';
+     $database_array2 = [
+       'driver' => 'sqlite',
++      'database' => $root2 . '/test_database',
++      'prefix' => NULL,
++      'namespace' => '',
++    ];
++    $root3 = '';
++    $url3 = 'contributed://test_user:test_pass@test_host:1433/test_database?namespace=Drupal\\Core\\Database\\Driver\\mysql';
++    $database_array3 = [
++      'driver' => 'contributed',
++      'host' => 'test_host',
++      'database' => 'test_database',
++      'prefix' => NULL,
++      'namespace' => 'Drupal\\Core\\Database\\Driver\\mysql',
++      'port' => 1433,
+       'username' => 'test_user',
+       'password' => 'test_pass',
+-      'host' => 'test_host',
+-      'database' => $root2 . '/test_database',
+-      'port' => 3306,
+     ];
+     return [
+       [$root1, $url1, $database_array1],
+       [$root2, $url2, $database_array2],
++      [$root3, $url3, $database_array3],
+     ];
+   }
+ 
+@@ -125,7 +138,7 @@ public function providerGetConnectionInfoAsUrl() {
+       'namespace' => 'Drupal\\Core\\Database\\Driver\\mysql',
+       'driver' => 'mysql',
+     ];
+-    $expected_url1 = 'mysql://test_user:test_pass@test_host:3306/test_database';
++    $expected_url1 = 'mysql://test_user:test_pass@test_host:3306/test_database?namespace=Drupal%5CCore%5CDatabase%5CDriver%5Cmysql';
+ 
+     $info2 = [
+       'database' => 'test_database',
