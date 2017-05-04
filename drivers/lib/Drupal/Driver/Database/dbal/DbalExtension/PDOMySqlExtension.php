@@ -17,7 +17,12 @@ class PDOMySqlExtension extends AbstractMySqlExtension {
   /**
    * Constructs a PDOMySqlExtension object.
    *
-   * @todo
+   * @param \Drupal\Driver\Database\dbal\Connection $drudbal_connection
+   *   The Drupal database connection object for this extension.
+   * @param \Doctrine\DBAL\Connection $dbal_connection
+   *   The DBAL connection.
+   * @param string $statement_class
+   *   The StatementInterface class to be used.
    */
   public function __construct(DruDbalConnection $drudbal_connection, DbalConnection $dbal_connection, $statement_class) {
     $this->connection = $drudbal_connection;
