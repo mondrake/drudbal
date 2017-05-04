@@ -27,7 +27,7 @@ env:
     - SIMPLETEST_BASE_URL="http://$HOST_ADDR:$HTTP_PORT"
   matrix:
     - DBAL_URL="mysql://$DB_AUTH@$HOST_ADDR/drudbal" SIMPLETEST_DB="dbal://$DB_AUTH@$HOST_ADDR/drudbal?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=pdo_mysql#drudbal_"
-    #- DBAL_URL="mysqli://$DB_AUTH@$HOST_ADDR/drudbal" SIMPLETEST_DB="dbal://$DB_AUTH@$HOST_ADDR/drudbal?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=mysqli#drudbal_"
+    - DBAL_URL="mysqli://$DB_AUTH@$HOST_ADDR/drudbal" SIMPLETEST_DB="dbal://$DB_AUTH@$HOST_ADDR/drudbal?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=mysqli#drudbal_"
 
 mysql:
   database: drudbal
@@ -63,6 +63,8 @@ before_install:
   - curl https://www.drupal.org/files/issues/2868273-9.patch | git apply
   # [#2874499] Test failures when db driver is set to not support transactions
   - curl https://www.drupal.org/files/issues/2874499-6-transaction-enabled.patch | git apply
+  # [#2875679] BasicSyntaxTest::testConcatFields fails with contrib driver
+  - curl https://www.drupal.org/files/issues/2875679-2.patch | git apply
 
   # Get Drupal Console
   #- composer require "drupal/console:~1.0" --prefer-dist --optimize-autoloader
@@ -79,6 +81,9 @@ install:
   - mkdir -p $DRUPAL_PATH/drivers/lib/Drupal/Driver/Database/
   - cd $DRUPAL_PATH/drivers/lib/Drupal/Driver/Database/
   - ln -s $DRUPAL_PATH/modules/contrib/drudbal/drivers/lib/Drupal/Driver/Database/dbal dbal
+
+  # Get a live database @todo remove eventually
+  - mysql -e 'CREATE DATABASE drudbal;'
 
   # Install Drupal
   - cd $DRUPAL_PATH/core
