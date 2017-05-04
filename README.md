@@ -19,9 +19,9 @@ called ```DBALExtension```, unique for the DBAL Driver in use, to which some ope
 delegated.
 
 ## Status
-(Updated: April 27, 2017)
+(Updated: May 5, 2017)
 
-The code in the ```master``` branch is meant to be working on a __MySql database, using a PDO connection__.
+The code in the ```master``` branch is meant to be working on a __MySql database, using either the 'mysql' or the 'mysqli' DBAL driver__.
 
 'Working' means:
 1. it is possible to install a Drupal site via the installer, selecting 'Doctrine DBAL' as the database of choice;
@@ -29,20 +29,21 @@ The code in the ```master``` branch is meant to be working on a __MySql database
 
 The status of the driver classes implementation is as follows:
 
-Class                       | Status        |
-----------------------------|---------------|
-Connection                  | Implemented. |
-Delete                      | Implemented. Can execute DBAL queries directly if no comments are required in the SQL statement.  |
-Insert                      | Implemented with overrides to the ```execute``` and ```::__toString``` methods. |
-Merge                       | Inheriting from ```\Drupal\Core\Database\Query\Merge```. DBAL does not support MERGE constructs, the INSERT with UPDATE fallback implemented by the base class fits the purpose. |
-Schema                      | Implemented. |
-Select                      | Implemented with override to the ```::__toString``` method. Consider integrating at higher level. |
-Transaction                 | Inheriting from ```\Drupal\Core\Database\Transaction```. Maybe in the future look into DBAL Transaction Management features. |
-Truncate                    | Implemented with overrides to the ```execute``` and ```::__toString``` methods. |
-Update                      | Implemented. Can execute DBAL queries directly if no comments are required in the SQL statement. |
-Upsert                      | Implemented with overrides to the ```execute``` and ```::__toString``` methods. DBAL does not support UPSERT, so implementation opens a transaction and proceeds with an INSERT attempt, falling back to UPDATE in case of failure. |
-Install/Tasks	              | Implemented. |
-Statement/PDODbalStatement	| Overrides the base class ```\Drupal\Core\Database\Statement```, to allow executing DBAL queries directly. |
+Class                         | Status        |
+------------------------------|---------------|
+Connection                    | Implemented. |
+Delete                        | Implemented. Can execute DBAL queries directly if no comments are required in the SQL statement.  |
+Insert                        | Implemented with overrides to the ```execute``` and ```::__toString``` methods. |
+Merge                         | Inheriting from ```\Drupal\Core\Database\Query\Merge```. DBAL does not support MERGE constructs, the INSERT with UPDATE fallback implemented by the base class fits the purpose. |
+Schema                        | Implemented. |
+Select                        | Implemented with override to the ```::__toString``` method. Consider integrating at higher level. |
+Transaction                   | Inheriting from ```\Drupal\Core\Database\Transaction```. Maybe in the future look into DBAL Transaction Management features. |
+Truncate                      | Implemented with overrides to the ```execute``` and ```::__toString``` methods. |
+Update                        | Implemented. |
+Upsert                        | Implemented with overrides to the ```execute``` and ```::__toString``` methods. DBAL does not support UPSERT, so implementation opens a transaction and proceeds with an INSERT attempt, falling back to UPDATE in case of failure. |
+Install/Tasks	                | Implemented. |
+Statement/MysqliDbalStatement	| Implements a wrapper to the _mysqli_ statement. |
+Statement/PDODbalStatement  	| Overrides the base class ```\Drupal\Core\Database\Statement```, to allow executing DBAL queries directly. |
 
 ## Installation
 
@@ -69,7 +70,7 @@ $ ln -s [DRUPAL_ROOT]/[path_to_contrib_modules]/drudbal/drivers/lib/Drupal/Drive
 ```
 
 5. Launch the interactive installer. Proceed as usual and when on the db selection form, select 'Doctrine DBAL'
-and enter a 'database URL' compliant with Doctrine DBAL syntax. __Note:__ the driver only works for mysql.
+and enter a 'database URL' compliant with Doctrine DBAL syntax. __Note:__ the driver only works for mysql or mysqli DBAL drivers.
 
 ![configuration](https://cloud.githubusercontent.com/assets/1174864/24586418/7f86feb4-17a0-11e7-820f-eb1483dad07f.png)
 
@@ -100,3 +101,4 @@ Issue | Description   |
 [2871374](https://www.drupal.org/node/2871374) | SelectTest::testVulnerableComment fails when driver overrides Select::\_\_toString |
 tbd | Add tests for Upsert with default values |
 [2874499](https://www.drupal.org/node/2874499) | Test failures when db driver is set to not support transactions |
+[2875679](https://www.drupal.org/node/2875679) | BasicSyntaxTest::testConcatFields fails with contrib driver |
