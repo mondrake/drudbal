@@ -68,6 +68,13 @@ class Connection extends DatabaseConnection {
   protected $dbalExtension;
 
   /**
+   * Current connection DBAL platform.
+   *
+   * @var \Doctrine\DBAL\Platforms\AbstractPlatform
+   */
+  protected $dbalPlatform;
+
+  /**
    * An array of options to be passed to the Statement object.
    *
    * DBAL is quite strict in the sense that it does not pass options to the
@@ -86,6 +93,7 @@ class Connection extends DatabaseConnection {
     $dbal_extension_class = static::getDbalExtensionClass($connection_options);
     $this->statementClass = static::getStatementClass($connection_options);
     $this->dbalExtension = new $dbal_extension_class($this, $dbal_connection, $this->statementClass);
+    $this->dbalPlatform = $dbal_connection->getDatabasePlatform();
     $this->transactionSupport = $this->dbalExtension->transactionSupport($connection_options);
     $this->transactionalDDLSupport = $this->dbalExtension->transactionalDDLSupport($connection_options);
     $this->setPrefix(isset($connection_options['prefix']) ? $connection_options['prefix'] : '');
@@ -227,7 +235,17 @@ class Connection extends DatabaseConnection {
   }
 
   /**
-   * @todo
+   * Create an array of DBAL connection options from the Drupal options.
+   *
+   * @param array $connection_options
+   *   An array of DRUPAL options for the connection. May include the
+   *   following:
+   *   - prefix
+   *   - namespace
+   *   - Other driver-specific options.
+   *
+   * @return array
+   *   An array of options suitable to establish a DBAL connection.
    */
   public static function mapConnectionOptionsToDbal(array $connection_options) {
     // Take away from the Drupal connection array the keys that will be
@@ -445,7 +463,7 @@ class Connection extends DatabaseConnection {
         if (empty($this->transactionLayers)) {
           break;
         }
-        $this->getDbalConnection()->exec('ROLLBACK TO SAVEPOINT ' . $savepoint);  // @todo move this to extension
+        $this->getDbalConnection()->exec($this->dbalPlatform->rollbackSavePoint($savepoint));
         $this->popCommittableTransactions();
         if ($rolled_back_other_active_savepoints) {
           throw new TransactionOutOfOrderException();
@@ -475,7 +493,7 @@ class Connection extends DatabaseConnection {
     // If we're already in a transaction then we want to create a savepoint
     // rather than try to create another transaction.
     if ($this->inTransaction()) {
-      $this->getDbalConnection()->exec('SAVEPOINT ' . $name);  // @todo move this to extension
+      $this->getDbalConnection()->exec($this->dbalPlatform->createSavePoint($name));
     }
     else {
       $this->connection->beginTransaction();
