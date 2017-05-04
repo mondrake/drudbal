@@ -63,8 +63,8 @@ before_install:
   - curl https://www.drupal.org/files/issues/2868273-9.patch | git apply
   # [#2874499] Test failures when db driver is set to not support transactions
   - curl https://www.drupal.org/files/issues/2874499-6-transaction-enabled.patch | git apply
-  # Skip BasicSyntaxTest::testConcatFields and UpdateTest::testUpdateAffectedRows
-  #- curl https://www.drupal.org/files/issues/2874378-9-do-not-test.patch | git apply
+  # [#2875679] BasicSyntaxTest::testConcatFields fails with contrib driver
+  - curl https://www.drupal.org/files/issues/2875679-2.patch | git apply
 
   # Get Drupal Console
   #- composer require "drupal/console:~1.0" --prefer-dist --optimize-autoloader
