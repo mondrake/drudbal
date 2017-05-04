@@ -10,6 +10,11 @@ use \Doctrine\DBAL\Connection as DbalConnection;
 interface DbalExtensionInterface {
 
   /**
+   * @todo
+   */
+  public function destroy();
+
+  /**
    * Prepares opening the DBAL connection.
    *
    * Allows driver/db specific options to be set before opening the DBAL
@@ -50,5 +55,28 @@ interface DbalExtensionInterface {
    * drivers.
    */
   public function clientVersion();
+
+  /**
+   * @todo
+   */
+  public function prepare($statement, array $params, array $driver_options = []);
+
+  /**
+   * Wraps and re-throws any DBALException thrown by static::query().
+   *
+   * @param \Exception $e
+   *   The exception thrown by query().
+   * @param $query
+   *   The query executed by query().
+   * @param array $args
+   *   An array of arguments for the prepared statement.
+   * @param array $options
+   *   An associative array of options to control how the query is run.
+   *
+   * @return @todo
+   *
+   * @throws \Drupal\Core\Database\DatabaseExceptionWrapper
+   */
+  public function handleQueryException(\Exception $e, $query, array $args = [], $options = []);
 
 }

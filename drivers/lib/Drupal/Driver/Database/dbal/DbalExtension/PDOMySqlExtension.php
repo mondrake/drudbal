@@ -13,23 +13,33 @@ use Doctrine\DBAL\Exception\DriverException;
 class PDOMySqlExtension extends AbstractMySqlExtension {
 
   /**
+   * Constructs a PDOMySqlExtension object.
+   *
+   * @todo
+   */
+  public function __construct(DruDbalConnection $drudbal_connection, DbalConnection $dbal_connection, $statement_class) {
+    $this->connection = $drudbal_connection;
+    $this->dbalConnection = $dbal_connection;
+    $this->dbalConnection->getWrappedConnection()->setAttribute(\PDO::ATTR_STATEMENT_CLASS, [$statement_class, [$this->connection]]);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function destroy() {
+    // Destroy all references to this connection by setting them to NULL.
+    // The Statement class attribute only accepts a new value that presents a
+    // proper callable, so we reset it to PDOStatement.
+    if (!empty($this->statementClass)) {
+      $this->getDbalConnection()->getWrappedConnection()->setAttribute(\PDO::ATTR_STATEMENT_CLASS, ['PDOStatement', []]);
+    }
+  }
+
+  /**
    * {@inheritdoc}
    */
   public static function preConnectionOpen(array &$connection_options, array &$dbal_connection_options) {
-    if (isset($connection_options['_dsn_utf8_fallback']) && $connection_options['_dsn_utf8_fallback'] === TRUE) {
-      // Only used during the installer version check, as a fallback from utf8mb4.
-      $charset = 'utf8';
-    }
-    else {
-      $charset = 'utf8mb4';
-    }
-
-    // Character set is added to dsn to ensure PDO uses the proper character
-    // set when escaping. This has security implications. See
-    // https://www.drupal.org/node/1201452 for further discussion.
-    $connection_options['charset'] = $charset;
-    $dbal_connection_options['charset'] = $charset;
-
+    parent::preConnectionOpen($connection_options, $dbal_connection_options);
     $dbal_connection_options['driverOptions'] += [
       \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
       // So we don't have to mess around with cursors and unbuffered queries by default.
@@ -49,7 +59,14 @@ class PDOMySqlExtension extends AbstractMySqlExtension {
   }
 
   /**
-   * @todo
+   * {@inheritdoc}
+   */
+  public function clientVersion() {
+    return $this->dbalConnection->getWrappedConnection()->getAttribute(\PDO::ATTR_CLIENT_VERSION);
+  }
+
+  /**
+   * {@inheritdoc}
    */
   public function prepare($statement, array $params, array $driver_options = []) {
     try {
@@ -61,20 +78,7 @@ class PDOMySqlExtension extends AbstractMySqlExtension {
   }
 
   /**
-   * Wraps and re-throws any DBALException thrown by static::query().
-   *
-   * @param \Exception $e
-   *   The exception thrown by query().
-   * @param $query
-   *   The query executed by query().
-   * @param array $args
-   *   An array of arguments for the prepared statement.
-   * @param array $options
-   *   An associative array of options to control how the query is run.
-   *
-   * @return @todo
-   *
-   * @throws \Drupal\Core\Database\DatabaseExceptionWrapper
+   * {@inheritdoc}
    */
   public function handleQueryException(\Exception $e, $query, array $args = [], $options = []) {
     if ($options['throw_exception']) {
@@ -110,25 +114,6 @@ class PDOMySqlExtension extends AbstractMySqlExtension {
     return NULL;
   }
 
-  /**
-   * {@inheritdoc}
-   */
-  public function clientVersion() {
-    return $this->dbalConnection->getWrappedConnection()->getAttribute(\PDO::ATTR_CLIENT_VERSION);
-  }
-
-  /**
-   * @todo
-   */
-  public function destroy() {
-    // Destroy all references to this connection by setting them to NULL.
-    // The Statement class attribute only accepts a new value that presents a
-    // proper callable, so we reset it to PDOStatement.
-    if (!empty($this->statementClass)) {
-      $this->getDbalConnection()->getWrappedConnection()->setAttribute(\PDO::ATTR_STATEMENT_CLASS, ['PDOStatement', []]);
-    }
-  }
-
   public function releaseSavepoint($name) {
     try {
       $this->dbalConnection->exec('RELEASE SAVEPOINT ' . $name);
@@ -142,7 +127,7 @@ class PDOMySqlExtension extends AbstractMySqlExtension {
       //
       // To avoid exceptions when no actual error has occurred, we silently
       // succeed for MySQL error code 1305 ("SAVEPOINT does not exist").
-      if ($e->getPrevious()->errorInfo[1] == '1305') {
+      if ($e->getErrorCode() == '1305') {
         // We also have to explain to PDO that the transaction stack has
         // been cleaned-up.
         try {

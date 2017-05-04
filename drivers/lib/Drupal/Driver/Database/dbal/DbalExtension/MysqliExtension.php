@@ -2,24 +2,11 @@
 
 namespace Drupal\Driver\Database\dbal\DbalExtension;
 
-use Drupal\Component\Utility\Unicode;
-use Drupal\Core\Database\Database;
 use Drupal\Core\Database\DatabaseExceptionWrapper;
-use Drupal\Core\Database\DatabaseNotFoundException;
 use Drupal\Core\Database\IntegrityConstraintViolationException;
-use Drupal\Core\Database\SchemaException;
 use Drupal\Core\Database\TransactionCommitFailedException;
-use Drupal\Driver\Database\dbal\Connection as DruDbalConnection;
-
-use Doctrine\DBAL\Connection as DbalConnection;
-use Doctrine\DBAL\ConnectionException as DbalConnectionException;
-use Doctrine\DBAL\DBALException;
-use Doctrine\DBAL\Driver\Mysqli\MysqliException;
-use Doctrine\DBAL\Exception\ConnectionException as DbalExceptionConnectionException;
 use Doctrine\DBAL\Exception\DriverException;
-use Doctrine\DBAL\DriverManager as DBALDriverManager;
-use Doctrine\DBAL\SQLParserUtils;
-
+use Doctrine\DBAL\Driver\Mysqli\MysqliException;
 
 /**
  * Driver specific methods for mysqli.
@@ -27,12 +14,16 @@ use Doctrine\DBAL\SQLParserUtils;
 class MysqliExtension extends AbstractMySqlExtension {
 
   /**
-   * @var @todo
+   * The Statement class to use for this extension.
+   *
+   * @var \Drupal\Core\Database\StatementInterface
    */
   protected $statementClass;
 
   /**
    * Constructs a MysqliExtension object.
+   *
+   * @todo
    */
   public function __construct(DruDbalConnection $drudbal_connection, DbalConnection $dbal_connection, $statement_class) {
     $this->connection = $drudbal_connection;
@@ -43,38 +34,8 @@ class MysqliExtension extends AbstractMySqlExtension {
   /**
    * {@inheritdoc}
    */
-  public static function preConnectionOpen(array &$connection_options, array &$dbal_connection_options) {
-    if (isset($connection_options['_dsn_utf8_fallback']) && $connection_options['_dsn_utf8_fallback'] === TRUE) {
-      // Only used during the installer version check, as a fallback from utf8mb4.
-      $charset = 'utf8';
-    }
-    else {
-      $charset = 'utf8mb4';
-    }
-
-    // Character set is added to dsn to ensure PDO uses the proper character
-    // set when escaping. This has security implications. See
-    // https://www.drupal.org/node/1201452 for further discussion.
-    $connection_options['charset'] = $charset;
-    $dbal_connection_options['charset'] = $charset;
-/*
-    $connection_options['driverOptions'] += [
-      \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
-      // So we don't have to mess around with cursors and unbuffered queries by default.
-      \PDO::MYSQL_ATTR_USE_BUFFERED_QUERY => TRUE,
-      // Make sure MySQL returns all matched rows on update queries including
-      // rows that actually didn't have to be updated because the values didn't
-      // change. This matches common behavior among other database systems.
-      \PDO::MYSQL_ATTR_FOUND_ROWS => TRUE,
-      // Because MySQL's prepared statements skip the query cache, because it's dumb.
-      \PDO::ATTR_EMULATE_PREPARES => TRUE,
-    ];
-    if (defined('\PDO::MYSQL_ATTR_MULTI_STATEMENTS')) {
-      // An added connection option in PHP 5.5.21 to optionally limit SQL to a
-      // single statement like mysqli.
-      $connection_options['driverOptions'] += [\PDO::MYSQL_ATTR_MULTI_STATEMENTS => FALSE];
-    }
-*/
+  public function destroy() {
+    // @todo
   }
 
   /**
@@ -85,14 +46,7 @@ class MysqliExtension extends AbstractMySqlExtension {
   }
 
   /**
-   * @todo
-   */
-  public function destroy() {
-    // @todo
-  }
-
-  /**
-   * @todo
+   * {@inheritdoc}
    */
   public function prepare($statement, array $params, array $driver_options = []) {
     try {
@@ -104,20 +58,7 @@ class MysqliExtension extends AbstractMySqlExtension {
   }
 
   /**
-   * Wraps and re-throws any DBALException thrown by static::query().
-   *
-   * @param \Exception $e
-   *   The exception thrown by query().
-   * @param $query
-   *   The query executed by query().
-   * @param array $args
-   *   An array of arguments for the prepared statement.
-   * @param array $options
-   *   An associative array of options to control how the query is run.
-   *
-   * @return @todo
-   *
-   * @throws \Drupal\Core\Database\DatabaseExceptionWrapper
+   * {@inheritdoc}
    */
   public function handleQueryException(\Exception $e, $query, array $args = [], $options = []) {
     if ($options['throw_exception']) {
@@ -133,7 +74,6 @@ class MysqliExtension extends AbstractMySqlExtension {
       else {
         $query_string = NULL;
       }
-//var_export([$e->getMessage(), $e->getErrorCode(), $e->getSqlState()]);die;
       $message = $e->getMessage() . ": " . $query_string . "; " . print_r($args, TRUE);
       if ($e instanceof DatabaseExceptionWrapper) {
         $e = $e->getPrevious();

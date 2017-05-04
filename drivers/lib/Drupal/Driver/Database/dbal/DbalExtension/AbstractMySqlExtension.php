@@ -103,15 +103,6 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
   protected $needsCleanup = FALSE;
 
   /**
-   * Constructs a Connection object.
-   */
-  public function __construct(DruDbalConnection $drudbal_connection, DbalConnection $dbal_connection, $statement_class) {
-    $this->connection = $drudbal_connection;
-    $this->dbalConnection = $dbal_connection;
-    $this->dbalConnection->getWrappedConnection()->setAttribute(\PDO::ATTR_STATEMENT_CLASS, [$statement_class, [$this->connection]]);
-  }
-
-  /**
    * @todo shouldn't serialization being avoided?? this is from mysql core
    */
   public function serialize() {
@@ -140,6 +131,25 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
    */
   public function getDbalConnection() {
     return $this->dbalConnection;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function preConnectionOpen(array &$connection_options, array &$dbal_connection_options) {
+    if (isset($connection_options['_dsn_utf8_fallback']) && $connection_options['_dsn_utf8_fallback'] === TRUE) {
+      // Only used during the installer version check, as a fallback from utf8mb4.
+      $charset = 'utf8';
+    }
+    else {
+      $charset = 'utf8mb4';
+    }
+
+    // Character set is added to dsn to ensure PDO uses the proper character
+    // set when escaping. This has security implications. See
+    // https://www.drupal.org/node/1201452 for further discussion.
+    $connection_options['charset'] = $charset;
+    $dbal_connection_options['charset'] = $charset;
   }
 
   /**
