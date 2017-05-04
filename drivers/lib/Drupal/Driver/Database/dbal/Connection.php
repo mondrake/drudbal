@@ -17,7 +17,9 @@ use Drupal\Core\Database\TransactionNoActiveException;
 use Drupal\Core\Database\TransactionOutOfOrderException;
 
 use Drupal\Driver\Database\dbal\DbalExtension\PDOMySqlExtension;
+use Drupal\Driver\Database\dbal\DbalExtension\MysqliExtension;
 use Drupal\Driver\Database\dbal\Statement\PDODbalStatement;
+use Drupal\Driver\Database\dbal\Statement\MysqliDbalStatement;
 
 use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\ConnectionException as DbalConnectionException;
@@ -45,6 +47,7 @@ class Connection extends DatabaseConnection {
    */
   protected static $dbalClassMap = array(
     'pdo_mysql' => [PDOMySqlExtension::class, PDODbalStatement::class],
+    'mysqli' => [MysqliExtension::class, MysqliDbalStatement::class],
   );
 
   /**
@@ -173,7 +176,7 @@ class Connection extends DatabaseConnection {
           return $stmt->rowCount();
         case Database::RETURN_INSERT_ID:
           $sequence_name = isset($options['sequence_name']) ? $options['sequence_name'] : NULL;
-          return $this->connection->lastInsertId($sequence_name);
+          return (string) $this->connection->lastInsertId($sequence_name);
         case Database::RETURN_NULL:
           return NULL;
         default:

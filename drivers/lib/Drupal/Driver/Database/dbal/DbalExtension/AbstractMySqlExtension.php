@@ -582,7 +582,7 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
         )
       ->setParameter(0, $this->dbalConnection->getDatabase())
       ->setParameter(1, $this->pfxTable($table));
-    $comment = $dbal_query->execute()->fetchField();
+    $comment = $dbal_query->execute()->fetchColumn();
     $this->alterGetComment($comment, $dbal_schema, $table, $column);
     return TRUE;
   }
