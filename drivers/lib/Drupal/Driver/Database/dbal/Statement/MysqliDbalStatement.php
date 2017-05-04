@@ -447,8 +447,12 @@ class MysqliDbalStatement implements \IteratorAggregate, StatementInterface {
   public function rowCount() {
     // SELECT query should not use the method.
     if ($this->allowRowCount) {
-      if (false === $this->_columnNames) {
+      if ($this->_conn->info === NULL) {
         return $this->_stmt->affected_rows;
+      }
+      else {
+        list($matched, $changed, $warnings) = sscanf($this->_conn->info, "Rows matched: %d Changed: %d Warnings: %d");
+        return $matched;
       }
       return $this->_stmt->num_rows;
     }
