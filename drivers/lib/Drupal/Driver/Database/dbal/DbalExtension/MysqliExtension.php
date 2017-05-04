@@ -41,13 +41,6 @@ class MysqliExtension extends AbstractMySqlExtension {
   /**
    * {@inheritdoc}
    */
-  public function destroy() {
-    // @todo
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function clientVersion() {
     return $this->dbalConnection->getWrappedConnection()->getWrappedResourceHandle()->get_client_info();
   }

@@ -126,6 +126,13 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
   }
 
   /**
+   * {@inheritdoc}
+   */
+  public function destroy() {
+    $this->schema = NULL;
+  }
+
+  /**
    * Gets the DBAL connection.
    *
    * @return string DBAL driver name
