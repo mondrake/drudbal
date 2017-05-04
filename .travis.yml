@@ -8,8 +8,8 @@ sudo: required
 dist: precise
 
 php:
-  - 7
-  #- nightly
+  #- 7
+  - nightly
 
 branches:
   except:
@@ -70,7 +70,7 @@ before_install:
   #- composer require "drupal/console:~1.0" --prefer-dist --optimize-autoloader
 
   # Get Doctrine DBAL
-  - composer require "doctrine/dbal:dev-master"
+  - composer require "doctrine/dbal"
 
 install:
   # Copy the repo to the modules/contrib directory.
