@@ -83,7 +83,6 @@ class PDOMySqlExtension extends AbstractMySqlExtension {
    * {@inheritdoc}
    */
   public function delegateQueryExceptionProcess($message, \Exception $e) {
-throw new \Exception($message, $e->getCode(), $e);
     // Match all SQLSTATE 23xxx errors.
     if (substr($e->getCode(), -6, -3) == '23') {
       throw new IntegrityConstraintViolationException($message, $e->getCode(), $e);

@@ -63,7 +63,6 @@ class MysqliExtension extends AbstractMySqlExtension {
    * {@inheritdoc}
    */
   public function delegateQueryExceptionProcess($message, \Exception $e) {
-throw new \Exception($message, $e->getCode(), $e);
     if ($e instanceof DatabaseExceptionWrapper) {
       $e = $e->getPrevious();
     }
@@ -71,14 +70,14 @@ throw new \Exception($message, $e->getCode(), $e);
     if (substr($e->getSqlState(), -6, -3) == '23') {
       throw new IntegrityConstraintViolationException($message, $e->getCode(), $e);
     }
-/*      elseif ($e->errorInfo[1] == 1153) {
+    elseif ($e->getErrorCode() == 1153) {
       // If a max_allowed_packet error occurs the message length is truncated.
       // This should prevent the error from recurring if the exception is
       // logged to the database using dblog or the like.
       $message = Unicode::truncateBytes($e->getMessage(), self::MIN_MAX_ALLOWED_PACKET);
-      throw new DatabaseExceptionWrapper($message, $e->getCode(), $e);
+      throw new DatabaseExceptionWrapper($message, $e->getSqlState(), $e);
     }
-*/      else {
+    else {
       throw new DatabaseExceptionWrapper($message, 0, $e);
     }
   }
