@@ -127,6 +127,8 @@ class MysqliDbalStatement implements \IteratorAggregate, StatementInterface {
    * {@inheritdoc}
    */
   public function execute($args = [], $options = []) {
+    list($positional_statement, $positional_args, $positional_types) = SQLParserUtils::expandListParameters($this->queryString, $args, []);
+
     if (isset($options['fetch'])) {
       if (is_string($options['fetch'])) {
         // @todo remove these comments??? \PDO::FETCH_PROPS_LATE tells __construct() to run before properties
@@ -145,8 +147,8 @@ class MysqliDbalStatement implements \IteratorAggregate, StatementInterface {
     }
 
     if (null !== $this->_bindedValues) {
-      if (null !== $args) {
-        if ( ! $this->_bindValues($args)) {
+      if (null !== $positional_args) {
+        if ( ! $this->_bindValues($positional_args)) {
           throw new MysqliException($this->_stmt->error, $this->_stmt->errno);
         }
       } else {
