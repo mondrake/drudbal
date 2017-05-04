@@ -195,7 +195,7 @@ class Connection extends DatabaseConnection {
       throw $e;
     }
     catch (\Exception $e) {
-      return $this->handleQueryException($e, $query, $args, $options);
+      return $this->handleDbalQueryException($e, $query, $args, $options);
     }
   }
 
@@ -216,7 +216,7 @@ class Connection extends DatabaseConnection {
    *
    * @throws \Drupal\Core\Database\DatabaseExceptionWrapper
    */
-  protected function handleQueryException(\Exception $e, $query, array $args = [], $options = []) {
+  protected function handleDbalQueryException(\Exception $e, $query, array $args = [], $options = []) {
     if ($options['throw_exception']) {
       // Wrap the exception in another exception, because PHP does not allow
       // overriding Exception::getMessage(). Its message is the extra database
@@ -233,7 +233,6 @@ class Connection extends DatabaseConnection {
       $message = $e->getMessage() . ": " . $query_string . "; " . print_r($args, TRUE);
       $this->dbalExtension->delegateQueryExceptionProcess($message, $e);
     }
-
     return NULL;
   }
 
