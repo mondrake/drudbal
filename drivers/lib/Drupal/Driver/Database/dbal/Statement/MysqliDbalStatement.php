@@ -244,7 +244,7 @@ class MysqliDbalStatement implements \IteratorAggregate, StatementInterface {
     if (true === $ret) {
       $values = [];
       foreach ($this->_rowBindedValues as $v) {
-        $values[] = $v;
+        $values[] = (string) $v;
       }
 
       return $values;
@@ -386,7 +386,7 @@ class MysqliDbalStatement implements \IteratorAggregate, StatementInterface {
     $return = [];
     if (isset($fetch)) {
       if (is_string($fetch)) {
-        $this->setFetchMode(\PDO::FETCH_CLASS, $fetch);  // @todo won't work
+        $this->setFetchMode(\PDO::FETCH_CLASS, $fetch);
       }
       else {
         $this->setFetchMode($fetch ?: $this->_defaultFetchMode);

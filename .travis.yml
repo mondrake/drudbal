@@ -82,6 +82,9 @@ install:
   - cd $DRUPAL_PATH/drivers/lib/Drupal/Driver/Database/
   - ln -s $DRUPAL_PATH/modules/contrib/drudbal/drivers/lib/Drupal/Driver/Database/dbal dbal
 
+  # Get a live database @todo remove eventually
+  - mysql -e 'CREATE DATABASE drudbal;'
+
   # Install Drupal
   - cd $DRUPAL_PATH/core
   - cp $DRUPAL_PATH/modules/contrib/drudbal/misc/install_cli.php install_cli.php
