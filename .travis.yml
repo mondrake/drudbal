@@ -82,9 +82,6 @@ install:
   - cd $DRUPAL_PATH/drivers/lib/Drupal/Driver/Database/
   - ln -s $DRUPAL_PATH/modules/contrib/drudbal/drivers/lib/Drupal/Driver/Database/dbal dbal
 
-  # Get a live database @todo remove eventually
-  - mysql -e 'CREATE DATABASE drudbal;'
-
   # Install Drupal
   - cd $DRUPAL_PATH/core
   - cp $DRUPAL_PATH/modules/contrib/drudbal/misc/install_cli.php install_cli.php
@@ -98,7 +95,7 @@ install:
 script:
   - cd $DRUPAL_PATH/core
   # Only run selected tests to avoid Travis timeout.
-  #- ../vendor/bin/phpunit --testsuite unit --group Database,Cache,Entity --verbose
+  - ../vendor/bin/phpunit --testsuite unit --group Database,Cache,Entity --verbose
   - ../vendor/bin/phpunit --testsuite kernel --group Database,Cache --verbose
   - ../vendor/bin/phpunit tests/Drupal/KernelTests/Core/Entity/ConfigEntityQueryTest.php
   - ../vendor/bin/phpunit tests/Drupal/KernelTests/Core/Entity/EntityQueryTest.php
