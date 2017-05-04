@@ -195,8 +195,46 @@ class Connection extends DatabaseConnection {
       throw $e;
     }
     catch (\Exception $e) {
-      return $this->dbalExtension->handleQueryException($e, $query, $args, $options);
+      return $this->handleQueryException($e, $query, $args, $options);
     }
+  }
+
+  /**
+   * Wraps and re-throws any DBALException thrown by ::query().
+   *
+   * @param \Exception $e
+   *   The exception thrown by query().
+   * @param $query
+   *   The query executed by query().
+   * @param array $args
+   *   An array of arguments for the prepared statement.
+   * @param array $options
+   *   An associative array of options to control how the query is run.
+   *
+   * @return null
+   *   When the option to re-throw is FALSE.
+   *
+   * @throws \Drupal\Core\Database\DatabaseExceptionWrapper
+   */
+  protected function handleQueryException(\Exception $e, $query, array $args = [], $options = []) {
+    if ($options['throw_exception']) {
+      // Wrap the exception in another exception, because PHP does not allow
+      // overriding Exception::getMessage(). Its message is the extra database
+      // debug information.
+      if ($query instanceof StatementInterface) {
+        $query_string = $query->getQueryString();
+      }
+      elseif (is_string($query)) {
+        $query_string = $query;
+      }
+      else {
+        $query_string = NULL;
+      }
+      $message = $e->getMessage() . ": " . $query_string . "; " . print_r($args, TRUE);
+      $this->dbalExtension->delegateQueryExceptionProcess($message, $e);
+    }
+
+    return NULL;
   }
 
   /**

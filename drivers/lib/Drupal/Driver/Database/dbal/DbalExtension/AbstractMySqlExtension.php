@@ -14,6 +14,7 @@ use Drupal\Driver\Database\dbal\Connection as DruDbalConnection;
 use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\ConnectionException as DbalConnectionException;
 use Doctrine\DBAL\DBALException;
+use Doctrine\DBAL\Exception\DriverException;
 use Doctrine\DBAL\Exception\ConnectionException as DbalExceptionConnectionException;
 
 /**

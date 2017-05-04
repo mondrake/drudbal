@@ -62,21 +62,15 @@ interface DbalExtensionInterface {
   public function prepare($statement, array $params, array $driver_options = []);
 
   /**
-   * Wraps and re-throws any DBALException thrown by static::query().
+   * Re-throws query exceptions.
    *
+   * @param string $message
+   *   The message to be re-thrown.
    * @param \Exception $e
-   *   The exception thrown by query().
-   * @param $query
-   *   The query executed by query().
-   * @param array $args
-   *   An array of arguments for the prepared statement.
-   * @param array $options
-   *   An associative array of options to control how the query is run.
-   *
-   * @return @todo
+   *   The exception thrown by the query.
    *
    * @throws \Drupal\Core\Database\DatabaseExceptionWrapper
    */
-  public function handleQueryException(\Exception $e, $query, array $args = [], $options = []);
+  public function delegateQueryExceptionProcess($message, \Exception $e);
 
 }

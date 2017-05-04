@@ -8,7 +8,6 @@ use Drupal\Core\Database\IntegrityConstraintViolationException;
 use Drupal\Core\Database\TransactionCommitFailedException;
 use Drupal\Driver\Database\dbal\Connection as DruDbalConnection;
 use Doctrine\DBAL\Connection as DbalConnection;
-use Doctrine\DBAL\Exception\DriverException;
 use Doctrine\DBAL\Driver\Mysqli\MysqliException;
 
 /**
@@ -63,41 +62,25 @@ class MysqliExtension extends AbstractMySqlExtension {
   /**
    * {@inheritdoc}
    */
-  public function handleQueryException(\Exception $e, $query, array $args = [], $options = []) {
-    if ($options['throw_exception']) {
-      // Wrap the exception in another exception, because PHP does not allow
-      // overriding Exception::getMessage(). Its message is the extra database
-      // debug information.
-      if ($query instanceof StatementInterface) {
-        $query_string = $query->getQueryString();
-      }
-      elseif (is_string($query)) {
-        $query_string = $query;
-      }
-      else {
-        $query_string = NULL;
-      }
-      $message = $e->getMessage() . ": " . $query_string . "; " . print_r($args, TRUE);
-      if ($e instanceof DatabaseExceptionWrapper) {
-        $e = $e->getPrevious();
-      }
-      // Match all SQLSTATE 23xxx errors.
-      if (substr($e->getSqlState(), -6, -3) == '23') {
-        throw new IntegrityConstraintViolationException($message, $e->getCode(), $e);
-      }
-/*      elseif ($e->errorInfo[1] == 1153) {
-        // If a max_allowed_packet error occurs the message length is truncated.
-        // This should prevent the error from recurring if the exception is
-        // logged to the database using dblog or the like.
-        $message = Unicode::truncateBytes($e->getMessage(), self::MIN_MAX_ALLOWED_PACKET);
-        throw new DatabaseExceptionWrapper($message, $e->getCode(), $e);
-      }
-*/      else {
-        throw new DatabaseExceptionWrapper($message, 0, $e);
-      }
+  public function delegateQueryExceptionProcess($message, \Exception $e) {
+throw new \Exception($message, $e->getCode(), $e);
+    if ($e instanceof DatabaseExceptionWrapper) {
+      $e = $e->getPrevious();
     }
-
-    return NULL;
+    // Match all SQLSTATE 23xxx errors.
+    if (substr($e->getSqlState(), -6, -3) == '23') {
+      throw new IntegrityConstraintViolationException($message, $e->getCode(), $e);
+    }
+/*      elseif ($e->errorInfo[1] == 1153) {
+      // If a max_allowed_packet error occurs the message length is truncated.
+      // This should prevent the error from recurring if the exception is
+      // logged to the database using dblog or the like.
+      $message = Unicode::truncateBytes($e->getMessage(), self::MIN_MAX_ALLOWED_PACKET);
+      throw new DatabaseExceptionWrapper($message, $e->getCode(), $e);
+    }
+*/      else {
+      throw new DatabaseExceptionWrapper($message, 0, $e);
+    }
   }
 
 }
