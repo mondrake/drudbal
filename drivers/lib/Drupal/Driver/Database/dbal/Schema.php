@@ -282,6 +282,7 @@ class Schema extends DatabaseSchema {
     }
 
     $this->dbalSchemaManager->renameTable($this->dbalExt->pfxTable($table), $this->dbalExt->pfxTable($new_name));
+    $this->dbalSchemaForceReload();
     return TRUE;
   }
 
@@ -292,7 +293,10 @@ class Schema extends DatabaseSchema {
     if (!$this->tableExists($table)) {
       return FALSE;
     }
-    $this->dbalSchemaManager->dropTable($this->dbalExt->pfxTable($table));
+    $current_schema = $this->dbalGetCurrentSchema();
+    $to_schema = clone $current_schema;
+    $to_schema->dropTable($this->dbalExt->pfxTable($table));
+    $this->dbalExecuteSchemaChange($current_schema, $to_schema);
   }
 
   /**
@@ -388,7 +392,6 @@ class Schema extends DatabaseSchema {
     $to_schema = clone $current_schema;
     $to_schema->getTable($this->dbalExt->pfxTable($table))->dropColumn($field);
     $this->dbalExecuteSchemaChange($current_schema, $to_schema);
-
     return TRUE;
   }
 
@@ -488,16 +491,13 @@ class Schema extends DatabaseSchema {
     if (!$this->tableExists($table)) {
       return FALSE;
     }
-
     $current_schema = $this->dbalGetCurrentSchema();
     if (!$current_schema->getTable($this->dbalExt->pfxTable($table))->hasPrimaryKey()) {
       return FALSE;
     }
-
     $to_schema = clone $current_schema;
     $to_schema->getTable($this->dbalExt->pfxTable($table))->dropPrimaryKey();
     $this->dbalExecuteSchemaChange($current_schema, $to_schema);
-
     return TRUE;
   }
 
@@ -563,7 +563,10 @@ class Schema extends DatabaseSchema {
     if (!$this->indexExists($table, $name)) {
       return FALSE;
     }
-    $this->dbalSchemaManager->dropIndex($name, $this->dbalExt->pfxTable($table));
+    $current_schema = $this->dbalGetCurrentSchema();
+    $to_schema = clone $current_schema;
+    $to_schema->getTable($this->dbalExt->pfxTable($table))->dropIndex($name);
+    $this->dbalExecuteSchemaChange($current_schema, $to_schema);
     return TRUE;
   }
 
@@ -586,6 +589,7 @@ class Schema extends DatabaseSchema {
     // @see https://github.com/doctrine/dbal/issues/1033
     $primary_key_processed_by_extension = FALSE;
     if (!$this->dbalExt->delegateChangeField($primary_key_processed_by_extension, $table, $field, $field_new, $spec, $keys_new, $dbal_column_definition)) {
+      $this->dbalSchemaForceReload();
       return;
     }
 
