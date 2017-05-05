@@ -89,7 +89,7 @@ class Schema extends DatabaseSchema {
     // Add columns.
     foreach ($table['fields'] as $field_name => $field) {
       $dbal_type = $this->getDbalColumnType($field);
-      $new_column = $new_table->addColumn($field_name, $dbal_type, ['columnDefinition' => $this->getDbalColumnDefinition($field_name, $dbal_type, $field)]);
+      $new_column = $new_table->addColumn($field_name, $dbal_type, $this->getDbalColumnOptions($field_name, $dbal_type, $field));
     }
 
     // Add primary key.
@@ -103,11 +103,6 @@ class Schema extends DatabaseSchema {
 
     // Execute the table creation.
     $this->dbalExecuteSchemaChange($current_schema, $to_schema);
-    // DBAL is limited here, as passing only 'columnDefinition' to
-    // ::addColumn does not propagate to other properties. We need to reload
-    // the schema at next get.
-    // @see https://github.com/doctrine/dbal/issues/1033
-    $this->dbalSchemaForceReload();
 
     // Add unique keys.
     if (!empty($table['unique keys'])) {
@@ -165,11 +160,11 @@ class Schema extends DatabaseSchema {
    * @param array $field
    *   A field description array, as specified in the schema documentation.
    *
-   * @return string
-   *   The SQL column definition specification, for use in the
-   *   'columnDefinition' DBAL column option.
+   * @return array
+   *   An array of DBAL column options, including the SQL column definition
+   *   specification in the 'columnDefinition' option.
    */
-  protected function getDbalColumnDefinition($field_name, $dbal_type, array $field) {
+  protected function getDbalColumnOptions($field_name, $dbal_type, array $field) {
     $options = [];
 
     $options['type'] = DbalType::getType($dbal_type);
@@ -226,7 +221,10 @@ class Schema extends DatabaseSchema {
     // Let DBAL extension alter the column definition if required.
     $this->dbalExt->alterDbalColumnDefinition($dbal_column_definition, $options, $dbal_type, $field, $field_name);
 
-    return $dbal_column_definition;
+    // Add the SQL column definiton as the 'columnDefinition' option.
+    $options['columnDefinition'] = $dbal_column_definition;
+
+    return $options;
   }
 
   /**
@@ -338,13 +336,13 @@ class Schema extends DatabaseSchema {
     // Delegate to DBAL extension.
     $primary_key_processed_by_extension = FALSE;
     $dbal_type = $this->getDbalColumnType($spec);
-    $dbal_column_definition = $this->getDbalColumnDefinition($field, $dbal_type, $spec);
-    if ($this->dbalExt->delegateAddField($primary_key_processed_by_extension, $table, $field, $spec, $keys_new, $dbal_column_definition)) {
+    $dbal_column_options = $this->getDbalColumnOptions($field, $dbal_type, $spec);
+    if ($this->dbalExt->delegateAddField($primary_key_processed_by_extension, $table, $field, $spec, $keys_new, $dbal_column_options)) {
       $this->dbalSchemaForceReload();
     }
     else {
       // DBAL extension did not pick up, proceed with DBAL.
-      $dbal_table->addColumn($field, $dbal_type, ['columnDefinition' => $dbal_column_definition]);
+      $dbal_table->addColumn($field, $dbal_type, $dbal_column_options);
       // Manage change to primary key.
       if (!empty($keys_new['primary key'])) {
         // @todo in MySql, this could still be a list of columns with length.
@@ -354,11 +352,6 @@ class Schema extends DatabaseSchema {
         $dbal_table->setPrimaryKey($this->dbalResolveIndexColumnList($keys_new['primary key']));
       }
       $this->dbalExecuteSchemaChange($current_schema, $to_schema);
-      // DBAL is limited here, as passing only 'columnDefinition' to
-      // ::addColumn does not propagate to other properties. We need to reload
-      // the schema at next get.
-      // @see https://github.com/doctrine/dbal/issues/1033
-      $this->dbalSchemaForceReload();
     }
 
     // Add unique keys.
@@ -593,13 +586,13 @@ class Schema extends DatabaseSchema {
     }
 
     $dbal_type = $this->getDbalColumnType($spec);
-    $dbal_column_definition = $this->getDbalColumnDefinition($field_new, $dbal_type, $spec);
+    $dbal_column_options = $this->getDbalColumnOptions($field_new, $dbal_type, $spec);
     // DBAL is limited here, if we pass only 'columnDefinition' to
     // ::changeColumn the schema diff will not capture any change. We need to
     // fallback to platform specific syntax.
     // @see https://github.com/doctrine/dbal/issues/1033
     $primary_key_processed_by_extension = FALSE;
-    if (!$this->dbalExt->delegateChangeField($primary_key_processed_by_extension, $table, $field, $field_new, $spec, $keys_new, $dbal_column_definition)) {
+    if (!$this->dbalExt->delegateChangeField($primary_key_processed_by_extension, $table, $field, $field_new, $spec, $keys_new, $dbal_column_options)) {
       return;
     }
     // We need to reload the schema at next get.
