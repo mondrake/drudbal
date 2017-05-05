@@ -527,9 +527,9 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
     ]);
   }
 
-  public function delegateAddField(&$primary_key_processed_by_driver, $table, $field, $spec, $keys_new, $dbal_column_definition) {
+  public function delegateAddField(&$primary_key_processed_by_driver, $table, $field, $spec, $keys_new, array $dbal_column_options) {
     if (!empty($keys_new['primary key']) && isset($field['type']) && $field['type'] == 'serial') {
-      $sql = 'ALTER TABLE {' . $table . '} ADD `' . $field . '` ' . $dbal_column_definition;
+      $sql = 'ALTER TABLE {' . $table . '} ADD `' . $field . '` ' . $dbal_column_options['columnDefinition'];
       $keys_sql = $this->createKeysSql(['primary key' => $keys_new['primary key']]);
       $sql .= ', ADD ' . $keys_sql[0];
       $this->connection->query($sql);
@@ -539,8 +539,8 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
     return FALSE;
   }
 
-  public function delegateChangeField(&$primary_key_processed_by_driver, $table, $field, $field_new, $spec, $keys_new, $dbal_column_definition) {
-    $sql = 'ALTER TABLE {' . $table . '} CHANGE `' . $field . '` `' . $field_new . '` ' . $dbal_column_definition;
+  public function delegateChangeField(&$primary_key_processed_by_driver, $table, $field, $field_new, $spec, $keys_new, array $dbal_column_options) {
+    $sql = 'ALTER TABLE {' . $table . '} CHANGE `' . $field . '` `' . $field_new . '` ' . $dbal_column_options['columnDefinition'];
     if (!empty($keys_new['primary key'])) {
       $keys_sql = $this->createKeysSql(['primary key' => $keys_new['primary key']]);
       $sql .= ', ADD ' . $keys_sql[0];
