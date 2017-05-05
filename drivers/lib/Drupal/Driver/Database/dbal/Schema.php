@@ -620,6 +620,7 @@ class Schema extends DatabaseSchema {
    * {@inheritdoc}
    */
   public function prepareComment($comment, $length = NULL) {
+    return 'bingobongo prepareComment';
     // Truncate comment to maximum comment length.
     if (isset($length)) {
       // Add table prefixes before truncating.
