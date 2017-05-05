@@ -131,10 +131,7 @@ class MysqliDbalStatement implements \IteratorAggregate, StatementInterface {
 
     if (isset($options['fetch'])) {
       if (is_string($options['fetch'])) {
-        // @todo remove these comments??? \PDO::FETCH_PROPS_LATE tells __construct() to run before properties
-        // are added to the object.
-        $this->setFetchMode(\PDO::FETCH_CLASS);
-        $this->fetchClass = $options['fetch'];
+        $this->setFetchMode(\PDO::FETCH_CLASS, $options['fetch']);
       }
       else {
         $this->setFetchMode($options['fetch']);
@@ -272,7 +269,13 @@ class MysqliDbalStatement implements \IteratorAggregate, StatementInterface {
       throw new MysqliException($this->_stmt->error, $this->_stmt->sqlstate, $this->_stmt->errno);
     }
 
-    $mode = $mode ?: $this->_defaultFetchMode;
+    if (is_string($mode)) {
+      $this->setFetchMode(\PDO::FETCH_CLASS, $mode);
+      $mode = \PDO::FETCH_CLASS;
+    }
+    else {
+      $mode = $mode ?: $this->_defaultFetchMode;
+    }
 
     switch ($mode) {
       case \PDO::FETCH_NUM:
@@ -466,6 +469,9 @@ class MysqliDbalStatement implements \IteratorAggregate, StatementInterface {
    */
   public function setFetchMode($mode, $a1 = NULL, $a2 = []) {
     $this->_defaultFetchMode = $mode;
+    if ($mode === \PDO::FETCH_CLASS) {
+      $this->fetchClass = $a1;
+    }
     return true;
   }
 
