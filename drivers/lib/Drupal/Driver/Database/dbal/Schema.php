@@ -78,7 +78,7 @@ class Schema extends DatabaseSchema {
    *   The fully prefixed table name to be used in the DBMS.
    */
   public function tableName($drupal_table) {
-    return $this->dbalExtension->pfxTable($drupal_table):
+    return $this->dbalExtension->pfxTable($drupal_table);
   }
 
   /**
@@ -90,7 +90,8 @@ class Schema extends DatabaseSchema {
     }
 
     // Create table via DBAL.
-    $to_schema = clone $this->dbalSchema();
+    $current_schema = $this->dbalSchema();
+    $to_schema = clone $current_schema;
     $new_table = $to_schema->createTable($this->tableName($name));
 
     // Delegate adding options to DBAL extension.
@@ -294,16 +295,17 @@ class Schema extends DatabaseSchema {
    * {@inheritdoc}
    */
   public function renameTable($table, $new_name) {
-    if (!$this->dbalSchema()->hasTable($this->tableName($table))) {
+    if (!$this->tableExists($table)) {
       throw new SchemaObjectDoesNotExistException(t("Cannot rename @table to @table_new: table @table doesn't exist.", ['@table' => $table, '@table_new' => $new_name]));
     }
-    if ($this->dbalSchema()->hasTable($this->tableName($new_name))) {
+    if ($this->tableExists($new_name)) {
       throw new SchemaObjectExistsException(t("Cannot rename @table to @table_new: table @table_new already exists.", ['@table' => $table, '@table_new' => $new_name]));
     }
-    $to_schema = clone $this->dbalSchema();
-    $to_schema->renameTable($this->tableName($table), $this->tableName($new_name));
-    $this->dbalExecuteSchemaChange($to_schema);
-    return TRUE;
+
+    // DBAL Schema will drop the old table and create a new one, so we go for
+    // using the manager instead that allows in-place renaming.
+    $this->dbalSchemaManager->renameTable($this->tableName($table), $this->tableName($new_name));
+    $this->dbalSchemaForceReload();
   }
 
   /**
@@ -311,7 +313,8 @@ class Schema extends DatabaseSchema {
    */
   public function dropTable($table) {
     if ($this->dbalSchema()->hasTable($this->tableName($table))) {
-      $to_schema = clone $this->dbalSchema();
+      $current_schema = $this->dbalSchema();
+      $to_schema = clone $current_schema;
       $to_schema->dropTable($this->tableName($table));
       $this->dbalExecuteSchemaChange($to_schema);
       return TRUE;
@@ -336,14 +339,16 @@ class Schema extends DatabaseSchema {
       $spec['not null'] = FALSE;
     }
 
-    $to_schema = clone $this->dbalSchema();
+    $current_schema = $this->dbalSchema();
+    $to_schema = clone $current_schema;
     $dbal_table = $to_schema->getTable($this->tableName($table));
 
     // Drop primary key if it is due to be changed.
     if (!empty($keys_new['primary key']) && $dbal_table->hasPrimaryKey()) {
       $dbal_table->dropPrimaryKey();
       $this->dbalExecuteSchemaChange($to_schema);
-      $to_schema = clone $this->dbalSchema();
+      $current_schema = $this->dbalSchema();
+      $to_schema = clone $current_schema;
       $dbal_table = $to_schema->getTable($this->tableName($table));
     }
 
@@ -406,7 +411,8 @@ class Schema extends DatabaseSchema {
       return FALSE;
     }
 
-    $to_schema = clone $this->dbalSchema();
+    $current_schema = $this->dbalSchema();
+    $to_schema = clone $current_schema;
     $to_schema->getTable($this->tableName($table))->dropColumn($field);
     $this->dbalExecuteSchemaChange($to_schema);
     return TRUE;
@@ -427,7 +433,8 @@ class Schema extends DatabaseSchema {
     }
 
     // DBAL extension did not pick up, proceed with DBAL.
-    $to_schema = clone $this->dbalSchema();
+    $current_schema = $this->dbalSchema();
+    $to_schema = clone $current_schema;
     // @todo this may not work - need to see if ::escapeDefaultValue
     // provides a sensible output.
     $to_schema->getTable($this->tableName($table))->getColumn($field)->setDefault($this->escapeDefaultValue($default));
@@ -449,7 +456,8 @@ class Schema extends DatabaseSchema {
     }
 
     // DBAL extension did not pick up, proceed with DBAL.
-    $to_schema = clone $this->dbalSchema();
+    $current_schema = $this->dbalSchema();
+    $to_schema = clone $current_schema;
     // @todo this may not work - we need to 'DROP' the default, not set it
     // to null.
     $to_schema->getTable($this->tableName($table))->getColumn($field)->setDefault(NULL);
@@ -493,7 +501,8 @@ class Schema extends DatabaseSchema {
     }
 
     // DBAL extension did not pick up, proceed with DBAL.
-    $to_schema = clone $this->dbalSchema();
+    $current_schema = $this->dbalSchema();
+    $to_schema = clone $current_schema;
     $to_schema->getTable($this->tableName($table))->setPrimaryKey($this->dbalResolveIndexColumnList($fields));
     $this->dbalExecuteSchemaChange($to_schema);
   }
@@ -508,7 +517,8 @@ class Schema extends DatabaseSchema {
     if (!$this->dbalSchema()->getTable($this->tableName($table))->hasPrimaryKey()) {
       return FALSE;
     }
-    $to_schema = clone $this->dbalSchema();
+    $current_schema = $this->dbalSchema();
+    $to_schema = clone $current_schema;
     $to_schema->getTable($this->tableName($table))->dropPrimaryKey();
     $this->dbalExecuteSchemaChange($to_schema);
     return TRUE;
@@ -532,7 +542,8 @@ class Schema extends DatabaseSchema {
     }
 
     // DBAL extension did not pick up, proceed with DBAL.
-    $to_schema = clone $this->dbalSchema();
+    $current_schema = $this->dbalSchema();
+    $to_schema = clone $current_schema;
     $to_schema->getTable($this->tableName($table))->addUniqueIndex($this->dbalResolveIndexColumnList($fields), $name);
     $this->dbalExecuteSchemaChange($to_schema);
   }
@@ -562,7 +573,8 @@ class Schema extends DatabaseSchema {
     }
 
     // DBAL extension did not pick up, proceed with DBAL.
-    $to_schema = clone $this->dbalSchema();
+    $current_schema = $this->dbalSchema();
+    $to_schema = clone $current_schema;
     $to_schema->getTable($this->tableName($table))->addIndex($this->dbalResolveIndexColumnList($fields), $name);
     $this->dbalExecuteSchemaChange($to_schema);
   }
@@ -574,7 +586,8 @@ class Schema extends DatabaseSchema {
     if (!$this->indexExists($table, $name)) {
       return FALSE;
     }
-    $to_schema = clone $this->dbalSchema();
+    $current_schema = $this->dbalSchema();
+    $to_schema = clone $current_schema;
     $to_schema->getTable($this->tableName($table))->dropIndex($name);
     $this->dbalExecuteSchemaChange($to_schema);
     return TRUE;
@@ -712,8 +725,8 @@ class Schema extends DatabaseSchema {
    *
    * @return $this
    */
-  protected function dbalSetCurrentSchema(DbalSchema $dbal_schema) {
-    $this->dbalCurrentSchema = $schema;
+  protected function dbalSetCurrentSchema(DbalSchema $dbal_schema = NULL) {
+    $this->dbalCurrentSchema = $dbal_schema;
     return $this;
   }
 
