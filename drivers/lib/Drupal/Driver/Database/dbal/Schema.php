@@ -103,6 +103,11 @@ class Schema extends DatabaseSchema {
 
     // Execute the table creation.
     $this->dbalExecuteSchemaChange($current_schema, $to_schema);
+    // DBAL is limited here, as passing only 'columnDefinition' to
+    // ::addColumn does not propagate to other properties. We need to reload
+    // the schema at next get.
+    // @see https://github.com/doctrine/dbal/issues/1033
+    $this->dbalSchemaForceReload();
 
     // Add unique keys.
     if (!empty($table['unique keys'])) {
@@ -211,7 +216,6 @@ class Schema extends DatabaseSchema {
       $comment = $this->dbalExt->alterSetColumnComment($comment, $dbal_type, $field, $field_name);
       $options['comment'] = $this->prepareComment($comment);
     }
-if ($field_name === 'test_field') throw new \Exception(var_export([$comment, $options], TRUE);
 
     // Let DBAL extension alter the column options if required.
     $this->dbalExt->alterDbalColumnOptions($options, $dbal_type, $field, $field_name);
@@ -350,6 +354,11 @@ if ($field_name === 'test_field') throw new \Exception(var_export([$comment, $op
         $dbal_table->setPrimaryKey($this->dbalResolveIndexColumnList($keys_new['primary key']));
       }
       $this->dbalExecuteSchemaChange($current_schema, $to_schema);
+      // DBAL is limited here, as passing only 'columnDefinition' to
+      // ::addColumn does not propagate to other properties. We need to reload
+      // the schema at next get.
+      // @see https://github.com/doctrine/dbal/issues/1033
+      $this->dbalSchemaForceReload();
     }
 
     // Add unique keys.
@@ -591,9 +600,10 @@ if ($field_name === 'test_field') throw new \Exception(var_export([$comment, $op
     // @see https://github.com/doctrine/dbal/issues/1033
     $primary_key_processed_by_extension = FALSE;
     if (!$this->dbalExt->delegateChangeField($primary_key_processed_by_extension, $table, $field, $field_new, $spec, $keys_new, $dbal_column_definition)) {
-      $this->dbalSchemaForceReload();
       return;
     }
+    // We need to reload the schema at next get.
+    $this->dbalSchemaForceReload();
 
     // New primary key.
     if (!empty($keys_new['primary key']) && !$primary_key_processed_by_extension) {
