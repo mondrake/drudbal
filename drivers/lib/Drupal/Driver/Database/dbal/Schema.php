@@ -290,13 +290,14 @@ class Schema extends DatabaseSchema {
    * {@inheritdoc}
    */
   public function dropTable($table) {
-    if (!$this->tableExists($table)) {
-      return FALSE;
-    }
     $current_schema = $this->dbalGetCurrentSchema();
-    $to_schema = clone $current_schema;
-    $to_schema->dropTable($this->dbalExt->pfxTable($table));
-    $this->dbalExecuteSchemaChange($current_schema, $to_schema);
+    if ($current_schema->hasTable($this->dbalExt->pfxTable($table))) {
+      $to_schema = clone $current_schema;
+      $to_schema->dropTable($this->dbalExt->pfxTable($table));
+      $this->dbalExecuteSchemaChange($current_schema, $to_schema);
+      return TRUE;
+    }
+    return FALSE;
   }
 
   /**
