@@ -100,7 +100,8 @@ script:
   - cd $DRUPAL_PATH/core
   # Only run selected tests to avoid Travis timeout.
   #- ../vendor/bin/phpunit --testsuite unit --group Database,Cache,Entity --verbose
-  - ../vendor/bin/phpunit --testsuite kernel --group Database,Cache --verbose
+  #- ../vendor/bin/phpunit --testsuite kernel --group Database,Cache --verbose
+  - ../vendor/bin/phpunit tests/Drupal/KernelTests/Core/Database/SchemaTest.php
   #- ../vendor/bin/phpunit tests/Drupal/KernelTests/Core/Entity/ConfigEntityQueryTest.php
   #- ../vendor/bin/phpunit tests/Drupal/KernelTests/Core/Entity/EntityQueryTest.php
   #- ../vendor/bin/phpunit tests/Drupal/KernelTests/Core/Entity/EntityQueryAggregateTest.php

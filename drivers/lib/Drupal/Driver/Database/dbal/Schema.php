@@ -211,6 +211,7 @@ class Schema extends DatabaseSchema {
       $comment = $this->dbalExt->alterSetColumnComment($comment, $dbal_type, $field, $field_name);
       $options['comment'] = $this->prepareComment($comment);
     }
+if ($field_name === 'test_field') throw new \Exception(var_export([$comment, $options], TRUE);
 
     // Let DBAL extension alter the column options if required.
     $this->dbalExt->alterDbalColumnOptions($options, $dbal_type, $field, $field_name);
@@ -620,7 +621,6 @@ class Schema extends DatabaseSchema {
    * {@inheritdoc}
    */
   public function prepareComment($comment, $length = NULL) {
-    return 'bingobongo prepareComment';
     // Truncate comment to maximum comment length.
     if (isset($length)) {
       // Add table prefixes before truncating.
