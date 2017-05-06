@@ -354,13 +354,12 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
     ];
 
     $info = Database::getConnectionInfo();
-    $pdo_exception = $e->getPrevious();
 
     // Detect utf8mb4 incompability.
 
     // @todo still clarify why this is needed
 
-    if ($pdo_exception->getCode() == self::UNSUPPORTED_CHARSET || ($pdo_exception->getCode() == self::SQLSTATE_SYNTAX_ERROR && $pdo_exception->errorInfo[1] == self::UNKNOWN_CHARSET)) {
+    if ($e->getErrorCode() == self::UNSUPPORTED_CHARSET) {
       $results['fail'][] = t('Your MySQL server and PHP MySQL driver must support utf8mb4 character encoding. Make sure to use a database system that supports this (such as MySQL/MariaDB/Percona 5.5.3 and up), and that the utf8mb4 character set is compiled in. See the <a href=":documentation" target="_blank">MySQL documentation</a> for more information.', [':documentation' => 'https://dev.mysql.com/doc/refman/5.0/en/cannot-initialize-character-set.html']);
       $info_copy = $info;
       // Set a flag to fall back to utf8. Note: this flag should only be
@@ -382,7 +381,7 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
     // Attempt to create the database if it is not found. Try to establish a
     // connection without database specified, try to create database, and if
     // successful reopen the connection to the new database.
-    if ($pdo_exception->getCode() == self::DATABASE_NOT_FOUND) {
+    if ($e->getErrorCode() == self::DATABASE_NOT_FOUND) {
       try {
         // Remove the database string from connection info.
         $database = $info['default']['database'];
@@ -413,13 +412,13 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
       catch (DatabaseNotFoundException $e) {
         // Still no dice; probably a permission issue. Raise the error to the
         // installer.
-        $results['fail'][] = t('Creation of database %database failed. The server reports the following message: %error.', ['%database' => $database, '%error' => $pdo_exception->getMessage()]);
+        $results['fail'][] = t('Creation of database %database failed. The server reports the following message: %error.', ['%database' => $database, '%error' => $e->getMessage()]);
       }
       return $results;
     }
 
     // Database connection failed for some other reasons. Report.
-    $results['fail'][] = t('Failed to connect to your database server. The server reports the following message: %error.<ul><li>Is the database server running?</li><li>Does the database exist or does the database user have sufficient privileges to create the database?</li><li>Have you entered the correct database name?</li><li>Have you entered the correct username and password?</li><li>Have you entered the correct database hostname?</li></ul>', ['%error' => $pdo_exception->getMessage()]);
+    $results['fail'][] = t('Failed to connect to your database server. The server reports the following message: %error.<ul><li>Is the database server running?</li><li>Does the database exist or does the database user have sufficient privileges to create the database?</li><li>Have you entered the correct database name?</li><li>Have you entered the correct username and password?</li><li>Have you entered the correct database hostname?</li></ul>', ['%error' => $e->getMessage()]);
     return $results;
   }
 
