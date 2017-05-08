@@ -78,7 +78,7 @@ class Schema extends DatabaseSchema {
    *   The fully prefixed table name to be used in the DBMS.
    */
   public function tableName($drupal_table) {
-    return $this->dbalExtension->pfxTable($drupal_table);
+    return $this->connection->getPrefixedTableName($drupal_table);
   }
 
   /**

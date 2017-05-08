@@ -568,7 +568,7 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
   public function delegateIndexExists(&$result, $table, $name) {
     if ($name == 'PRIMARY') {
       $schema = $this->dbalConnection->getSchemaManager()->createSchema();
-      $result = $schema->getTable($this->pfxTable($table))->hasPrimaryKey();
+      $result = $schema->getTable($this->connection->getPrefixedTableName($table))->hasPrimaryKey();
       return TRUE;
     }
     return FALSE;
@@ -607,13 +607,6 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
   }
 
   /**
-   * @todo
-   */
-  public function pfxTable($table) {
-    return $this->connection->prefixTables('{' . $table . '}');
-  }
-
-  /**
    * Retrieve a table or column comment.
    */
   public function delegateGetComment(&$comment, $dbal_schema, $table, $column = NULL) {
@@ -634,7 +627,7 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
           )
         )
       ->setParameter(0, $this->dbalConnection->getDatabase())
-      ->setParameter(1, $this->pfxTable($table));
+      ->setParameter(1, $this->connection->getPrefixedTableName($table));
     $comment = $dbal_query->execute()->fetchColumn();
     $this->alterGetComment($comment, $dbal_schema, $table, $column);
     return TRUE;
