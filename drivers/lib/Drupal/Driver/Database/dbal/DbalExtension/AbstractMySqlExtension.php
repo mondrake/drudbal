@@ -501,12 +501,12 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function delegateFieldExists(&$result, $drupal_table_name, $column) {
+  public function delegateFieldExists(&$result, $drupal_table_name, $field_name) {
     // The DBAL Schema manager is quite slow here.
     // Instead, we try to select from the table and field in question. If it
     // fails, the most likely reason is that it does not exist.
     try {
-      $ret = $this->getDbalConnection()->query("SELECT $column FROM " . $this->tableName($drupal_table_name) . " LIMIT 1 OFFSET 0");
+      $ret = $this->getDbalConnection()->query("SELECT $field_name FROM " . $this->tableName($drupal_table_name) . " LIMIT 1 OFFSET 0");
       $result = TRUE;
     }
     catch (\Exception $e) {
@@ -518,24 +518,24 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function delegateCreateTableSetOptions(DbalTable $dbal_table, DbalSchema $dbal_schema, array &$drupal_table_specs, $drupal_table_name) {
+  public function alterCreateTableOptions(DbalTable $dbal_table, DbalSchema $dbal_schema, array &$drupal_table_specs, $drupal_table_name) {
     // Provide defaults if needed.
     $drupal_table_specs += [
-      'mysql_engine' => 'InnoDB',
-      'mysql_character_set' => 'utf8mb4',
+      'mysql_engine' => 'InnoDB', // @todo use constant
+      'mysql_character_set' => 'utf8mb4', // @todo use constant
     ];
     $dbal_table->addOption('charset', $drupal_table_specs['mysql_character_set']);
     $dbal_table->addOption('engine', $drupal_table_specs['mysql_engine']);
     $info = $this->connection->getConnectionOptions();
-    $dbal_table->addOption('collate', empty($info['collation']) ? 'utf8mb4_general_ci' : $info['collation']);
+    $dbal_table->addOption('collate', empty($info['collation']) ? 'utf8mb4_general_ci' : $info['collation']);   // @todo use constant for collation
   }
 
   /**
    * {@inheritdoc}
    */
-  public function delegateGetDbalColumnType(&$dbal_type, $field) {
-    if (isset($field['mysql_type'])) {
-      $dbal_type = $this->dbalConnection->getDatabasePlatform()->getDoctrineTypeMapping($field['mysql_type']);
+  public function delegateGetDbalColumnType(&$dbal_type, array $drupal_field_specs) {
+    if (isset($drupal_field_specs['mysql_type'])) {
+      $dbal_type = $this->dbalConnection->getDatabasePlatform()->getDoctrineTypeMapping($drupal_field_specs['mysql_type']);
       return TRUE;
     }
     return FALSE;
@@ -544,10 +544,10 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function alterDbalColumnOptions(&$options, $dbal_type, $field, $field_name) {
-    if (isset($field['type']) && $field['type'] == 'varchar_ascii') {
-      $options['charset'] = 'ascii';
-      $options['collation'] = 'ascii_general_ci';
+  public function alterDbalColumnOptions(array &$dbal_column_options, $dbal_type, array $drupal_field_specs, $field_name) {
+    if (isset($drupal_field_specs['type']) && $drupal_field_specs['type'] === 'varchar_ascii') {
+      $dbal_column_options['charset'] = 'ascii';
+      $dbal_column_options['collation'] = 'ascii_general_ci';
     }
   }
 
@@ -563,22 +563,22 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function alterDbalColumnDefinition(&$dbal_column_definition, $options, $dbal_type, $field, $field_name) {
+  public function alterDbalColumnDefinition(&$dbal_column_definition, array $dbal_column_options, $dbal_type, array $drupal_field_specs, $field_name) {
     // DBAL does not support unsigned float/numeric columns.
     // @see https://github.com/doctrine/dbal/issues/2380
-    if (isset($field['type']) && $field['type'] == 'float' && !empty($field['unsigned']) && (bool) $field['unsigned'] === TRUE) {
+    if (isset($drupal_field_specs['type']) && $drupal_field_specs['type'] == 'float' && !empty($drupal_field_specs['unsigned']) && (bool) $drupal_field_specs['unsigned'] === TRUE) {
       $dbal_column_definition = str_replace('DOUBLE PRECISION', 'DOUBLE PRECISION UNSIGNED', $dbal_column_definition);
     }
-    if (isset($field['type']) && $field['type'] == 'numeric' && !empty($field['unsigned']) && (bool) $field['unsigned'] === TRUE) {
+    if (isset($drupal_field_specs['type']) && $drupal_field_specs['type'] == 'numeric' && !empty($drupal_field_specs['unsigned']) && (bool) $drupal_field_specs['unsigned'] === TRUE) {
       $dbal_column_definition = preg_replace('/NUMERIC\((.+)\)/', '$0 UNSIGNED', $dbal_column_definition);
     }
     // DBAL does not support per-column charset.
     // @see https://github.com/doctrine/dbal/pull/881
-    if (isset($field['type']) && $field['type'] == 'varchar_ascii') {
+    if (isset($drupal_field_specs['type']) && $drupal_field_specs['type'] == 'varchar_ascii') {
       $dbal_column_definition = preg_replace('/CHAR\(([0-9]+)\)/', '$0 CHARACTER SET ascii', $dbal_column_definition);
     }
     // DBAL does not support BINARY option for char/varchar columns.
-    if (isset($field['binary']) && $field['binary']) {
+    if (isset($drupal_field_specs['binary']) && $drupal_field_specs['binary']) {
       $dbal_column_definition = preg_replace('/CHAR\(([0-9]+)\)/', '$0 BINARY', $dbal_column_definition);
     }
     // Decode quotes.
@@ -590,13 +590,13 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function delegateAddField(&$primary_key_processed_by_driver, $table, $field, $spec, $keys_new, array $dbal_column_options) {
-    if (!empty($keys_new['primary key']) && isset($field['type']) && $field['type'] == 'serial') {
-      $sql = 'ALTER TABLE {' . $table . '} ADD `' . $field . '` ' . $dbal_column_options['columnDefinition'];
-      $keys_sql = $this->createKeysSql(['primary key' => $keys_new['primary key']]);
+  public function delegateAddField(&$primary_key_processed_by_extension, $drupal_table_name, $field_name, array $drupal_field_specs, array $keys_new_specs, array $dbal_column_options) {
+    if (!empty($keys_new_specs['primary key']) && isset($drupal_field_specs['type']) && $drupal_field_specs['type'] == 'serial') {
+      $sql = 'ALTER TABLE {' . $drupal_table_name . '} ADD `' . $field_name . '` ' . $dbal_column_options['columnDefinition'];
+      $keys_sql = $this->createKeysSql(['primary key' => $keys_new_specs['primary key']]);
       $sql .= ', ADD ' . $keys_sql[0];
       $this->connection->query($sql);
-      $primary_key_processed_by_driver = TRUE;
+      $primary_key_processed_by_extension = TRUE;
       return TRUE;
     }
     return FALSE;
@@ -605,12 +605,12 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function delegateChangeField(&$primary_key_processed_by_driver, $table, $field, $field_new, $spec, $keys_new, array $dbal_column_options) {
-    $sql = 'ALTER TABLE {' . $table . '} CHANGE `' . $field . '` `' . $field_new . '` ' . $dbal_column_options['columnDefinition'];
-    if (!empty($keys_new['primary key'])) {
-      $keys_sql = $this->createKeysSql(['primary key' => $keys_new['primary key']]);
+  public function delegateChangeField(&$primary_key_processed_by_extension, $drupal_table_name, $field_name, $field_new_name, array $drupal_field_new_specs, array $keys_new_specs, array $dbal_column_options) {
+    $sql = 'ALTER TABLE {' . $drupal_table_name . '} CHANGE `' . $field_name . '` `' . $field_new_name . '` ' . $dbal_column_options['columnDefinition'];
+    if (!empty($keys_new_specs['primary key'])) {
+      $keys_sql = $this->createKeysSql(['primary key' => $keys_new_specs['primary key']]);
       $sql .= ', ADD ' . $keys_sql[0];
-      $primary_key_processed_by_driver = TRUE;
+      $primary_key_processed_by_extension = TRUE;
     }
     $this->connection->query($sql);
     return TRUE;
