@@ -305,8 +305,6 @@ class Connection extends DatabaseConnection {
       'dbal_options' => NULL,
       'dbal_extension_class' => NULL,
       'dbal_statement_class' => NULL,
-// @todo advanced_options are written to settings.php - still??
-      'advanced_options' => NULL,
     ]);
     // Map to DBAL connection array the main keys from the Drupal connection.
     if (isset($connection_options['database'])) {

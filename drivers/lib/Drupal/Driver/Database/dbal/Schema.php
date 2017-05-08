@@ -77,8 +77,8 @@ class Schema extends DatabaseSchema {
    * @return string
    *   The fully prefixed table name to be used in the DBMS.
    */
-  public function tableName($drupal_table) {
-    return $this->dbalExtension->pfxTable($drupal_table);
+  protected function tableName($drupal_table) {
+    return $this->connection->getPrefixedTableName($drupal_table);
   }
 
   /**
@@ -304,6 +304,7 @@ class Schema extends DatabaseSchema {
 
     // DBAL Schema will drop the old table and create a new one, so we go for
     // using the manager instead that allows in-place renaming.
+    // @see https://github.com/doctrine/migrations/issues/17
     $this->dbalSchemaManager->renameTable($this->tableName($table), $this->tableName($new_name));
     $this->dbalSchemaForceReload();
   }
@@ -312,14 +313,28 @@ class Schema extends DatabaseSchema {
    * {@inheritdoc}
    */
   public function dropTable($table) {
-    if ($this->dbalSchema()->hasTable($this->tableName($table))) {
-      $current_schema = $this->dbalSchema();
-      $to_schema = clone $current_schema;
-      $to_schema->dropTable($this->tableName($table));
-      $this->dbalExecuteSchemaChange($to_schema);
-      return TRUE;
+    if (!$this->tableExists($table)) {
+      return FALSE;
     }
-    return FALSE;
+
+    // DBAL Schema is slow here, especially for tearDown while testing, so we
+    // use the manager directly.
+    // @todo this will affect possibility to drop FKs in an orderly way, so
+    // we would need to revise at later stage if we want the driver to support
+    // a broader set of capabilities.
+    $this->dbalSchemaManager->dropTable($this->tableName($table));
+    $this->dbalSchemaForceReload();
+    return TRUE;
+
+    // @todo preferred way:
+    // if ($this->dbalSchema()->hasTable($this->tableName($table))) {
+    //   $current_schema = $this->dbalSchema();
+    //   $to_schema = clone $current_schema;
+    //   $to_schema->dropTable($this->tableName($table));
+    //   $this->dbalExecuteSchemaChange($to_schema);
+    //   return TRUE;
+    // }
+    // return FALSE;
   }
 
   /**
@@ -691,6 +706,12 @@ class Schema extends DatabaseSchema {
    * {@inheritdoc}
    */
   public function tableExists($table) {
+    $result = NULL;
+    if ($this->dbalExtension->delegateTableExists($result, $table)) {
+      return $result;
+    }
+
+    // DBAL extension did not pick up, proceed with DBAL.
     return $this->dbalSchemaManager->tablesExist([$this->tableName($table)]);
   }
 
@@ -698,6 +719,12 @@ class Schema extends DatabaseSchema {
    * {@inheritdoc}
    */
   public function fieldExists($table, $column) {
+    $result = NULL;
+    if ($this->dbalExtension->delegateFieldExists($result, $table, $column)) {
+      return $result;
+    }
+
+    // DBAL extension did not pick up, proceed with DBAL.
     if (!$this->tableExists($table)) {
       return FALSE;
     }

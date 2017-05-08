@@ -90,6 +90,7 @@ https://github.com/doctrine/dbal/issues/1033 | DBAL-1096: schema-tool:update doe
 https://github.com/doctrine/dbal/pull/881    | Add Mysql per-column charset support |
 https://github.com/doctrine/dbal/pull/2412   | Add mysql specific indexes with lengths |
 https://github.com/doctrine/dbal/issues/2380 | Unsigned numeric columns not generated correctly |
+https://github.com/doctrine/migrations/issues/17 | Data loss on table renaming. |
 
 ## Related Drupal issues
 Issue | Description   |
