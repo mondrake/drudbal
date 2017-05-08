@@ -77,7 +77,7 @@ class Schema extends DatabaseSchema {
    * @return string
    *   The fully prefixed table name to be used in the DBMS.
    */
-  public function tableName($drupal_table) {
+  protected function tableName($drupal_table) {
     return $this->connection->getPrefixedTableName($drupal_table);
   }
 
@@ -85,7 +85,7 @@ class Schema extends DatabaseSchema {
    * {@inheritdoc}
    */
   public function createTable($name, $table) {
-    if ($this->tableExists($name)) {
+    if ($this->dbalSchema()->hasTable($this->tableName($name))) {
       throw new SchemaObjectExistsException(t('Table @name already exists.', ['@name' => $name]));
     }
 
@@ -295,15 +295,16 @@ class Schema extends DatabaseSchema {
    * {@inheritdoc}
    */
   public function renameTable($table, $new_name) {
-    if (!$this->tableExists($table)) {
+    if (!$this->dbalSchema()->hasTable($this->tableName($table))) {
       throw new SchemaObjectDoesNotExistException(t("Cannot rename @table to @table_new: table @table doesn't exist.", ['@table' => $table, '@table_new' => $new_name]));
     }
-    if ($this->tableExists($new_name)) {
+    if ($this->dbalSchema()->hasTable($this->tableName($new_name))) {
       throw new SchemaObjectExistsException(t("Cannot rename @table to @table_new: table @table_new already exists.", ['@table' => $table, '@table_new' => $new_name]));
     }
 
     // DBAL Schema will drop the old table and create a new one, so we go for
     // using the manager instead that allows in-place renaming.
+    // @see https://github.com/doctrine/migrations/issues/17
     $this->dbalSchemaManager->renameTable($this->tableName($table), $this->tableName($new_name));
     $this->dbalSchemaForceReload();
   }
