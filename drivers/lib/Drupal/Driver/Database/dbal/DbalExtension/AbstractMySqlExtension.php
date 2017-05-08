@@ -359,7 +359,7 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
   /**
    * @todo
    */
-  public static function delegateInstallConnectExceptionProcess(DbalExceptionConnectionException $e) {
+  public static function delegateInstallConnectExceptionProcess(\Exception $e) {
     $results = [
       'fail' => [],
       'pass' => [],
@@ -368,10 +368,7 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
     $info = Database::getConnectionInfo();
 
     // Detect utf8mb4 incompability.
-
-    // @todo still clarify why this is needed
-
-    if ($e->getErrorCode() === self::UNSUPPORTED_CHARSET) {
+    if ($e->getErrorCode() === self::UNSUPPORTED_CHARSET || $e->getErrorCode() === self::UNKNOWN_CHARSET) {
       $results['fail'][] = t('Your MySQL server and PHP MySQL driver must support utf8mb4 character encoding. Make sure to use a database system that supports this (such as MySQL/MariaDB/Percona 5.5.3 and up), and that the utf8mb4 character set is compiled in. See the <a href=":documentation" target="_blank">MySQL documentation</a> for more information.', [':documentation' => 'https://dev.mysql.com/doc/refman/5.0/en/cannot-initialize-character-set.html']);
       $info_copy = $info;
       // Set a flag to fall back to utf8. Note: this flag should only be
