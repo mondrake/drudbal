@@ -720,7 +720,7 @@ class Schema extends DatabaseSchema {
    */
   public function fieldExists($table, $column) {
     $result = NULL;
-    if ($this->dbalExtension->delegateTableExists($result, $table, $column)) {
+    if ($this->dbalExtension->delegateFieldExists($result, $table, $column)) {
       return $result;
     }
 
