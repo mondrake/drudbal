@@ -85,7 +85,7 @@ class Schema extends DatabaseSchema {
    * {@inheritdoc}
    */
   public function createTable($name, $table) {
-    if ($this->dbalSchema()->hasTable($this->tableName($name))) {
+    if ($this->tableExists($name)) {
       throw new SchemaObjectExistsException(t('Table @name already exists.', ['@name' => $name]));
     }
 
@@ -295,10 +295,10 @@ class Schema extends DatabaseSchema {
    * {@inheritdoc}
    */
   public function renameTable($table, $new_name) {
-    if (!$this->dbalSchema()->hasTable($this->tableName($table))) {
+    if (!$this->tableExists($table)) {
       throw new SchemaObjectDoesNotExistException(t("Cannot rename @table to @table_new: table @table doesn't exist.", ['@table' => $table, '@table_new' => $new_name]));
     }
-    if ($this->dbalSchema()->hasTable($this->tableName($new_name))) {
+    if ($this->tableExists($new_name)) {
       throw new SchemaObjectExistsException(t("Cannot rename @table to @table_new: table @table_new already exists.", ['@table' => $table, '@table_new' => $new_name]));
     }
 
@@ -692,7 +692,15 @@ class Schema extends DatabaseSchema {
    * {@inheritdoc}
    */
   public function tableExists($table) {
-    return $this->dbalSchemaManager->tablesExist([$this->tableName($table)]);
+    try {
+      $ret = $this->connection->getDbalConnection()->query("SELECT 1 FROM " . $this->tableName($table) . " LIMIT 1 OFFSET 0");
+      return TRUE;
+    }
+    catch (\Exception $e) {
+      return FALSE;
+    }
+
+//    return $this->dbalSchemaManager->tablesExist([$this->tableName($table)]);
   }
 
   /**
