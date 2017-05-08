@@ -85,7 +85,7 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
   /**
    * The DruDbal connection.
    *
-   * @var @todo
+   * @var \Drupal\Driver\Database\dbal\Connection
    */
   protected $connection;
 
@@ -133,9 +133,7 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
   }
 
   /**
-   * Gets the DBAL connection.
-   *
-   * @return string DBAL driver name
+   * {@inheritdoc}
    */
   public function getDbalConnection() {
     return $this->dbalConnection;
@@ -153,6 +151,10 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
   protected function tableName($drupal_table) {
     return $this->connection->getPrefixedTableName($drupal_table);
   }
+
+  /**
+   * Connection delegated methods.
+   */
 
   /**
    * {@inheritdoc}
@@ -207,39 +209,41 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
   }
 
   /**
-   * @todo
+   * {@inheritdoc}
    */
-  public function transactionSupport(array &$connection_options = []) {
-    // This driver defaults to transaction support, except if explicitly passed FALSE.
+  public function delegateTransactionSupport(array &$connection_options = []) {
+    // MySQL defaults to transaction support, except if explicitly passed FALSE.
     return !isset($connection_options['transactions']) || ($connection_options['transactions'] !== FALSE);
   }
 
   /**
-   * @todo
+   * {@inheritdoc}
    */
-  public function transactionalDDLSupport(array &$connection_options = []) {
+  public function delegateTransactionalDDLSupport(array &$connection_options = []) {
     // MySQL never supports transactional DDL.
     return FALSE;
   }
 
   /**
-   * @todo
+   * {@inheritdoc}
    */
   public function preCreateDatabase($database) {
+    return $this;
   }
 
   /**
-   * @todo
+   * {@inheritdoc}
    */
   public function postCreateDatabase($database) {
     // Set the database as active.
     $this->dbalConnection->exec("USE $database");
+    return $this;
   }
 
   /**
-   * @todo
+   * {@inheritdoc}
    */
-  public function nextId($existing_id = 0) {
+  public function delegateNextId($existing_id = 0) {
     $new_id = $this->connection->query('INSERT INTO {sequences} () VALUES ()', [], ['return' => Database::RETURN_INSERT_ID]);
     // This should only happen after an import or similar event.
     if ($existing_id >= $new_id) {
@@ -258,9 +262,9 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
   }
 
   /**
-   * @todo
+   * Cleanup next ID.
    */
-  public function nextIdDelete() {
+  protected function nextIdDelete() {
     // While we want to clean up the table to keep it up from occupying too
     // much storage and memory, we must keep the highest value in the table
     // because InnoDB uses an in-memory auto-increment counter as long as the
@@ -372,7 +376,7 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
 
     // @todo still clarify why this is needed
 
-    if ($e->getErrorCode() == self::UNSUPPORTED_CHARSET) {
+    if ($e->getErrorCode() === self::UNSUPPORTED_CHARSET) {
       $results['fail'][] = t('Your MySQL server and PHP MySQL driver must support utf8mb4 character encoding. Make sure to use a database system that supports this (such as MySQL/MariaDB/Percona 5.5.3 and up), and that the utf8mb4 character set is compiled in. See the <a href=":documentation" target="_blank">MySQL documentation</a> for more information.', [':documentation' => 'https://dev.mysql.com/doc/refman/5.0/en/cannot-initialize-character-set.html']);
       $info_copy = $info;
       // Set a flag to fall back to utf8. Note: this flag should only be
@@ -394,7 +398,7 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
     // Attempt to create the database if it is not found. Try to establish a
     // connection without database specified, try to create database, and if
     // successful reopen the connection to the new database.
-    if ($e->getErrorCode() == self::DATABASE_NOT_FOUND) {
+    if ($e->getErrorCode() === self::DATABASE_NOT_FOUND) {
       try {
         // Remove the database string from connection info.
         $database = $info['default']['database'];
@@ -436,7 +440,10 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
   }
 
   /**
-   * @todo
+   * Executes MySql installation specific tasks.
+   *
+   * @return array
+   *   An array of pass/fail installation messages.
    */
   public function runInstallTasks() {
     $results = [
@@ -485,12 +492,12 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function delegateTableExists(&$result, $table) {
+  public function delegateTableExists(&$result, $drupal_table_name) {
     // The DBAL Schema manager is quite slow here.
     // Instead, we try to select from the table in question.  If it fails,
     // the most likely reason is that it does not exist.
     try {
-      $ret = $this->getDbalConnection()->query("SELECT 1 FROM " . $this->tableName($table) . " LIMIT 1 OFFSET 0");
+      $ret = $this->getDbalConnection()->query("SELECT 1 FROM " . $this->tableName($drupal_table_name) . " LIMIT 1 OFFSET 0");
       $result = TRUE;
     }
     catch (\Exception $e) {
@@ -502,12 +509,12 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function delegateFieldExists(&$result, $table, $column) {
+  public function delegateFieldExists(&$result, $drupal_table_name, $column) {
     // The DBAL Schema manager is quite slow here.
     // Instead, we try to select from the table and field in question. If it
     // fails, the most likely reason is that it does not exist.
     try {
-      $ret = $this->getDbalConnection()->query("SELECT $column FROM " . $this->tableName($table) . " LIMIT 1 OFFSET 0");
+      $ret = $this->getDbalConnection()->query("SELECT $column FROM " . $this->tableName($drupal_table_name) . " LIMIT 1 OFFSET 0");
       $result = TRUE;
     }
     catch (\Exception $e) {

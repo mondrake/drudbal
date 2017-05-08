@@ -15,6 +15,18 @@ interface DbalExtensionInterface {
   public function destroy();
 
   /**
+   * Gets the DBAL connection.
+   *
+   * @return \Doctrine\DBAL\Connection
+   *   The DBAL connection.
+   */
+  public function getDbalConnection();
+
+  /**
+   * Connection delegated methods.
+   */
+
+  /**
    * Prepares opening the DBAL connection.
    *
    * Allows driver/db specific options to be set before opening the DBAL
@@ -51,10 +63,71 @@ interface DbalExtensionInterface {
   /**
    * Returns the version of the database client.
    *
-   * This is the low-level database client version, like mysqlind in mysql
+   * This is the low-level database client version, like mysqlind in MySQL
    * drivers.
+   *
+   * @return string
+   *   A string with the database client information.
    */
   public function clientVersion();
+
+  /**
+   * Informs the Connection on whether transactions are supported.
+   *
+   * @param array $connection_options
+   *   An array of connection options, valid for Drupal database connections.
+   *
+   * @return bool
+   *   TRUE if transactions are supported, FALSE otherwise.
+   */
+  public function delegateTransactionSupport(array &$connection_options = []);
+
+  /**
+   * Informs the Connection on whether DDL transactions are supported.
+   *
+   * @param array $connection_options
+   *   An array of connection options, valid for Drupal database connections.
+   *
+   * @return bool
+   *   TRUE if DDL transactions are supported, FALSE otherwise.
+   */
+  public function delegateTransactionalDDLSupport(array &$connection_options = []);
+
+  /**
+   * Prepares creating a database.
+   *
+   * Allows driver/db specific actions to be taken before creating a database.
+   *
+   * @param string $database
+   *   The name of the database to be created.
+   *
+   * @return $this
+   */
+  public function preCreateDatabase($database);
+
+  /**
+   * Executes actions after having created a database.
+   *
+   * Allows driver/db specific actions to be after creating a database.
+   *
+   * @param string $database
+   *   The name of the database to be created.
+   *
+   * @return $this
+   */
+  public function postCreateDatabase($database);
+
+  /**
+   * Retrieves an unique ID.
+   *
+   * @param $existing_id
+   *   (optional) Watermark ID.
+   *
+   * @return
+   *   An integer number larger than any number returned by earlier calls and
+   *   also larger than the $existing_id if one was passed in.
+   */
+  public function delegateNextId($existing_id = 0);
 
   /**
    * @todo
