@@ -2,7 +2,9 @@
 
 namespace Drupal\Driver\Database\dbal\DbalExtension;
 
-use \Doctrine\DBAL\Connection as DbalConnection;
+use Doctrine\DBAL\Connection as DbalConnection;
+use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
+
 
 /**
  * Provides an interface for Dbal extensions.
@@ -130,20 +132,78 @@ interface DbalExtensionInterface {
   public function delegateNextId($existing_id = 0);
 
   /**
-   * @todo
-   */
-  public function prepare($statement, array $params, array $driver_options = []);
-
-  /**
-   * Re-throws query exceptions.
+   * Extension level handling of DBALExceptions thrown by Connection::query().
    *
    * @param string $message
    *   The message to be re-thrown.
    * @param \Exception $e
-   *   The exception thrown by the query.
+   *   The exception thrown by query().
    *
+   * @throws \Drupal\Core\Database\IntegrityConstraintViolationException
+   *   When a integrity constraint was violated in the query.
    * @throws \Drupal\Core\Database\DatabaseExceptionWrapper
+   *   For any other error.
    */
   public function delegateQueryExceptionProcess($message, \Exception $e);
+
+  /**
+   * Runs a limited-range query.
+   *
+   * @param string $query
+   *   A string containing an SQL query.
+   * @param int $from
+   *   The first result row to return.
+   * @param int $count
+   *   The maximum number of result rows to return.
+   * @param array $args
+   *   (optional) An array of values to substitute into the query at placeholder
+   *    markers.
+   * @param array $options
+   *   (optional) An array of options on the query.
+   *
+   * @return \Drupal\Core\Database\StatementInterface
+   *   A database query result resource, or NULL if the query was not executed
+   *   correctly.
+   */
+  public function delegateQueryRange($query, $from, $count, array $args = [], array $options = []);
+
+  /**
+   * Runs a SELECT query and stores its results in a temporary table.
+   *
+   * @param string $tablename
+   *   A string with the Drupal name of the table to be generated.
+   * @param string $query
+   *   A string containing a normal SELECT SQL query.
+   * @param array $args
+   *   (optional) An array of values to substitute into the query at placeholder
+   *   markers.
+   * @param array $options
+   *   (optional) An associative array of options to control how the query is
+   *   run. See the documentation for DatabaseConnection::defaultOptions() for
+   *   details.
+   *
+   * @return \Drupal\Core\Database\StatementInterface
+   *   A database query result resource, or NULL if the query was not executed
+   *   correctly.
+   */
+  public function delegateQueryTemporary($tablename, $query, array $args = [], array $options = []);
+
+  /**
+   * Handles exceptions thrown by Connection::popCommittableTransactions().
+   *
+   * @param \Doctrine\DBAL\Exception\DriverException $e
+   *   The exception thrown by query().
+   *
+   * @throws \Drupal\Core\Database\TransactionCommitFailedException
+   *   When commit fails.
+   * @throws \Exception
+   *   For any other error.
+   */
+  public function delegateReleaseSavepointExceptionProcess(DbalDriverException $e);
+
+  /**
+   * @todo
+   */
+  public function prepare($statement, array $params, array $driver_options = []);
 
 }

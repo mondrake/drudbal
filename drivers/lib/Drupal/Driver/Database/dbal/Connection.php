@@ -25,6 +25,7 @@ use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\ConnectionException as DbalConnectionException;
 use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\DriverManager as DbalDriverManager;
+use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
 use Doctrine\DBAL\Version as DbalVersion;
 use GuzzleHttp\Psr7\Uri;
 use Psr\Http\Message\UriInterface;
@@ -345,26 +346,16 @@ class Connection extends DatabaseConnection {
    * {@inheritdoc}
    */
   public function queryRange($query, $from, $count, array $args = [], array $options = []) {
-    try {
-      return $this->dbalExtension->queryRange($query, $from, $count, $args, $options);
-    }
-    catch (DBALException $e) {
-      throw new \Exception($e->getMessage());
-    }
+    return $this->dbalExtension->delegateQueryRange($query, $from, $count, $args, $options);
   }
 
   /**
    * {@inheritdoc}
    */
   public function queryTemporary($query, array $args = [], array $options = []) {
-    try {
-      $tablename = $this->generateTemporaryTableName();
-      $this->dbalExtension->queryTemporary($tablename, $query, $args, $options);
-      return $tablename;
-    }
-    catch (DBALException $e) {
-      throw new \Exception($e->getMessage());
-    }
+    $tablename = $this->generateTemporaryTableName();
+    $this->dbalExtension->delegateQueryTemporary($tablename, $query, $args, $options);
+    return $tablename;
   }
 
   /**
@@ -559,8 +550,15 @@ class Connection extends DatabaseConnection {
       }
       else {
         // Attempt to release this savepoint in the standard way.
-        if ($this->dbalExtension->releaseSavepoint($name) === 'all') {
-          $this->transactionLayers = [];
+        try {
+          $this->getDbalConnection()->exec($this->dbalPlatform->releaseSavePoint($name));
+        }
+        catch (DbalDriverException $e) {
+          // If all SAVEPOINTs were released automatically, clean the
+          // transaction stack.
+          if ($this->dbalExtension->delegateReleaseSavepointExceptionProcess($e) === 'all') {
+            $this->transactionLayers = [];
+          };
         }
       }
     }
