@@ -69,7 +69,7 @@ before_install:
   #- composer require "drupal/console:~1.0" --prefer-dist --optimize-autoloader
 
   # Get Doctrine DBAL
-  - rm composer.lock
+  - composer require "doctrine/common:^2.7.1"
   - composer require "doctrine/dbal:dev-master"
 
 install:
