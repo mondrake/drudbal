@@ -490,7 +490,7 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
    */
 
   /**
-   * @todo
+   * {@inheritdoc}
    */
   public function delegateTableExists(&$result, $drupal_table_name) {
     // The DBAL Schema manager is quite slow here.
@@ -507,7 +507,7 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
   }
 
   /**
-   * @todo
+   * {@inheritdoc}
    */
   public function delegateFieldExists(&$result, $drupal_table_name, $column) {
     // The DBAL Schema manager is quite slow here.
