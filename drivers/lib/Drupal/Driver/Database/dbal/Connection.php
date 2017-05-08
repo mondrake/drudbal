@@ -94,8 +94,8 @@ class Connection extends DatabaseConnection {
     $this->statementClass = static::getStatementClass($connection_options);
     $this->dbalExtension = new $dbal_extension_class($this, $dbal_connection, $this->statementClass);
     $this->dbalPlatform = $dbal_connection->getDatabasePlatform();
-    $this->transactionSupport = $this->dbalExtension->transactionSupport($connection_options);
-    $this->transactionalDDLSupport = $this->dbalExtension->transactionalDDLSupport($connection_options);
+    $this->transactionSupport = $this->dbalExtension->delegateTransactionSupport($connection_options);
+    $this->transactionalDDLSupport = $this->dbalExtension->delegateTransactionalDDLSupport($connection_options);
     $this->setPrefix(isset($connection_options['prefix']) ? $connection_options['prefix'] : '');
     $this->connectionOptions = $connection_options;
     // Unset $this->connection so that __get() can return the wrapped
@@ -415,7 +415,7 @@ class Connection extends DatabaseConnection {
    * {@inheritdoc}
    */
   public function nextId($existing_id = 0) {
-    return $this->dbalExtension->nextId($existing_id);
+    return $this->dbalExtension->delegateNextId($existing_id);
   }
 
   /**

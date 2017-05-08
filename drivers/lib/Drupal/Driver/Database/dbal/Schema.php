@@ -24,9 +24,6 @@ use Doctrine\DBAL\Types\Type as DbalType;
  */
 class Schema extends DatabaseSchema {
 
-// @todo remove the $dbalSchemaManager, use the current schema as extensively as possible to improve performance
-
-
   /**
    * DBAL schema manager.
    *
