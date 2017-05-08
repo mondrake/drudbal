@@ -25,6 +25,7 @@ use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\ConnectionException as DbalConnectionException;
 use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\DriverManager as DbalDriverManager;
+use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
 use Doctrine\DBAL\Version as DbalVersion;
 use GuzzleHttp\Psr7\Uri;
 use Psr\Http\Message\UriInterface;
@@ -549,8 +550,15 @@ class Connection extends DatabaseConnection {
       }
       else {
         // Attempt to release this savepoint in the standard way.
-        if ($this->dbalExtension->releaseSavepoint($name) === 'all') {
-          $this->transactionLayers = [];
+        try {
+          $this->getDbalConnection()->exec($this->dbalPlatform->releaseSavePoint($savepoint));
+        }
+        catch (DbalDriverException $e) {
+          // If all SAVEPOINTs were released automatically, clean the
+          // transaction stack.
+          if ($this->dbalExtension->delegateReleaseSavepointExceptionProcess($e) === 'all') {
+            $this->transactionLayers = [];
+          };
         }
       }
     }

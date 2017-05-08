@@ -2,7 +2,9 @@
 
 namespace Drupal\Driver\Database\dbal\DbalExtension;
 
-use \Doctrine\DBAL\Connection as DbalConnection;
+use Doctrine\DBAL\Connection as DbalConnection;
+use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
+
 
 /**
  * Provides an interface for Dbal extensions.
@@ -130,6 +132,21 @@ interface DbalExtensionInterface {
   public function delegateNextId($existing_id = 0);
 
   /**
+   * Extension level handling of DBALExceptions thrown by Connection::query().
+   *
+   * @param string $message
+   *   The message to be re-thrown.
+   * @param \Exception $e
+   *   The exception thrown by query().
+   *
+   * @throws \Drupal\Core\Database\IntegrityConstraintViolationException
+   *   When a integrity constraint was violated in the query.
+   * @throws \Drupal\Core\Database\DatabaseExceptionWrapper
+   *   For any other error.
+   */
+  public function delegateQueryExceptionProcess($message, \Exception $e);
+
+  /**
    * Runs a limited-range query.
    *
    * @param string $query
@@ -172,20 +189,21 @@ interface DbalExtensionInterface {
   public function delegateQueryTemporary($tablename, $query, array $args = [], array $options = []);
 
   /**
+   * Handles exceptions thrown by Connection::popCommittableTransactions().
+   *
+   * @param \Doctrine\DBAL\Exception\DriverException $e
+   *   The exception thrown by query().
+   *
+   * @throws \Drupal\Core\Database\TransactionCommitFailedException
+   *   When commit fails.
+   * @throws \Exception
+   *   For any other error.
+   */
+  public function delegateReleaseSavepointExceptionProcess(DbalDriverException $e);
+
+  /**
    * @todo
    */
   public function prepare($statement, array $params, array $driver_options = []);
-
-  /**
-   * Re-throws query exceptions.
-   *
-   * @param string $message
-   *   The message to be re-thrown.
-   * @param \Exception $e
-   *   The exception thrown by the query.
-   *
-   * @throws \Drupal\Core\Database\DatabaseExceptionWrapper
-   */
-  public function delegateQueryExceptionProcess($message, \Exception $e);
 
 }
