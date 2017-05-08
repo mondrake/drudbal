@@ -4,6 +4,7 @@ namespace Drupal\Driver\Database\dbal\DbalExtension;
 
 use Drupal\Component\Utility\Unicode;
 use Drupal\Core\Database\Database;
+use Drupal\Core\Database\DatabaseException;
 use Drupal\Core\Database\DatabaseExceptionWrapper;
 use Drupal\Core\Database\DatabaseNotFoundException;
 use Drupal\Core\Database\IntegrityConstraintViolationException;
@@ -284,9 +285,7 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
     // errors. There is no problem with completely ignoring errors here: if
     // these queries fail, the sequence will work just fine, just use a bit
     // more database storage and memory.
-//    catch (DatabaseException $e) {
-    catch (\Exception $e) {
-      return;  // @todo
+    catch (DatabaseException $e) {
     }
   }
 
