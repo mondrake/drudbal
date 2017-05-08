@@ -25,6 +25,7 @@ use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\ConnectionException as DbalConnectionException;
 use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\DriverManager as DbalDriverManager;
+use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
 use Doctrine\DBAL\Version as DbalVersion;
 use GuzzleHttp\Psr7\Uri;
 use Psr\Http\Message\UriInterface;
@@ -68,6 +69,13 @@ class Connection extends DatabaseConnection {
   protected $dbalExtension;
 
   /**
+   * Current connection DBAL platform.
+   *
+   * @var \Doctrine\DBAL\Platforms\AbstractPlatform
+   */
+  protected $dbalPlatform;
+
+  /**
    * An array of options to be passed to the Statement object.
    *
    * DBAL is quite strict in the sense that it does not pass options to the
@@ -86,8 +94,9 @@ class Connection extends DatabaseConnection {
     $dbal_extension_class = static::getDbalExtensionClass($connection_options);
     $this->statementClass = static::getStatementClass($connection_options);
     $this->dbalExtension = new $dbal_extension_class($this, $dbal_connection, $this->statementClass);
-    $this->transactionSupport = $this->dbalExtension->transactionSupport($connection_options);
-    $this->transactionalDDLSupport = $this->dbalExtension->transactionalDDLSupport($connection_options);
+    $this->dbalPlatform = $dbal_connection->getDatabasePlatform();
+    $this->transactionSupport = $this->dbalExtension->delegateTransactionSupport($connection_options);
+    $this->transactionalDDLSupport = $this->dbalExtension->delegateTransactionalDDLSupport($connection_options);
     $this->setPrefix(isset($connection_options['prefix']) ? $connection_options['prefix'] : '');
     $this->connectionOptions = $connection_options;
     // Unset $this->connection so that __get() can return the wrapped
@@ -187,8 +196,45 @@ class Connection extends DatabaseConnection {
       throw $e;
     }
     catch (\Exception $e) {
-      return $this->dbalExtension->handleQueryException($e, $query, $args, $options);
+      return $this->handleDbalQueryException($e, $query, $args, $options);
     }
+  }
+
+  /**
+   * Wraps and re-throws any DBALException thrown by ::query().
+   *
+   * @param \Exception $e
+   *   The exception thrown by query().
+   * @param $query
+   *   The query executed by query().
+   * @param array $args
+   *   An array of arguments for the prepared statement.
+   * @param array $options
+   *   An associative array of options to control how the query is run.
+   *
+   * @return null
+   *   When the option to re-throw is FALSE.
+   *
+   * @throws \Drupal\Core\Database\DatabaseExceptionWrapper
+   */
+  protected function handleDbalQueryException(\Exception $e, $query, array $args = [], $options = []) {
+    if ($options['throw_exception']) {
+      // Wrap the exception in another exception, because PHP does not allow
+      // overriding Exception::getMessage(). Its message is the extra database
+      // debug information.
+      if ($query instanceof StatementInterface) {
+        $query_string = $query->getQueryString();
+      }
+      elseif (is_string($query)) {
+        $query_string = $query;
+      }
+      else {
+        $query_string = NULL;
+      }
+      $message = $e->getMessage() . ": " . $query_string . "; " . print_r($args, TRUE);
+      $this->dbalExtension->delegateQueryExceptionProcess($message, $e);
+    }
+    return NULL;
   }
 
   /**
@@ -227,7 +273,17 @@ class Connection extends DatabaseConnection {
   }
 
   /**
-   * @todo
+   * Create an array of DBAL connection options from the Drupal options.
+   *
+   * @param array $connection_options
+   *   An array of DRUPAL options for the connection. May include the
+   *   following:
+   *   - prefix
+   *   - namespace
+   *   - Other driver-specific options.
+   *
+   * @return array
+   *   An array of options suitable to establish a DBAL connection.
    */
   public static function mapConnectionOptionsToDbal(array $connection_options) {
     // Take away from the Drupal connection array the keys that will be
@@ -250,8 +306,6 @@ class Connection extends DatabaseConnection {
       'dbal_options' => NULL,
       'dbal_extension_class' => NULL,
       'dbal_statement_class' => NULL,
-// @todo advanced_options are written to settings.php - still??
-      'advanced_options' => NULL,
     ]);
     // Map to DBAL connection array the main keys from the Drupal connection.
     if (isset($connection_options['database'])) {
@@ -292,26 +346,16 @@ class Connection extends DatabaseConnection {
    * {@inheritdoc}
    */
   public function queryRange($query, $from, $count, array $args = [], array $options = []) {
-    try {
-      return $this->dbalExtension->queryRange($query, $from, $count, $args, $options);
-    }
-    catch (DBALException $e) {
-      throw new \Exception($e->getMessage());
-    }
+    return $this->dbalExtension->delegateQueryRange($query, $from, $count, $args, $options);
   }
 
   /**
    * {@inheritdoc}
    */
   public function queryTemporary($query, array $args = [], array $options = []) {
-    try {
-      $tablename = $this->generateTemporaryTableName();
-      $this->dbalExtension->queryTemporary($tablename, $query, $args, $options);
-      return $tablename;
-    }
-    catch (DBALException $e) {
-      throw new \Exception($e->getMessage());
-    }
+    $tablename = $this->generateTemporaryTableName();
+    $this->dbalExtension->delegateQueryTemporary($tablename, $query, $args, $options);
+    return $tablename;
   }
 
   /**
@@ -362,7 +406,7 @@ class Connection extends DatabaseConnection {
    * {@inheritdoc}
    */
   public function nextId($existing_id = 0) {
-    return $this->dbalExtension->nextId($existing_id);
+    return $this->dbalExtension->delegateNextId($existing_id);
   }
 
   /**
@@ -445,7 +489,7 @@ class Connection extends DatabaseConnection {
         if (empty($this->transactionLayers)) {
           break;
         }
-        $this->getDbalConnection()->exec('ROLLBACK TO SAVEPOINT ' . $savepoint);  // @todo move this to extension
+        $this->getDbalConnection()->exec($this->dbalPlatform->rollbackSavePoint($savepoint));
         $this->popCommittableTransactions();
         if ($rolled_back_other_active_savepoints) {
           throw new TransactionOutOfOrderException();
@@ -475,7 +519,7 @@ class Connection extends DatabaseConnection {
     // If we're already in a transaction then we want to create a savepoint
     // rather than try to create another transaction.
     if ($this->inTransaction()) {
-      $this->getDbalConnection()->exec('SAVEPOINT ' . $name);  // @todo move this to extension
+      $this->getDbalConnection()->exec($this->dbalPlatform->createSavePoint($name));
     }
     else {
       $this->connection->beginTransaction();
@@ -506,8 +550,15 @@ class Connection extends DatabaseConnection {
       }
       else {
         // Attempt to release this savepoint in the standard way.
-        if ($this->dbalExtension->releaseSavepoint($name) === 'all') {
-          $this->transactionLayers = [];
+        try {
+          $this->getDbalConnection()->exec($this->dbalPlatform->releaseSavePoint($name));
+        }
+        catch (DbalDriverException $e) {
+          // If all SAVEPOINTs were released automatically, clean the
+          // transaction stack.
+          if ($this->dbalExtension->delegateReleaseSavepointExceptionProcess($e) === 'all') {
+            $this->transactionLayers = [];
+          };
         }
       }
     }

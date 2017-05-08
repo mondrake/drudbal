@@ -4,6 +4,7 @@ namespace Drupal\Driver\Database\dbal\DbalExtension;
 
 use Drupal\Component\Utility\Unicode;
 use Drupal\Core\Database\Database;
+use Drupal\Core\Database\DatabaseException;
 use Drupal\Core\Database\DatabaseExceptionWrapper;
 use Drupal\Core\Database\DatabaseNotFoundException;
 use Drupal\Core\Database\IntegrityConstraintViolationException;
@@ -14,7 +15,10 @@ use Drupal\Driver\Database\dbal\Connection as DruDbalConnection;
 use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\ConnectionException as DbalConnectionException;
 use Doctrine\DBAL\DBALException;
+use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
 use Doctrine\DBAL\Exception\ConnectionException as DbalExceptionConnectionException;
+use Doctrine\DBAL\Schema\Schema as DbalSchema;
+use Doctrine\DBAL\Schema\Table as DbalTable;
 
 /**
  * Abstract DBAL Extension for MySql drivers.
@@ -84,7 +88,7 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
   /**
    * The DruDbal connection.
    *
-   * @var @todo
+   * @var \Drupal\Driver\Database\dbal\Connection
    */
   protected $connection;
 
@@ -101,15 +105,6 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
    * @var bool
    */
   protected $needsCleanup = FALSE;
-
-  /**
-   * Constructs a Connection object.
-   */
-  public function __construct(DruDbalConnection $drudbal_connection, DbalConnection $dbal_connection, $statement_class) {
-    $this->connection = $drudbal_connection;
-    $this->dbalConnection = $dbal_connection;
-    $this->dbalConnection->getWrappedConnection()->setAttribute(\PDO::ATTR_STATEMENT_CLASS, [$statement_class, [$this->connection]]);
-  }
 
   /**
    * @todo shouldn't serialization being avoided?? this is from mysql core
@@ -134,12 +129,53 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
   }
 
   /**
-   * Gets the DBAL connection.
-   *
-   * @return string DBAL driver name
+   * {@inheritdoc}
+   */
+  public function destroy() {
+    $this->schema = NULL;
+  }
+
+  /**
+   * {@inheritdoc}
    */
   public function getDbalConnection() {
     return $this->dbalConnection;
+  }
+
+  /**
+   * Returns a fully prefixed table name from Drupal's {table} syntax.
+   *
+   * @param string $drupal table
+   *   The table name in Drupal's syntax.
+   *
+   * @return string
+   *   The fully prefixed table name to be used in the DBMS.
+   */
+  protected function tableName($drupal_table) {
+    return $this->connection->getPrefixedTableName($drupal_table);
+  }
+
+  /**
+   * Connection delegated methods.
+   */
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function preConnectionOpen(array &$connection_options, array &$dbal_connection_options) {
+    if (isset($connection_options['_dsn_utf8_fallback']) && $connection_options['_dsn_utf8_fallback'] === TRUE) {
+      // Only used during the installer version check, as a fallback from utf8mb4.
+      $charset = 'utf8';
+    }
+    else {
+      $charset = 'utf8mb4';
+    }
+
+    // Character set is added to dsn to ensure PDO uses the proper character
+    // set when escaping. This has security implications. See
+    // https://www.drupal.org/node/1201452 for further discussion.
+    $connection_options['charset'] = $charset;
+    $dbal_connection_options['charset'] = $charset;
   }
 
   /**
@@ -176,39 +212,41 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
   }
 
   /**
-   * @todo
+   * {@inheritdoc}
    */
-  public function transactionSupport(array &$connection_options = []) {
-    // This driver defaults to transaction support, except if explicitly passed FALSE.
+  public function delegateTransactionSupport(array &$connection_options = []) {
+    // MySQL defaults to transaction support, except if explicitly passed FALSE.
     return !isset($connection_options['transactions']) || ($connection_options['transactions'] !== FALSE);
   }
 
   /**
-   * @todo
+   * {@inheritdoc}
    */
-  public function transactionalDDLSupport(array &$connection_options = []) {
+  public function delegateTransactionalDDLSupport(array &$connection_options = []) {
     // MySQL never supports transactional DDL.
     return FALSE;
   }
 
   /**
-   * @todo
+   * {@inheritdoc}
    */
-  public function preCreateDatabase($database) {
+  public function preCreateDatabase($database_name) {
+    return $this;
   }
 
   /**
-   * @todo
+   * {@inheritdoc}
    */
-  public function postCreateDatabase($database) {
+  public function postCreateDatabase($database_name) {
     // Set the database as active.
-    $this->dbalConnection->exec("USE $database");
+    $this->dbalConnection->exec("USE $database_name");
+    return $this;
   }
 
   /**
-   * @todo
+   * {@inheritdoc}
    */
-  public function nextId($existing_id = 0) {
+  public function delegateNextId($existing_id = 0) {
     $new_id = $this->connection->query('INSERT INTO {sequences} () VALUES ()', [], ['return' => Database::RETURN_INSERT_ID]);
     // This should only happen after an import or similar event.
     if ($existing_id >= $new_id) {
@@ -227,9 +265,9 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
   }
 
   /**
-   * @todo
+   * Cleanup next ID.
    */
-  public function nextIdDelete() {
+  protected function nextIdDelete() {
     // While we want to clean up the table to keep it up from occupying too
     // much storage and memory, we must keep the highest value in the table
     // because InnoDB uses an in-memory auto-increment counter as long as the
@@ -249,24 +287,52 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
     // errors. There is no problem with completely ignoring errors here: if
     // these queries fail, the sequence will work just fine, just use a bit
     // more database storage and memory.
-//    catch (DatabaseException $e) {
-    catch (\Exception $e) {
-      return;  // @todo
+    catch (DatabaseException $e) {
     }
   }
 
-  public function queryRange($query, $from, $count, array $args = [], array $options = []) {
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateQueryRange($query, $from, $count, array $args = [], array $options = []) {
     return $this->connection->query($query . ' LIMIT ' . (int) $from . ', ' . (int) $count, $args, $options);
   }
 
-  public function queryTemporary($tablename, $query, array $args = [], array $options = []) {
-    return $this->connection->query('CREATE TEMPORARY TABLE {' . $tablename . '} Engine=MEMORY ' . $query, $args, $options);
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateQueryTemporary($drupal_table_name, $query, array $args = [], array $options = []) {
+    return $this->connection->query('CREATE TEMPORARY TABLE {' . $drupal_table_name . '} Engine=MEMORY ' . $query, $args, $options);
   }
 
   /**
-   * Returns the version of the database client.
+   * {@inheritdoc}
    */
-  abstract public function clientVersion();
+  public function delegateReleaseSavepointExceptionProcess(DbalDriverException $e) {
+    // In MySQL (InnoDB), savepoints are automatically committed
+    // when tables are altered or created (DDL transactions are not
+    // supported). This can cause exceptions due to trying to release
+    // savepoints which no longer exist.
+    //
+    // To avoid exceptions when no actual error has occurred, we silently
+    // succeed for MySQL error code 1305 ("SAVEPOINT does not exist").
+    if ($e->getErrorCode() == '1305') {
+      // We also have to explain to PDO that the transaction stack has
+      // been cleaned-up.
+      try {
+        $this->dbalConnection->commit();
+      }
+      catch (DbalConnectionException $e) {
+        throw new TransactionCommitFailedException();
+      }
+      // If one SAVEPOINT was released automatically, then all were.
+      // Therefore, clean the transaction stack.
+      return 'all';  // @todo use a const
+    }
+    else {
+      throw $e;
+    }
+  }
 
   /**
    * Truncate delegated methods.
@@ -275,14 +341,14 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
   /**
    * @todo
    */
-  public function preTruncate($table) {
+  public function preTruncate($drupal_table_name) {
     $this->dbalConnection->exec('SET FOREIGN_KEY_CHECKS=0');
   }
 
   /**
    * @todo
    */
-  public function postTruncate($table) {
+  public function postTruncate($drupal_table_name) {
     $this->dbalConnection->exec('SET FOREIGN_KEY_CHECKS=1');
   }
 
@@ -293,20 +359,16 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
   /**
    * @todo
    */
-  public static function handleInstallConnectException(DbalExceptionConnectionException $e) {
+  public static function delegateInstallConnectExceptionProcess(\Exception $e) {
     $results = [
       'fail' => [],
       'pass' => [],
     ];
 
     $info = Database::getConnectionInfo();
-    $pdo_exception = $e->getPrevious();
 
     // Detect utf8mb4 incompability.
-
-    // @todo still clarify why this is needed
-
-    if ($pdo_exception->getCode() == self::UNSUPPORTED_CHARSET || ($pdo_exception->getCode() == self::SQLSTATE_SYNTAX_ERROR && $pdo_exception->errorInfo[1] == self::UNKNOWN_CHARSET)) {
+    if ($e->getErrorCode() === self::UNSUPPORTED_CHARSET || $e->getErrorCode() === self::UNKNOWN_CHARSET) {
       $results['fail'][] = t('Your MySQL server and PHP MySQL driver must support utf8mb4 character encoding. Make sure to use a database system that supports this (such as MySQL/MariaDB/Percona 5.5.3 and up), and that the utf8mb4 character set is compiled in. See the <a href=":documentation" target="_blank">MySQL documentation</a> for more information.', [':documentation' => 'https://dev.mysql.com/doc/refman/5.0/en/cannot-initialize-character-set.html']);
       $info_copy = $info;
       // Set a flag to fall back to utf8. Note: this flag should only be
@@ -328,7 +390,7 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
     // Attempt to create the database if it is not found. Try to establish a
     // connection without database specified, try to create database, and if
     // successful reopen the connection to the new database.
-    if ($pdo_exception->getCode() == self::DATABASE_NOT_FOUND) {
+    if ($e->getErrorCode() === self::DATABASE_NOT_FOUND) {
       try {
         // Remove the database string from connection info.
         $database = $info['default']['database'];
@@ -359,18 +421,21 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
       catch (DatabaseNotFoundException $e) {
         // Still no dice; probably a permission issue. Raise the error to the
         // installer.
-        $results['fail'][] = t('Creation of database %database failed. The server reports the following message: %error.', ['%database' => $database, '%error' => $pdo_exception->getMessage()]);
+        $results['fail'][] = t('Creation of database %database failed. The server reports the following message: %error.', ['%database' => $database, '%error' => $e->getMessage()]);
       }
       return $results;
     }
 
     // Database connection failed for some other reasons. Report.
-    $results['fail'][] = t('Failed to connect to your database server. The server reports the following message: %error.<ul><li>Is the database server running?</li><li>Does the database exist or does the database user have sufficient privileges to create the database?</li><li>Have you entered the correct database name?</li><li>Have you entered the correct username and password?</li><li>Have you entered the correct database hostname?</li></ul>', ['%error' => $pdo_exception->getMessage()]);
+    $results['fail'][] = t('Failed to connect to your database server. The server reports the following message: %error.<ul><li>Is the database server running?</li><li>Does the database exist or does the database user have sufficient privileges to create the database?</li><li>Have you entered the correct database name?</li><li>Have you entered the correct username and password?</li><li>Have you entered the correct database hostname?</li></ul>', ['%error' => $e->getMessage()]);
     return $results;
   }
 
   /**
-   * @todo
+   * Executes MySql installation specific tasks.
+   *
+   * @return array
+   *   An array of pass/fail installation messages.
    */
   public function runInstallTasks() {
     $results = [
@@ -416,18 +481,58 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
    * Schema delegated methods.
    */
 
-  public function delegateCreateTableSetOptions($dbal_table, $dbal_schema, &$table, $name) {
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateTableExists(&$result, $drupal_table_name) {
+    // The DBAL Schema manager is quite slow here.
+    // Instead, we try to select from the table in question.  If it fails,
+    // the most likely reason is that it does not exist.
+    try {
+      $ret = $this->getDbalConnection()->query("SELECT 1 FROM " . $this->tableName($drupal_table_name) . " LIMIT 1 OFFSET 0");
+      $result = TRUE;
+    }
+    catch (\Exception $e) {
+      $result = FALSE;
+    }
+    return TRUE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateFieldExists(&$result, $drupal_table_name, $column) {
+    // The DBAL Schema manager is quite slow here.
+    // Instead, we try to select from the table and field in question. If it
+    // fails, the most likely reason is that it does not exist.
+    try {
+      $ret = $this->getDbalConnection()->query("SELECT $column FROM " . $this->tableName($drupal_table_name) . " LIMIT 1 OFFSET 0");
+      $result = TRUE;
+    }
+    catch (\Exception $e) {
+      $result = FALSE;
+    }
+    return TRUE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateCreateTableSetOptions(DbalTable $dbal_table, DbalSchema $dbal_schema, array &$drupal_table_specs, $drupal_table_name) {
     // Provide defaults if needed.
-    $table += [
+    $drupal_table_specs += [
       'mysql_engine' => 'InnoDB',
       'mysql_character_set' => 'utf8mb4',
     ];
-    $dbal_table->addOption('charset', $table['mysql_character_set']);
-    $dbal_table->addOption('engine', $table['mysql_engine']);
+    $dbal_table->addOption('charset', $drupal_table_specs['mysql_character_set']);
+    $dbal_table->addOption('engine', $drupal_table_specs['mysql_engine']);
     $info = $this->connection->getConnectionOptions();
     $dbal_table->addOption('collate', empty($info['collation']) ? 'utf8mb4_general_ci' : $info['collation']);
   }
 
+  /**
+   * {@inheritdoc}
+   */
   public function delegateGetDbalColumnType(&$dbal_type, $field) {
     if (isset($field['mysql_type'])) {
       $dbal_type = $this->dbalConnection->getDatabasePlatform()->getDoctrineTypeMapping($field['mysql_type']);
@@ -436,6 +541,9 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
     return FALSE;
   }
 
+  /**
+   * {@inheritdoc}
+   */
   public function alterDbalColumnOptions(&$options, $dbal_type, $field, $field_name) {
     if (isset($field['type']) && $field['type'] == 'varchar_ascii') {
       $options['charset'] = 'ascii';
@@ -443,12 +551,18 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
     }
   }
 
+  /**
+   * {@inheritdoc}
+   */
   public function encodeDefaultValue($string) {
     return strtr($string, [
       '\'' => "]]]]QUOTEDELIMITERDRUDBAL[[[[",
     ]);
   }
 
+  /**
+   * {@inheritdoc}
+   */
   public function alterDbalColumnDefinition(&$dbal_column_definition, $options, $dbal_type, $field, $field_name) {
     // DBAL does not support unsigned float/numeric columns.
     // @see https://github.com/doctrine/dbal/issues/2380
@@ -473,9 +587,12 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
     ]);
   }
 
-  public function delegateAddField(&$primary_key_processed_by_driver, $table, $field, $spec, $keys_new, $dbal_column_definition) {
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateAddField(&$primary_key_processed_by_driver, $table, $field, $spec, $keys_new, array $dbal_column_options) {
     if (!empty($keys_new['primary key']) && isset($field['type']) && $field['type'] == 'serial') {
-      $sql = 'ALTER TABLE {' . $table . '} ADD `' . $field . '` ' . $dbal_column_definition;
+      $sql = 'ALTER TABLE {' . $table . '} ADD `' . $field . '` ' . $dbal_column_options['columnDefinition'];
       $keys_sql = $this->createKeysSql(['primary key' => $keys_new['primary key']]);
       $sql .= ', ADD ' . $keys_sql[0];
       $this->connection->query($sql);
@@ -485,8 +602,11 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
     return FALSE;
   }
 
-  public function delegateChangeField(&$primary_key_processed_by_driver, $table, $field, $field_new, $spec, $keys_new, $dbal_column_definition) {
-    $sql = 'ALTER TABLE {' . $table . '} CHANGE `' . $field . '` `' . $field_new . '` ' . $dbal_column_definition;
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateChangeField(&$primary_key_processed_by_driver, $table, $field, $field_new, $spec, $keys_new, array $dbal_column_options) {
+    $sql = 'ALTER TABLE {' . $table . '} CHANGE `' . $field . '` `' . $field_new . '` ' . $dbal_column_options['columnDefinition'];
     if (!empty($keys_new['primary key'])) {
       $keys_sql = $this->createKeysSql(['primary key' => $keys_new['primary key']]);
       $sql .= ', ADD ' . $keys_sql[0];
@@ -496,6 +616,9 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
     return TRUE;
   }
 
+  /**
+   * {@inheritdoc}
+   */
   public function delegateFieldSetDefault($table, $field, $default) {
     // DBAL would use an ALTER TABLE ... CHANGE statement that would not
     // preserve non-DBAL managed column attributes. Use MySql syntax here
@@ -504,6 +627,9 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
     return TRUE;
   }
 
+  /**
+   * {@inheritdoc}
+   */
   public function delegateFieldSetNoDefault($table, $field) {
     // DBAL would use an ALTER TABLE ... CHANGE statement that would not
     // preserve non-DBAL managed column attributes. Use MySql syntax here
@@ -512,15 +638,21 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
     return TRUE;
   }
 
+  /**
+   * {@inheritdoc}
+   */
   public function delegateIndexExists(&$result, $table, $name) {
     if ($name == 'PRIMARY') {
       $schema = $this->dbalConnection->getSchemaManager()->createSchema();
-      $result = $schema->getTable($this->pfxTable($table))->hasPrimaryKey();
+      $result = $schema->getTable($this->tableName($table))->hasPrimaryKey();
       return TRUE;
     }
     return FALSE;
   }
 
+  /**
+   * {@inheritdoc}
+   */
   public function delegateAddPrimaryKey($schema, $table, $fields) {
     // DBAL does not support creating indexes with column lenghts.
     // @see https://github.com/doctrine/dbal/pull/2412
@@ -531,6 +663,9 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
     return FALSE;
   }
 
+  /**
+   * {@inheritdoc}
+   */
   public function delegateAddUniqueKey($table, $name, $fields) {
     // DBAL does not support creating indexes with column lenghts.
     // @see https://github.com/doctrine/dbal/pull/2412
@@ -541,6 +676,9 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
     return FALSE;
   }
 
+  /**
+   * {@inheritdoc}
+   */
   public function delegateAddIndex($table, $name, $fields, $spec) {
     // DBAL does not support creating indexes with column lenghts.
     // @see https://github.com/doctrine/dbal/pull/2412
@@ -554,14 +692,7 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
   }
 
   /**
-   * @todo
-   */
-  public function pfxTable($table) {
-    return $this->connection->prefixTables('{' . $table . '}');
-  }
-
-  /**
-   * Retrieve a table or column comment.
+   * {@inheritdoc}
    */
   public function delegateGetComment(&$comment, $dbal_schema, $table, $column = NULL) {
     if ($column !== NULL) {
@@ -581,28 +712,28 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
           )
         )
       ->setParameter(0, $this->dbalConnection->getDatabase())
-      ->setParameter(1, $this->pfxTable($table));
+      ->setParameter(1, $this->tableName($table));
     $comment = $dbal_query->execute()->fetchColumn();
     $this->alterGetComment($comment, $dbal_schema, $table, $column);
     return TRUE;
   }
 
   /**
-   * Alter a table or column comment retrieved from schema.
+   * {@inheritdoc}
    */
   public function alterGetComment(&$comment, $dbal_schema, $table, $column = NULL) {
     return;
   }
 
   /**
-   * Alter a table comment being set.
+   * {@inheritdoc}
    */
   public function alterSetTableComment($comment, $name, $dbal_schema, $table) {
     return Unicode::truncate($comment, self::COMMENT_MAX_TABLE, TRUE, TRUE);
   }
 
   /**
-   * Alter a column comment being set.
+   * {@inheritdoc}
    */
   public function alterSetColumnComment($comment, $dbal_type, $field, $field_name) {
     return Unicode::truncate($comment, self::COMMENT_MAX_COLUMN, TRUE, TRUE);
