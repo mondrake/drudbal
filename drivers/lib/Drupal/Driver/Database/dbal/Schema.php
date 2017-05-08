@@ -313,14 +313,28 @@ class Schema extends DatabaseSchema {
    * {@inheritdoc}
    */
   public function dropTable($table) {
-    if ($this->dbalSchema()->hasTable($this->tableName($table))) {
-      $current_schema = $this->dbalSchema();
-      $to_schema = clone $current_schema;
-      $to_schema->dropTable($this->tableName($table));
-      $this->dbalExecuteSchemaChange($to_schema);
-      return TRUE;
+    if (!$this->tableExists($table)) {
+      return FALSE;
     }
-    return FALSE;
+
+    // DBAL Schema is slow here, especially for tearDown while testing, so we
+    // use the manager directly.
+    // @todo this will affect possibility to drop FKs in an orderly way, so
+    // we would need to revise at later stage if we want the driver to support
+    // a broader set of capabilities.
+    $this->dbalSchemaManager->dropTable($this->tableName($table));
+    $this->dbalSchemaForceReload();
+    return TRUE;
+
+    // @todo preferred way:
+    // if ($this->dbalSchema()->hasTable($this->tableName($table))) {
+    //   $current_schema = $this->dbalSchema();
+    //   $to_schema = clone $current_schema;
+    //   $to_schema->dropTable($this->tableName($table));
+    //   $this->dbalExecuteSchemaChange($to_schema);
+    //   return TRUE;
+    // }
+    // return FALSE;
   }
 
   /**
@@ -692,33 +706,29 @@ class Schema extends DatabaseSchema {
    * {@inheritdoc}
    */
   public function tableExists($table) {
-    try {
-      $ret = $this->connection->getDbalConnection()->query("SELECT 1 FROM " . $this->tableName($table) . " LIMIT 1 OFFSET 0");
-      return TRUE;
-    }
-    catch (\Exception $e) {
-      return FALSE;
+    $result = NULL;
+    if ($this->dbalExtension->delegateTableExists($result, $table)) {
+      return $result;
     }
 
-//    return $this->dbalSchemaManager->tablesExist([$this->tableName($table)]);
+    // DBAL extension did not pick up, proceed with DBAL.
+    return $this->dbalSchemaManager->tablesExist([$this->tableName($table)]);
   }
 
   /**
    * {@inheritdoc}
    */
   public function fieldExists($table, $column) {
-    try {
-      $ret = $this->connection->getDbalConnection()->query("SELECT $column FROM " . $this->tableName($table) . " LIMIT 1 OFFSET 0");
-      return TRUE;
-    }
-    catch (\Exception $e) {
-      return FALSE;
+    $result = NULL;
+    if ($this->dbalExtension->delegateTableExists($result, $table, $column)) {
+      return $result;
     }
 
-//    if (!$this->tableExists($table)) {
-//      return FALSE;
-//    }
-//    return in_array($column, array_keys($this->dbalSchemaManager->listTableColumns($this->tableName($table))));
+    // DBAL extension did not pick up, proceed with DBAL.
+    if (!$this->tableExists($table)) {
+      return FALSE;
+    }
+    return in_array($column, array_keys($this->dbalSchemaManager->listTableColumns($this->tableName($table))));
   }
 
   /**

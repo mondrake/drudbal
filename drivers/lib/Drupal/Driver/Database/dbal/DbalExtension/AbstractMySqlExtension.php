@@ -142,6 +142,19 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
   }
 
   /**
+   * Returns a fully prefixed table name from Drupal's {table} syntax.
+   *
+   * @param string $drupal table
+   *   The table name in Drupal's syntax.
+   *
+   * @return string
+   *   The fully prefixed table name to be used in the DBMS.
+   */
+  protected function tableName($drupal_table) {
+    return $this->connection->getPrefixedTableName($drupal_table);
+  }
+
+  /**
    * {@inheritdoc}
    */
   public static function preConnectionOpen(array &$connection_options, array &$dbal_connection_options) {
@@ -469,6 +482,40 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
    * Schema delegated methods.
    */
 
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateTableExists(&$result, $table) {
+    // The DBAL Schema manager is quite slow here.
+    // Instead, we try to select from the table in question.  If it fails,
+    // the most likely reason is that it does not exist.
+    try {
+      $ret = $this->getDbalConnection()->query("SELECT 1 FROM " . $this->tableName($table) . " LIMIT 1 OFFSET 0");
+      $result = TRUE;
+    }
+    catch (\Exception $e) {
+      $result = FALSE;
+    }
+    return TRUE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateFieldExists(&$result, $table, $column) {
+    // The DBAL Schema manager is quite slow here.
+    // Instead, we try to select from the table and field in question. If it
+    // fails, the most likely reason is that it does not exist.
+    try {
+      $ret = $this->getDbalConnection()->query("SELECT $column FROM " . $this->tableName($table) . " LIMIT 1 OFFSET 0");
+      $result = TRUE;
+    }
+    catch (\Exception $e) {
+      $result = FALSE;
+    }
+    return TRUE;
+  }
+
   public function delegateCreateTableSetOptions($dbal_table, $dbal_schema, &$table, $name) {
     // Provide defaults if needed.
     $table += [
@@ -568,7 +615,7 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
   public function delegateIndexExists(&$result, $table, $name) {
     if ($name == 'PRIMARY') {
       $schema = $this->dbalConnection->getSchemaManager()->createSchema();
-      $result = $schema->getTable($this->connection->getPrefixedTableName($table))->hasPrimaryKey();
+      $result = $schema->getTable($this->tableName($table))->hasPrimaryKey();
       return TRUE;
     }
     return FALSE;
@@ -627,7 +674,7 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
           )
         )
       ->setParameter(0, $this->dbalConnection->getDatabase())
-      ->setParameter(1, $this->connection->getPrefixedTableName($table));
+      ->setParameter(1, $this->tableName($table));
     $comment = $dbal_query->execute()->fetchColumn();
     $this->alterGetComment($comment, $dbal_schema, $table, $column);
     return TRUE;
