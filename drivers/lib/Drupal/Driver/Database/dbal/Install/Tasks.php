@@ -10,6 +10,7 @@ use Drupal\Driver\Database\dbal\Connection as DruDbalConnection;
 
 use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\Exception\ConnectionException as DbalExceptionConnectionException;
+use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
 use Doctrine\DBAL\DriverManager as DbalDriverManager;
 
 /**
@@ -92,15 +93,14 @@ class Tasks extends InstallTasks {
       return FALSE;
     }
     catch (DbalExceptionConnectionException $e) {
-      // We get here if 'dbal_url' could be processed, but the driver (or the
-      // server) has found problems in the connection (e.g. wrong
-      // username/password, or host, etc). It's possible that the problem can
-      // be fixed (e.g. by creating a missing database), so hand over to the
-      // Dbal extension for the processing.
+      // We get here if 'dbal_url' could be processed, but a connection could
+      // not be established. Most likely the database is missing. It's possible
+      // that the problem can be fixed so hand over to the Dbal extension for
+      // processing.
       $connection_info = Database::getConnectionInfo()['default'];
       if (!empty($connection_info['dbal_driver'])) {
         $dbal_extension_class = DruDbalConnection::getDbalExtensionClass($connection_info);
-        $results = $dbal_extension_class::handleInstallConnectException($e);
+        $results = $dbal_extension_class::delegateInstallConnectExceptionProcess($e);
         foreach ($results['pass'] as $result) {
           $this->pass($result);
         }
@@ -112,6 +112,22 @@ class Tasks extends InstallTasks {
         $this->fail(t('Failed to connect to your database server. Doctrine DBAL reports the following message: %error.', ['%error' => $e->getMessage()]));
       }
       return empty($this->results['fail']);
+    }
+    catch (DbalDriverException $e) {
+      // We get here if 'dbal_url' could be processed, but the driver (or the
+      // server) has found problems. Hand over to the Dbal extension for
+      // processing.
+      $connection_info = Database::getConnectionInfo()['default'];
+      $dbal_extension_class = DruDbalConnection::getDbalExtensionClass($connection_info);
+      $results = $dbal_extension_class::delegateInstallConnectExceptionProcess($e);
+      foreach ($results['pass'] as $result) {
+        $this->pass($result);
+      }
+      foreach ($results['fail'] as $result) {
+        $this->fail($result);
+      }
+      // Return true to continue with other checks.
+      return TRUE;
     }
     catch (DBALException $e) {
       // We get here if 'dbal_url' is defined but invalid/malformed.

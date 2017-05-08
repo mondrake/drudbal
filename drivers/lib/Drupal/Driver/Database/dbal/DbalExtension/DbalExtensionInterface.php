@@ -100,24 +100,24 @@ interface DbalExtensionInterface {
    *
    * Allows driver/db specific actions to be taken before creating a database.
    *
-   * @param string $database
+   * @param string $database_name
    *   The name of the database to be created.
    *
    * @return $this
    */
-  public function preCreateDatabase($database);
+  public function preCreateDatabase($database_name);
 
   /**
    * Executes actions after having created a database.
    *
    * Allows driver/db specific actions to be after creating a database.
    *
-   * @param string $database
-   *   The name of the database to be created.
+   * @param string $database_name
+   *   The name of the database created.
    *
    * @return $this
    */
-  public function postCreateDatabase($database);
+  public function postCreateDatabase($database_name);
 
   /**
    * Retrieves an unique ID.
@@ -170,7 +170,7 @@ interface DbalExtensionInterface {
   /**
    * Runs a SELECT query and stores its results in a temporary table.
    *
-   * @param string $tablename
+   * @param string $drupal_table_name
    *   A string with the Drupal name of the table to be generated.
    * @param string $query
    *   A string containing a normal SELECT SQL query.
@@ -186,7 +186,7 @@ interface DbalExtensionInterface {
    *   A database query result resource, or NULL if the query was not executed
    *   correctly.
    */
-  public function delegateQueryTemporary($tablename, $query, array $args = [], array $options = []);
+  public function delegateQueryTemporary($drupal_table_name, $query, array $args = [], array $options = []);
 
   /**
    * Handles exceptions thrown by Connection::popCommittableTransactions().
