@@ -91,15 +91,15 @@ class Schema extends DatabaseSchema {
     $to_schema = clone $current_schema;
     $new_table = $to_schema->createTable($this->tableName($name));
 
-    // Delegate adding options to DBAL extension.
-    $this->dbalExtension->delegateCreateTableSetOptions($new_table, $to_schema, $table, $name);
-
     // Add table comment.
     if (!empty($table['description'])) {
       $comment = $this->connection->prefixTables($table['description']);
       $comment = $this->dbalExtension->alterSetTableComment($comment, $name, $to_schema, $table);
       $new_table->addOption('comment', $this->prepareComment($comment));
     }
+
+    // Let DBAL extension alter the table options if required.
+    $this->dbalExtension->alterCreateTableOptions($new_table, $to_schema, $table, $name);
 
     // Add columns.
     foreach ($table['fields'] as $field_name => $field) {
