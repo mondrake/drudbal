@@ -551,7 +551,7 @@ class Connection extends DatabaseConnection {
       else {
         // Attempt to release this savepoint in the standard way.
         try {
-          $this->getDbalConnection()->exec($this->dbalPlatform->releaseSavePoint($savepoint));
+          $this->getDbalConnection()->exec($this->dbalPlatform->releaseSavePoint($name));
         }
         catch (DbalDriverException $e) {
           // If all SAVEPOINTs were released automatically, clean the
