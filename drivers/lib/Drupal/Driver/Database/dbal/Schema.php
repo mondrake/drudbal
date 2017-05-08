@@ -707,10 +707,18 @@ class Schema extends DatabaseSchema {
    * {@inheritdoc}
    */
   public function fieldExists($table, $column) {
-    if (!$this->tableExists($table)) {
+    try {
+      $ret = $this->connection->getDbalConnection()->query("SELECT $column FROM " . $this->tableName($table) . " LIMIT 1 OFFSET 0");
+      return TRUE;
+    }
+    catch (\Exception $e) {
       return FALSE;
     }
-    return in_array($column, array_keys($this->dbalSchemaManager->listTableColumns($this->tableName($table))));
+
+//    if (!$this->tableExists($table)) {
+//      return FALSE;
+//    }
+//    return in_array($column, array_keys($this->dbalSchemaManager->listTableColumns($this->tableName($table))));
   }
 
   /**
