@@ -289,18 +289,21 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
     }
   }
 
-  public function queryRange($query, $from, $count, array $args = [], array $options = []) {
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateQueryRange($query, $from, $count, array $args = [], array $options = []) {
     return $this->connection->query($query . ' LIMIT ' . (int) $from . ', ' . (int) $count, $args, $options);
   }
 
-  public function queryTemporary($tablename, $query, array $args = [], array $options = []) {
-    return $this->connection->query('CREATE TEMPORARY TABLE {' . $tablename . '} Engine=MEMORY ' . $query, $args, $options);
-  }
 
   /**
-   * Returns the version of the database client.
+   * {@inheritdoc}
    */
-  abstract public function clientVersion();
+  public function delegateQueryTemporary($tablename, $query, array $args = [], array $options = []) {
+    return $this->connection->query('CREATE TEMPORARY TABLE {' . $tablename . '} Engine=MEMORY ' . $query, $args, $options);
+  }
 
   /**
    * Transaction delegated methods.
