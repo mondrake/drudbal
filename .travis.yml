@@ -26,8 +26,8 @@ env:
     # Drupal PHPUnit test variables.
     - SIMPLETEST_BASE_URL="http://$HOST_ADDR:$HTTP_PORT"
   matrix:
-    - DBAL_URL="mysql://$DB_AUTH@$HOST_ADDR/drudbal" SIMPLETEST_DB="mysql://$DB_AUTH@$HOST_ADDR/drudbal#drudbal_"
-    - DBAL_URL="mysql://$DB_AUTH@$HOST_ADDR/drudbal" SIMPLETEST_DB="dbal://$DB_AUTH@$HOST_ADDR/drudbal?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=pdo_mysql#drudbal_"
+    #- DBAL_URL="mysql://$DB_AUTH@$HOST_ADDR/drudbal" SIMPLETEST_DB="mysql://$DB_AUTH@$HOST_ADDR/drudbal#drudbal_"
+    #- DBAL_URL="mysql://$DB_AUTH@$HOST_ADDR/drudbal" SIMPLETEST_DB="dbal://$DB_AUTH@$HOST_ADDR/drudbal?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=pdo_mysql#drudbal_"
     - DBAL_URL="mysqli://$DB_AUTH@$HOST_ADDR/drudbal" SIMPLETEST_DB="dbal://$DB_AUTH@$HOST_ADDR/drudbal?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=mysqli#drudbal_"
 
 mysql:
@@ -94,14 +94,14 @@ install:
 script:
   - cd $DRUPAL_PATH/core
   # Only run selected tests to avoid Travis timeout.
-  - ../vendor/bin/phpunit --testsuite unit --group Database,Cache,Entity --verbose
-  - ../vendor/bin/phpunit --testsuite kernel --group Database,Cache --verbose
-  - ../vendor/bin/phpunit tests/Drupal/KernelTests/Core/Entity/ConfigEntityQueryTest.php
-  - ../vendor/bin/phpunit tests/Drupal/KernelTests/Core/Entity/EntityQueryTest.php
-  - ../vendor/bin/phpunit tests/Drupal/KernelTests/Core/Entity/EntityQueryAggregateTest.php
-  - ../vendor/bin/phpunit tests/Drupal/KernelTests/Core/Entity/EntityQueryRelationshipTest.php
-  - ../vendor/bin/phpunit tests/Drupal/KernelTests/Core/Entity/FieldSqlStorageTest.php
-  - ../vendor/bin/phpunit tests/Drupal/KernelTests/Core/Entity/FieldTranslationSqlStorageTest.php
+  #- ../vendor/bin/phpunit --testsuite unit --group Database,Cache,Entity --verbose
+  #- ../vendor/bin/phpunit --testsuite kernel --group Database,Cache --verbose
+  #- ../vendor/bin/phpunit tests/Drupal/KernelTests/Core/Entity/ConfigEntityQueryTest.php
+  #- ../vendor/bin/phpunit tests/Drupal/KernelTests/Core/Entity/EntityQueryTest.php
+  #- ../vendor/bin/phpunit tests/Drupal/KernelTests/Core/Entity/EntityQueryAggregateTest.php
+  #- ../vendor/bin/phpunit tests/Drupal/KernelTests/Core/Entity/EntityQueryRelationshipTest.php
+  #- ../vendor/bin/phpunit tests/Drupal/KernelTests/Core/Entity/FieldSqlStorageTest.php
+  #- ../vendor/bin/phpunit tests/Drupal/KernelTests/Core/Entity/FieldTranslationSqlStorageTest.php
   - ../vendor/bin/phpunit tests/Drupal/KernelTests/Core/Entity/EntityTranslationTest.php
   - ../vendor/bin/phpunit modules/views/tests/src/Kernel/Handler/FilterStringTest.php
 
