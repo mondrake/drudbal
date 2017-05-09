@@ -113,8 +113,8 @@ class MysqliDbalStatement implements \IteratorAggregate, StatementInterface {
     $this->_stmt = $this->_conn->prepare($positional_statement);
 
     if (false === $this->_stmt) {
-if (strpos($positional_statement, 'SELECT views_test_data') !== FALSE) throw new \Exception(var_export([$statement, $params, $positional_statement, $positional_params], TRUE), 0, $e);
-if (strpos($positional_statement, 'entity_test_mul base_table') !== FALSE) throw new \Exception(var_export([$statement, $params, $positional_statement, $positional_params], TRUE), 0, $e);
+if (strpos($positional_statement, 'SELECT views_test_data') !== FALSE) throw new \Exception(var_export([$statement, $params, $positional_statement, $positional_params], TRUE));
+if (strpos($positional_statement, 'entity_test_mul base_table') !== FALSE) throw new \Exception(var_export([$statement, $params, $positional_statement, $positional_params], TRUE));
         throw new MysqliException($this->_conn->error, $this->_conn->sqlstate, $this->_conn->errno);
     }
 
