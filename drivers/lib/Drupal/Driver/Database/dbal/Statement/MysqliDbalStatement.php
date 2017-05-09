@@ -108,13 +108,17 @@ class MysqliDbalStatement implements \IteratorAggregate, StatementInterface {
       $this->allowRowCount = $allow_row_count;
     }
 
+    $statement = strtr($statement, [
+       '\\\\' => "]]]]DOUBLESLASHESDRUDBAL[[[[",
+    ]);
     list($positional_statement, $positional_params, $positional_types) = SQLParserUtils::expandListParameters($statement, $params, []);
+    $positional_statement = strtr($positional_statement, [
+       "]]]]DOUBLESLASHESDRUDBAL[[[[" => '\\\\',
+    ]);
     $this->_conn = $dbh->getDbalConnection()->getWrappedConnection()->getWrappedResourceHandle();
     $this->_stmt = $this->_conn->prepare($positional_statement);
 
     if (false === $this->_stmt) {
-if (strpos($positional_statement, 'SELECT views_test_data') !== FALSE) throw new \Exception(var_export([$statement, $params, $positional_statement, $positional_params], TRUE));
-if (strpos($positional_statement, 'entity_test_mul base_table') !== FALSE) throw new \Exception(var_export([$statement, $params, $positional_statement, $positional_params], TRUE));
         throw new MysqliException($this->_conn->error, $this->_conn->sqlstate, $this->_conn->errno);
     }
 
@@ -129,7 +133,13 @@ if (strpos($positional_statement, 'entity_test_mul base_table') !== FALSE) throw
    * {@inheritdoc}
    */
   public function execute($args = [], $options = []) {
-    list($positional_statement, $positional_args, $positional_types) = SQLParserUtils::expandListParameters($this->queryString, $args, []);
+    $statement = strtr($this->queryString, [
+       '\\\\' => "]]]]DOUBLESLASHESDRUDBAL[[[[",
+    ]);
+    list($positional_statement, $positional_args, $positional_types) = SQLParserUtils::expandListParameters($statement, $args, []);
+    $positional_statement = strtr($positional_statement, [
+       "]]]]DOUBLESLASHESDRUDBAL[[[[" => '\\\\',
+    ]);
 
     if (isset($options['fetch'])) {
       if (is_string($options['fetch'])) {
