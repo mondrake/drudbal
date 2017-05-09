@@ -102,6 +102,8 @@ script:
   - ../vendor/bin/phpunit tests/Drupal/KernelTests/Core/Entity/EntityQueryRelationshipTest.php
   - ../vendor/bin/phpunit tests/Drupal/KernelTests/Core/Entity/FieldSqlStorageTest.php
   - ../vendor/bin/phpunit tests/Drupal/KernelTests/Core/Entity/FieldTranslationSqlStorageTest.php
+  - ../vendor/bin/phpunit tests/Drupal/KernelTests/Core/Entity/EntityTranslationTest.php
+  - ../vendor/bin/phpunit modules/views/tests/src/Kernel/Handler/FilterStringTest.php
 
 notifications:
   email: false
