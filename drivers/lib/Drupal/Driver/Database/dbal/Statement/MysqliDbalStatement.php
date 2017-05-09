@@ -128,8 +128,6 @@ class MysqliDbalStatement implements \IteratorAggregate, StatementInterface {
    */
   public function execute($args = [], $options = []) {
     list($positional_statement, $positional_args, $positional_types) = SQLParserUtils::expandListParameters($this->queryString, $args, []);
-if (strpos($positional_statement, 'SELECT views_test_data') !== FALSE) throw new \Exception(var_export([$this->queryString, $args, $positional_statement, $positional_args], TRUE));
-if (strpos($positional_statement, 'entity_test_mul base_table') !== FALSE) throw new \Exception(var_export([$this->queryString, $args, $positional_statement, $positional_args], TRUE));
 
     if (isset($options['fetch'])) {
       if (is_string($options['fetch'])) {
@@ -145,6 +143,7 @@ if (strpos($positional_statement, 'entity_test_mul base_table') !== FALSE) throw
       $query_start = microtime(TRUE);
     }
 
+try {
     if (null !== $this->_bindedValues) {
       if (null !== $positional_args) {
         if ( ! $this->_bindValues($positional_args)) {
@@ -206,6 +205,12 @@ if (strpos($positional_statement, 'entity_test_mul base_table') !== FALSE) throw
     }
 
     $this->result = true;
+}
+catch (\Exception $e) {
+if (strpos($positional_statement, 'SELECT views_test_data') !== FALSE) throw new \Exception(var_export([$this->queryString, $args, $positional_statement, $positional_args], TRUE));
+if (strpos($positional_statement, 'entity_test_mul base_table') !== FALSE) throw new \Exception(var_export([$this->queryString, $args, $positional_statement, $positional_args], TRUE));
+throw $e;
+}
 
     if (!empty($logger)) {
       $query_end = microtime(TRUE);
