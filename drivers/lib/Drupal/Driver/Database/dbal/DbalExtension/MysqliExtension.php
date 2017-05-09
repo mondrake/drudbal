@@ -61,9 +61,9 @@ class MysqliExtension extends AbstractMySqlExtension {
    * {@inheritdoc}
    */
   public function delegateQueryExceptionProcess($message, \Exception $e) {
-    if ($e instanceof \Exception) {
-      throw $e;
-    }
+if (!method_exists($e, 'getSqlState')) {
+  throw new DatabaseExceptionWrapper($message, 0, $e);
+}
     if ($e instanceof DatabaseExceptionWrapper) {
       $e = $e->getPrevious();
     }
