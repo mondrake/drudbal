@@ -239,11 +239,6 @@ class Schema extends DatabaseSchema {
     // Add the SQL column definiton as the 'columnDefinition' option.
     $options['columnDefinition'] = $dbal_column_definition;
 
-    // DBAL duplicates the comment when the 'columnDefinition' option is passed
-    // in, so unset here.
-    // @todo open a DBAL issue for that.
-    //unset($options['comment']);
-
     return $options;
   }
 
