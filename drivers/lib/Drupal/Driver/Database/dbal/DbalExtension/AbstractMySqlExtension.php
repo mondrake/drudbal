@@ -567,7 +567,9 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
     // DBAL does not support unsigned float/numeric columns.
     // @see https://github.com/doctrine/dbal/issues/2380
     if (isset($field['type']) && $field['type'] == 'float' && !empty($field['unsigned']) && (bool) $field['unsigned'] === TRUE) {
+$x = $dbal_column_definition;
       $dbal_column_definition = str_replace('DOUBLE PRECISION', 'DOUBLE PRECISION UNSIGNED', $dbal_column_definition);
+throw new \Exception(var_export([$x, $dbal_column_definition], TRUE));
     }
     if (isset($field['type']) && $field['type'] == 'numeric' && !empty($field['unsigned']) && (bool) $field['unsigned'] === TRUE) {
       $dbal_column_definition = preg_replace('/NUMERIC\((.+)\)/', '$0 UNSIGNED', $dbal_column_definition);
