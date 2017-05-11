@@ -19,6 +19,7 @@ use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
 use Doctrine\DBAL\Exception\ConnectionException as DbalExceptionConnectionException;
 use Doctrine\DBAL\Schema\Schema as DbalSchema;
 use Doctrine\DBAL\Schema\Table as DbalTable;
+use Doctrine\DBAL\Version as DbalVersion;
 
 /**
  * Abstract DBAL Extension for MySql drivers.
@@ -84,6 +85,15 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
    * @var int
    */
   const MIN_MAX_ALLOWED_PACKET = 1024;
+
+  /**
+   * Replacement for single quote identifiers.
+   *
+   * @todo DBAL uses single quotes instead of backticks to produce DDL
+   * statements. This causes problems if fields defaults or comments have
+   * single quotes inside.
+   */
+  const SINGLE_QUOTE_IDENTIFIER_REPLACEMENT = ']]]]SINGLEQUOTEIDENTIFIERDRUDBAL[[[[';
 
   /**
    * The DruDbal connection.
@@ -554,10 +564,9 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function encodeDefaultValue($string) {
-    return strtr($string, [
-      '\'' => "]]]]QUOTEDELIMITERDRUDBAL[[[[",
-    ]);
+  public function getEncodedStringForDDLSql($string) {
+    // Encode single quotes.
+    return str_replace('\'', self::SINGLE_QUOTE_IDENTIFIER_REPLACEMENT, $string);
   }
 
   /**
@@ -566,11 +575,14 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
   public function alterDbalColumnDefinition(&$dbal_column_definition, array $dbal_column_options, $dbal_type, array $drupal_field_specs, $field_name) {
     // DBAL does not support unsigned float/numeric columns.
     // @see https://github.com/doctrine/dbal/issues/2380
-    if (isset($drupal_field_specs['type']) && $drupal_field_specs['type'] == 'float' && !empty($drupal_field_specs['unsigned']) && (bool) $drupal_field_specs['unsigned'] === TRUE) {
-      $dbal_column_definition = str_replace('DOUBLE PRECISION', 'DOUBLE PRECISION UNSIGNED', $dbal_column_definition);
-    }
-    if (isset($drupal_field_specs['type']) && $drupal_field_specs['type'] == 'numeric' && !empty($drupal_field_specs['unsigned']) && (bool) $drupal_field_specs['unsigned'] === TRUE) {
-      $dbal_column_definition = preg_replace('/NUMERIC\((.+)\)/', '$0 UNSIGNED', $dbal_column_definition);
+    // @tode remove the version check once DBAL 2.6.0 is out.
+    if (version_compare(DbalVersion::VERSION, '2.6.0', '<')) {
+      if (isset($drupal_field_specs['type']) && $drupal_field_specs['type'] == 'float' && !empty($drupal_field_specs['unsigned']) && (bool) $drupal_field_specs['unsigned'] === TRUE) {
+        $dbal_column_definition = str_replace('DOUBLE PRECISION', 'DOUBLE PRECISION UNSIGNED', $dbal_column_definition);
+      }
+      if (isset($drupal_field_specs['type']) && $drupal_field_specs['type'] == 'numeric' && !empty($drupal_field_specs['unsigned']) && (bool) $drupal_field_specs['unsigned'] === TRUE) {
+        $dbal_column_definition = preg_replace('/NUMERIC\((.+)\)/', '$0 UNSIGNED', $dbal_column_definition);
+      }
     }
     // DBAL does not support per-column charset.
     // @see https://github.com/doctrine/dbal/pull/881
@@ -581,10 +593,8 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
     if (isset($drupal_field_specs['binary']) && $drupal_field_specs['binary']) {
       $dbal_column_definition = preg_replace('/CHAR\(([0-9]+)\)/', '$0 BINARY', $dbal_column_definition);
     }
-    // Decode quotes.
-    $dbal_column_definition = strtr($dbal_column_definition, [
-      "]]]]QUOTEDELIMITERDRUDBAL[[[[" => '\\\'',
-    ]);
+    // Decode single quotes.
+    $dbal_column_definition = str_replace(self::SINGLE_QUOTE_IDENTIFIER_REPLACEMENT, '\\\'', $dbal_column_definition);
   }
 
   /**
