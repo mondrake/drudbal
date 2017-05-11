@@ -212,7 +212,7 @@ class Schema extends DatabaseSchema {
         }
       }
       else {
-        $options['default'] = $this->dbalExtension->encodeDefaultValue($field['default']);
+        $options['default'] = $this->dbalPlatform->quoteSingleIdentifier($field['default']);
       }
     }
 

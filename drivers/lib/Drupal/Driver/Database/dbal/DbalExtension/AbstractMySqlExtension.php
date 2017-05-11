@@ -554,15 +554,6 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function encodeDefaultValue($string) {
-    return strtr($string, [
-      '\'' => "]]]]QUOTEDELIMITERDRUDBAL[[[[",
-    ]);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function alterDbalColumnDefinition(&$dbal_column_definition, array $dbal_column_options, $dbal_type, array $drupal_field_specs, $field_name) {
     // DBAL does not support unsigned float/numeric columns.
     // @see https://github.com/doctrine/dbal/issues/2380
@@ -581,10 +572,6 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
     if (isset($drupal_field_specs['binary']) && $drupal_field_specs['binary']) {
       $dbal_column_definition = preg_replace('/CHAR\(([0-9]+)\)/', '$0 BINARY', $dbal_column_definition);
     }
-    // Decode quotes.
-    $dbal_column_definition = strtr($dbal_column_definition, [
-      "]]]]QUOTEDELIMITERDRUDBAL[[[[" => '\\\'',
-    ]);
   }
 
   /**
