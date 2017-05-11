@@ -576,7 +576,7 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
     // DBAL does not support unsigned float/numeric columns.
     // @see https://github.com/doctrine/dbal/issues/2380
     // @tode remove the version check once DBAL 2.6.0 is out.
-    if (version_compare(DbalVersion::VERSION, '2.6.0', '>=')) {
+    if (version_compare(DbalVersion::VERSION, '2.6.0', '<')) {
       if (isset($drupal_field_specs['type']) && $drupal_field_specs['type'] == 'float' && !empty($drupal_field_specs['unsigned']) && (bool) $drupal_field_specs['unsigned'] === TRUE) {
         $dbal_column_definition = str_replace('DOUBLE PRECISION', 'DOUBLE PRECISION UNSIGNED', $dbal_column_definition);
       }
