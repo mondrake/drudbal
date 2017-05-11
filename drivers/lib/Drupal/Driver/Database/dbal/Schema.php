@@ -212,7 +212,7 @@ class Schema extends DatabaseSchema {
         }
       }
       else {
-        $options['default'] = $this->dbalPlatform->quoteSingleIdentifier($field['default']);
+        $options['default'] = in_array($options['type'], ['string', 'text']) ? $this->dbalPlatform->quoteSingleIdentifier($field['default']) : $field['default'];
       }
     }
 
