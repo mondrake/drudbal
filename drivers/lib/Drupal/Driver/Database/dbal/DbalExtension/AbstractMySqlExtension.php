@@ -19,6 +19,7 @@ use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
 use Doctrine\DBAL\Exception\ConnectionException as DbalExceptionConnectionException;
 use Doctrine\DBAL\Schema\Schema as DbalSchema;
 use Doctrine\DBAL\Schema\Table as DbalTable;
+use Doctrine\DBAL\Version as DbalVersion;
 
 /**
  * Abstract DBAL Extension for MySql drivers.
@@ -574,11 +575,14 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
   public function alterDbalColumnDefinition(&$dbal_column_definition, array $dbal_column_options, $dbal_type, array $drupal_field_specs, $field_name) {
     // DBAL does not support unsigned float/numeric columns.
     // @see https://github.com/doctrine/dbal/issues/2380
-    if (isset($drupal_field_specs['type']) && $drupal_field_specs['type'] == 'float' && !empty($drupal_field_specs['unsigned']) && (bool) $drupal_field_specs['unsigned'] === TRUE) {
-      $dbal_column_definition = str_replace('DOUBLE PRECISION', 'DOUBLE PRECISION UNSIGNED', $dbal_column_definition);
-    }
-    if (isset($drupal_field_specs['type']) && $drupal_field_specs['type'] == 'numeric' && !empty($drupal_field_specs['unsigned']) && (bool) $drupal_field_specs['unsigned'] === TRUE) {
-      $dbal_column_definition = preg_replace('/NUMERIC\((.+)\)/', '$0 UNSIGNED', $dbal_column_definition);
+    // @tode remove the version check once DBAL 2.6.0 is out.
+    if (version_compare(DbalVersion::VERSION, '2.6.0', '>=')) {
+      if (isset($drupal_field_specs['type']) && $drupal_field_specs['type'] == 'float' && !empty($drupal_field_specs['unsigned']) && (bool) $drupal_field_specs['unsigned'] === TRUE) {
+        $dbal_column_definition = str_replace('DOUBLE PRECISION', 'DOUBLE PRECISION UNSIGNED', $dbal_column_definition);
+      }
+      if (isset($drupal_field_specs['type']) && $drupal_field_specs['type'] == 'numeric' && !empty($drupal_field_specs['unsigned']) && (bool) $drupal_field_specs['unsigned'] === TRUE) {
+        $dbal_column_definition = preg_replace('/NUMERIC\((.+)\)/', '$0 UNSIGNED', $dbal_column_definition);
+      }
     }
     // DBAL does not support per-column charset.
     // @see https://github.com/doctrine/dbal/pull/881
