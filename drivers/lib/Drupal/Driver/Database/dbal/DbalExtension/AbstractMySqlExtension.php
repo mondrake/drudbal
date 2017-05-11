@@ -86,6 +86,15 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
   const MIN_MAX_ALLOWED_PACKET = 1024;
 
   /**
+   * Replacement for single quote identifiers.
+   *
+   * @todo DBAL uses single quotes instead of backticks to produce DDL
+   * statements. This causes problems if fields defaults or comments have
+   * single quotes inside.
+   */
+  const SINGLE_QUOTE_IDENTIFIER_REPLACEMENT = ']]]]SINGLEQUOTEIDENTIFIERDRUDBAL[[[[';
+
+  /**
    * The DruDbal connection.
    *
    * @var \Drupal\Driver\Database\dbal\Connection
@@ -554,6 +563,14 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
+  public function getEncodedStringForDDLSql($string) {
+    // Encode single quotes.
+    return str_replace('\'', self::SINGLE_QUOTE_IDENTIFIER_REPLACEMENT, $string);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function alterDbalColumnDefinition(&$dbal_column_definition, array $dbal_column_options, $dbal_type, array $drupal_field_specs, $field_name) {
     // DBAL does not support unsigned float/numeric columns.
     // @see https://github.com/doctrine/dbal/issues/2380
@@ -572,6 +589,8 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
     if (isset($drupal_field_specs['binary']) && $drupal_field_specs['binary']) {
       $dbal_column_definition = preg_replace('/CHAR\(([0-9]+)\)/', '$0 BINARY', $dbal_column_definition);
     }
+    // Decode single quotes.
+    $dbal_column_definition = str_replace(self::SINGLE_QUOTE_IDENTIFIER_REPLACEMENT, '\\\'', $dbal_column_definition);
   }
 
   /**
