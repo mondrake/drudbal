@@ -554,7 +554,7 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function alterDbalColumnOptions(array &$dbal_column_options, $dbal_type, array $drupal_field_specs, $field_name) {
+  public function alterDbalColumnOptions($context, array &$dbal_column_options, $dbal_type, array $drupal_field_specs, $field_name) {
     if (isset($drupal_field_specs['type']) && $drupal_field_specs['type'] === 'varchar_ascii') {
       $dbal_column_options['charset'] = 'ascii';
       $dbal_column_options['collation'] = 'ascii_general_ci';
@@ -572,7 +572,7 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function alterDbalColumnDefinition(&$dbal_column_definition, array $dbal_column_options, $dbal_type, array $drupal_field_specs, $field_name) {
+  public function alterDbalColumnDefinition($context, &$dbal_column_definition, array $dbal_column_options, $dbal_type, array $drupal_field_specs, $field_name) {
     // DBAL does not support unsigned float/numeric columns.
     // @see https://github.com/doctrine/dbal/issues/2380
     // @tode remove the version check once DBAL 2.6.0 is out.
@@ -595,6 +595,13 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
     }
     // Decode single quotes.
     $dbal_column_definition = str_replace(self::SINGLE_QUOTE_IDENTIFIER_REPLACEMENT, '\\\'', $dbal_column_definition);
+    // @todo DBAL duplicates the COMMENT part when creating a table, or
+    // adding a field, if comment is already in the 'customDefinition' option.
+    // Open a DBAL issue. Here, just drop comment from the column definition
+    // string.
+    if (in_array($context, ['createTable', 'addField'])) {
+      $dbal_column_definition = preg_replace("/ COMMENT (?:(?:'(?:\\\\\\\\)+'|'(?:[^'\\\\]|\\\\'?|'')*'))?/s", '', $dbal_column_definition);
+    }
   }
 
   /**

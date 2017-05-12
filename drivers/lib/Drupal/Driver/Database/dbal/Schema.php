@@ -104,7 +104,7 @@ class Schema extends DatabaseSchema {
     // Add columns.
     foreach ($table['fields'] as $field_name => $field) {
       $dbal_type = $this->getDbalColumnType($field);
-      $new_column = $new_table->addColumn($field_name, $dbal_type, $this->getDbalColumnOptions($field_name, $dbal_type, $field));
+      $new_column = $new_table->addColumn($field_name, $dbal_type, $this->getDbalColumnOptions('createTable', $field_name, $dbal_type, $field));
     }
 
     // Add primary key.
@@ -168,6 +168,9 @@ class Schema extends DatabaseSchema {
   /**
    * Gets DBAL column options, given Drupal's field specs.
    *
+   * @param string $context
+   *   The context from where the method is called. Can be 'createTable',
+   *   'addField', 'changeField'.
    * @param string $field_name
    *   The column name.
    * @param string $dbal_type
@@ -179,7 +182,7 @@ class Schema extends DatabaseSchema {
    *   An array of DBAL column options, including the SQL column definition
    *   specification in the 'columnDefinition' option.
    */
-  protected function getDbalColumnOptions($field_name, $dbal_type, array $field) {
+  protected function getDbalColumnOptions($context, $field_name, $dbal_type, array $field) {
     $options = [];
 
     $options['type'] = DbalType::getType($dbal_type);
@@ -228,13 +231,13 @@ class Schema extends DatabaseSchema {
     }
 
     // Let DBAL extension alter the column options if required.
-    $this->dbalExtension->alterDbalColumnOptions($options, $dbal_type, $field, $field_name);
+    $this->dbalExtension->alterDbalColumnOptions($context, $options, $dbal_type, $field, $field_name);
 
     // Get the column definition from DBAL, and trim the field name.
     $dbal_column_definition = substr($this->dbalPlatform->getColumnDeclarationSQL($field_name, $options), strlen($field_name) + 1);
 
     // Let DBAL extension alter the column definition if required.
-    $this->dbalExtension->alterDbalColumnDefinition($dbal_column_definition, $options, $dbal_type, $field, $field_name);
+    $this->dbalExtension->alterDbalColumnDefinition($context, $dbal_column_definition, $options, $dbal_type, $field, $field_name);
 
     // Add the SQL column definiton as the 'columnDefinition' option.
     $options['columnDefinition'] = $dbal_column_definition;
@@ -367,7 +370,7 @@ class Schema extends DatabaseSchema {
     // Delegate to DBAL extension.
     $primary_key_processed_by_extension = FALSE;
     $dbal_type = $this->getDbalColumnType($spec);
-    $dbal_column_options = $this->getDbalColumnOptions($field, $dbal_type, $spec);
+    $dbal_column_options = $this->getDbalColumnOptions('addField', $field, $dbal_type, $spec);
     if ($this->dbalExtension->delegateAddField($primary_key_processed_by_extension, $table, $field, $spec, $keys_new, $dbal_column_options)) {
       $this->dbalSchemaForceReload();
     }
@@ -617,7 +620,7 @@ class Schema extends DatabaseSchema {
     }
 
     $dbal_type = $this->getDbalColumnType($spec);
-    $dbal_column_options = $this->getDbalColumnOptions($field_new, $dbal_type, $spec);
+    $dbal_column_options = $this->getDbalColumnOptions('changeField', $field_new, $dbal_type, $spec);
     // DBAL is limited here, if we pass only 'columnDefinition' to
     // ::changeColumn the schema diff will not capture any change. We need to
     // fallback to platform specific syntax.
