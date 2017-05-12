@@ -595,9 +595,13 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
     }
     // Decode single quotes.
     $dbal_column_definition = str_replace(self::SINGLE_QUOTE_IDENTIFIER_REPLACEMENT, '\\\'', $dbal_column_definition);
-    // @todo DBAL duplicates the COMMENT part when creating a table, if comment
-    // is already in the 'customDefinition' option. Open a DBAL issue. Here,
-    // just drop comment from the column definition string.
+    // @todo DBAL duplicates the COMMENT part when creating a table, or
+    // adding a field, if comment is already in the 'customDefinition' option.
+    // Open a DBAL issue. Here, just drop comment from the column definition
+    // string.
+    if (in_array($context, ['createTable', 'addField'])) {
+      $dbal_column_definition = preg_replace("/ COMMENT (?:(?:'(?:\\\\\\\\)+'|'(?:[^'\\\\]|\\\\'?|'')*'))?/s", '', $dbal_column_definition);
+    }
   }
 
   /**
