@@ -636,32 +636,31 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function delegateFieldSetDefault($table, $field, $default) {
+  public function delegateFieldSetDefault($drupal_table_name, $field_name, $default) {
     // DBAL would use an ALTER TABLE ... CHANGE statement that would not
     // preserve non-DBAL managed column attributes. Use MySql syntax here
     // instead.
-    $this->connection->query('ALTER TABLE {' . $table . '} ALTER COLUMN `' . $field . '` SET DEFAULT ' . $default);
+    $this->connection->query('ALTER TABLE {' . $drupal_table_name . '} ALTER COLUMN `' . $field_name . '` SET DEFAULT ' . $default);
     return TRUE;
   }
 
   /**
    * {@inheritdoc}
    */
-  public function delegateFieldSetNoDefault($table, $field) {
+  public function delegateFieldSetNoDefault($drupal_table_name, $field_name) {
     // DBAL would use an ALTER TABLE ... CHANGE statement that would not
     // preserve non-DBAL managed column attributes. Use MySql syntax here
     // instead.
-    $this->connection->query('ALTER TABLE {' . $table . '} ALTER COLUMN `' . $field . '` DROP DEFAULT');
+    $this->connection->query('ALTER TABLE {' . $drupal_table_name . '} ALTER COLUMN `' . $field_name . '` DROP DEFAULT');
     return TRUE;
   }
 
   /**
    * {@inheritdoc}
    */
-  public function delegateIndexExists(&$result, $table, $name) {
-    if ($name == 'PRIMARY') {
-      $schema = $this->dbalConnection->getSchemaManager()->createSchema();
-      $result = $schema->getTable($this->tableName($table))->hasPrimaryKey();
+  public function delegateIndexExists(&$result, DbalSchema $dbal_schema, $drupal_table_name, $index_name) {
+    if ($index_name == 'PRIMARY') {
+      $result = $dbal_schema->getTable($this->tableName($drupal_table_name))->hasPrimaryKey();
       return TRUE;
     }
     return FALSE;
@@ -670,11 +669,11 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function delegateAddPrimaryKey($schema, $table, $fields) {
+  public function delegateAddPrimaryKey(DbalSchema $dbal_schema, $drupal_table_name, $drupal_field_specs) {
     // DBAL does not support creating indexes with column lenghts.
     // @see https://github.com/doctrine/dbal/pull/2412
-    if (($idx_cols = $this->dbalResolveIndexColumnNames($fields)) === FALSE) {
-      $this->connection->query('ALTER TABLE {' . $table . '} ADD PRIMARY KEY (' . $this->createKeySql($fields) . ')');
+    if (($idx_cols = $this->dbalResolveIndexColumnNames($drupal_field_specs)) === FALSE) {
+      $this->connection->query('ALTER TABLE {' . $drupal_table_name . '} ADD PRIMARY KEY (' . $this->createKeySql($drupal_field_specs) . ')');
       return TRUE;
     }
     return FALSE;
@@ -683,11 +682,11 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function delegateAddUniqueKey($table, $name, $fields) {
+  public function delegateAddUniqueKey($drupal_table_name, $index_name, $drupal_field_specs) {
     // DBAL does not support creating indexes with column lenghts.
     // @see https://github.com/doctrine/dbal/pull/2412
-    if (($idx_cols = $this->dbalResolveIndexColumnNames($fields)) === FALSE) {
-      $this->connection->query('ALTER TABLE {' . $table . '} ADD UNIQUE KEY `' . $name . '` (' . $this->createKeySql($fields) . ')');
+    if (($idx_cols = $this->dbalResolveIndexColumnNames($drupal_field_specs)) === FALSE) {
+      $this->connection->query('ALTER TABLE {' . $drupal_table_name . '} ADD UNIQUE KEY `' . $index_name . '` (' . $this->createKeySql($drupal_field_specs) . ')');
       return TRUE;
     }
     return FALSE;
@@ -696,13 +695,13 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function delegateAddIndex($table, $name, $fields, $spec) {
+  public function delegateAddIndex($drupal_table_name, $index_name, array $drupal_field_specs, array $indexes_spec) {
     // DBAL does not support creating indexes with column lenghts.
     // @see https://github.com/doctrine/dbal/pull/2412
-    $spec['indexes'][$name] = $fields;
-    $indexes = $this->getNormalizedIndexes($spec);
-    if (($idx_cols = $this->dbalResolveIndexColumnNames($indexes[$name])) === FALSE) {
-      $this->connection->query('ALTER TABLE {' . $table . '} ADD INDEX `' . $name . '` (' . $this->createKeySql($indexes[$name]) . ')');
+    $indexes_spec['indexes'][$index_name] = $drupal_field_specs;
+    $indexes = $this->getNormalizedIndexes($indexes_spec);
+    if (($idx_cols = $this->dbalResolveIndexColumnNames($indexes[$index_name])) === FALSE) {
+      $this->connection->query('ALTER TABLE {' . $drupal_table_name . '} ADD INDEX `' . $index_name . '` (' . $this->createKeySql($indexes[$index_name]) . ')');
       return TRUE;
     }
     return FALSE;
@@ -711,7 +710,7 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function delegateGetComment(&$comment, $dbal_schema, $table, $column = NULL) {
+  public function delegateGetComment(&$comment, DbalSchema $dbal_schema, $drupal_table_name, $column = NULL) {
     if ($column !== NULL) {
       return FALSE;
     }
@@ -729,73 +728,31 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
           )
         )
       ->setParameter(0, $this->dbalConnection->getDatabase())
-      ->setParameter(1, $this->tableName($table));
+      ->setParameter(1, $this->tableName($drupal_table_name));
     $comment = $dbal_query->execute()->fetchColumn();
-    $this->alterGetComment($comment, $dbal_schema, $table, $column);
+    $this->alterGetComment($comment, $dbal_schema, $drupal_table_name, $column);
     return TRUE;
   }
 
   /**
    * {@inheritdoc}
    */
-  public function alterGetComment(&$comment, $dbal_schema, $table, $column = NULL) {
+  public function alterGetComment(&$comment, DbalSchema $dbal_schema, $drupal_table_name, $column = NULL) {
     return;
   }
 
   /**
    * {@inheritdoc}
    */
-  public function alterSetTableComment($comment, $name, $dbal_schema, $table) {
-    return Unicode::truncate($comment, self::COMMENT_MAX_TABLE, TRUE, TRUE);
+  public function alterSetTableComment(&$comment, $drupal_table_name, DbalSchema $dbal_schema, array $drupal_table_spec) {
+    $comment = Unicode::truncate($comment, self::COMMENT_MAX_TABLE, TRUE, TRUE);
   }
 
   /**
    * {@inheritdoc}
    */
-  public function alterSetColumnComment($comment, $dbal_type, $field, $field_name) {
-    return Unicode::truncate($comment, self::COMMENT_MAX_COLUMN, TRUE, TRUE);
-  }
-
-  /**
-   * @var array
-   *   List of MySQL string types.
-   */
-  protected $mysqlStringTypes = [
-    'VARCHAR',
-    'CHAR',
-    'TINYTEXT',
-    'MEDIUMTEXT',
-    'LONGTEXT',
-    'TEXT',
-  ];
-
-  /**
-   * Set database-engine specific properties for a field.
-   *
-   * @param $field
-   *   A field description array, as specified in the schema documentation.
-   */
-  protected function processField($field) {
-
-    if (!isset($field['size'])) {
-      $field['size'] = 'normal';
-    }
-
-    // Set the correct database-engine specific datatype.
-    // In case one is already provided, force it to uppercase.
-    if (isset($field['mysql_type'])) {
-      $field['mysql_type'] = Unicode::strtoupper($field['mysql_type']);
-    }
-    else {
-      $map = $this->getFieldTypeMap();
-      $field['mysql_type'] = $map[$field['type'] . ':' . $field['size']];
-    }
-
-    if (isset($field['type']) && $field['type'] == 'serial') {
-      $field['auto_increment'] = TRUE;
-    }
-
-    return $field;
+  public function alterSetColumnComment(&$comment, $dbal_type, $drupal_field_specs, $field_name) {
+    $comment = Unicode::truncate($comment, self::COMMENT_MAX_COLUMN, TRUE, TRUE);
   }
 
   /**
@@ -821,11 +778,11 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
         $field_name = is_array($index_field) ? $index_field[0] : $index_field;
         // Check whether the field is defined in the table specification.
         if (isset($spec['fields'][$field_name])) {
-          // Get the MySQL type from the processed field.
-          $mysql_field = $this->processField($spec['fields'][$field_name]);
-          if (in_array($mysql_field['mysql_type'], $this->mysqlStringTypes)) {
+          // Get the DBAL type from the field spec.
+          $dbal_type = $this->connection->schema()->getDbalColumnType($spec['fields'][$field_name]);
+          if (in_array($dbal_type, ['string', 'text'])) {
             // Check whether we need to shorten the index.
-            if ((!isset($mysql_field['type']) || $mysql_field['type'] != 'varchar_ascii') && (!isset($mysql_field['length']) || $mysql_field['length'] > 191)) {
+            if ((!isset($spec['fields'][$field_name]['type']) || $spec['fields'][$field_name]['type'] != 'varchar_ascii') && (!isset($spec['fields'][$field_name]['length']) || $spec['fields'][$field_name]['length'] > 191)) {
               // Limit the index length to 191 characters.
               $this->shortenIndex($indexes[$index_name][$index_key]);
             }
@@ -837,49 +794,6 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
       }
     }
     return $indexes;
-  }
-
-  protected function getFieldTypeMap() {
-    // Put :normal last so it gets preserved by array_flip. This makes
-    // it much easier for modules (such as schema.module) to map
-    // database types back into schema types.
-    // $map does not use drupal_static as its value never changes.
-    static $map = [
-      'varchar_ascii:normal' => 'VARCHAR',
-
-      'varchar:normal'  => 'VARCHAR',
-      'char:normal'     => 'CHAR',
-
-      'text:tiny'       => 'TINYTEXT',
-      'text:small'      => 'TINYTEXT',
-      'text:medium'     => 'MEDIUMTEXT',
-      'text:big'        => 'LONGTEXT',
-      'text:normal'     => 'TEXT',
-
-      'serial:tiny'     => 'TINYINT',
-      'serial:small'    => 'SMALLINT',
-      'serial:medium'   => 'MEDIUMINT',
-      'serial:big'      => 'BIGINT',
-      'serial:normal'   => 'INT',
-
-      'int:tiny'        => 'TINYINT',
-      'int:small'       => 'SMALLINT',
-      'int:medium'      => 'MEDIUMINT',
-      'int:big'         => 'BIGINT',
-      'int:normal'      => 'INT',
-
-      'float:tiny'      => 'FLOAT',
-      'float:small'     => 'FLOAT',
-      'float:medium'    => 'FLOAT',
-      'float:big'       => 'DOUBLE',
-      'float:normal'    => 'FLOAT',
-
-      'numeric:normal'  => 'DECIMAL',
-
-      'blob:big'        => 'LONGBLOB',
-      'blob:normal'     => 'BLOB',
-    ];
-    return $map;
   }
 
   /**

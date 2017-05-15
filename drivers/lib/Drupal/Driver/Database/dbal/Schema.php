@@ -94,7 +94,7 @@ class Schema extends DatabaseSchema {
     // Add table comment.
     if (!empty($table['description'])) {
       $comment = $this->connection->prefixTables($table['description']);
-      $comment = $this->dbalExtension->alterSetTableComment($comment, $name, $to_schema, $table);
+      $this->dbalExtension->alterSetTableComment($comment, $name, $to_schema, $table);
       $new_table->addOption('comment', $this->prepareComment($comment));
     }
 
@@ -143,7 +143,7 @@ class Schema extends DatabaseSchema {
    * @return string
    *   The string identifier of the DBAL column type.
    */
-  protected function getDbalColumnType(array $field) {
+  public function getDbalColumnType(array $field) {
     $dbal_type = NULL;
 
     // Delegate to DBAL extension.
@@ -226,7 +226,7 @@ class Schema extends DatabaseSchema {
 
     if (!empty($field['description'])) {
       $comment = $this->connection->prefixTables($field['description']);
-      $comment = $this->dbalExtension->alterSetColumnComment($comment, $dbal_type, $field, $field_name);
+      $this->dbalExtension->alterSetColumnComment($comment, $dbal_type, $field, $field_name);
       $options['comment'] = $this->prepareComment($comment);
     }
 
@@ -489,7 +489,7 @@ class Schema extends DatabaseSchema {
 
     // Delegate to DBAL extension.
     $result = FALSE;
-    if ($this->dbalExtension->delegateIndexExists($result, $table, $name)) {
+    if ($this->dbalExtension->delegateIndexExists($result, $this->dbalSchema(), $table, $name)) {
       return $result;
     }
 
