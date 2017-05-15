@@ -81,8 +81,6 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
    *
    * @link https://mariadb.com/kb/en/mariadb/server-system-variables/#max_allowed_packet
    * @link https://dev.mysql.com/doc/refman/5.7/en/server-system-variables.html#sysvar_max_allowed_packet
-   *
-   * @var int
    */
   const MIN_MAX_ALLOWED_PACKET = 1024;
 
@@ -94,6 +92,21 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
    * single quotes inside.
    */
   const SINGLE_QUOTE_IDENTIFIER_REPLACEMENT = ']]]]SINGLEQUOTEIDENTIFIERDRUDBAL[[[[';
+
+  /**
+   * Default MySql engine.
+   */
+  const DEFAULT_ENGINE = 'InnoDB';
+
+  /**
+   * Default character set.
+   */
+  const DEFAULT_CHARACTER_SET = 'utf8mb4';
+
+  /**
+   * Default collation.
+   */
+  const DEFAULT_COLLATION = 'utf8mb4_general_ci';
 
   /**
    * The DruDbal connection.
@@ -349,17 +362,19 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
    */
 
   /**
-   * @todo
+   * {@inheritdoc}
    */
   public function preTruncate($drupal_table_name) {
     $this->dbalConnection->exec('SET FOREIGN_KEY_CHECKS=0');
+    return $this;
   }
 
   /**
-   * @todo
+   * {@inheritdoc}
    */
   public function postTruncate($drupal_table_name) {
     $this->dbalConnection->exec('SET FOREIGN_KEY_CHECKS=1');
+    return $this;
   }
 
   /**
@@ -367,7 +382,7 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
    */
 
   /**
-   * @todo
+   * {@inheritdoc}
    */
   public static function delegateInstallConnectExceptionProcess(\Exception $e) {
     $results = [
@@ -442,10 +457,7 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
   }
 
   /**
-   * Executes MySql installation specific tasks.
-   *
-   * @return array
-   *   An array of pass/fail installation messages.
+   * {@inheritdoc}
    */
   public function runInstallTasks() {
     $results = [
@@ -469,7 +481,7 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
     }
 
     // Ensure that the MySQL driver supports utf8mb4 encoding.
-    $version = $this->clientVersion();
+    $version = $this->delegateClientVersion();
     if (FALSE !== strpos($version, 'mysqlnd')) {
       // The mysqlnd driver supports utf8mb4 starting at version 5.0.9.
       $version = preg_replace('/^\D+([\d.]+).*/', '$1', $version);
@@ -531,13 +543,14 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
   public function alterCreateTableOptions(DbalTable $dbal_table, DbalSchema $dbal_schema, array &$drupal_table_specs, $drupal_table_name) {
     // Provide defaults if needed.
     $drupal_table_specs += [
-      'mysql_engine' => 'InnoDB', // @todo use constant
-      'mysql_character_set' => 'utf8mb4', // @todo use constant
+      'mysql_engine' => self::DEFAULT_ENGINE,
+      'mysql_character_set' => self::DEFAULT_CHARACTER_SET,
     ];
     $dbal_table->addOption('charset', $drupal_table_specs['mysql_character_set']);
     $dbal_table->addOption('engine', $drupal_table_specs['mysql_engine']);
     $info = $this->connection->getConnectionOptions();
-    $dbal_table->addOption('collate', empty($info['collation']) ? 'utf8mb4_general_ci' : $info['collation']);   // @todo use constant for collation
+    $dbal_table->addOption('collate', empty($info['collation']) ? self::DEFAULT_COLLATION : $info['collation']);
+    return $this;
   }
 
   /**
@@ -559,12 +572,13 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
       $dbal_column_options['charset'] = 'ascii';
       $dbal_column_options['collation'] = 'ascii_general_ci';
     }
+    return $this;
   }
 
   /**
    * {@inheritdoc}
    */
-  public function getEncodedStringForDDLSql($string) {
+  public function getDbalEncodedStringForDDLSql($string) {
     // Encode single quotes.
     return str_replace('\'', self::SINGLE_QUOTE_IDENTIFIER_REPLACEMENT, $string);
   }
@@ -575,7 +589,7 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
   public function alterDbalColumnDefinition($context, &$dbal_column_definition, array $dbal_column_options, $dbal_type, array $drupal_field_specs, $field_name) {
     // DBAL does not support unsigned float/numeric columns.
     // @see https://github.com/doctrine/dbal/issues/2380
-    // @tode remove the version check once DBAL 2.6.0 is out.
+    // @todo remove the version check once DBAL 2.6.0 is out.
     if (version_compare(DbalVersion::VERSION, '2.6.0', '<')) {
       if (isset($drupal_field_specs['type']) && $drupal_field_specs['type'] == 'float' && !empty($drupal_field_specs['unsigned']) && (bool) $drupal_field_specs['unsigned'] === TRUE) {
         $dbal_column_definition = str_replace('DOUBLE PRECISION', 'DOUBLE PRECISION UNSIGNED', $dbal_column_definition);
@@ -595,13 +609,14 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
     }
     // Decode single quotes.
     $dbal_column_definition = str_replace(self::SINGLE_QUOTE_IDENTIFIER_REPLACEMENT, '\\\'', $dbal_column_definition);
-    // @todo DBAL duplicates the COMMENT part when creating a table, or
-    // adding a field, if comment is already in the 'customDefinition' option.
-    // Open a DBAL issue. Here, just drop comment from the column definition
-    // string.
+    // DBAL duplicates the COMMENT part when creating a table, or adding a
+    // field, if comment is already in the 'customDefinition' option. Here,
+    // just drop comment from the column definition string.
+    // @see https://github.com/doctrine/dbal/pull/2725
     if (in_array($context, ['createTable', 'addField'])) {
       $dbal_column_definition = preg_replace("/ COMMENT (?:(?:'(?:\\\\\\\\)+'|'(?:[^'\\\\]|\\\\'?|'')*'))?/s", '', $dbal_column_definition);
     }
+    return $this;
   }
 
   /**
@@ -738,7 +753,7 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
    * {@inheritdoc}
    */
   public function alterGetComment(&$comment, DbalSchema $dbal_schema, $drupal_table_name, $column = NULL) {
-    return;
+    return $this;
   }
 
   /**
@@ -746,13 +761,15 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
    */
   public function alterSetTableComment(&$comment, $drupal_table_name, DbalSchema $dbal_schema, array $drupal_table_spec) {
     $comment = Unicode::truncate($comment, self::COMMENT_MAX_TABLE, TRUE, TRUE);
+    return $this;
   }
 
   /**
    * {@inheritdoc}
    */
-  public function alterSetColumnComment(&$comment, $dbal_type, $drupal_field_specs, $field_name) {
+  public function alterSetColumnComment(&$comment, $dbal_type, array $drupal_field_specs, $field_name) {
     $comment = Unicode::truncate($comment, self::COMMENT_MAX_COLUMN, TRUE, TRUE);
+    return $this;
   }
 
   /**
@@ -818,7 +835,16 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
     }
   }
 
-  protected function createKeySql($fields) {
+  /**
+   * Returns a string specifying a sequence of columns in MySql syntax.
+   *
+   * @param array $fields
+   *   The array of fields in Drupal format.
+   *
+   * @return string
+   *   The string specifying the sequence of columns.
+   */
+  protected function createKeySql(array $fields) {
     $return = [];
     foreach ($fields as $field) {
       if (is_array($field)) {
@@ -831,20 +857,41 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
     return implode(', ', $return);
   }
 
-  protected function dbalResolveIndexColumnNames($fields) {
-    $return = [];
+  /**
+   * Determines if DBAL can process a list of fields.
+   *
+   * DBAL does not support creating indexes with column lenghts, so here we
+   * determine if the extension should process adding keys/indexes instead
+   * of DBAL natively.
+   *
+   * @param array $fields
+   *   The array of fields in Drupal format.
+   *
+   * @return boolean
+   *   FALSE if there is at least a column with length spec, TRUE if all the
+   *   columns are to be indexed to full lenght.
+   *
+   * @see https://github.com/doctrine/dbal/pull/2412
+   */
+  protected function dbalResolveIndexColumnNames(array $fields) {
     foreach ($fields as $field) {
       if (is_array($field)) {
         return FALSE;
       }
-      else {
-        $return[] = $field;
-      }
     }
-    return $return;
+    return TRUE;
   }
 
-  protected function createKeysSql($spec) {
+  /**
+   * Returns an array of strings specifying keys/indexes in MySql syntax.
+   *
+   * @param array $spec
+   *   The array of table specifications in Drupal format.
+   *
+   * @return string[]
+   *   The array of strings specifying keys/indexes in MySql syntax.
+   */
+  protected function createKeysSql(array $spec) {
     $keys = [];
 
     if (!empty($spec['primary key'])) {
@@ -856,7 +903,7 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
       }
     }
     if (!empty($spec['indexes'])) {
-      $indexes = $this->druDbalDriver->getNormalizedIndexes($spec);
+      $indexes = $this->getNormalizedIndexes($spec);
       foreach ($indexes as $index => $fields) {
         $keys[] = 'INDEX `' . $index . '` (' . $this->createKeySql($fields) . ')';
       }
