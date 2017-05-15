@@ -27,62 +27,48 @@ use Doctrine\DBAL\Version as DbalVersion;
 class PDOSqliteExtension implements DbalExtensionInterface {
 
   /**
-   * Minimum required mysql version.
+   * Error code for "Unable to open database file" error.
    */
-  const MYSQLSERVER_MINIMUM_VERSION = '5.5.3';
+  const DATABASE_NOT_FOUND = 14;
 
   /**
-   * Minimum required MySQLnd version.
-   */
-  const MYSQLND_MINIMUM_VERSION = '5.0.9';
-
-  /**
-   * Minimum required libmysqlclient version.
-   */
-  const LIBMYSQLCLIENT_MINIMUM_VERSION = '5.5.3';
-
-  /**
-   * Error code for "Unknown database" error.
-   */
-  const DATABASE_NOT_FOUND = 1049;
-
-  /**
-   * Error code for "Access denied" error.
-   */
-  const ACCESS_DENIED = 1045;
-
-  /**
-   * Error code for "Can't initialize character set" error.
-   */
-  const UNSUPPORTED_CHARSET = 2019;
-
-  /**
-   * Driver-specific error code for "Unknown character set" error.
-   */
-  const UNKNOWN_CHARSET = 1115;
-
-  /**
-   * SQLSTATE error code for "Syntax error or access rule violation".
-   */
-  const SQLSTATE_SYNTAX_ERROR = 42000;
-
-  /**
-   * Maximum length of a table comment in MySQL.
-   */
-  const COMMENT_MAX_TABLE = 60;
-
-  /**
-   * Maximum length of a column comment in MySQL.
-   */
-  const COMMENT_MAX_COLUMN = 255;
-
-  /**
-   * The minimal possible value for the max_allowed_packet setting of MySQL.
+   * Whether or not the active transaction (if any) will be rolled back.
    *
-   * @link https://mariadb.com/kb/en/mariadb/server-system-variables/#max_allowed_packet
-   * @link https://dev.mysql.com/doc/refman/5.7/en/server-system-variables.html#sysvar_max_allowed_packet
+   * @var bool
    */
-  const MIN_MAX_ALLOWED_PACKET = 1024;
+  protected $willRollback;
+
+  /**
+   * A map of condition operators to SQLite operators.
+   *
+   * We don't want to override any of the defaults.
+   */
+  protected static $sqliteConditionOperatorMap = [
+    'LIKE' => ['postfix' => " ESCAPE '\\'"],
+    'NOT LIKE' => ['postfix' => " ESCAPE '\\'"],
+    'LIKE BINARY' => ['postfix' => " ESCAPE '\\'", 'operator' => 'GLOB'],
+    'NOT LIKE BINARY' => ['postfix' => " ESCAPE '\\'", 'operator' => 'NOT GLOB'],
+  ];
+
+  /**
+   * All databases attached to the current database. This is used to allow
+   * prefixes to be safely handled without locking the table
+   *
+   * @var array
+   */
+  protected $attachedDatabases = [];
+
+  /**
+   * Whether or not a table has been dropped this request: the destructor will
+   * only try to get rid of unnecessary databases if there is potential of them
+   * being empty.
+   *
+   * This variable is set to public because Schema needs to
+   * access it. However, it should not be manually set.
+   *
+   * @var bool
+   */
+  public $tableDropped = FALSE;
 
   /**
    * Replacement for single quote identifiers.
