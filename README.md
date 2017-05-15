@@ -92,6 +92,7 @@ https://github.com/doctrine/dbal/pull/2412       | Add mysql specific indexes wi
 https://github.com/doctrine/dbal/issues/2380     | Unsigned numeric columns not generated correctly | Fixed in 2.6.0 |
 https://github.com/doctrine/migrations/issues/17 | Data loss on table renaming. | |
 https://github.com/doctrine/dbal/pull/2720       | SQLParserUtils::getPlaceholderPositions fails if there are quoted strings containing only backslashes | |
+https://github.com/doctrine/dbal/pull/2725       | Duplicate 'COMMENT' part in SQL statement | |
 
 ## Related Drupal issues
 Issue | Description   |
