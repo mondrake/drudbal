@@ -143,7 +143,7 @@ class Schema extends DatabaseSchema {
    * @return string
    *   The string identifier of the DBAL column type.
    */
-  protected function getDbalColumnType(array $field) {
+  public function getDbalColumnType(array $field) {
     $dbal_type = NULL;
 
     // Delegate to DBAL extension.
