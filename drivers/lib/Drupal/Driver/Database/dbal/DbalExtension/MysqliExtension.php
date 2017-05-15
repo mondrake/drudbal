@@ -41,14 +41,14 @@ class MysqliExtension extends AbstractMySqlExtension {
   /**
    * {@inheritdoc}
    */
-  public function clientVersion() {
+  public function delegateClientVersion() {
     return $this->dbalConnection->getWrappedConnection()->getWrappedResourceHandle()->get_client_info();
   }
 
   /**
    * {@inheritdoc}
    */
-  public function prepare($statement, array $params, array $driver_options = []) {
+  public function delegatePrepare($statement, array $params, array $driver_options = []) {
     try {
       return new $this->statementClass($this->connection, $statement, $params, $driver_options);
     }

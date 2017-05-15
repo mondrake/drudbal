@@ -66,14 +66,14 @@ class PDOMySqlExtension extends AbstractMySqlExtension {
   /**
    * {@inheritdoc}
    */
-  public function clientVersion() {
+  public function delegateClientVersion() {
     return $this->dbalConnection->getWrappedConnection()->getAttribute(\PDO::ATTR_CLIENT_VERSION);
   }
 
   /**
    * {@inheritdoc}
    */
-  public function prepare($statement, array $params, array $driver_options = []) {
+  public function delegatePrepare($statement, array $params, array $driver_options = []) {
     try {
       return $this->getDbalConnection()->getWrappedConnection()->prepare($statement, $driver_options);
     }

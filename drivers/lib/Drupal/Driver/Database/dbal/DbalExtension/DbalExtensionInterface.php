@@ -71,7 +71,7 @@ interface DbalExtensionInterface {
    * @return string
    *   A string with the database client information.
    */
-  public function clientVersion();
+  public function delegateClientVersion();
 
   /**
    * Informs the Connection on whether transactions are supported.
@@ -130,6 +130,11 @@ interface DbalExtensionInterface {
    *   also larger than the $existing_id if one was passed in.
    */
   public function delegateNextId($existing_id = 0);
+
+  /**
+   * @todo
+   */
+  public function delegatePrepare($statement, array $params, array $driver_options = []);
 
   /**
    * Extension level handling of DBALExceptions thrown by Connection::query().
@@ -202,8 +207,133 @@ interface DbalExtensionInterface {
   public function delegateReleaseSavepointExceptionProcess(DbalDriverException $e);
 
   /**
-   * @todo
+   * Truncate delegated methods.
    */
-  public function prepare($statement, array $params, array $driver_options = []);
+
+  /**
+   * {@inheritdoc}
+   */
+  public function preTruncate($drupal_table_name);
+
+  /**
+   * {@inheritdoc}
+   */
+  public function postTruncate($drupal_table_name);
+
+  /**
+   * Install\Tasks delegated methods.
+   */
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function delegateInstallConnectExceptionProcess(\Exception $e);
+
+  /**
+   * Executes installation specific tasks for the database.
+   *
+   * @return array
+   *   An array of pass/fail installation messages.
+   */
+  public function runInstallTasks();
+
+  /**
+   * Schema delegated methods.
+   */
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateTableExists(&$result, $drupal_table_name);
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateFieldExists(&$result, $drupal_table_name, $field_name);
+
+  /**
+   * {@inheritdoc}
+   */
+  public function alterCreateTableOptions(DbalTable $dbal_table, DbalSchema $dbal_schema, array &$drupal_table_specs, $drupal_table_name);
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateGetDbalColumnType(&$dbal_type, array $drupal_field_specs);
+
+  /**
+   * {@inheritdoc}
+   */
+  public function alterDbalColumnOptions($context, array &$dbal_column_options, $dbal_type, array $drupal_field_specs, $field_name);
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getDbalEncodedStringForDDLSql($string);
+
+  /**
+   * {@inheritdoc}
+   */
+  public function alterDbalColumnDefinition($context, &$dbal_column_definition, array $dbal_column_options, $dbal_type, array $drupal_field_specs, $field_name);
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateAddField(&$primary_key_processed_by_extension, $drupal_table_name, $field_name, array $drupal_field_specs, array $keys_new_specs, array $dbal_column_options);
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateChangeField(&$primary_key_processed_by_extension, $drupal_table_name, $field_name, $field_new_name, array $drupal_field_new_specs, array $keys_new_specs, array $dbal_column_options);
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateFieldSetDefault($drupal_table_name, $field_name, $default);
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateFieldSetNoDefault($drupal_table_name, $field_name);
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateIndexExists(&$result, DbalSchema $dbal_schema, $drupal_table_name, $index_name);
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateAddPrimaryKey(DbalSchema $dbal_schema, $drupal_table_name, $drupal_field_specs);
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateAddUniqueKey($drupal_table_name, $index_name, $drupal_field_specs);
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateAddIndex($drupal_table_name, $index_name, array $drupal_field_specs, array $indexes_spec);
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateGetComment(&$comment, DbalSchema $dbal_schema, $drupal_table_name, $column = NULL);
+
+  /**
+   * {@inheritdoc}
+   */
+  public function alterGetComment(&$comment, DbalSchema $dbal_schema, $drupal_table_name, $column = NULL);
+
+  /**
+   * {@inheritdoc}
+   */
+  public function alterSetTableComment(&$comment, $drupal_table_name, DbalSchema $dbal_schema, array $drupal_table_spec);
+
+  /**
+   * {@inheritdoc}
+   */
+  public function alterSetColumnComment(&$comment, $dbal_type, $drupal_field_specs, $field_name);
 
 }
