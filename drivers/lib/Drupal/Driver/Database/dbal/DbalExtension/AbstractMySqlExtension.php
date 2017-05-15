@@ -550,6 +550,7 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
     $dbal_table->addOption('engine', $drupal_table_specs['mysql_engine']);
     $info = $this->connection->getConnectionOptions();
     $dbal_table->addOption('collate', empty($info['collation']) ? self::DEFAULT_COLLATION : $info['collation']);
+    return $this;
   }
 
   /**
@@ -571,6 +572,7 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
       $dbal_column_options['charset'] = 'ascii';
       $dbal_column_options['collation'] = 'ascii_general_ci';
     }
+    return $this;
   }
 
   /**
@@ -614,6 +616,7 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
     if (in_array($context, ['createTable', 'addField'])) {
       $dbal_column_definition = preg_replace("/ COMMENT (?:(?:'(?:\\\\\\\\)+'|'(?:[^'\\\\]|\\\\'?|'')*'))?/s", '', $dbal_column_definition);
     }
+    return $this;
   }
 
   /**
@@ -750,7 +753,7 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
    * {@inheritdoc}
    */
   public function alterGetComment(&$comment, DbalSchema $dbal_schema, $drupal_table_name, $column = NULL) {
-    return;
+    return $this;
   }
 
   /**
@@ -758,13 +761,15 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
    */
   public function alterSetTableComment(&$comment, $drupal_table_name, DbalSchema $dbal_schema, array $drupal_table_spec) {
     $comment = Unicode::truncate($comment, self::COMMENT_MAX_TABLE, TRUE, TRUE);
+    return $this;
   }
 
   /**
    * {@inheritdoc}
    */
-  public function alterSetColumnComment(&$comment, $dbal_type, $drupal_field_specs, $field_name) {
+  public function alterSetColumnComment(&$comment, $dbal_type, array $drupal_field_specs, $field_name) {
     $comment = Unicode::truncate($comment, self::COMMENT_MAX_COLUMN, TRUE, TRUE);
+    return $this;
   }
 
   /**
