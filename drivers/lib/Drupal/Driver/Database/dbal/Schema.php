@@ -551,7 +551,7 @@ class Schema extends DatabaseSchema {
     }
 
     // Delegate to DBAL extension.
-    if ($this->dbalExtension->delegateAddUniqueKey($this->dbalSchema(), $table, $name, $fields)) {
+    if ($this->dbalExtension->delegateAddUniqueKey($table, $name, $fields)) {
       $this->dbalSchemaForceReload();
       return;
     }
@@ -582,7 +582,7 @@ class Schema extends DatabaseSchema {
     }
 
     // Delegate to DBAL extension.
-    if ($this->dbalExtension->delegateAddIndex($this->dbalSchema(), $table, $name, $fields, $spec)) {
+    if ($this->dbalExtension->delegateAddIndex($table, $name, $fields, $spec)) {
       $this->dbalSchemaForceReload();
       return;
     }
