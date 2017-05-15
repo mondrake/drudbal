@@ -636,32 +636,31 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function delegateFieldSetDefault($table, $field, $default) {
+  public function delegateFieldSetDefault($drupal_table_name, $field_name, $default) {
     // DBAL would use an ALTER TABLE ... CHANGE statement that would not
     // preserve non-DBAL managed column attributes. Use MySql syntax here
     // instead.
-    $this->connection->query('ALTER TABLE {' . $table . '} ALTER COLUMN `' . $field . '` SET DEFAULT ' . $default);
+    $this->connection->query('ALTER TABLE {' . $drupal_table_name . '} ALTER COLUMN `' . $field_name . '` SET DEFAULT ' . $default);
     return TRUE;
   }
 
   /**
    * {@inheritdoc}
    */
-  public function delegateFieldSetNoDefault($table, $field) {
+  public function delegateFieldSetNoDefault($drupal_table_name, $field_name) {
     // DBAL would use an ALTER TABLE ... CHANGE statement that would not
     // preserve non-DBAL managed column attributes. Use MySql syntax here
     // instead.
-    $this->connection->query('ALTER TABLE {' . $table . '} ALTER COLUMN `' . $field . '` DROP DEFAULT');
+    $this->connection->query('ALTER TABLE {' . $drupal_table_name . '} ALTER COLUMN `' . $field_name . '` DROP DEFAULT');
     return TRUE;
   }
 
   /**
    * {@inheritdoc}
    */
-  public function delegateIndexExists(&$result, $table, $name) {
-    if ($name == 'PRIMARY') {
-      $schema = $this->dbalConnection->getSchemaManager()->createSchema();
-      $result = $schema->getTable($this->tableName($table))->hasPrimaryKey();
+  public function delegateIndexExists(&$result, DbalSchema $dbal_schema, $drupal_table_name, $index_name) {
+    if ($index_name == 'PRIMARY') {
+      $result = $dbal_schema->getTable($this->tableName($drupal_table_name))->hasPrimaryKey();
       return TRUE;
     }
     return FALSE;
@@ -670,11 +669,11 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function delegateAddPrimaryKey($schema, $table, $fields) {
+  public function delegateAddPrimaryKey(DbalSchema $dbal_schema, $drupal_table_name, $drupal_field_specs) {
     // DBAL does not support creating indexes with column lenghts.
     // @see https://github.com/doctrine/dbal/pull/2412
-    if (($idx_cols = $this->dbalResolveIndexColumnNames($fields)) === FALSE) {
-      $this->connection->query('ALTER TABLE {' . $table . '} ADD PRIMARY KEY (' . $this->createKeySql($fields) . ')');
+    if (($idx_cols = $this->dbalResolveIndexColumnNames($drupal_field_specs)) === FALSE) {
+      $this->connection->query('ALTER TABLE {' . $drupal_table_name . '} ADD PRIMARY KEY (' . $this->createKeySql($drupal_field_specs) . ')');
       return TRUE;
     }
     return FALSE;
@@ -683,11 +682,11 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function delegateAddUniqueKey($table, $name, $fields) {
+  public function delegateAddUniqueKey(DbalSchema $dbal_schema, $drupal_table_name, $index_name, $drupal_field_specs) {
     // DBAL does not support creating indexes with column lenghts.
     // @see https://github.com/doctrine/dbal/pull/2412
-    if (($idx_cols = $this->dbalResolveIndexColumnNames($fields)) === FALSE) {
-      $this->connection->query('ALTER TABLE {' . $table . '} ADD UNIQUE KEY `' . $name . '` (' . $this->createKeySql($fields) . ')');
+    if (($idx_cols = $this->dbalResolveIndexColumnNames($drupal_field_specs)) === FALSE) {
+      $this->connection->query('ALTER TABLE {' . $drupal_table_name . '} ADD UNIQUE KEY `' . $index_name . '` (' . $this->createKeySql($drupal_field_specs) . ')');
       return TRUE;
     }
     return FALSE;
@@ -696,13 +695,13 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function delegateAddIndex($table, $name, $fields, $spec) {
+  public function delegateAddIndex(DbalSchema $dbal_schema, $drupal_table_name, $index_name, array $drupal_field_specs, array $indexes_spec) {
     // DBAL does not support creating indexes with column lenghts.
     // @see https://github.com/doctrine/dbal/pull/2412
-    $spec['indexes'][$name] = $fields;
-    $indexes = $this->getNormalizedIndexes($spec);
-    if (($idx_cols = $this->dbalResolveIndexColumnNames($indexes[$name])) === FALSE) {
-      $this->connection->query('ALTER TABLE {' . $table . '} ADD INDEX `' . $name . '` (' . $this->createKeySql($indexes[$name]) . ')');
+    $indexes_spec['indexes'][$index_name] = $drupal_field_specs;
+    $indexes = $this->getNormalizedIndexes($indexes_spec);
+    if (($idx_cols = $this->dbalResolveIndexColumnNames($indexes[$index_name])) === FALSE) {
+      $this->connection->query('ALTER TABLE {' . $drupal_table_name . '} ADD INDEX `' . $index_name . '` (' . $this->createKeySql($indexes[$index_name]) . ')');
       return TRUE;
     }
     return FALSE;
@@ -711,7 +710,7 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function delegateGetComment(&$comment, $dbal_schema, $table, $column = NULL) {
+  public function delegateGetComment(&$comment, DbalSchema $dbal_schema, $drupal_table_name, $column = NULL) {
     if ($column !== NULL) {
       return FALSE;
     }
@@ -729,31 +728,31 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
           )
         )
       ->setParameter(0, $this->dbalConnection->getDatabase())
-      ->setParameter(1, $this->tableName($table));
+      ->setParameter(1, $this->tableName($drupal_table_name));
     $comment = $dbal_query->execute()->fetchColumn();
-    $this->alterGetComment($comment, $dbal_schema, $table, $column);
+    $this->alterGetComment($comment, $dbal_schema, $drupal_table_name, $column);
     return TRUE;
   }
 
   /**
    * {@inheritdoc}
    */
-  public function alterGetComment(&$comment, $dbal_schema, $table, $column = NULL) {
+  public function alterGetComment(&$comment, DbalSchema $dbal_schema, $drupal_table_name, $column = NULL) {
     return;
   }
 
   /**
    * {@inheritdoc}
    */
-  public function alterSetTableComment($comment, $name, $dbal_schema, $table) {
-    return Unicode::truncate($comment, self::COMMENT_MAX_TABLE, TRUE, TRUE);
+  public function alterSetTableComment(&$comment, $drupal_table_name, DbalSchema $dbal_schema, array $drupal_table_spec) {
+    $comment = Unicode::truncate($comment, self::COMMENT_MAX_TABLE, TRUE, TRUE);
   }
 
   /**
    * {@inheritdoc}
    */
-  public function alterSetColumnComment($comment, $dbal_type, $field, $field_name) {
-    return Unicode::truncate($comment, self::COMMENT_MAX_COLUMN, TRUE, TRUE);
+  public function alterSetColumnComment(&$comment, $dbal_type, $drupal_field_specs, $field_name) {
+    $comment = Unicode::truncate($comment, self::COMMENT_MAX_COLUMN, TRUE, TRUE);
   }
 
   /**

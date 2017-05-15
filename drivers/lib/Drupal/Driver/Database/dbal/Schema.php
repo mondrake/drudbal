@@ -94,7 +94,7 @@ class Schema extends DatabaseSchema {
     // Add table comment.
     if (!empty($table['description'])) {
       $comment = $this->connection->prefixTables($table['description']);
-      $comment = $this->dbalExtension->alterSetTableComment($comment, $name, $to_schema, $table);
+      $this->dbalExtension->alterSetTableComment($comment, $name, $to_schema, $table);
       $new_table->addOption('comment', $this->prepareComment($comment));
     }
 
@@ -226,7 +226,7 @@ class Schema extends DatabaseSchema {
 
     if (!empty($field['description'])) {
       $comment = $this->connection->prefixTables($field['description']);
-      $comment = $this->dbalExtension->alterSetColumnComment($comment, $dbal_type, $field, $field_name);
+      $this->dbalExtension->alterSetColumnComment($comment, $dbal_type, $field, $field_name);
       $options['comment'] = $this->prepareComment($comment);
     }
 
@@ -489,7 +489,7 @@ class Schema extends DatabaseSchema {
 
     // Delegate to DBAL extension.
     $result = FALSE;
-    if ($this->dbalExtension->delegateIndexExists($result, $table, $name)) {
+    if ($this->dbalExtension->delegateIndexExists($result, $this->dbalSchema(), $table, $name)) {
       return $result;
     }
 
@@ -551,7 +551,7 @@ class Schema extends DatabaseSchema {
     }
 
     // Delegate to DBAL extension.
-    if ($this->dbalExtension->delegateAddUniqueKey($table, $name, $fields)) {
+    if ($this->dbalExtension->delegateAddUniqueKey($this->dbalSchema(), $table, $name, $fields)) {
       $this->dbalSchemaForceReload();
       return;
     }
@@ -582,7 +582,7 @@ class Schema extends DatabaseSchema {
     }
 
     // Delegate to DBAL extension.
-    if ($this->dbalExtension->delegateAddIndex($table, $name, $fields, $spec)) {
+    if ($this->dbalExtension->delegateAddIndex($this->dbalSchema(), $table, $name, $fields, $spec)) {
       $this->dbalSchemaForceReload();
       return;
     }
