@@ -4,7 +4,8 @@ namespace Drupal\Driver\Database\dbal\DbalExtension;
 
 use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
-
+use Doctrine\DBAL\Schema\Schema as DbalSchema;
+use Doctrine\DBAL\Schema\Table as DbalTable;
 
 /**
  * Provides an interface for Dbal extensions.
