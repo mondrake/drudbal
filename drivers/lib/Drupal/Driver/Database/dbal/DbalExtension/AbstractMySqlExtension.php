@@ -818,7 +818,16 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
     }
   }
 
-  protected function createKeySql($fields) {
+  /**
+   * Returns a string specifying a sequence of columns in MySql syntax.
+   *
+   * @param array $fields
+   *   The array of fields in Drupal format.
+   *
+   * @return string
+   *   The string specifying the sequence of columns.
+   */
+  protected function createKeySql(array $fields) {
     $return = [];
     foreach ($fields as $field) {
       if (is_array($field)) {
@@ -831,20 +840,41 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
     return implode(', ', $return);
   }
 
-  protected function dbalResolveIndexColumnNames($fields) {
-    $return = [];
+  /**
+   * Determines if DBAL can process a list of fields.
+   *
+   * DBAL does not support creating indexes with column lenghts, so here we
+   * determine if the extension should process adding keys/indexes instead
+   * of DBAL natively.
+   *
+   * @param array $fields
+   *   The array of fields in Drupal format.
+   *
+   * @return boolean
+   *   FALSE if there is at least a column with length spec, TRUE if all the
+   *   columns are to be indexed to full lenght.
+   *
+   * @see https://github.com/doctrine/dbal/pull/2412
+   */
+  protected function dbalResolveIndexColumnNames(array $fields) {
     foreach ($fields as $field) {
       if (is_array($field)) {
         return FALSE;
       }
-      else {
-        $return[] = $field;
-      }
     }
-    return $return;
+    return TRUE;
   }
 
-  protected function createKeysSql($spec) {
+  /**
+   * Returns an array of strings specifying keys/indexes in MySql syntax.
+   *
+   * @param array $spec
+   *   The array of table specifications in Drupal format.
+   *
+   * @return string[]
+   *   The array of strings specifying keys/indexes in MySql syntax.
+   */
+  protected function createKeysSql(array $spec) {
     $keys = [];
 
     if (!empty($spec['primary key'])) {
@@ -856,7 +886,7 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
       }
     }
     if (!empty($spec['indexes'])) {
-      $indexes = $this->druDbalDriver->getNormalizedIndexes($spec);
+      $indexes = $this->getNormalizedIndexes($spec);
       foreach ($indexes as $index => $fields) {
         $keys[] = 'INDEX `' . $index . '` (' . $this->createKeySql($fields) . ')';
       }
