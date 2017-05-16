@@ -21,6 +21,7 @@ use Drupal\Driver\Database\dbal\DbalExtension\PDOMySqlExtension;
 use Drupal\Driver\Database\dbal\DbalExtension\PDOSqliteExtension;
 use Drupal\Driver\Database\dbal\Statement\MysqliDbalStatement;
 use Drupal\Driver\Database\dbal\Statement\PDODbalStatement;
+use Drupal\Driver\Database\dbal\Statement\PDOSqliteDbalStatement;
 
 use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\ConnectionException as DbalConnectionException;
@@ -50,7 +51,7 @@ class Connection extends DatabaseConnection {
   protected static $dbalClassMap = array(
     'mysqli' => [MysqliExtension::class, MysqliDbalStatement::class],
     'pdo_mysql' => [PDOMySqlExtension::class, PDODbalStatement::class],
-    'pdo_sqlite' => [PDOSqliteExtension::class, PDODbalStatement::class],
+    'pdo_sqlite' => [PDOSqliteExtension::class, PDOSqliteDbalStatement::class],
   );
 
   /**
@@ -697,4 +698,24 @@ class Connection extends DatabaseConnection {
     return array_pop($this->statementOptions[$option]);
   }
 
+  /**
+   * Returns the table prefixes array.
+   *
+   * @return array
+   *   The connection options array.
+   */
+  public function getPrefixes() {
+    return $this->prefixes;
+  }
+
+  /**
+   * Set the list of prefixes used by this database connection.
+   *
+   * @param array|string $prefix
+   *   Either a single prefix, or an array of prefixes, in any of the multiple
+   *   forms documented in default.settings.php.
+   */
+  public function setPrefixPublic($prefix) {
+    return $this->setPrefix($prefix);
+  }
 }

@@ -10,6 +10,7 @@ use Drupal\Core\Database\DatabaseNotFoundException;
 use Drupal\Core\Database\IntegrityConstraintViolationException;
 use Drupal\Core\Database\SchemaException;
 use Drupal\Core\Database\TransactionCommitFailedException;
+use Drupal\Core\Database\Driver\sqlite\Connection as SqliteConnectionBase;
 use Drupal\Driver\Database\dbal\Connection as DruDbalConnection;
 
 use Doctrine\DBAL\Connection as DbalConnection;
@@ -52,7 +53,7 @@ class PDOSqliteExtension implements DbalExtensionInterface {
 
   /**
    * All databases attached to the current database. This is used to allow
-   * prefixes to be safely handled without locking the table
+   * prefixes to be safely handled without locking the table.
    *
    * @var array
    */
@@ -109,6 +110,13 @@ class PDOSqliteExtension implements DbalExtensionInterface {
   protected $dbalConnection;
 
   /**
+   * The Statement class to use for this extension.
+   *
+   * @var \Drupal\Core\Database\StatementInterface
+   */
+  protected $statementClass;
+
+  /**
    * Flag to indicate if the cleanup function in __destruct() should run.
    *
    * @var bool
@@ -150,16 +158,41 @@ class PDOSqliteExtension implements DbalExtensionInterface {
   public function __construct(DruDbalConnection $drudbal_connection, DbalConnection $dbal_connection, $statement_class) {
     $this->connection = $drudbal_connection;
     $this->dbalConnection = $dbal_connection;
-    $this->dbalConnection->getWrappedConnection()->setAttribute(\PDO::ATTR_STATEMENT_CLASS, [$statement_class, [$this->connection]]);
+    $this->statementClass = $statement_class;
+
+    // Attach one database for each registered prefix.
+    $prefixes = $this->connection->getPrefixes();
+    foreach ($prefixes as &$prefix) {
+      // Empty prefix means query the main database -- no need to attach anything.
+      if (!empty($prefix)) {
+        // Only attach the database once.
+        if (!isset($this->attachedDatabases[$prefix])) {
+          $this->attachedDatabases[$prefix] = $prefix;
+          if ($this->connection->getConnectionOptions()['database'] === ':memory:') {
+            // In memory database use ':memory:' as database name. According to
+            // http://www.sqlite.org/inmemorydb.html it will open a unique
+            // database so attaching it twice is not a problem.
+            $this->connection->query('ATTACH DATABASE :database AS :prefix', [':database' => $this->connection->getConnectionOptions()['database'], ':prefix' => $prefix]);
+          }
+          else {
+            $this->connection->query('ATTACH DATABASE :database AS :prefix', [':database' => $this->connection->getConnectionOptions()['database'] . '-' . $prefix, ':prefix' => $prefix]);
+          }
+        }
+
+        // Add a ., so queries become prefix.table, which is proper syntax for
+        // querying an attached database.
+        $prefix .= '.';
+      }
+    }
+
+    // Regenerate the prefixes replacement table.
+    $this->connection->setPrefixPublic($prefixes);
   }
 
   /**
    * {@inheritdoc}
    */
   public function destroy() {
-    if (!empty($this->statementClass)) {
-      $this->getDbalConnection()->getWrappedConnection()->setAttribute(\PDO::ATTR_STATEMENT_CLASS, ['PDOStatement', []]);
-    }
     $this->schema = NULL;
   }
 
@@ -174,12 +207,7 @@ class PDOSqliteExtension implements DbalExtensionInterface {
    * {@inheritdoc}
    */
   public function delegatePrepare($statement, array $params, array $driver_options = []) {
-    try {
-      return $this->getDbalConnection()->getWrappedConnection()->prepare($statement, $driver_options);
-    }
-    catch (\PDOException $e) {
-      throw new DatabaseExceptionWrapper($e->getMessage(), $e->getCode(), $e);
-    }
+    return new $this->statementClass($this->connection->getDbalConnection(), $this->connection, $statement, $driver_options);
   }
 
   /**
@@ -230,67 +258,57 @@ class PDOSqliteExtension implements DbalExtensionInterface {
    * {@inheritdoc}
    */
   public static function preConnectionOpen(array &$connection_options, array &$dbal_connection_options) {
-    if (isset($connection_options['_dsn_utf8_fallback']) && $connection_options['_dsn_utf8_fallback'] === TRUE) {
-      // Only used during the installer version check, as a fallback from utf8mb4.
-      $charset = 'utf8';
-    }
-    else {
-      $charset = 'utf8mb4';
-    }
-
-    // Character set is added to dsn to ensure PDO uses the proper character
-    // set when escaping. This has security implications. See
-    // https://www.drupal.org/node/1201452 for further discussion.
-    $connection_options['charset'] = $charset;
-    $dbal_connection_options['charset'] = $charset;
+    $dbal_connection_options['path'] = $connection_options['database'];
+    unset($dbal_connection_options['dbname']);
     $dbal_connection_options['driverOptions'] += [
       \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
-      // So we don't have to mess around with cursors and unbuffered queries by default.
-      \PDO::MYSQL_ATTR_USE_BUFFERED_QUERY => TRUE,
-      // Make sure MySQL returns all matched rows on update queries including
-      // rows that actually didn't have to be updated because the values didn't
-      // change. This matches common behavior among other database systems.
-      \PDO::MYSQL_ATTR_FOUND_ROWS => TRUE,
-      // Because MySQL's prepared statements skip the query cache, because it's dumb.
-      \PDO::ATTR_EMULATE_PREPARES => TRUE,
+      // Convert numeric values to strings when fetching.
+      \PDO::ATTR_STRINGIFY_FETCHES => TRUE,
     ];
-    if (defined('\PDO::MYSQL_ATTR_MULTI_STATEMENTS')) {
-      // An added connection option in PHP 5.5.21 to optionally limit SQL to a
-      // single statement like mysqli.
-      $dbal_connection_options['driverOptions'] += [\PDO::MYSQL_ATTR_MULTI_STATEMENTS => FALSE];
-    }
   }
 
   /**
    * {@inheritdoc}
    */
   public static function postConnectionOpen(DbalConnection $dbal_connection, array &$connection_options, array &$dbal_connection_options) {
-    // Force MySQL to use the UTF-8 character set. Also set the collation, if a
-    // certain one has been set; otherwise, MySQL defaults to
-    // 'utf8mb4_general_ci' for utf8mb4.
-    $sql = 'SET NAMES ' . $connection_options['charset'];
-    if (!empty($connection_options['collation'])) {
-      $sql .= ' COLLATE ' . $connection_options['collation'];
-    }
-    $dbal_connection->exec($sql);
+    $pdo = $dbal_connection->getWrappedConnection();
 
-    // Set MySQL init_commands if not already defined.  Default Drupal's MySQL
-    // behavior to conform more closely to SQL standards.  This allows Drupal
-    // to run almost seamlessly on many different kinds of database systems.
-    // These settings force MySQL to behave the same as postgresql, or sqlite
-    // in regards to syntax interpretation and invalid data handling.  See
-    // https://www.drupal.org/node/344575 for further discussion. Also, as MySQL
-    // 5.5 changed the meaning of TRADITIONAL we need to spell out the modes one
-    // by one.
+    // Create functions needed by SQLite.
+    $pdo->sqliteCreateFunction('if', [SqliteConnectionBase::class, 'sqlFunctionIf']);
+    $pdo->sqliteCreateFunction('greatest', [SqliteConnectionBase::class, 'sqlFunctionGreatest']);
+    $pdo->sqliteCreateFunction('pow', 'pow', 2);
+    $pdo->sqliteCreateFunction('exp', 'exp', 1);
+    $pdo->sqliteCreateFunction('length', 'strlen', 1);
+    $pdo->sqliteCreateFunction('md5', 'md5', 1);
+    $pdo->sqliteCreateFunction('concat', [SqliteConnectionBase::class, 'sqlFunctionConcat']);
+    $pdo->sqliteCreateFunction('concat_ws', [SqliteConnectionBase::class, 'sqlFunctionConcatWs']);
+    $pdo->sqliteCreateFunction('substring', [SqliteConnectionBase::class, 'sqlFunctionSubstring'], 3);
+    $pdo->sqliteCreateFunction('substring_index', [SqliteConnectionBase::class, 'sqlFunctionSubstringIndex'], 3);
+    $pdo->sqliteCreateFunction('rand', [SqliteConnectionBase::class, 'sqlFunctionRand']);
+    $pdo->sqliteCreateFunction('regexp', [SqliteConnectionBase::class, 'sqlFunctionRegexp']);
+
+    // SQLite does not support the LIKE BINARY operator, so we overload the
+    // non-standard GLOB operator for case-sensitive matching. Another option
+    // would have been to override another non-standard operator, MATCH, but
+    // that does not support the NOT keyword prefix.
+    $pdo->sqliteCreateFunction('glob', [SqliteConnectionBase::class, 'sqlFunctionLikeBinary']);
+
+    // Create a user-space case-insensitive collation with UTF-8 support.
+    $pdo->sqliteCreateCollation('NOCASE_UTF8', ['Drupal\Component\Utility\Unicode', 'strcasecmp']);
+
+    // Set SQLite init_commands if not already defined. Enable the Write-Ahead
+    // Logging (WAL) for SQLite. See https://www.drupal.org/node/2348137 and
+    // https://www.sqlite.org/wal.html.
     $connection_options += [
       'init_commands' => [],
     ];
     $connection_options['init_commands'] += [
-      'sql_mode' => "SET sql_mode = 'ANSI,STRICT_TRANS_TABLES,STRICT_ALL_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,ONLY_FULL_GROUP_BY'",
+      'wal' => "PRAGMA journal_mode=WAL",
     ];
-    // Execute initial commands.
-    foreach ($connection_options['init_commands'] as $sql) {
-      $dbal_connection->exec($sql);
+
+    // Execute sqlite init_commands.
+    if (isset($connection_options['init_commands'])) {
+      $dbal_connection->exec(implode('; ', $connection_options['init_commands']));
     }
   }
 
@@ -298,7 +316,6 @@ class PDOSqliteExtension implements DbalExtensionInterface {
    * {@inheritdoc}
    */
   public function delegateTransactionSupport(array &$connection_options = []) {
-    // MySQL defaults to transaction support, except if explicitly passed FALSE.
     return !isset($connection_options['transactions']) || ($connection_options['transactions'] !== FALSE);
   }
 
@@ -306,8 +323,7 @@ class PDOSqliteExtension implements DbalExtensionInterface {
    * {@inheritdoc}
    */
   public function delegateTransactionalDDLSupport(array &$connection_options = []) {
-    // MySQL never supports transactional DDL.
-    return FALSE;
+    return !isset($connection_options['transactions']) || ($connection_options['transactions'] !== FALSE);
   }
 
   /**
