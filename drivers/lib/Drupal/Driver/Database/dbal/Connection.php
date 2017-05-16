@@ -217,8 +217,9 @@ class Connection extends DatabaseConnection {
    * @param array $options
    *   An associative array of options to control how the query is run.
    *
-   * @return null
-   *   When the option to re-throw is FALSE.
+   * @return mixed
+   *   NULL when the option to re-throw is FALSE, the result of
+   *   DbalExtensionInterface::delegateQueryExceptionProcess() otherwise.
    *
    * @throws \Drupal\Core\Database\DatabaseExceptionWrapper
    */
@@ -237,7 +238,7 @@ class Connection extends DatabaseConnection {
         $query_string = NULL;
       }
       $message = $e->getMessage() . ": " . $query_string . "; " . print_r($args, TRUE);
-      $this->dbalExtension->delegateQueryExceptionProcess($message, $e);
+      return $this->dbalExtension->delegateQueryExceptionProcess($query, $args, $options, $message, $e);
     }
     return NULL;
   }

@@ -159,6 +159,12 @@ interface DbalExtensionInterface {
   /**
    * Handles a DBALExceptions thrown by Connection::query().
    *
+   * @param string $query
+   *   A string containing the failing SQL query.
+   * @param array $args
+   *   An array of values to substitute into the query at placeholder markers.
+   * @param array $options
+   *   An array of options on the query.
    * @param string $message
    *   The message to be re-thrown.
    * @param \Exception $e
@@ -169,7 +175,7 @@ interface DbalExtensionInterface {
    * @throws \Drupal\Core\Database\DatabaseExceptionWrapper
    *   For any other error.
    */
-  public function delegateQueryExceptionProcess($message, \Exception $e);
+  public function delegateQueryExceptionProcess($query, array $args, array $options, $message, \Exception $e);
 
   /**
    * Runs a limited-range query.
