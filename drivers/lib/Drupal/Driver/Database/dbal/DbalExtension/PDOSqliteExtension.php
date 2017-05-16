@@ -28,6 +28,11 @@ use Doctrine\DBAL\Version as DbalVersion;
 class PDOSqliteExtension implements DbalExtensionInterface {
 
   /**
+   * Minimum required Sqlite version.
+   */
+  const SQLITE_MINIMUM_VERSION = '3.7.11';
+
+  /**
    * Error code for "Unable to open database file" error.
    */
   const DATABASE_NOT_FOUND = 14;
@@ -79,21 +84,6 @@ class PDOSqliteExtension implements DbalExtensionInterface {
    * single quotes inside.
    */
   const SINGLE_QUOTE_IDENTIFIER_REPLACEMENT = ']]]]SINGLEQUOTEIDENTIFIERDRUDBAL[[[[';
-
-  /**
-   * Default MySql engine.
-   */
-  const DEFAULT_ENGINE = 'InnoDB';
-
-  /**
-   * Default character set.
-   */
-  const DEFAULT_CHARACTER_SET = 'utf8mb4';
-
-  /**
-   * Default collation.
-   */
-  const DEFAULT_COLLATION = 'utf8mb4_general_ci';
 
   /**
    * The DruDbal connection.
@@ -422,6 +412,11 @@ class PDOSqliteExtension implements DbalExtensionInterface {
    * {@inheritdoc}
    */
   public static function delegateInstallConnectExceptionProcess(\Exception $e) {
+    $results = [
+      'fail' => [],
+      'pass' => [],
+    ];
+
     return $results;
   }
 
@@ -429,6 +424,20 @@ class PDOSqliteExtension implements DbalExtensionInterface {
    * {@inheritdoc}
    */
   public function runInstallTasks() {
+    $results = [
+      'fail' => [],
+      'pass' => [],
+    ];
+
+    // Ensure that Sqlite has the right minimum version.
+    $db_server_version = $this->dbalConnection->getWrappedConnection()->getServerVersion();
+    if (version_compare($db_server_version, self::SQLITE_MINIMUM_VERSION, '<')) {
+      $results['fail'][] = t("The Sqlite version %version is less than the minimum required version %minimum_version.", [
+        '%version' => $db_server_version,
+        '%minimum_version' => self::SQLITE_MINIMUM_VERSION,
+      ]);
+    }
+
     return $results;
   }
 
@@ -440,12 +449,14 @@ class PDOSqliteExtension implements DbalExtensionInterface {
    * {@inheritdoc}
    */
   public function delegateTableExists(&$result, $drupal_table_name) {
+    return FALSE;
   }
 
   /**
    * {@inheritdoc}
    */
   public function delegateFieldExists(&$result, $drupal_table_name, $field_name) {
+    return FALSE;
   }
 
   /**
@@ -487,54 +498,63 @@ class PDOSqliteExtension implements DbalExtensionInterface {
    * {@inheritdoc}
    */
   public function delegateAddField(&$primary_key_processed_by_extension, $drupal_table_name, $field_name, array $drupal_field_specs, array $keys_new_specs, array $dbal_column_options) {
+    return FALSE;
   }
 
   /**
    * {@inheritdoc}
    */
   public function delegateChangeField(&$primary_key_processed_by_extension, $drupal_table_name, $field_name, $field_new_name, array $drupal_field_new_specs, array $keys_new_specs, array $dbal_column_options) {
+    return FALSE;
   }
 
   /**
    * {@inheritdoc}
    */
   public function delegateFieldSetDefault($drupal_table_name, $field_name, $default) {
+    return FALSE;
   }
 
   /**
    * {@inheritdoc}
    */
   public function delegateFieldSetNoDefault($drupal_table_name, $field_name) {
+    return FALSE;
   }
 
   /**
    * {@inheritdoc}
    */
   public function delegateIndexExists(&$result, DbalSchema $dbal_schema, $drupal_table_name, $index_name) {
+    return FALSE;
   }
 
   /**
    * {@inheritdoc}
    */
   public function delegateAddPrimaryKey(DbalSchema $dbal_schema, $drupal_table_name, $drupal_field_specs) {
+    return FALSE;
   }
 
   /**
    * {@inheritdoc}
    */
   public function delegateAddUniqueKey($drupal_table_name, $index_name, $drupal_field_specs) {
+    return FALSE;
   }
 
   /**
    * {@inheritdoc}
    */
   public function delegateAddIndex($drupal_table_name, $index_name, array $drupal_field_specs, array $indexes_spec) {
+    return FALSE;
   }
 
   /**
    * {@inheritdoc}
    */
   public function delegateGetComment(&$comment, DbalSchema $dbal_schema, $drupal_table_name, $column = NULL) {
+    return FALSE;
   }
 
   /**
