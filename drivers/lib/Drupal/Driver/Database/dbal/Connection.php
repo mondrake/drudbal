@@ -212,8 +212,9 @@ class Connection extends DatabaseConnection {
    * @param array $options
    *   An associative array of options to control how the query is run.
    *
-   * @return null
-   *   When the option to re-throw is FALSE.
+   * @return mixed
+   *   NULL when the option to re-throw is FALSE, the result of
+   *   DbalExtensionInterface::delegateQueryExceptionProcess() otherwise.
    *
    * @throws \Drupal\Core\Database\DatabaseExceptionWrapper
    */
@@ -232,7 +233,7 @@ class Connection extends DatabaseConnection {
         $query_string = NULL;
       }
       $message = $e->getMessage() . ": " . $query_string . "; " . print_r($args, TRUE);
-      $this->dbalExtension->delegateQueryExceptionProcess($message, $e);
+      return $this->dbalExtension->delegateQueryExceptionProcess($query, $args, $options, $message, $e);
     }
     return NULL;
   }
@@ -693,4 +694,24 @@ class Connection extends DatabaseConnection {
     return array_pop($this->statementOptions[$option]);
   }
 
+  /**
+   * Returns the table prefixes array.
+   *
+   * @return array
+   *   The connection options array.
+   */
+  public function getPrefixes() {
+    return $this->prefixes;
+  }
+
+  /**
+   * Set the list of prefixes used by this database connection.
+   *
+   * @param array|string $prefix
+   *   Either a single prefix, or an array of prefixes, in any of the multiple
+   *   forms documented in default.settings.php.
+   */
+  public function setPrefixPublic($prefix) {
+    return $this->setPrefix($prefix);
+  }
 }
