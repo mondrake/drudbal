@@ -122,14 +122,14 @@ class Schema extends DatabaseSchema {
     // Add unique keys.
     if (!empty($table['unique keys'])) {
       foreach ($table['unique keys'] as $key => $fields) {
-        $this->addUniqueKey($name, $key, $fields);
+//        $this->addUniqueKey($name, $key, $fields);
       }
     }
 
     // Add indexes.
     if (!empty($table['indexes'])) {
       foreach ($table['indexes'] as $index => $fields) {
-        $this->addIndex($name, $index, $fields, $table);
+//        $this->addIndex($name, $index, $fields, $table);
       }
     }
   }
