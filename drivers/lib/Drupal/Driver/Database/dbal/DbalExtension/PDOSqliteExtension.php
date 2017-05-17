@@ -510,7 +510,7 @@ class PDOSqliteExtension implements DbalExtensionInterface {
    */
   public function getDbalEncodedStringForDDLSql($string) {
     // Encode single quotes.
-//    return str_replace('\'', self::SINGLE_QUOTE_IDENTIFIER_REPLACEMENT, $string);
+    return str_replace('\'', self::SINGLE_QUOTE_IDENTIFIER_REPLACEMENT, $string);
   }
 
   /**
@@ -520,17 +520,11 @@ class PDOSqliteExtension implements DbalExtensionInterface {
     // DBAL does not support unsigned float/numeric columns.
     // @see https://github.com/doctrine/dbal/issues/2380
     // @todo remove the version check once DBAL 2.6.0 is out.
-//    if (version_compare(DbalVersion::VERSION, '2.6.0', '<')) {
-//if (!empty($drupal_field_specs['unsigned']) && (bool) $drupal_field_specs['unsigned'] === TRUE) {
-//  $sql .= ' CHECK (' . $name . '>= 0)';
-//  throw new \Exception($dbal_column_definition . ' ---> ' . var_export($drupal_field_specs, TRUE) . ' ---> ' . var_export($dbal_column_options, TRUE));
-//}
-      if (isset($drupal_field_specs['type']) && in_array($drupal_field_specs['type'], ['float', 'numeric', 'serial', 'int']) && !empty($drupal_field_specs['unsigned']) && (bool) $drupal_field_specs['unsigned'] === TRUE) {
-        $dbal_column_definition .= ' CHECK (' . $field_name . '>= 0)';
-      }
-//    }
+    if (isset($drupal_field_specs['type']) && in_array($drupal_field_specs['type'], ['float', 'numeric', 'serial', 'int']) && !empty($drupal_field_specs['unsigned']) && (bool) $drupal_field_specs['unsigned'] === TRUE) {
+      $dbal_column_definition .= ' CHECK (' . $field_name . '>= 0)';
+    }
     // Decode single quotes.
-    $dbal_column_definition = str_replace(self::SINGLE_QUOTE_IDENTIFIER_REPLACEMENT, '\\\'', $dbal_column_definition);
+    $dbal_column_definition = str_replace(self::SINGLE_QUOTE_IDENTIFIER_REPLACEMENT, '\'', $dbal_column_definition);
     // DBAL duplicates the COMMENT part when creating a table, or adding a
     // field, if comment is already in the 'customDefinition' option. Here,
     // just drop comment from the column definition string.
