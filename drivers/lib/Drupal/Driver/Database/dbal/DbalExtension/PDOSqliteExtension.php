@@ -510,7 +510,7 @@ class PDOSqliteExtension implements DbalExtensionInterface {
    */
   public function getDbalEncodedStringForDDLSql($string) {
     // Encode single quotes.
-    return str_replace('\'', self::SINGLE_QUOTE_IDENTIFIER_REPLACEMENT, $string);
+//    return str_replace('\'', self::SINGLE_QUOTE_IDENTIFIER_REPLACEMENT, $string);
   }
 
   /**
