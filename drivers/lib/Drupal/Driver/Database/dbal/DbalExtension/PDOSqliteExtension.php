@@ -524,7 +524,7 @@ class PDOSqliteExtension implements DbalExtensionInterface {
 //if (!empty($drupal_field_specs['unsigned']) && (bool) $drupal_field_specs['unsigned'] === TRUE) {
 //  $sql .= ' CHECK (' . $name . '>= 0)';
 //  throw new \Exception($dbal_column_definition . ' ---> ' . var_export($drupal_field_specs, TRUE) . ' ---> ' . var_export($dbal_column_options, TRUE));
-}
+//}
       if (isset($drupal_field_specs['type']) && in_array($drupal_field_specs['type'], ['float', 'numeric', 'serial', 'int']) && !empty($drupal_field_specs['unsigned']) && (bool) $drupal_field_specs['unsigned'] === TRUE) {
         $dbal_column_definition .= ' CHECK (' . $field_name . '>= 0)';
       }
