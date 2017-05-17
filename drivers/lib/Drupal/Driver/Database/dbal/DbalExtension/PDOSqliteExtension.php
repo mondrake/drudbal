@@ -524,7 +524,7 @@ class PDOSqliteExtension implements DbalExtensionInterface {
       $dbal_column_definition .= ' CHECK (' . $field_name . '>= 0)';
     }
     // Decode single quotes.
-    $dbal_column_definition = str_replace(self::SINGLE_QUOTE_IDENTIFIER_REPLACEMENT, '\'', $dbal_column_definition);
+    $dbal_column_definition = str_replace(self::SINGLE_QUOTE_IDENTIFIER_REPLACEMENT, '>mxmx<', $dbal_column_definition);
     // DBAL duplicates the COMMENT part when creating a table, or adding a
     // field, if comment is already in the 'customDefinition' option. Here,
     // just drop comment from the column definition string.
