@@ -101,9 +101,14 @@ class Insert extends QueryInsert {
   public function __toString() {
     $comments = $this->connection->makeComment($this->comments);
     $dbal_connection = $this->connection->getDbalConnection();
-    $prefixed_table = $this->connection->getPrefixedTableName($this->table);
+
+    $sql = '';
+    if (count($this->insertFields) === 0 && empty($this->fromQuery) && $this->connection->getDbalExtension()->delegateDefaultsOnlyInsertSql($sql, $this->table)) {
+      return $comments . $sql;
+    }
 
     // Use DBAL query builder to prepare the INSERT query.
+    $prefixed_table = $this->connection->getPrefixedTableName($this->table);
     $dbal_query = $dbal_connection->createQueryBuilder()->insert($prefixed_table);
 
     // If we're selecting from a SelectQuery, and no fields are specified in
@@ -114,9 +119,11 @@ class Insert extends QueryInsert {
       $insert_fields = array_keys($dbal_connection->getSchemaManager()->listTableColumns($prefixed_table));
     }
     else {
-//      foreach ($this->defaultFields as $field) {
-//        $dbal_query->setValue($field, $this->connection->getDbalExtension()->getInsertDefaultValueKeyword());
-//      }
+      if ($this->connection->getDbalExtension()->getAddDefaultsExplicitlyOnInsert()) {
+        foreach ($this->defaultFields as $field) {
+          $dbal_query->setValue($field, 'default');
+        }
+      }
       $insert_fields = $this->insertFields;
     }
     $max_placeholder = 0;

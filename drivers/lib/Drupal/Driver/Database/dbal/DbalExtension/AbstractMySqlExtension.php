@@ -371,8 +371,15 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function getInsertDefaultValueKeyword() {
-    return 'DEFAULT';
+  public function getAddDefaultsExplicitlyOnInsert() {
+    return TRUE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateDefaultsOnlyInsertSql(&$sql, $drupal_table_name) {
+    return FALSE;
   }
 
   /**

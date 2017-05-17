@@ -400,8 +400,16 @@ class PDOSqliteExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function getInsertDefaultValueKeyword() {
-    return 'default';
+  public function getAddDefaultsExplicitlyOnInsert() {
+    return FALSE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateDefaultsOnlyInsertSql(&$sql, $drupal_table_name) {
+    $sql = 'INSERT INTO ' . $this->tableName($drupal_table_name) . ' DEFAULT VALUES';
+    return TRUE;
   }
 
   /**

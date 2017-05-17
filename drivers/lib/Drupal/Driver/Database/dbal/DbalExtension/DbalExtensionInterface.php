@@ -244,7 +244,12 @@ interface DbalExtensionInterface {
   /**
    * @todo
    */
-  public function getInsertDefaultValueKeyword();
+  public function getAddDefaultsExplicitlyOnInsert();
+
+  /**
+   * @todo
+   */
+  public function delegateDefaultsOnlyInsertSql(&$sql, $drupal_table_name);
 
   /**
    * Truncate delegated methods.
