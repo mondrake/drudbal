@@ -53,6 +53,18 @@ class Schema extends DatabaseSchema {
   protected $dbalExtension;
 
   /**
+   * Definition of prefixInfo array structure.
+   *
+   * Rather than redefining DatabaseSchema::getPrefixInfo() for each driver,
+   * by defining the defaultSchema variable only MySQL has to re-write the
+   * method.
+   *
+   * @see DatabaseSchema::getPrefixInfo()
+   */
+//  protected $defaultSchema = 'public';
+  protected $defaultSchema = 'main';
+
+  /**
    * Constructs a Schema object.
    *
    * @var \Drupal\Driver\Database\dbal\Connection
@@ -556,10 +568,13 @@ class Schema extends DatabaseSchema {
       return;
     }
 
+    $info = $this->getPrefixInfo($table);
+    $index_name = $info['schema'] . '.' . $info['table'] . '_' . $name;
+
     // DBAL extension did not pick up, proceed with DBAL.
     $current_schema = $this->dbalSchema();
     $to_schema = clone $current_schema;
-    $to_schema->getTable($this->tableName($table))->addUniqueIndex($this->dbalResolveIndexColumnList($fields), $name);
+    $to_schema->getTable($this->tableName($table))->addUniqueIndex($this->dbalResolveIndexColumnList($fields), $index_name);
     $this->dbalExecuteSchemaChange($to_schema);
   }
 
@@ -587,10 +602,13 @@ class Schema extends DatabaseSchema {
       return;
     }
 
+    $info = $this->getPrefixInfo($table);
+    $index_name = $info['schema'] . '.' . $info['table'] . '_' . $name;
+
     // DBAL extension did not pick up, proceed with DBAL.
     $current_schema = $this->dbalSchema();
     $to_schema = clone $current_schema;
-    $to_schema->getTable($this->tableName($table))->addIndex($this->dbalResolveIndexColumnList($fields), $name);
+    $to_schema->getTable($this->tableName($table))->addIndex($this->dbalResolveIndexColumnList($fields), $index_name);
     $this->dbalExecuteSchemaChange($to_schema);
   }
 
