@@ -394,6 +394,17 @@ class PDOSqliteExtension implements DbalExtensionInterface {
   }
 
   /**
+   * Insert delegated methods.
+   */
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getInsertDefaultValueKeyword() {
+    return 'default';
+  }
+
+  /**
    * Truncate delegated methods.
    */
 

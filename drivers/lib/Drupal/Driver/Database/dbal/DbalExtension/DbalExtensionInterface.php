@@ -238,6 +238,15 @@ interface DbalExtensionInterface {
   public function delegateReleaseSavepointExceptionProcess(DbalDriverException $e);
 
   /**
+   * Insert delegated methods.
+   */
+
+  /**
+   * @todo
+   */
+  public function getInsertDefaultValueKeyword();
+
+  /**
    * Truncate delegated methods.
    */
 

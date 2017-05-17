@@ -365,6 +365,17 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
   }
 
   /**
+   * Insert delegated methods.
+   */
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getInsertDefaultValueKeyword() {
+    return 'DEFAULT';
+  }
+
+  /**
    * Truncate delegated methods.
    */
 

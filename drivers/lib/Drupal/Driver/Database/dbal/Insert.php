@@ -115,7 +115,7 @@ class Insert extends QueryInsert {
     }
     else {
       foreach ($this->defaultFields as $field) {
-        $dbal_query->setValue($field, 'default');
+        $dbal_query->setValue($field, $this->connection->getDbalExtension()->getInsertDefaultValueKeyword());
       }
       $insert_fields = $this->insertFields;
     }
