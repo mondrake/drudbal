@@ -521,15 +521,12 @@ class PDOSqliteExtension implements DbalExtensionInterface {
     // @see https://github.com/doctrine/dbal/issues/2380
     // @todo remove the version check once DBAL 2.6.0 is out.
 //    if (version_compare(DbalVersion::VERSION, '2.6.0', '<')) {
-if (!empty($drupal_field_specs['unsigned']) && (bool) $drupal_field_specs['unsigned'] === TRUE) {
+//if (!empty($drupal_field_specs['unsigned']) && (bool) $drupal_field_specs['unsigned'] === TRUE) {
 //  $sql .= ' CHECK (' . $name . '>= 0)';
-  throw new \Exception($dbal_column_definition . ' ---> ' . var_export($drupal_field_specs, TRUE) . ' ---> ' . var_export($dbal_column_options, TRUE));
+//  throw new \Exception($dbal_column_definition . ' ---> ' . var_export($drupal_field_specs, TRUE) . ' ---> ' . var_export($dbal_column_options, TRUE));
 }
-      if (isset($drupal_field_specs['type']) && $drupal_field_specs['type'] == 'float' && !empty($drupal_field_specs['unsigned']) && (bool) $drupal_field_specs['unsigned'] === TRUE) {
-        $dbal_column_definition = str_replace('DOUBLE PRECISION', 'DOUBLE PRECISION UNSIGNED', $dbal_column_definition);
-      }
-      if (isset($drupal_field_specs['type']) && $drupal_field_specs['type'] == 'numeric' && !empty($drupal_field_specs['unsigned']) && (bool) $drupal_field_specs['unsigned'] === TRUE) {
-        $dbal_column_definition = preg_replace('/NUMERIC\((.+)\)/', '$0 UNSIGNED', $dbal_column_definition);
+      if (isset($drupal_field_specs['type']) && in_array($drupal_field_specs['type'], ['float', 'numeric', 'serial', 'int']) && !empty($drupal_field_specs['unsigned']) && (bool) $drupal_field_specs['unsigned'] === TRUE) {
+        $dbal_column_definition .= ' CHECK (' . $field_name . '>= 0)';
       }
 //    }
     // Decode single quotes.
