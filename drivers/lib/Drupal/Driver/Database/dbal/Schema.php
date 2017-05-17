@@ -125,7 +125,7 @@ class Schema extends DatabaseSchema {
       // However we have to add here instead of separate calls to
       // ::addPrimaryKey to avoid failure when creating a table with an
       // autoincrement column.
-      $new_table->setPrimaryKey($this->dbalResolveIndexColumnList($table['primary key']));
+      $new_table->setPrimaryKey($this->dbalGetFieldList($table['primary key']));
     }
 
     // Execute the table creation.
@@ -395,7 +395,7 @@ class Schema extends DatabaseSchema {
         // However we have to add here instead of separate calls to
         // ::addPrimaryKey to avoid failure when creating a table with an
         // autoincrement column.
-        $dbal_table->setPrimaryKey($this->dbalResolveIndexColumnList($keys_new['primary key']));
+        $dbal_table->setPrimaryKey($this->dbalGetFieldList($keys_new['primary key']));
       }
       $this->dbalExecuteSchemaChange($to_schema);
     }
@@ -506,7 +506,8 @@ class Schema extends DatabaseSchema {
     }
 
     // DBAL extension did not pick up, proceed with DBAL.
-    return in_array($name, array_keys($this->dbalSchemaManager->listTableIndexes($this->tableName($table))));
+    $index_name = $this->dbalExtension->delegateGetIndexName($table, $name, $this->getPrefixInfo($table));
+    return in_array($index_name, array_keys($this->dbalSchemaManager->listTableIndexes($this->tableName($table))));
   }
 
   /**
@@ -530,7 +531,7 @@ class Schema extends DatabaseSchema {
     // DBAL extension did not pick up, proceed with DBAL.
     $current_schema = $this->dbalSchema();
     $to_schema = clone $current_schema;
-    $to_schema->getTable($this->tableName($table))->setPrimaryKey($this->dbalResolveIndexColumnList($fields));
+    $to_schema->getTable($this->tableName($table))->setPrimaryKey($this->dbalGetFieldList($fields));
     $this->dbalExecuteSchemaChange($to_schema);
   }
 
@@ -568,13 +569,11 @@ class Schema extends DatabaseSchema {
       return;
     }
 
-    $info = $this->getPrefixInfo($table);
-    $index_name = $info['schema'] . '_' . $info['table'] . '_' . $name;
-
     // DBAL extension did not pick up, proceed with DBAL.
+    $index_name = $this->dbalExtension->delegateGetIndexName($table, $name, $this->getPrefixInfo($table));
     $current_schema = $this->dbalSchema();
     $to_schema = clone $current_schema;
-    $to_schema->getTable($this->tableName($table))->addUniqueIndex($this->dbalResolveIndexColumnList($fields), $index_name);
+    $to_schema->getTable($this->tableName($table))->addUniqueIndex($this->dbalGetFieldList($fields), $index_name);
     $this->dbalExecuteSchemaChange($to_schema);
   }
 
@@ -602,13 +601,11 @@ class Schema extends DatabaseSchema {
       return;
     }
 
-    $info = $this->getPrefixInfo($table);
-    $index_name = $info['schema'] . '_' . $info['table'] . '_' . $name;
-
     // DBAL extension did not pick up, proceed with DBAL.
+    $index_name = $this->dbalExtension->delegateGetIndexName($table, $name, $this->getPrefixInfo($table));
     $current_schema = $this->dbalSchema();
     $to_schema = clone $current_schema;
-    $to_schema->getTable($this->tableName($table))->addIndex($this->dbalResolveIndexColumnList($fields), $index_name);
+    $to_schema->getTable($this->tableName($table))->addIndex($this->dbalGetFieldList($fields), $index_name);
     $this->dbalExecuteSchemaChange($to_schema);
   }
 
@@ -802,22 +799,18 @@ class Schema extends DatabaseSchema {
   }
 
   /**
-   * @todo rename this method
+   * Gets the list of columns from Drupal field specs.
    *
-   *
-   * Gets the list of columns to be used for index manipulation operations.
+   * Normalizes fields with length to field name only.
    *
    * @param array[] $fields
    *   An array of field description arrays, as specified in the schema
    *   documentation.
    *
-   * @return string[]|false
-   *   The list of columns, or FALSE if it cannot be determined (e.g. because
-   *   there are column leghts specified, that DBAL cannot process).
-   *
-   * @see https://github.com/doctrine/dbal/pull/2412
+   * @return string[]
+   *   The list of columns.
    */
-  protected function dbalResolveIndexColumnList(array $fields) {
+  protected function dbalGetFieldList(array $fields) {
     $return = [];
     foreach ($fields as $field) {
       if (is_array($field)) {

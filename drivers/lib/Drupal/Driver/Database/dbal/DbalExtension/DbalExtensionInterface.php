@@ -506,6 +506,19 @@ interface DbalExtensionInterface {
   public function delegateFieldSetNoDefault($drupal_table_name, $field_name);
 
   /**
+   * Calculates an index name.
+   *
+   * @param string $drupal_table_name
+   *   A string with the Drupal name of the table.
+   * @param string $index_name
+   *   A string with the Drupal name of the index.
+   *
+   * @return string
+   *   A string with the name of the index to be used in the DBMS.
+   */
+  public function delegateGetIndexName($drupal_table_name, $index_name, array $table_prefix_info);
+
+  /**
    * Checks if an index exists.
    *
    * @param bool $result

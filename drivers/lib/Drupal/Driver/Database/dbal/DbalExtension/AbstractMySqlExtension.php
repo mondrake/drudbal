@@ -698,6 +698,13 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
+  public function delegateGetIndexName($drupal_table_name, $index_name, array $table_prefix_info) {
+    return $index_name;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function delegateIndexExists(&$result, DbalSchema $dbal_schema, $drupal_table_name, $index_name) {
     if ($index_name == 'PRIMARY') {
       $result = $dbal_schema->getTable($this->tableName($drupal_table_name))->hasPrimaryKey();

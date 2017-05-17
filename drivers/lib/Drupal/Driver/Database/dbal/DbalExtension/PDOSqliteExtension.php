@@ -566,6 +566,13 @@ class PDOSqliteExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
+  public function delegateGetIndexName($drupal_table_name, $index_name, array $table_prefix_info) {
+    return $table_prefix_info['schema'] . '_' . $table_prefix_info['table'] . '_' . $index_name;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function delegateIndexExists(&$result, DbalSchema $dbal_schema, $drupal_table_name, $index_name) {
     return FALSE;
   }
