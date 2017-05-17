@@ -569,7 +569,7 @@ class Schema extends DatabaseSchema {
     }
 
     $info = $this->getPrefixInfo($table);
-    $index_name = $info['schema'] . '.' . $info['table'] . '_' . $name;
+    $index_name = $info['schema'] . '_' . $info['table'] . '_' . $name;
 
     // DBAL extension did not pick up, proceed with DBAL.
     $current_schema = $this->dbalSchema();
@@ -603,7 +603,7 @@ class Schema extends DatabaseSchema {
     }
 
     $info = $this->getPrefixInfo($table);
-    $index_name = $info['schema'] . '.' . $info['table'] . '_' . $name;
+    $index_name = $info['schema'] . '_' . $info['table'] . '_' . $name;
 
     // DBAL extension did not pick up, proceed with DBAL.
     $current_schema = $this->dbalSchema();
