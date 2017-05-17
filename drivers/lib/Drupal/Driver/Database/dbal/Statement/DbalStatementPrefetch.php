@@ -3,7 +3,7 @@
 namespace Drupal\Driver\Database\dbal\Statement;
 
 use Drupal\Core\Database\Database;
-use Drupal\Core\Database\Database\RowCountException;
+use Drupal\Core\Database\RowCountException;
 use Drupal\Core\Database\StatementInterface;
 use Drupal\Driver\Database\dbal\Connection as DruDbalConnection;
 use Doctrine\DBAL\Connection as DbalConnection;
