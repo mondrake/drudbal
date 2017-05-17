@@ -114,9 +114,9 @@ class Insert extends QueryInsert {
       $insert_fields = array_keys($dbal_connection->getSchemaManager()->listTableColumns($prefixed_table));
     }
     else {
-      foreach ($this->defaultFields as $field) {
-        $dbal_query->setValue($field, $this->connection->getDbalExtension()->getInsertDefaultValueKeyword());
-      }
+//      foreach ($this->defaultFields as $field) {
+//        $dbal_query->setValue($field, $this->connection->getDbalExtension()->getInsertDefaultValueKeyword());
+//      }
       $insert_fields = $this->insertFields;
     }
     $max_placeholder = 0;
