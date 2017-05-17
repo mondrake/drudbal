@@ -268,6 +268,14 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
+  public function delegateMapConditionOperator($operator) {
+    // We don't want to override any of the defaults for MySql.
+    return NULL;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function delegateNextId($existing_id = 0) {
     $new_id = $this->connection->query('INSERT INTO {sequences} () VALUES ()', [], ['return' => Database::RETURN_INSERT_ID]);
     // This should only happen after an import or similar event.

@@ -404,8 +404,7 @@ class Connection extends DatabaseConnection {
    * {@inheritdoc}
    */
   public function mapConditionOperator($operator) {
-    // We don't want to override any of the defaults.
-    return NULL;
+    return $this->dbalExtension->delegateMapConditionOperator($operator);
   }
 
   /**

@@ -121,6 +121,11 @@ interface DbalExtensionInterface {
   public function postCreateDatabase($database_name);
 
   /**
+   * @todo
+   */
+  public function delegateMapConditionOperator($operator);
+
+  /**
    * Retrieves an unique ID.
    *
    * @param $existing_id

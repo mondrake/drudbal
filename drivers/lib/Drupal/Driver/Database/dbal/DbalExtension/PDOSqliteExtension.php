@@ -340,8 +340,15 @@ class PDOSqliteExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
+  public function delegateMapConditionOperator($operator) {
+    return isset(static::$sqliteConditionOperatorMap[$operator]) ? static::$sqliteConditionOperatorMap[$operator] : NULL;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function delegateNextId($existing_id = 0) {
-    $trn = $this->startTransaction();
+    $trn = $this->connection->startTransaction();
     // We can safely use literal queries here instead of the slower query
     // builder because if a given database breaks here then it can simply
     // override nextId. However, this is unlikely as we deal with short strings
