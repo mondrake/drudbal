@@ -27,7 +27,7 @@ env:
     - SIMPLETEST_BASE_URL="http://$HOST_ADDR:$HTTP_PORT"
   matrix:
     #- DBAL_URL="mysql://$DB_AUTH@$HOST_ADDR/drudbal" SIMPLETEST_DB="mysql://$DB_AUTH@$HOST_ADDR/drudbal#drudbal_"
-    #- DBAL_URL="mysql://$DB_AUTH@$HOST_ADDR/drudbal" SIMPLETEST_DB="dbal://$DB_AUTH@$HOST_ADDR/drudbal?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=pdo_mysql#drudbal_"
+    - DBAL_URL="mysql://$DB_AUTH@$HOST_ADDR/drudbal" SIMPLETEST_DB="dbal://$DB_AUTH@$HOST_ADDR/drudbal?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=pdo_mysql#drudbal_"
     #- DBAL_URL="mysqli://$DB_AUTH@$HOST_ADDR/drudbal" SIMPLETEST_DB="dbal://$DB_AUTH@$HOST_ADDR/drudbal?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=mysqli#drudbal_"
     - DBAL_URL="sqlite:///sites/default/files/.ht.sqlite" SIMPLETEST_DB="sqlite://test_user:test_pass@test_host:3306/sites/default/files/.ht.sqlite"
     - DBAL_URL="sqlite:///sites/default/files/.ht.sqlite" SIMPLETEST_DB="dbal://fake/sites/default/files/.ht.sqlite?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=pdo_sqlite"

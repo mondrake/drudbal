@@ -802,6 +802,9 @@ class Schema extends DatabaseSchema {
   }
 
   /**
+   * @todo rename this method
+   *
+   *
    * Gets the list of columns to be used for index manipulation operations.
    *
    * @param array[] $fields
@@ -818,7 +821,7 @@ class Schema extends DatabaseSchema {
     $return = [];
     foreach ($fields as $field) {
       if (is_array($field)) {
-        return FALSE;
+        $return[] = $field[0];
       }
       else {
         $return[] = $field;
