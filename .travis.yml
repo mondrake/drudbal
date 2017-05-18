@@ -66,7 +66,7 @@ before_install:
   - curl https://www.drupal.org/files/issues/2874499-6-transaction-enabled.patch | git apply
   # [#2875679] BasicSyntaxTest::testConcatFields fails with contrib driver
   - curl https://www.drupal.org/files/issues/2875679-2.patch | git apply
-  - curl https://www.drupal.org/files/issues/2874378-11-do-not-test.patch | git apply -v
+  - curl https://www.drupal.org/files/issues/2874378-12-do-not-test.patch | git apply -v
 
   # Get Drupal Console
   #- composer require "drupal/console:~1.0" --prefer-dist --optimize-autoloader
