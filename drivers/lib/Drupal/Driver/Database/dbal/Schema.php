@@ -686,35 +686,80 @@ class Schema extends DatabaseSchema {
   /**
    * Retrieves a table or column comment.
    *
-   * @param string $table
-   *   The table name.
+   * @param string $name
+   *   The name of the table.
    * @param string $column
-   *   (optional) The column name. If NULL, the table comment will be
-   *   retrieved.
+   *   (Optional) The name of the column.
    *
-   * @return string
-   *   The retrieved comment.
+   * @return string|null
+   *   The comment string or NULL if the comment is not supported.
+   *
+   * @todo remove once https://www.drupal.org/node/2879677 (Decouple getting
+   *   table vs column comments in Schema) is in.
    */
   public function getComment($table, $column = NULL) {
-    $dbal_schema = $this->dbalSchema();
-    $comment = NULL;
-
-    // Delegate to DBAL extension.
-    if ($this->dbalExtension->delegateGetComment($comment, $dbal_schema, $table, $column)) {
-      return $comment;
+    if ($column !== NULL) {
+      try {
+        return $this->getTableComment($table);
+      }
+      catch (\RuntimeException $e) {
+        return NULL;
+      }
     }
-
-    // DBAL extension did not pick up, proceed with DBAL.
-    if (isset($column)) {
-      $comment = $dbal_schema->getTable($this->tableName($table))->getColumn($column)->getComment();
-      // Let DBAL extension cleanup the comment if necessary.
-      $this->dbalExtension->alterGetComment($comment, $dbal_schema, $table, $column);
-      return $comment;
+    else {
+      try {
+        return $this->getColumnComment($table, $column);
+      }
+      catch (\RuntimeException$e) {
+        return NULL;
+      }
     }
-    // DBAL cannot retrieve table comments from introspected schema. DBAL
-    // extension should have processed it already.
-    // @see https://github.com/doctrine/dbal/issues/1335
-    return NULL;
+  }
+
+  /**
+   * Retrieves a table comment.
+   *
+   * By default this is not supported. Drivers implementations should override
+   * this method if returning comments is supported.
+   *
+   * @param string $name
+   *   The name of the table.
+   *
+   * @return string|null
+   *   The comment string.
+   *
+   * @throws \RuntimeExceptions
+   *   When table comments are not supported.
+   *
+   * @todo remove docblock once https://www.drupal.org/node/2879677
+   *   (Decouple getting table vs column comments in Schema) is in.
+   */
+  public function getTableComment($table) {
+    return $this->dbalExtension->delegateGetTableComment($this->dbalSchema(), $table));
+  }
+
+  /**
+   * Retrieves a column comment.
+   *
+   * By default this is not supported. Drivers implementations should override
+   * this method if returning comments is supported.
+   *
+   * @param string $name
+   *   The name of the table.
+   * @param string $column
+   *   The name of the column.
+   *
+   * @return string|null
+   *   The comment string.
+   *
+   * @throws \RuntimeExceptions
+   *   When table comments are not supported.
+   *
+   * @todo remove docblock once https://www.drupal.org/node/2879677
+   *   (Decouple getting table vs column comments in Schema) is in.
+   */
+  public function getColumnComment($table, $column) {
+    return $this->dbalExtension->delegateGetColumnComment($this->dbalSchema(), $table, $column));
   }
 
   /**

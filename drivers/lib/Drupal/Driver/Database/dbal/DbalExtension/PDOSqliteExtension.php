@@ -601,15 +601,17 @@ class PDOSqliteExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function delegateGetComment(&$comment, DbalSchema $dbal_schema, $drupal_table_name, $column = NULL) {
-    return FALSE;
+  public function delegateGetTableComment(DbalSchema $dbal_schema, $drupal_table_name) {
+    throw new \RuntimeException('Table comments are not supported in SQlite.');
   }
 
   /**
    * {@inheritdoc}
+   *
+   * @todo move to AbstractExtension, or to Schema with check if supported.
    */
-  public function alterGetComment(&$comment, DbalSchema $dbal_schema, $drupal_table_name, $column = NULL) {
-    return $this;
+  public function delegateGetColumnComment(DbalSchema $dbal_schema, $drupal_table_name, $column) {
+    return $dbal_schema->getTable($this->tableName($drupal_table_name))->getColumn($column)->getComment();
   }
 
   /**

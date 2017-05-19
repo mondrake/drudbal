@@ -588,28 +588,24 @@ interface DbalExtensionInterface {
   public function delegateAddIndex($drupal_table_name, $index_name, array $drupal_field_specs, array $indexes_spec);
 
   /**
-   * Retrieves a table or column comment.
+   * Retrieves a table comment.
    *
-   * @param string $comment
-   *   The comment. Passed by reference.
    * @param \Doctrine\DBAL\Schema\Schema $dbal_schema
    *   The DBAL schema object.
    * @param string $drupal_table_name
    *   A string with the Drupal name of the table.
-   * @param string $column
-   *   A string with the name of the column.
    *
-   * @return bool
-   *   TRUE if the extension managed the to get the comment, FALSE if it has
-   *   to be handled by DBAL.
+   * @return string
+   *   The table comment.
+   *
+   * @throws \RuntimeExceptions
+   *   When table comments are not supported.
    */
-  public function delegateGetComment(&$comment, DbalSchema $dbal_schema, $drupal_table_name, $column = NULL);
+  public function delegateGetTableComment(DbalSchema $dbal_schema, $drupal_table_name);
 
   /**
-   * Alters a table or column comment retrieved from the database.
+   * Retrieves a column comment.
    *
-   * @param string $comment
-   *   The comment. Passed by reference.
    * @param \Doctrine\DBAL\Schema\Schema $dbal_schema
    *   The DBAL schema object.
    * @param string $drupal_table_name
@@ -617,9 +613,13 @@ interface DbalExtensionInterface {
    * @param string $column
    *   A string with the name of the column.
    *
-   * @return $this
+   * @return string
+   *   The column comment.
+   *
+   * @throws \RuntimeExceptions
+   *   When column comments are not supported.
    */
-  public function alterGetComment(&$comment, DbalSchema $dbal_schema, $drupal_table_name, $column = NULL);
+  public function delegateGetColumnComment(DbalSchema $dbal_schema, $drupal_table_name, $column);
 
   /**
    * Alters a table comment to be written to the database.
