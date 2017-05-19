@@ -262,7 +262,7 @@ interface DbalExtensionInterface {
   public function getAddDefaultsExplicitlyOnInsert();
 
   /**
-   * Returns SQL syntax for INSERTing a row with only defualt fields.
+   * Returns SQL syntax for INSERTing a row with only default fields.
    *
    * @param string $sql
    *   The SQL string to be processed. Passed by reference.
