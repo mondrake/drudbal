@@ -3,7 +3,6 @@
 namespace Drupal\Driver\Database\dbal;
 
 use Drupal\Core\Database\Query\Delete as QueryDelete;
-use Drupal\Core\Database\Query\SelectInterface;
 
 /**
  * DruDbal implementation of \Drupal\Core\Database\Query\Delete.

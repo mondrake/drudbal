@@ -5,18 +5,13 @@ namespace Drupal\Driver\Database\dbal\DbalExtension;
 use Drupal\Component\Utility\Unicode;
 use Drupal\Core\Database\Database;
 use Drupal\Core\Database\DatabaseException;
-use Drupal\Core\Database\DatabaseExceptionWrapper;
 use Drupal\Core\Database\DatabaseNotFoundException;
-use Drupal\Core\Database\IntegrityConstraintViolationException;
 use Drupal\Core\Database\SchemaException;
 use Drupal\Core\Database\TransactionCommitFailedException;
-use Drupal\Driver\Database\dbal\Connection as DruDbalConnection;
 
 use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\ConnectionException as DbalConnectionException;
-use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
-use Doctrine\DBAL\Exception\ConnectionException as DbalExceptionConnectionException;
 use Doctrine\DBAL\Schema\Schema as DbalSchema;
 use Doctrine\DBAL\Schema\Table as DbalTable;
 use Doctrine\DBAL\Version as DbalVersion;
@@ -167,7 +162,7 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
   /**
    * Returns a fully prefixed table name from Drupal's {table} syntax.
    *
-   * @param string $drupal table
+   * @param string $drupal_table
    *   The table name in Drupal's syntax.
    *
    * @return string
@@ -186,7 +181,8 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
    */
   public static function preConnectionOpen(array &$connection_options, array &$dbal_connection_options) {
     if (isset($connection_options['_dsn_utf8_fallback']) && $connection_options['_dsn_utf8_fallback'] === TRUE) {
-      // Only used during the installer version check, as a fallback from utf8mb4.
+      // Only used during the installer version check, as a fallback from
+      // utf8mb4.
       $charset = 'utf8';
     }
     else {
@@ -352,7 +348,7 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
       try {
         $this->dbalConnection->commit();
       }
-      catch (DbalConnectionException $e) {
+      catch (DbalConnectionException $exc) {
         throw new TransactionCommitFailedException();
       }
       // If one SAVEPOINT was released automatically, then all were.
@@ -468,16 +464,21 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
         Database::getConnection();
         $results['pass'][] = t('Database %database was created successfully.', ['%database' => $database]);
       }
-      catch (DatabaseNotFoundException $e) {
+      catch (DatabaseNotFoundException $exc) {
         // Still no dice; probably a permission issue. Raise the error to the
         // installer.
-        $results['fail'][] = t('Creation of database %database failed. The server reports the following message: %error.', ['%database' => $database, '%error' => $e->getMessage()]);
+        $results['fail'][] = t('Creation of database %database failed. The server reports the following message: %error.', [
+          '%database' => $database,
+          '%error' => $exc->getMessage()
+        ]);
       }
       return $results;
     }
 
     // Database connection failed for some other reasons. Report.
-    $results['fail'][] = t('Failed to connect to your database server. The server reports the following message: %error.<ul><li>Is the database server running?</li><li>Does the database exist or does the database user have sufficient privileges to create the database?</li><li>Have you entered the correct database name?</li><li>Have you entered the correct username and password?</li><li>Have you entered the correct database hostname?</li></ul>', ['%error' => $e->getMessage()]);
+    $results['fail'][] = t('Failed to connect to your database server. The server reports the following message: %error.<ul><li>Is the database server running?</li><li>Does the database exist or does the database user have sufficient privileges to create the database?</li><li>Have you entered the correct database name?</li><li>Have you entered the correct username and password?</li><li>Have you entered the correct database hostname?</li></ul>', [
+      '%error' => $e->getMessage()
+    ]);
     return $results;
   }
 
@@ -511,13 +512,19 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
       // The mysqlnd driver supports utf8mb4 starting at version 5.0.9.
       $version = preg_replace('/^\D+([\d.]+).*/', '$1', $version);
       if (version_compare($version, self::MYSQLND_MINIMUM_VERSION, '<')) {
-        $results['fail'][] = t("The MySQLnd driver version %version is less than the minimum required version. Upgrade to MySQLnd version %mysqlnd_minimum_version or up, or alternatively switch mysql drivers to libmysqlclient version %libmysqlclient_minimum_version or up.", ['%version' => $version, '%mysqlnd_minimum_version' => self::MYSQLND_MINIMUM_VERSION, '%libmysqlclient_minimum_version' => self::LIBMYSQLCLIENT_MINIMUM_VERSION]);
+        $results['fail'][] = t("The MySQLnd driver version %version is less than the minimum required version. Upgrade to MySQLnd version %mysqlnd_minimum_version or up, or alternatively switch mysql drivers to libmysqlclient version %libmysqlclient_minimum_version or up.", [
+          '%version' => $version, '%mysqlnd_minimum_version' => self::MYSQLND_MINIMUM_VERSION,
+          '%libmysqlclient_minimum_version' => self::LIBMYSQLCLIENT_MINIMUM_VERSION,
+        ]);
       }
     }
     else {
       // The libmysqlclient driver supports utf8mb4 starting at version 5.5.3.
       if (version_compare($version, self::LIBMYSQLCLIENT_MINIMUM_VERSION, '<')) {
-        $results['fail'][] = t("The libmysqlclient driver version %version is less than the minimum required version. Upgrade to libmysqlclient version %libmysqlclient_minimum_version or up, or alternatively switch mysql drivers to MySQLnd version %mysqlnd_minimum_version or up.", ['%version' => $version, '%libmysqlclient_minimum_version' => self::LIBMYSQLCLIENT_MINIMUM_VERSION, '%mysqlnd_minimum_version' => self::MYSQLND_MINIMUM_VERSION]);
+        $results['fail'][] = t("The libmysqlclient driver version %version is less than the minimum required version. Upgrade to libmysqlclient version %libmysqlclient_minimum_version or up, or alternatively switch mysql drivers to MySQLnd version %mysqlnd_minimum_version or up.", [
+          '%version' => $version, '%libmysqlclient_minimum_version' => self::LIBMYSQLCLIENT_MINIMUM_VERSION,
+          '%mysqlnd_minimum_version' => self::MYSQLND_MINIMUM_VERSION,
+        ]);
       }
     }
 
@@ -543,7 +550,7 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
     // Instead, we try to select from the table in question.  If it fails,
     // the most likely reason is that it does not exist.
     try {
-      $ret = $this->getDbalConnection()->query("SELECT 1 FROM " . $this->tableName($drupal_table_name) . " LIMIT 1 OFFSET 0");
+      $this->getDbalConnection()->query("SELECT 1 FROM " . $this->tableName($drupal_table_name) . " LIMIT 1 OFFSET 0");
       $result = TRUE;
     }
     catch (\Exception $e) {
@@ -560,7 +567,7 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
     // Instead, we try to select from the table and field in question. If it
     // fails, the most likely reason is that it does not exist.
     try {
-      $ret = $this->getDbalConnection()->query("SELECT $field_name FROM " . $this->tableName($drupal_table_name) . " LIMIT 1 OFFSET 0");
+      $this->getDbalConnection()->query("SELECT $field_name FROM " . $this->tableName($drupal_table_name) . " LIMIT 1 OFFSET 0");
       $result = TRUE;
     }
     catch (\Exception $e) {
@@ -723,10 +730,10 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function delegateAddPrimaryKey(DbalSchema $dbal_schema, $drupal_table_name, $drupal_field_specs) {
+  public function delegateAddPrimaryKey(DbalSchema $dbal_schema, $drupal_table_name, array $drupal_field_specs) {
     // DBAL does not support creating indexes with column lenghts.
     // @see https://github.com/doctrine/dbal/pull/2412
-    if (($idx_cols = $this->dbalResolveIndexColumnNames($drupal_field_specs)) === FALSE) {
+    if ($this->dbalResolveIndexColumnNames($drupal_field_specs) === FALSE) {
       $this->connection->query('ALTER TABLE {' . $drupal_table_name . '} ADD PRIMARY KEY (' . $this->createKeySql($drupal_field_specs) . ')');
       return TRUE;
     }
@@ -736,10 +743,10 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function delegateAddUniqueKey($drupal_table_name, $index_name, $drupal_field_specs) {
+  public function delegateAddUniqueKey($drupal_table_name, $index_name, array $drupal_field_specs) {
     // DBAL does not support creating indexes with column lenghts.
     // @see https://github.com/doctrine/dbal/pull/2412
-    if (($idx_cols = $this->dbalResolveIndexColumnNames($drupal_field_specs)) === FALSE) {
+    if ($this->dbalResolveIndexColumnNames($drupal_field_specs) === FALSE) {
       $this->connection->query('ALTER TABLE {' . $drupal_table_name . '} ADD UNIQUE KEY `' . $index_name . '` (' . $this->createKeySql($drupal_field_specs) . ')');
       return TRUE;
     }
@@ -754,7 +761,7 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
     // @see https://github.com/doctrine/dbal/pull/2412
     $indexes_spec['indexes'][$index_name] = $drupal_field_specs;
     $indexes = $this->getNormalizedIndexes($indexes_spec);
-    if (($idx_cols = $this->dbalResolveIndexColumnNames($indexes[$index_name])) === FALSE) {
+    if ($this->dbalResolveIndexColumnNames($indexes[$index_name]) === FALSE) {
       $this->connection->query('ALTER TABLE {' . $drupal_table_name . '} ADD INDEX `' . $index_name . '` (' . $this->createKeySql($indexes[$index_name]) . ')');
       return TRUE;
     }
@@ -854,7 +861,7 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
    *
    * Shortens an index to 191 characters.
    *
-   * @param array $index
+   * @param mixed $index
    *   The index array to be used in createKeySql.
    *
    * @see Drupal\Core\Database\Driver\mysql\Schema::createKeySql()
@@ -903,7 +910,7 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
    * @param array $fields
    *   The array of fields in Drupal format.
    *
-   * @return boolean
+   * @return bool
    *   FALSE if there is at least a column with length spec, TRUE if all the
    *   columns are to be indexed to full lenght.
    *
