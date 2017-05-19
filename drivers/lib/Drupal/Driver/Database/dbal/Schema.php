@@ -735,7 +735,7 @@ class Schema extends DatabaseSchema {
    *   (Decouple getting table vs column comments in Schema) is in.
    */
   public function getTableComment($table) {
-    return $this->dbalExtension->delegateGetTableComment($this->dbalSchema(), $table));
+    return $this->dbalExtension->delegateGetTableComment($this->dbalSchema(), $table);
   }
 
   /**
@@ -759,7 +759,7 @@ class Schema extends DatabaseSchema {
    *   (Decouple getting table vs column comments in Schema) is in.
    */
   public function getColumnComment($table, $column) {
-    return $this->dbalExtension->delegateGetColumnComment($this->dbalSchema(), $table, $column));
+    return $this->dbalExtension->delegateGetColumnComment($this->dbalSchema(), $table, $column);
   }
 
   /**
