@@ -675,7 +675,7 @@ class Schema extends DatabaseSchema {
   /**
    * Retrieves a table or column comment.
    *
-   * @param string $name
+   * @param string $table
    *   The name of the table.
    * @param string $column
    *   (Optional) The name of the column.
@@ -687,7 +687,7 @@ class Schema extends DatabaseSchema {
    *   table vs column comments in Schema) is in.
    */
   public function getComment($table, $column = NULL) {
-    if ($column !== NULL) {
+    if ($column === NULL) {
       try {
         return $this->getTableComment($table);
       }
@@ -711,7 +711,7 @@ class Schema extends DatabaseSchema {
    * By default this is not supported. Drivers implementations should override
    * this method if returning comments is supported.
    *
-   * @param string $name
+   * @param string $table
    *   The name of the table.
    *
    * @return string|null
@@ -733,7 +733,7 @@ class Schema extends DatabaseSchema {
    * By default this is not supported. Drivers implementations should override
    * this method if returning comments is supported.
    *
-   * @param string $name
+   * @param string $table
    *   The name of the table.
    * @param string $column
    *   The name of the column.
