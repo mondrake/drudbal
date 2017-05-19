@@ -64,6 +64,8 @@ before_install:
   - curl https://www.drupal.org/files/issues/2874499-6-transaction-enabled.patch | git apply
   # [#2875679] BasicSyntaxTest::testConcatFields fails with contrib driver
   - curl https://www.drupal.org/files/issues/2875679-2.patch | git apply
+  # [#2879677] Decouple getting table vs column comments in Schema
+  - curl https://www.drupal.org/files/issues/2879677-2.patch | git apply
 
   # Get Drupal Console
   #- composer require "drupal/console:~1.0" --prefer-dist --optimize-autoloader
@@ -94,8 +96,8 @@ install:
 script:
   - cd $DRUPAL_PATH/core
   # Only run selected tests to avoid Travis timeout.
-  - ../vendor/bin/phpunit --testsuite unit --group Database,Cache,Entity --verbose
-  - ../vendor/bin/phpunit --testsuite kernel --group Database,Cache --verbose
+  - ../vendor/bin/phpunit --testsuite unit --group Database,Cache,Entity
+  - ../vendor/bin/phpunit --testsuite kernel --group Database,Cache
   - ../vendor/bin/phpunit tests/Drupal/KernelTests/Core/Entity/ConfigEntityQueryTest.php
   - ../vendor/bin/phpunit tests/Drupal/KernelTests/Core/Entity/EntityQueryTest.php
   - ../vendor/bin/phpunit tests/Drupal/KernelTests/Core/Entity/EntityQueryAggregateTest.php
