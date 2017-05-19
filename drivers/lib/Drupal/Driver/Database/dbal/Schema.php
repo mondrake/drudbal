@@ -63,6 +63,7 @@ class Schema extends DatabaseSchema {
     $this->dbalExtension = $this->connection->getDbalExtension();
     $this->dbalSchemaManager = $this->connection->getDbalConnection()->getSchemaManager();
     $this->dbalPlatform = $this->connection->getDbalConnection()->getDatabasePlatform();
+    $this->dbalExtension->alterDefaultSchema($this->defaultSchema);
   }
 
   /**
@@ -113,7 +114,7 @@ class Schema extends DatabaseSchema {
       // However we have to add here instead of separate calls to
       // ::addPrimaryKey to avoid failure when creating a table with an
       // autoincrement column.
-      $new_table->setPrimaryKey($this->dbalResolveIndexColumnList($table['primary key']));
+      $new_table->setPrimaryKey($this->dbalGetFieldList($table['primary key']));
     }
 
     // Execute the table creation.
@@ -383,7 +384,7 @@ class Schema extends DatabaseSchema {
         // However we have to add here instead of separate calls to
         // ::addPrimaryKey to avoid failure when creating a table with an
         // autoincrement column.
-        $dbal_table->setPrimaryKey($this->dbalResolveIndexColumnList($keys_new['primary key']));
+        $dbal_table->setPrimaryKey($this->dbalGetFieldList($keys_new['primary key']));
       }
       $this->dbalExecuteSchemaChange($to_schema);
     }
@@ -494,7 +495,8 @@ class Schema extends DatabaseSchema {
     }
 
     // DBAL extension did not pick up, proceed with DBAL.
-    return in_array($name, array_keys($this->dbalSchemaManager->listTableIndexes($this->tableName($table))));
+    $index_name = $this->dbalExtension->delegateGetIndexName($table, $name, $this->getPrefixInfo($table));
+    return in_array($index_name, array_keys($this->dbalSchemaManager->listTableIndexes($this->tableName($table))));
   }
 
   /**
@@ -518,7 +520,7 @@ class Schema extends DatabaseSchema {
     // DBAL extension did not pick up, proceed with DBAL.
     $current_schema = $this->dbalSchema();
     $to_schema = clone $current_schema;
-    $to_schema->getTable($this->tableName($table))->setPrimaryKey($this->dbalResolveIndexColumnList($fields));
+    $to_schema->getTable($this->tableName($table))->setPrimaryKey($this->dbalGetFieldList($fields));
     $this->dbalExecuteSchemaChange($to_schema);
   }
 
@@ -557,9 +559,10 @@ class Schema extends DatabaseSchema {
     }
 
     // DBAL extension did not pick up, proceed with DBAL.
+    $index_name = $this->dbalExtension->delegateGetIndexName($table, $name, $this->getPrefixInfo($table));
     $current_schema = $this->dbalSchema();
     $to_schema = clone $current_schema;
-    $to_schema->getTable($this->tableName($table))->addUniqueIndex($this->dbalResolveIndexColumnList($fields), $name);
+    $to_schema->getTable($this->tableName($table))->addUniqueIndex($this->dbalGetFieldList($fields), $index_name);
     $this->dbalExecuteSchemaChange($to_schema);
   }
 
@@ -588,9 +591,10 @@ class Schema extends DatabaseSchema {
     }
 
     // DBAL extension did not pick up, proceed with DBAL.
+    $index_name = $this->dbalExtension->delegateGetIndexName($table, $name, $this->getPrefixInfo($table));
     $current_schema = $this->dbalSchema();
     $to_schema = clone $current_schema;
-    $to_schema->getTable($this->tableName($table))->addIndex($this->dbalResolveIndexColumnList($fields), $name);
+    $to_schema->getTable($this->tableName($table))->addIndex($this->dbalGetFieldList($fields), $index_name);
     $this->dbalExecuteSchemaChange($to_schema);
   }
 
@@ -672,34 +676,79 @@ class Schema extends DatabaseSchema {
    * Retrieves a table or column comment.
    *
    * @param string $table
-   *   The table name.
+   *   The name of the table.
    * @param string $column
-   *   (optional) The column name. If NULL, the table comment will be
-   *   retrieved.
+   *   (Optional) The name of the column.
    *
-   * @return string
-   *   The retrieved comment.
+   * @return string|null
+   *   The comment string or NULL if the comment is not supported.
+   *
+   * @todo remove once https://www.drupal.org/node/2879677 (Decouple getting
+   *   table vs column comments in Schema) is in.
    */
   public function getComment($table, $column = NULL) {
-    $dbal_schema = $this->dbalSchema();
-    $comment = NULL;
-
-    // Delegate to DBAL extension.
-    if ($this->dbalExtension->delegateGetComment($comment, $dbal_schema, $table, $column)) {
-      return $comment;
+    if ($column === NULL) {
+      try {
+        return $this->getTableComment($table);
+      }
+      catch (\RuntimeException $e) {
+        return NULL;
+      }
     }
-
-    // DBAL extension did not pick up, proceed with DBAL.
-    if (isset($column)) {
-      $comment = $dbal_schema->getTable($this->tableName($table))->getColumn($column)->getComment();
-      // Let DBAL extension cleanup the comment if necessary.
-      $this->dbalExtension->alterGetComment($comment, $dbal_schema, $table, $column);
-      return $comment;
+    else {
+      try {
+        return $this->getColumnComment($table, $column);
+      }
+      catch (\RuntimeException$e) {
+        return NULL;
+      }
     }
-    // DBAL cannot retrieve table comments from introspected schema. DBAL
-    // extension should have processed it already.
-    // @see https://github.com/doctrine/dbal/issues/1335
-    return NULL;
+  }
+
+  /**
+   * Retrieves a table comment.
+   *
+   * By default this is not supported. Drivers implementations should override
+   * this method if returning comments is supported.
+   *
+   * @param string $table
+   *   The name of the table.
+   *
+   * @return string|null
+   *   The comment string.
+   *
+   * @throws \RuntimeExceptions
+   *   When table comments are not supported.
+   *
+   * @todo remove docblock once https://www.drupal.org/node/2879677
+   *   (Decouple getting table vs column comments in Schema) is in.
+   */
+  public function getTableComment($table) {
+    return $this->dbalExtension->delegateGetTableComment($this->dbalSchema(), $table);
+  }
+
+  /**
+   * Retrieves a column comment.
+   *
+   * By default this is not supported. Drivers implementations should override
+   * this method if returning comments is supported.
+   *
+   * @param string $table
+   *   The name of the table.
+   * @param string $column
+   *   The name of the column.
+   *
+   * @return string|null
+   *   The comment string.
+   *
+   * @throws \RuntimeExceptions
+   *   When table comments are not supported.
+   *
+   * @todo remove docblock once https://www.drupal.org/node/2879677
+   *   (Decouple getting table vs column comments in Schema) is in.
+   */
+  public function getColumnComment($table, $column) {
+    return $this->dbalExtension->delegateGetColumnComment($this->dbalSchema(), $table, $column);
   }
 
   /**
@@ -784,23 +833,22 @@ class Schema extends DatabaseSchema {
   }
 
   /**
-   * Gets the list of columns to be used for index manipulation operations.
+   * Gets the list of columns from Drupal field specs.
+   *
+   * Normalizes fields with length to field name only.
    *
    * @param array[] $fields
    *   An array of field description arrays, as specified in the schema
    *   documentation.
    *
-   * @return string[]|false
-   *   The list of columns, or FALSE if it cannot be determined (e.g. because
-   *   there are column leghts specified, that DBAL cannot process).
-   *
-   * @see https://github.com/doctrine/dbal/pull/2412
+   * @return string[]
+   *   The list of columns.
    */
-  protected function dbalResolveIndexColumnList(array $fields) {
+  protected function dbalGetFieldList(array $fields) {
     $return = [];
     foreach ($fields as $field) {
       if (is_array($field)) {
-        return FALSE;
+        $return[] = $field[0];
       }
       else {
         $return[] = $field;

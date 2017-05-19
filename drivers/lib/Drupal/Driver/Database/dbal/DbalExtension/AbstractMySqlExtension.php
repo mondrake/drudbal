@@ -268,6 +268,14 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
+  public function delegateMapConditionOperator($operator) {
+    // We don't want to override any of the defaults for MySql.
+    return NULL;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function delegateNextId($existing_id = 0) {
     $new_id = $this->connection->query('INSERT INTO {sequences} () VALUES ()', [], ['return' => Database::RETURN_INSERT_ID]);
     // This should only happen after an import or similar event.
@@ -354,6 +362,24 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
     else {
       throw $e;
     }
+  }
+
+  /**
+   * Insert delegated methods.
+   */
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getAddDefaultsExplicitlyOnInsert() {
+    return TRUE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateDefaultsOnlyInsertSql(&$sql, $drupal_table_name) {
+    return FALSE;
   }
 
   /**
@@ -501,6 +527,13 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
   /**
    * Schema delegated methods.
    */
+
+  /**
+   * {@inheritdoc}
+   */
+  public function alterDefaultSchema(&$default_schema) {
+    return $this;
+  }
 
   /**
    * {@inheritdoc}
@@ -672,6 +705,13 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
+  public function delegateGetIndexName($drupal_table_name, $index_name, array $table_prefix_info) {
+    return $index_name;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function delegateIndexExists(&$result, DbalSchema $dbal_schema, $drupal_table_name, $index_name) {
     if ($index_name == 'PRIMARY') {
       $result = $dbal_schema->getTable($this->tableName($drupal_table_name))->hasPrimaryKey();
@@ -724,11 +764,7 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function delegateGetComment(&$comment, DbalSchema $dbal_schema, $drupal_table_name, $column = NULL) {
-    if ($column !== NULL) {
-      return FALSE;
-    }
-
+  public function delegateGetTableComment(DbalSchema $dbal_schema, $drupal_table_name) {
     // DBAL cannot retrieve table comments from introspected schema.
     // @see https://github.com/doctrine/dbal/issues/1335
     $dbal_query = $this->dbalConnection->createQueryBuilder();
@@ -744,15 +780,16 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
       ->setParameter(0, $this->dbalConnection->getDatabase())
       ->setParameter(1, $this->tableName($drupal_table_name));
     $comment = $dbal_query->execute()->fetchColumn();
-    $this->alterGetComment($comment, $dbal_schema, $drupal_table_name, $column);
-    return TRUE;
+    return $comment;
   }
 
   /**
    * {@inheritdoc}
+   *
+   * @todo move to AbstractExtension, or to Schema with check if supported.
    */
-  public function alterGetComment(&$comment, DbalSchema $dbal_schema, $drupal_table_name, $column = NULL) {
-    return $this;
+  public function delegateGetColumnComment(DbalSchema $dbal_schema, $drupal_table_name, $column) {
+    return $dbal_schema->getTable($this->tableName($drupal_table_name))->getColumn($column)->getComment();
   }
 
   /**

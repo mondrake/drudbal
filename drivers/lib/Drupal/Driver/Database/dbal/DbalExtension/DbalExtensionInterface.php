@@ -121,6 +121,19 @@ interface DbalExtensionInterface {
   public function postCreateDatabase($database_name);
 
   /**
+   * Gets any special processing requirements for the condition operator.
+   *
+   * @param string $operator
+   *   The condition operator, such as "IN", "BETWEEN", etc. Case-sensitive.
+   *
+   * @return
+   *   The extra handling directives for the specified operator, or NULL.
+   *
+   * @see \Drupal\Core\Database\Connection
+   */
+  public function delegateMapConditionOperator($operator);
+
+  /**
    * Retrieves an unique ID.
    *
    * @param $existing_id
@@ -233,6 +246,36 @@ interface DbalExtensionInterface {
   public function delegateReleaseSavepointExceptionProcess(DbalDriverException $e);
 
   /**
+   * Insert delegated methods.
+   */
+
+  /**
+   * Determines if an INSERT query should explicity add default fields.
+   *
+   * Some DBMS accept using the 'default' keyword when entering default values
+   * for fields.
+   *
+   * @return bool
+   *   TRUE if the the 'default' keyword shall be used for INSERTing default
+   *   for fields, FALSE otherwise.
+   */
+  public function getAddDefaultsExplicitlyOnInsert();
+
+  /**
+   * Returns SQL syntax for INSERTing a row with only default fields.
+   *
+   * @param string $sql
+   *   The SQL string to be processed. Passed by reference.
+   * @param string $drupal_table_name
+   *   A string with the Drupal name of the table.
+   *
+   * @return bool
+   *   TRUE if the extension is returning an SQL string the check, FALSE if it
+   *   has to be handled by DBAL.
+   */
+  public function delegateDefaultsOnlyInsertSql(&$sql, $drupal_table_name);
+
+  /**
    * Truncate delegated methods.
    */
 
@@ -286,6 +329,16 @@ interface DbalExtensionInterface {
   /**
    * Schema delegated methods.
    */
+
+  /**
+   * Alters the database default schema name.
+   *
+   * @param string $default_schema
+   *   The default schema name. Passed by reference.
+   *
+   * @return $this
+   */
+  public function alterDefaultSchema(&$default_schema);
 
   /**
    * Checks if a table exists.
@@ -487,6 +540,19 @@ interface DbalExtensionInterface {
   public function delegateFieldSetNoDefault($drupal_table_name, $field_name);
 
   /**
+   * Calculates an index name.
+   *
+   * @param string $drupal_table_name
+   *   A string with the Drupal name of the table.
+   * @param string $index_name
+   *   A string with the Drupal name of the index.
+   *
+   * @return string
+   *   A string with the name of the index to be used in the DBMS.
+   */
+  public function delegateGetIndexName($drupal_table_name, $index_name, array $table_prefix_info);
+
+  /**
    * Checks if an index exists.
    *
    * @param bool $result
@@ -556,28 +622,24 @@ interface DbalExtensionInterface {
   public function delegateAddIndex($drupal_table_name, $index_name, array $drupal_field_specs, array $indexes_spec);
 
   /**
-   * Retrieves a table or column comment.
+   * Retrieves a table comment.
    *
-   * @param string $comment
-   *   The comment. Passed by reference.
    * @param \Doctrine\DBAL\Schema\Schema $dbal_schema
    *   The DBAL schema object.
    * @param string $drupal_table_name
    *   A string with the Drupal name of the table.
-   * @param string $column
-   *   A string with the name of the column.
    *
-   * @return bool
-   *   TRUE if the extension managed the to get the comment, FALSE if it has
-   *   to be handled by DBAL.
+   * @return string
+   *   The table comment.
+   *
+   * @throws \RuntimeExceptions
+   *   When table comments are not supported.
    */
-  public function delegateGetComment(&$comment, DbalSchema $dbal_schema, $drupal_table_name, $column = NULL);
+  public function delegateGetTableComment(DbalSchema $dbal_schema, $drupal_table_name);
 
   /**
-   * Alters a table or column comment retrieved from the database.
+   * Retrieves a column comment.
    *
-   * @param string $comment
-   *   The comment. Passed by reference.
    * @param \Doctrine\DBAL\Schema\Schema $dbal_schema
    *   The DBAL schema object.
    * @param string $drupal_table_name
@@ -585,9 +647,13 @@ interface DbalExtensionInterface {
    * @param string $column
    *   A string with the name of the column.
    *
-   * @return $this
+   * @return string
+   *   The column comment.
+   *
+   * @throws \RuntimeExceptions
+   *   When column comments are not supported.
    */
-  public function alterGetComment(&$comment, DbalSchema $dbal_schema, $drupal_table_name, $column = NULL);
+  public function delegateGetColumnComment(DbalSchema $dbal_schema, $drupal_table_name, $column);
 
   /**
    * Alters a table comment to be written to the database.
