@@ -588,14 +588,14 @@ class PDOSqliteExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function delegateAddPrimaryKey(DbalSchema $dbal_schema, $drupal_table_name, $drupal_field_specs) {
+  public function delegateAddPrimaryKey(DbalSchema $dbal_schema, $drupal_table_name, array $drupal_field_specs) {
     return FALSE;
   }
 
   /**
    * {@inheritdoc}
    */
-  public function delegateAddUniqueKey($drupal_table_name, $index_name, $drupal_field_specs) {
+  public function delegateAddUniqueKey($drupal_table_name, $index_name, array $drupal_field_specs) {
     return FALSE;
   }
 
