@@ -49,7 +49,7 @@ before_install:
   # Get Drupal core and dependencies
   - git clone http://git.drupal.org/project/drupal.git $DRUPAL_PATH
   - cd $DRUPAL_PATH
-  #- composer install
+  - composer install
 
   # Apply Drupal core patches
   # [#2605284] Testing framework does not work with contributed database drivers
