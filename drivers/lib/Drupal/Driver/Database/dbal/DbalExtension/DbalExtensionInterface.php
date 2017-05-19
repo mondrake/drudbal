@@ -121,7 +121,15 @@ interface DbalExtensionInterface {
   public function postCreateDatabase($database_name);
 
   /**
-   * @todo
+   * Gets any special processing requirements for the condition operator.
+   *
+   * @param string $operator
+   *   The condition operator, such as "IN", "BETWEEN", etc. Case-sensitive.
+   *
+   * @return
+   *   The extra handling directives for the specified operator, or NULL.
+   *
+   * @see \Drupal\Core\Database\Connection
    */
   public function delegateMapConditionOperator($operator);
 
@@ -242,12 +250,28 @@ interface DbalExtensionInterface {
    */
 
   /**
-   * @todo
+   * Determines if an INSERT query should explicity add default fields.
+   *
+   * Some DBMS accept using the 'default' keyword when entering default values
+   * for fields.
+   *
+   * @return bool
+   *   TRUE if the the 'default' keyword shall be used for INSERTing default
+   *   faor fields, FALSE otherwise.
    */
   public function getAddDefaultsExplicitlyOnInsert();
 
   /**
-   * @todo
+   * Returns SQL syntax for INSERTing a row with only defualt fields.
+   *
+   * @param string $sql
+   *   The SQL string to be processed. Passed by reference.
+   * @param string $drupal_table_name
+   *   A string with the Drupal name of the table.
+   *
+   * @return bool
+   *   TRUE if the extension is returning an SQL string the check, FALSE if it
+   *   has to be handled by DBAL.
    */
   public function delegateDefaultsOnlyInsertSql(&$sql, $drupal_table_name);
 
@@ -305,6 +329,16 @@ interface DbalExtensionInterface {
   /**
    * Schema delegated methods.
    */
+
+  /**
+   * Alters the database default schema name.
+   *
+   * @param string $default_schema
+   *   The default schema name. Passed by reference.
+   *
+   * @return $this
+   */
+  public function alterDefaultSchema(&$default_schema);
 
   /**
    * Checks if a table exists.

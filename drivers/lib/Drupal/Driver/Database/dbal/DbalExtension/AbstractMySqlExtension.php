@@ -531,6 +531,13 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
+  public function alterDefaultSchema(&$default_schema) {
+    return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function delegateTableExists(&$result, $drupal_table_name) {
     // The DBAL Schema manager is quite slow here.
     // Instead, we try to select from the table in question.  If it fails,

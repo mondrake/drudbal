@@ -474,6 +474,14 @@ class PDOSqliteExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
+  public function alterDefaultSchema(&$default_schema) {
+    $default_schema = 'main';
+    return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function delegateTableExists(&$result, $drupal_table_name) {
     return FALSE;
   }

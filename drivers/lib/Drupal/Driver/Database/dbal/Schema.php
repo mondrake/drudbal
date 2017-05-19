@@ -53,18 +53,6 @@ class Schema extends DatabaseSchema {
   protected $dbalExtension;
 
   /**
-   * Definition of prefixInfo array structure.
-   *
-   * Rather than redefining DatabaseSchema::getPrefixInfo() for each driver,
-   * by defining the defaultSchema variable only MySQL has to re-write the
-   * method.
-   *
-   * @see DatabaseSchema::getPrefixInfo()
-   */
-//  protected $defaultSchema = 'public';
-  protected $defaultSchema = 'main';
-
-  /**
    * Constructs a Schema object.
    *
    * @var \Drupal\Driver\Database\dbal\Connection
@@ -75,6 +63,7 @@ class Schema extends DatabaseSchema {
     $this->dbalExtension = $this->connection->getDbalExtension();
     $this->dbalSchemaManager = $this->connection->getDbalConnection()->getSchemaManager();
     $this->dbalPlatform = $this->connection->getDbalConnection()->getDatabasePlatform();
+    $this->dbalExtension->alterDefaultSchema($this->defaultSchema);
   }
 
   /**
