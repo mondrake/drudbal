@@ -257,7 +257,7 @@ interface DbalExtensionInterface {
    *
    * @return bool
    *   TRUE if the the 'default' keyword shall be used for INSERTing default
-   *   faor fields, FALSE otherwise.
+   *   for fields, FALSE otherwise.
    */
   public function getAddDefaultsExplicitlyOnInsert();
 
