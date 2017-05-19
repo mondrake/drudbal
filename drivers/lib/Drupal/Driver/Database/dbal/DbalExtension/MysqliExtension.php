@@ -5,7 +5,6 @@ namespace Drupal\Driver\Database\dbal\DbalExtension;
 use Drupal\Component\Utility\Unicode;
 use Drupal\Core\Database\DatabaseExceptionWrapper;
 use Drupal\Core\Database\IntegrityConstraintViolationException;
-use Drupal\Core\Database\TransactionCommitFailedException;
 use Drupal\Driver\Database\dbal\Connection as DruDbalConnection;
 use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\Driver\Mysqli\MysqliException;

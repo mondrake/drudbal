@@ -126,7 +126,7 @@ interface DbalExtensionInterface {
    * @param string $operator
    *   The condition operator, such as "IN", "BETWEEN", etc. Case-sensitive.
    *
-   * @return
+   * @return array
    *   The extra handling directives for the specified operator, or NULL.
    *
    * @see \Drupal\Core\Database\Connection
@@ -136,10 +136,10 @@ interface DbalExtensionInterface {
   /**
    * Retrieves an unique ID.
    *
-   * @param $existing_id
+   * @param integer $existing_id
    *   (optional) Watermark ID.
    *
-   * @return
+   * @return integer
    *   An integer number larger than any number returned by earlier calls and
    *   also larger than the $existing_id if one was passed in.
    */
@@ -546,6 +546,8 @@ interface DbalExtensionInterface {
    *   A string with the Drupal name of the table.
    * @param string $index_name
    *   A string with the Drupal name of the index.
+   * @param array $table_prefix_info
+   *   A keyed array with information about the schema, table name and prefix.
    *
    * @return string
    *   A string with the name of the index to be used in the DBMS.
@@ -584,7 +586,7 @@ interface DbalExtensionInterface {
    *   TRUE if the extension added the primary key, FALSE if it has to be
    *   handled by DBAL.
    */
-  public function delegateAddPrimaryKey(DbalSchema $dbal_schema, $drupal_table_name, $drupal_field_specs);
+  public function delegateAddPrimaryKey(DbalSchema $dbal_schema, $drupal_table_name, array $drupal_field_specs);
 
   /**
    * Adds a unique key.
@@ -600,7 +602,7 @@ interface DbalExtensionInterface {
    *   TRUE if the extension added the unique key, FALSE if it has to be
    *   handled by DBAL.
    */
-  public function delegateAddUniqueKey($drupal_table_name, $index_name, $drupal_field_specs);
+  public function delegateAddUniqueKey($drupal_table_name, $index_name, array $drupal_field_specs);
 
   /**
    * Adds an index.
@@ -664,7 +666,7 @@ interface DbalExtensionInterface {
    *   A string with the Drupal name of the table.
    * @param \Doctrine\DBAL\Schema\Schema $dbal_schema
    *   The DBAL schema object.
-   * @param array $drupal_table_specs
+   * @param array $drupal_table_spec
    *   A Drupal Schema API table definition array.
    *
    * @return $this
