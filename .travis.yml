@@ -107,5 +107,9 @@ script:
   - ../vendor/bin/phpunit tests/Drupal/KernelTests/Core/Entity/EntityTranslationTest.php
   - ../vendor/bin/phpunit modules/views/tests/src/Kernel/Handler/FilterStringTest.php
 
+after_script:
+  - cd $DRUPAL_PATH/modules/contrib/drudbal
+  - ../../../vendor/bin/phpcs
+
 notifications:
   email: false
