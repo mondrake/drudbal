@@ -104,3 +104,4 @@ Issue | Description   |
 tbd | Add tests for Upsert with default values |
 [2874499](https://www.drupal.org/node/2874499) | Test failures when db driver is set to not support transactions |
 [2875679](https://www.drupal.org/node/2875679) | BasicSyntaxTest::testConcatFields fails with contrib driver |
+[2879677](https://www.drupal.org/node/2879677) | Decouple getting table vs column comments in Schema |
