@@ -136,10 +136,10 @@ interface DbalExtensionInterface {
   /**
    * Retrieves an unique ID.
    *
-   * @param integer $existing_id
+   * @param int $existing_id
    *   (optional) Watermark ID.
    *
-   * @return integer
+   * @return int
    *   An integer number larger than any number returned by earlier calls and
    *   also larger than the $existing_id if one was passed in.
    */

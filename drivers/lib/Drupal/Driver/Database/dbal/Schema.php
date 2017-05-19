@@ -2,16 +2,12 @@
 
 namespace Drupal\Driver\Database\dbal;
 
-use Drupal\Core\Database\Query\Condition;
-use Drupal\Core\Database\SchemaException;
 use Drupal\Core\Database\SchemaObjectExistsException;
 use Drupal\Core\Database\SchemaObjectDoesNotExistException;
 use Drupal\Core\Database\Schema as DatabaseSchema;
 use Drupal\Component\Utility\Unicode;
 
-use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\Schema\Schema as DbalSchema;
-use Doctrine\DBAL\Schema\SchemaException as DBALSchemaException;
 use Doctrine\DBAL\Types\Type as DbalType;
 
 /**
@@ -69,7 +65,7 @@ class Schema extends DatabaseSchema {
   /**
    * Returns a fully prefixed table name from Drupal's {table} syntax.
    *
-   * @param string $drupal table
+   * @param string $drupal_table
    *   The table name in Drupal's syntax.
    *
    * @return string
@@ -105,7 +101,7 @@ class Schema extends DatabaseSchema {
     // Add columns.
     foreach ($table['fields'] as $field_name => $field) {
       $dbal_type = $this->getDbalColumnType($field);
-      $new_column = $new_table->addColumn($field_name, $dbal_type, $this->getDbalColumnOptions('createTable', $field_name, $dbal_type, $field));
+      $new_table->addColumn($field_name, $dbal_type, $this->getDbalColumnOptions('createTable', $field_name, $dbal_type, $field));
     }
 
     // Add primary key.
@@ -617,10 +613,17 @@ class Schema extends DatabaseSchema {
    */
   public function changeField($table, $field, $field_new, $spec, $keys_new = []) {
     if (!$this->fieldExists($table, $field)) {
-      throw new SchemaObjectDoesNotExistException(t("Cannot change the definition of field @table.@name: field doesn't exist.", ['@table' => $table, '@name' => $field]));
+      throw new SchemaObjectDoesNotExistException(t("Cannot change the definition of field @table.@name: field doesn't exist.", [
+        '@table' => $table,
+        '@name' => $field
+      ]));
     }
     if (($field != $field_new) && $this->fieldExists($table, $field_new)) {
-      throw new SchemaObjectExistsException(t("Cannot rename field @table.@name to @name_new: target field already exists.", ['@table' => $table, '@name' => $field, '@name_new' => $field_new]));
+      throw new SchemaObjectExistsException(t("Cannot rename field @table.@name to @name_new: target field already exists.", [
+        '@table' => $table,
+        '@name' => $field,
+        '@name_new' => $field_new,
+      ]));
     }
 
     $dbal_type = $this->getDbalColumnType($spec);
@@ -824,7 +827,7 @@ class Schema extends DatabaseSchema {
    * @return bool
    *   TRUE if no exceptions were raised.
    */
-  protected function dbalExecuteSchemaChange($to_schema) {
+  protected function dbalExecuteSchemaChange(DbalSchema $to_schema) {
     foreach ($this->dbalSchema()->getMigrateToSql($to_schema, $this->dbalPlatform) as $sql) {
       $this->connection->getDbalConnection()->exec($sql);
     }

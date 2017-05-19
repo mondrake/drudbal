@@ -12,4 +12,6 @@ use Drupal\Core\Database\Transaction as DatabaseTransaction;
  * code in Drupal\Driver\Database\dbal\DbalExtension\[dbal_driver_name]
  * classes and execution handed over to there.
  */
-class Transaction extends DatabaseTransaction { }
+class Transaction extends DatabaseTransaction {
+
+}

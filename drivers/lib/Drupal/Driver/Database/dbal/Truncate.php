@@ -18,7 +18,6 @@ class Truncate extends QueryTruncate {
    * {@inheritdoc}
    */
   public function execute() {
-    $dbal_connection = $this->connection->getDbalConnection();
     $dbal_extension = $this->connection->getDbalExtension();
 
     // Allow DBAL extension to process commands before a DDL TRUNCATE.
@@ -43,7 +42,6 @@ class Truncate extends QueryTruncate {
   public function __toString() {
     $comments = $this->connection->makeComment($this->comments);
     $dbal_connection = $this->connection->getDbalConnection();
-    $dbal_extension = $this->connection->getDbalExtension();
     $prefixed_table = $this->connection->getPrefixedTableName($this->table);
 
     // In most cases, TRUNCATE is not a transaction safe statement as it is a

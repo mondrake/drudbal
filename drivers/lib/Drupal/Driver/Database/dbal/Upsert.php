@@ -108,8 +108,7 @@ class Upsert extends QueryUpsert {
    * @return int
    *   The number of records updated (should be 1).
    */
-  protected function fallbackUpdate($insert_values) {
-    $comments = $this->connection->makeComment($this->comments);
+  protected function fallbackUpdate(array $insert_values) {
     $dbal_connection = $this->connection->getDbalConnection();
     $prefixed_table = $this->connection->getPrefixedTableName($this->table);
 
