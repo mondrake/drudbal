@@ -15,13 +15,6 @@ use Doctrine\DBAL\Driver\Mysqli\MysqliException;
 class MysqliExtension extends AbstractMySqlExtension {
 
   /**
-   * The Statement class to use for this extension.
-   *
-   * @var \Drupal\Core\Database\StatementInterface
-   */
-  protected $statementClass;
-
-  /**
    * Constructs a MysqliExtension object.
    *
    * @param \Drupal\Driver\Database\dbal\Connection $drudbal_connection

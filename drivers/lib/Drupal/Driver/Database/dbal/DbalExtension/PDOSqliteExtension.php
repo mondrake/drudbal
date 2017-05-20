@@ -25,7 +25,7 @@ use Doctrine\DBAL\Version as DbalVersion;
 /**
  * Driver specific methods for pdo_sqlite.
  */
-class PDOSqliteExtension implements DbalExtensionInterface {
+class PDOSqliteExtension extends AbstractExtension {
 
   /**
    * Minimum required Sqlite version.
@@ -84,27 +84,6 @@ class PDOSqliteExtension implements DbalExtensionInterface {
    * single quotes inside.
    */
   const SINGLE_QUOTE_IDENTIFIER_REPLACEMENT = ']]]]SINGLEQUOTEIDENTIFIERDRUDBAL[[[[';
-
-  /**
-   * The DruDbal connection.
-   *
-   * @var \Drupal\Driver\Database\dbal\Connection
-   */
-  protected $connection;
-
-  /**
-   * The actual DBAL connection.
-   *
-   * @var \Doctrine\DBAL\Connection
-   */
-  protected $dbalConnection;
-
-  /**
-   * The Statement class to use for this extension.
-   *
-   * @var \Drupal\Core\Database\StatementInterface
-   */
-  protected $statementClass;
 
   /**
    * Flag to indicate if the cleanup function in __destruct() should run.
@@ -182,12 +161,6 @@ class PDOSqliteExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function destroy() {
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function delegateClientVersion() {
     return $this->dbalConnection->getWrappedConnection()->getAttribute(\PDO::ATTR_CLIENT_VERSION);
   }
@@ -220,26 +193,6 @@ class PDOSqliteExtension implements DbalExtensionInterface {
     else {
       throw new DatabaseExceptionWrapper($message, 0, $e);
     }
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function getDbalConnection() {
-    return $this->dbalConnection;
-  }
-
-  /**
-   * Returns a fully prefixed table name from Drupal's {table} syntax.
-   *
-   * @param string $drupal table
-   *   The table name in Drupal's syntax.
-   *
-   * @return string
-   *   The fully prefixed table name to be used in the DBMS.
-   */
-  protected function tableName($drupal_table) {
-    return $this->connection->getPrefixedTableName($drupal_table);
   }
 
   /**
@@ -333,13 +286,6 @@ class PDOSqliteExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function postCreateDatabase($database_name) {
-    return $this;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function delegateMapConditionOperator($operator) {
     return isset(static::$sqliteConditionOperatorMap[$operator]) ? static::$sqliteConditionOperatorMap[$operator] : NULL;
   }
@@ -391,6 +337,7 @@ class PDOSqliteExtension implements DbalExtensionInterface {
    * {@inheritdoc}
    */
   public function delegateReleaseSavepointExceptionProcess(DbalDriverException $e) {
+    // @todo
   }
 
   /**
@@ -413,24 +360,6 @@ class PDOSqliteExtension implements DbalExtensionInterface {
   }
 
   /**
-   * Truncate delegated methods.
-   */
-
-  /**
-   * {@inheritdoc}
-   */
-  public function preTruncate($drupal_table_name) {
-    return $this;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function postTruncate($drupal_table_name) {
-    return $this;
-  }
-
-  /**
    * Install\Tasks delegated methods.
    */
 
@@ -442,6 +371,9 @@ class PDOSqliteExtension implements DbalExtensionInterface {
       'fail' => [],
       'pass' => [],
     ];
+
+    // @todo is DBAL creating the db on connect? if so, and file path is wrong,
+    // what happens?
 
     return $results;
   }
@@ -482,40 +414,6 @@ class PDOSqliteExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function delegateTableExists(&$result, $drupal_table_name) {
-    return FALSE;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function delegateFieldExists(&$result, $drupal_table_name, $field_name) {
-    return FALSE;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function alterCreateTableOptions(DbalTable $dbal_table, DbalSchema $dbal_schema, array &$drupal_table_specs, $drupal_table_name) {
-    return $this;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function delegateGetDbalColumnType(&$dbal_type, array $drupal_field_specs) {
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function alterDbalColumnOptions($context, array &$dbal_column_options, $dbal_type, array $drupal_field_specs, $field_name) {
-    return $this;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function getDbalEncodedStringForDDLSql($string) {
     // Encode single quotes.
     return str_replace('\'', self::SINGLE_QUOTE_IDENTIFIER_REPLACEMENT, $string);
@@ -546,34 +444,6 @@ class PDOSqliteExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function delegateAddField(&$primary_key_processed_by_extension, $drupal_table_name, $field_name, array $drupal_field_specs, array $keys_new_specs, array $dbal_column_options) {
-    return FALSE;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function delegateChangeField(&$primary_key_processed_by_extension, $drupal_table_name, $field_name, $field_new_name, array $drupal_field_new_specs, array $keys_new_specs, array $dbal_column_options) {
-    return FALSE;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function delegateFieldSetDefault($drupal_table_name, $field_name, $default) {
-    return FALSE;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function delegateFieldSetNoDefault($drupal_table_name, $field_name) {
-    return FALSE;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function delegateGetIndexName($drupal_table_name, $index_name, array $table_prefix_info) {
     return $table_prefix_info['schema'] . '_' . $table_prefix_info['table'] . '_' . $index_name;
   }
@@ -581,59 +451,8 @@ class PDOSqliteExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function delegateIndexExists(&$result, DbalSchema $dbal_schema, $drupal_table_name, $index_name) {
-    return FALSE;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function delegateAddPrimaryKey(DbalSchema $dbal_schema, $drupal_table_name, array $drupal_field_specs) {
-    return FALSE;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function delegateAddUniqueKey($drupal_table_name, $index_name, array $drupal_field_specs) {
-    return FALSE;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function delegateAddIndex($drupal_table_name, $index_name, array $drupal_field_specs, array $indexes_spec) {
-    return FALSE;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function delegateGetTableComment(DbalSchema $dbal_schema, $drupal_table_name) {
     throw new \RuntimeException('Table comments are not supported in SQlite.');
-  }
-
-  /**
-   * {@inheritdoc}
-   *
-   * @todo move to AbstractExtension, or to Schema with check if supported.
-   */
-  public function delegateGetColumnComment(DbalSchema $dbal_schema, $drupal_table_name, $column) {
-    return $dbal_schema->getTable($this->tableName($drupal_table_name))->getColumn($column)->getComment();
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function alterSetTableComment(&$comment, $drupal_table_name, DbalSchema $dbal_schema, array $drupal_table_spec) {
-    return $this;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function alterSetColumnComment(&$comment, $dbal_type, array $drupal_field_specs, $field_name) {
-    return $this;
   }
 
 }
