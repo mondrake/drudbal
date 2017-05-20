@@ -462,13 +462,40 @@ class PDOSqliteExtension extends AbstractExtension {
    * {@inheritdoc}
    */
   public function delegateChangeField(&$primary_key_processed_by_extension, $drupal_table_name, $field_name, $field_new_name, array $drupal_field_new_specs, array $keys_new_specs, array $dbal_column_options) {
-    $sql = 'ALTER TABLE {' . $drupal_table_name . '} CHANGE `' . $field_name . '` `' . $field_new_name . '` ' . $dbal_column_options['columnDefinition'];
-    if (!empty($keys_new_specs['primary key'])) {
-      $keys_sql = $this->createKeysSql(['primary key' => $keys_new_specs['primary key']]);
-      $sql .= ', ADD ' . $keys_sql[0];
-      $primary_key_processed_by_extension = TRUE;
+    $old_schema = $this->introspectSchema($drupal_table_name);
+    $new_schema = $old_schema;
+
+    // Map the old field to the new field.
+    if ($field_name != $field_new_name) {
+      $mapping[$field_new_name] = $field_name;
     }
-    $this->connection->query($sql);
+    else {
+      $mapping = [];
+    }
+
+    // Remove the previous definition and swap in the new one.
+    unset($new_schema['fields'][$field_name]);
+    $new_schema['fields'][$field_new_name] = $drupal_field_new_specs;
+
+    // Map the former indexes to the new column name.
+    $new_schema['primary key'] = $this->mapKeyDefinition($new_schema['primary key'], $mapping);
+    foreach (['unique keys', 'indexes'] as $k) {
+      foreach ($new_schema[$k] as &$key_definition) {
+        $key_definition = $this->mapKeyDefinition($key_definition, $mapping);
+      }
+    }
+
+    // Add in the keys from $keys_new.
+    if (isset($keys_new['primary key'])) {
+      $new_schema['primary key'] = $keys_new['primary key'];
+    }
+    foreach (['unique keys', 'indexes'] as $k) {
+      if (!empty($keys_new_specs[$k])) {
+        $new_schema[$k] = $keys_new_specs[$k] + $new_schema[$k];
+      }
+    }
+
+    $this->alterTable($drupal_table_name, $old_schema, $new_schema, $mapping);
     return TRUE;
   }
 
@@ -484,6 +511,168 @@ class PDOSqliteExtension extends AbstractExtension {
    */
   public function delegateGetTableComment(DbalSchema $dbal_schema, $drupal_table_name) {
     throw new \RuntimeException('Table comments are not supported in SQlite.');
+  }
+
+  /**
+   * Find out the schema of a table.
+   *
+   * This function uses introspection methods provided by the database to
+   * create a schema array. This is useful, for example, during update when
+   * the old schema is not available.
+   *
+   * @param $table
+   *   Name of the table.
+   *
+   * @return
+   *   An array representing the schema, from drupal_get_schema().
+   *
+   * @throws \Exception
+   *   If a column of the table could not be parsed.
+   */
+  protected function introspectSchema($table) {
+    $mapped_fields = array_flip($this->getFieldTypeMap());
+    $schema = [
+      'fields' => [],
+      'primary key' => [],
+      'unique keys' => [],
+      'indexes' => [],
+    ];
+
+    $info = $this->getPrefixInfo($table);
+    $result = $this->connection->query('PRAGMA ' . $info['schema'] . '.table_info(' . $info['table'] . ')');
+    foreach ($result as $row) {
+      if (preg_match('/^([^(]+)\((.*)\)$/', $row->type, $matches)) {
+        $type = $matches[1];
+        $length = $matches[2];
+      }
+      else {
+        $type = $row->type;
+        $length = NULL;
+      }
+      if (isset($mapped_fields[$type])) {
+        list($type, $size) = explode(':', $mapped_fields[$type]);
+        $schema['fields'][$row->name] = [
+          'type' => $type,
+          'size' => $size,
+          'not null' => !empty($row->notnull),
+          'default' => trim($row->dflt_value, "'"),
+        ];
+        if ($length) {
+          $schema['fields'][$row->name]['length'] = $length;
+        }
+        if ($row->pk) {
+          $schema['primary key'][] = $row->name;
+        }
+      }
+      else {
+        throw new \Exception("Unable to parse the column type " . $row->type);
+      }
+    }
+    $indexes = [];
+    $result = $this->connection->query('PRAGMA ' . $info['schema'] . '.index_list(' . $info['table'] . ')');
+    foreach ($result as $row) {
+      if (strpos($row->name, 'sqlite_autoindex_') !== 0) {
+        $indexes[] = [
+          'schema_key' => $row->unique ? 'unique keys' : 'indexes',
+          'name' => $row->name,
+        ];
+      }
+    }
+    foreach ($indexes as $index) {
+      $name = $index['name'];
+      // Get index name without prefix.
+      $index_name = substr($name, strlen($info['table']) + 1);
+      $result = $this->connection->query('PRAGMA ' . $info['schema'] . '.index_info(' . $name . ')');
+      foreach ($result as $row) {
+        $schema[$index['schema_key']][$index_name][] = $row->name;
+      }
+    }
+    return $schema;
+  }
+
+  /**
+   * Utility method: rename columns in an index definition according to a new mapping.
+   *
+   * @param $key_definition
+   *   The key definition.
+   * @param $mapping
+   *   The new mapping.
+   */
+  protected function mapKeyDefinition(array $key_definition, array $mapping) {
+    foreach ($key_definition as &$field) {
+      // The key definition can be an array($field, $length).
+      if (is_array($field)) {
+        $field = &$field[0];
+      }
+      if (isset($mapping[$field])) {
+        $field = $mapping[$field];
+      }
+    }
+    return $key_definition;
+  }
+
+  /**
+   * Create a table with a new schema containing the old content.
+   *
+   * As SQLite does not support ALTER TABLE (with a few exceptions) it is
+   * necessary to create a new table and copy over the old content.
+   *
+   * @param $table
+   *   Name of the table to be altered.
+   * @param $old_schema
+   *   The old schema array for the table.
+   * @param $new_schema
+   *   The new schema array for the table.
+   * @param $mapping
+   *   An optional mapping between the fields of the old specification and the
+   *   fields of the new specification. An associative array, whose keys are
+   *   the fields of the new table, and values can take two possible forms:
+   *     - a simple string, which is interpreted as the name of a field of the
+   *       old table,
+   *     - an associative array with two keys 'expression' and 'arguments',
+   *       that will be used as an expression field.
+   */
+  protected function alterTable($table, $old_schema, $new_schema, array $mapping = []) {
+    $i = 0;
+    do {
+      $new_table = $table . '_' . $i++;
+    } while ($this->tableExists($new_table));
+
+    $this->createTable($new_table, $new_schema);
+
+    // Build a SQL query to migrate the data from the old table to the new.
+    $select = $this->connection->select($table);
+
+    // Complete the mapping.
+    $possible_keys = array_keys($new_schema['fields']);
+    $mapping += array_combine($possible_keys, $possible_keys);
+
+    // Now add the fields.
+    foreach ($mapping as $field_alias => $field_source) {
+      // Just ignore this field (ie. use it's default value).
+      if (!isset($field_source)) {
+        continue;
+      }
+
+      if (is_array($field_source)) {
+        $select->addExpression($field_source['expression'], $field_alias, $field_source['arguments']);
+      }
+      else {
+        $select->addField($table, $field_source, $field_alias);
+      }
+    }
+
+    // Execute the data migration query.
+    $this->connection->insert($new_table)
+      ->from($select)
+      ->execute();
+
+    $old_count = $this->connection->query('SELECT COUNT(*) FROM {' . $table . '}')->fetchField();
+    $new_count = $this->connection->query('SELECT COUNT(*) FROM {' . $new_table . '}')->fetchField();
+    if ($old_count == $new_count) {
+      $this->dropTable($table);
+      $this->renameTable($new_table, $table);
+    }
   }
 
 }

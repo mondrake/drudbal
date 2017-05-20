@@ -868,6 +868,7 @@ class Schema extends DatabaseSchema {
     $default_prefix = $this->connection->tablePrefix();
     $default_prefix_length = strlen($default_prefix);
 
+    $tables = [];
     foreach ($this->dbalExtension->delegateListTableNames() as $table_name) {
       // Take into account tables that have an individual prefix.
       if (isset($individually_prefixed_tables[$table_name])) {
