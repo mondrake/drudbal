@@ -414,6 +414,23 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
+  public function delegatelistTableNames(){
+    try {
+      return $this->getDbalExtension()->getSchemaManager()->listTableNames();
+    }
+    catch (DbalDriverException $e) {
+      if ($e->getErrorCode() === 17) {
+        return $this->getDbalExtension()->getSchemaManager()->listTableNames();
+      }
+      else {
+        throw $e;
+      }
+    }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function getDbalEncodedStringForDDLSql($string) {
     // Encode single quotes.
     return str_replace('\'', self::SINGLE_QUOTE_IDENTIFIER_REPLACEMENT, $string);
@@ -439,6 +456,20 @@ class PDOSqliteExtension extends AbstractExtension {
 //      $dbal_column_definition = preg_replace("/ COMMENT (?:(?:'(?:\\\\\\\\)+'|'(?:[^'\\\\]|\\\\'?|'')*'))?/s", '', $dbal_column_definition);
 //    }
     return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateChangeField(&$primary_key_processed_by_extension, $drupal_table_name, $field_name, $field_new_name, array $drupal_field_new_specs, array $keys_new_specs, array $dbal_column_options) {
+    $sql = 'ALTER TABLE {' . $drupal_table_name . '} CHANGE `' . $field_name . '` `' . $field_new_name . '` ' . $dbal_column_options['columnDefinition'];
+    if (!empty($keys_new_specs['primary key'])) {
+      $keys_sql = $this->createKeysSql(['primary key' => $keys_new_specs['primary key']]);
+      $sql .= ', ADD ' . $keys_sql[0];
+      $primary_key_processed_by_extension = TRUE;
+    }
+    $this->connection->query($sql);
+    return TRUE;
   }
 
   /**

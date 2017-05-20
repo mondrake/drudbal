@@ -235,6 +235,13 @@ class AbstractExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
+  public function delegatelistTableNames(){
+    return $this->getDbalExtension()->getSchemaManager()->listTableNames();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function delegateTableExists(&$result, $drupal_table_name) {
     return FALSE;
   }
