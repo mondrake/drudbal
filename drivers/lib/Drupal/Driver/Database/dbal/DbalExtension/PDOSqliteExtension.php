@@ -416,11 +416,11 @@ class PDOSqliteExtension extends AbstractExtension {
    */
   public function delegatelistTableNames(){
     try {
-      return $this->getDbalExtension()->getSchemaManager()->listTableNames();
+      return $this->getDbalConnection()->getSchemaManager()->listTableNames();
     }
     catch (DbalDriverException $e) {
       if ($e->getErrorCode() === 17) {
-        return $this->getDbalExtension()->getSchemaManager()->listTableNames();
+        return $this->getDbalConnection()->getSchemaManager()->listTableNames();
       }
       else {
         throw $e;
