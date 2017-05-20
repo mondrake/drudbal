@@ -396,7 +396,7 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
         // installer.
         $results['fail'][] = t('Creation of database %database failed. The server reports the following message: %error.', [
           '%database' => $database,
-          '%error' => $exc->getMessage()
+          '%error' => $exc->getMessage(),
         ]);
       }
       return $results;
@@ -404,7 +404,7 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
 
     // Database connection failed for some other reasons. Report.
     $results['fail'][] = t('Failed to connect to your database server. The server reports the following message: %error.<ul><li>Is the database server running?</li><li>Does the database exist or does the database user have sufficient privileges to create the database?</li><li>Have you entered the correct database name?</li><li>Have you entered the correct username and password?</li><li>Have you entered the correct database hostname?</li></ul>', [
-      '%error' => $e->getMessage()
+      '%error' => $e->getMessage(),
     ]);
     return $results;
   }
@@ -440,7 +440,8 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
       $version = preg_replace('/^\D+([\d.]+).*/', '$1', $version);
       if (version_compare($version, self::MYSQLND_MINIMUM_VERSION, '<')) {
         $results['fail'][] = t("The MySQLnd driver version %version is less than the minimum required version. Upgrade to MySQLnd version %mysqlnd_minimum_version or up, or alternatively switch mysql drivers to libmysqlclient version %libmysqlclient_minimum_version or up.", [
-          '%version' => $version, '%mysqlnd_minimum_version' => self::MYSQLND_MINIMUM_VERSION,
+          '%version' => $version,
+          '%mysqlnd_minimum_version' => self::MYSQLND_MINIMUM_VERSION,
           '%libmysqlclient_minimum_version' => self::LIBMYSQLCLIENT_MINIMUM_VERSION,
         ]);
       }
@@ -449,7 +450,8 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
       // The libmysqlclient driver supports utf8mb4 starting at version 5.5.3.
       if (version_compare($version, self::LIBMYSQLCLIENT_MINIMUM_VERSION, '<')) {
         $results['fail'][] = t("The libmysqlclient driver version %version is less than the minimum required version. Upgrade to libmysqlclient version %libmysqlclient_minimum_version or up, or alternatively switch mysql drivers to MySQLnd version %mysqlnd_minimum_version or up.", [
-          '%version' => $version, '%libmysqlclient_minimum_version' => self::LIBMYSQLCLIENT_MINIMUM_VERSION,
+          '%version' => $version,
+          '%libmysqlclient_minimum_version' => self::LIBMYSQLCLIENT_MINIMUM_VERSION,
           '%mysqlnd_minimum_version' => self::MYSQLND_MINIMUM_VERSION,
         ]);
       }
