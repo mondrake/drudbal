@@ -562,7 +562,7 @@ class PDOSqliteExtension extends AbstractExtension {
       'indexes' => [],
     ];
 
-    $info = $this->getPrefixInfo($table);
+    $info = $this->connection->schema()->getPrefixInfoPublic($table);
     $result = $this->connection->query('PRAGMA ' . $info['schema'] . '.table_info(' . $info['table'] . ')');
     foreach ($result as $row) {
       if (preg_match('/^([^(]+)\((.*)\)$/', $row->type, $matches)) {
@@ -660,9 +660,9 @@ class PDOSqliteExtension extends AbstractExtension {
     $i = 0;
     do {
       $new_table = $table . '_' . $i++;
-    } while ($this->tableExists($new_table));
+    } while ($this->connection->schema()->tableExists($new_table));
 
-    $this->createTable($new_table, $new_schema);
+    $this->connection->schema()->createTable($new_table, $new_schema);
 
     // Build a SQL query to migrate the data from the old table to the new.
     $select = $this->connection->select($table);
@@ -694,8 +694,8 @@ class PDOSqliteExtension extends AbstractExtension {
     $old_count = $this->connection->query('SELECT COUNT(*) FROM {' . $table . '}')->fetchField();
     $new_count = $this->connection->query('SELECT COUNT(*) FROM {' . $new_table . '}')->fetchField();
     if ($old_count == $new_count) {
-      $this->dropTable($table);
-      $this->renameTable($new_table, $table);
+      $this->connection->schema()->dropTable($table);
+      $this->connection->schema()->renameTable($new_table, $table);
     }
   }
 
