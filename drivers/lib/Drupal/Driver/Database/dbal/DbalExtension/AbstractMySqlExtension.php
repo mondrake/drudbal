@@ -19,7 +19,7 @@ use Doctrine\DBAL\Version as DbalVersion;
 /**
  * Abstract DBAL Extension for MySql drivers.
  */
-abstract class AbstractMySqlExtension implements DbalExtensionInterface {
+abstract class AbstractMySqlExtension extends AbstractExtension {
 
   /**
    * Minimum required mysql version.
@@ -104,20 +104,6 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
   const DEFAULT_COLLATION = 'utf8mb4_general_ci';
 
   /**
-   * The DruDbal connection.
-   *
-   * @var \Drupal\Driver\Database\dbal\Connection
-   */
-  protected $connection;
-
-  /**
-   * The actual DBAL connection.
-   *
-   * @var \Doctrine\DBAL\Connection
-   */
-  protected $dbalConnection;
-
-  /**
    * Flag to indicate if the cleanup function in __destruct() should run.
    *
    * @var bool
@@ -144,32 +130,6 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
     if ($this->needsCleanup) {
       $this->nextIdDelete();
     }
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function destroy() {
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function getDbalConnection() {
-    return $this->dbalConnection;
-  }
-
-  /**
-   * Returns a fully prefixed table name from Drupal's {table} syntax.
-   *
-   * @param string $drupal_table
-   *   The table name in Drupal's syntax.
-   *
-   * @return string
-   *   The fully prefixed table name to be used in the DBMS.
-   */
-  protected function tableName($drupal_table) {
-    return $this->connection->getPrefixedTableName($drupal_table);
   }
 
   /**
@@ -248,25 +208,10 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function preCreateDatabase($database_name) {
-    return $this;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function postCreateDatabase($database_name) {
     // Set the database as active.
     $this->dbalConnection->exec("USE $database_name");
     return $this;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function delegateMapConditionOperator($operator) {
-    // We don't want to override any of the defaults for MySql.
-    return NULL;
   }
 
   /**
@@ -361,24 +306,6 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
   }
 
   /**
-   * Insert delegated methods.
-   */
-
-  /**
-   * {@inheritdoc}
-   */
-  public function getAddDefaultsExplicitlyOnInsert() {
-    return TRUE;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function delegateDefaultsOnlyInsertSql(&$sql, $drupal_table_name) {
-    return FALSE;
-  }
-
-  /**
    * Truncate delegated methods.
    */
 
@@ -469,7 +396,7 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
         // installer.
         $results['fail'][] = t('Creation of database %database failed. The server reports the following message: %error.', [
           '%database' => $database,
-          '%error' => $exc->getMessage()
+          '%error' => $exc->getMessage(),
         ]);
       }
       return $results;
@@ -477,7 +404,7 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
 
     // Database connection failed for some other reasons. Report.
     $results['fail'][] = t('Failed to connect to your database server. The server reports the following message: %error.<ul><li>Is the database server running?</li><li>Does the database exist or does the database user have sufficient privileges to create the database?</li><li>Have you entered the correct database name?</li><li>Have you entered the correct username and password?</li><li>Have you entered the correct database hostname?</li></ul>', [
-      '%error' => $e->getMessage()
+      '%error' => $e->getMessage(),
     ]);
     return $results;
   }
@@ -513,7 +440,8 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
       $version = preg_replace('/^\D+([\d.]+).*/', '$1', $version);
       if (version_compare($version, self::MYSQLND_MINIMUM_VERSION, '<')) {
         $results['fail'][] = t("The MySQLnd driver version %version is less than the minimum required version. Upgrade to MySQLnd version %mysqlnd_minimum_version or up, or alternatively switch mysql drivers to libmysqlclient version %libmysqlclient_minimum_version or up.", [
-          '%version' => $version, '%mysqlnd_minimum_version' => self::MYSQLND_MINIMUM_VERSION,
+          '%version' => $version,
+          '%mysqlnd_minimum_version' => self::MYSQLND_MINIMUM_VERSION,
           '%libmysqlclient_minimum_version' => self::LIBMYSQLCLIENT_MINIMUM_VERSION,
         ]);
       }
@@ -522,7 +450,8 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
       // The libmysqlclient driver supports utf8mb4 starting at version 5.5.3.
       if (version_compare($version, self::LIBMYSQLCLIENT_MINIMUM_VERSION, '<')) {
         $results['fail'][] = t("The libmysqlclient driver version %version is less than the minimum required version. Upgrade to libmysqlclient version %libmysqlclient_minimum_version or up, or alternatively switch mysql drivers to MySQLnd version %mysqlnd_minimum_version or up.", [
-          '%version' => $version, '%libmysqlclient_minimum_version' => self::LIBMYSQLCLIENT_MINIMUM_VERSION,
+          '%version' => $version,
+          '%libmysqlclient_minimum_version' => self::LIBMYSQLCLIENT_MINIMUM_VERSION,
           '%mysqlnd_minimum_version' => self::MYSQLND_MINIMUM_VERSION,
         ]);
       }
@@ -534,13 +463,6 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
   /**
    * Schema delegated methods.
    */
-
-  /**
-   * {@inheritdoc}
-   */
-  public function alterDefaultSchema(&$default_schema) {
-    return $this;
-  }
 
   /**
    * {@inheritdoc}
@@ -712,13 +634,6 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function delegateGetIndexName($drupal_table_name, $index_name, array $table_prefix_info) {
-    return $index_name;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function delegateIndexExists(&$result, DbalSchema $dbal_schema, $drupal_table_name, $index_name) {
     if ($index_name == 'PRIMARY') {
       $result = $dbal_schema->getTable($this->tableName($drupal_table_name))->hasPrimaryKey();
@@ -788,15 +703,6 @@ abstract class AbstractMySqlExtension implements DbalExtensionInterface {
       ->setParameter(1, $this->tableName($drupal_table_name));
     $comment = $dbal_query->execute()->fetchColumn();
     return $comment;
-  }
-
-  /**
-   * {@inheritdoc}
-   *
-   * @todo move to AbstractExtension, or to Schema with check if supported.
-   */
-  public function delegateGetColumnComment(DbalSchema $dbal_schema, $drupal_table_name, $column) {
-    return $dbal_schema->getTable($this->tableName($drupal_table_name))->getColumn($column)->getComment();
   }
 
   /**

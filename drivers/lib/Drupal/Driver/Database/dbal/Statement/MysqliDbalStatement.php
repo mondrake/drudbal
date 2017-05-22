@@ -109,11 +109,11 @@ class MysqliDbalStatement implements \IteratorAggregate, StatementInterface {
     }
 
     $statement = strtr($statement, [
-       '\\\\' => "]]]]DOUBLESLASHESDRUDBAL[[[[",  // @todo SQLParserUtils::getPlaceholderPositions issue
+       '\\\\' => "]]]]DOUBLESLASHESDRUDBAL[[[[",  // @todo remove once DBAL 2.5.13 is out
     ]);
     list($positional_statement, $positional_params, $positional_types) = SQLParserUtils::expandListParameters($statement, $params, []);
     $positional_statement = strtr($positional_statement, [
-       "]]]]DOUBLESLASHESDRUDBAL[[[[" => '\\\\',  // @todo SQLParserUtils::getPlaceholderPositions issue
+       "]]]]DOUBLESLASHESDRUDBAL[[[[" => '\\\\',  // @todo remove once DBAL 2.5.13 is out
     ]);
     $this->_conn = $dbh->getDbalConnection()->getWrappedConnection()->getWrappedResourceHandle();
     $this->_stmt = $this->_conn->prepare($positional_statement);
@@ -133,11 +133,11 @@ class MysqliDbalStatement implements \IteratorAggregate, StatementInterface {
    * {@inheritdoc}
    */
   public function execute($args = [], $options = []) {
-    $statement = strtr($this->queryString, [  // @todo SQLParserUtils::getPlaceholderPositions issue
+    $statement = strtr($this->queryString, [  // @todo remove once DBAL 2.5.13 is out
        '\\\\' => "]]]]DOUBLESLASHESDRUDBAL[[[[",
     ]);
     list($positional_statement, $positional_args, $positional_types) = SQLParserUtils::expandListParameters($statement, $args, []);
-    $positional_statement = strtr($positional_statement, [  // @todo SQLParserUtils::getPlaceholderPositions issue
+    $positional_statement = strtr($positional_statement, [  // @todo remove once DBAL 2.5.13 is out
        "]]]]DOUBLESLASHESDRUDBAL[[[[" => '\\\\',
     ]);
 

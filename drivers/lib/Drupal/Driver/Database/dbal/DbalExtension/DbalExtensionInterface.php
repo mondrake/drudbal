@@ -341,6 +341,14 @@ interface DbalExtensionInterface {
   public function alterDefaultSchema(&$default_schema);
 
   /**
+   * Returns a list of all tables in the current database.
+   *
+   * @return string[]
+   *   An array of table names (as retrieved from the DBMS).
+   */
+  public function delegateListTableNames();
+
+  /**
    * Checks if a table exists.
    *
    * @param bool $result
