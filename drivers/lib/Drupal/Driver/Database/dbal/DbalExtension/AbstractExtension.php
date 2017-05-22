@@ -360,11 +360,13 @@ class AbstractExtension implements DbalExtensionInterface {
 
   /**
    * {@inheritdoc}
-   *
-   * @todo check if supported.
    */
   public function delegateGetColumnComment(DbalSchema $dbal_schema, $drupal_table_name, $column) {
-    return $dbal_schema->getTable($this->tableName($drupal_table_name))->getColumn($column)->getComment();
+    if ($this->getDbalConnection()->getDatabasePlatform()->supportsInlineColumnComments()) {
+      return $dbal_schema->getTable($this->tableName($drupal_table_name))->getColumn($column)->getComment();
+    else {
+      throw new \RuntimeException("Column comments are not supported for '" . $this->dbalConnection->getDriver()->getName() . "''");
+    }
   }
 
   /**
