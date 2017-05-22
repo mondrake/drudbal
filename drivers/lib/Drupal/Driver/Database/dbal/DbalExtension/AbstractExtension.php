@@ -235,7 +235,7 @@ class AbstractExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function delegatelistTableNames(){
+  public function delegateListTableNames(){
     return $this->getDbalConnection()->getSchemaManager()->listTableNames();
   }
 

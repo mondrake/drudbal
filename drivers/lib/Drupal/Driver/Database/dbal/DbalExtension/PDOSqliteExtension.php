@@ -414,7 +414,7 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegatelistTableNames(){
+  public function delegateListTableNames(){
     try {
       return $this->getDbalConnection()->getSchemaManager()->listTableNames();
     }

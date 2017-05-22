@@ -346,7 +346,7 @@ interface DbalExtensionInterface {
    * @return string[]
    *   An array of table names (as retrieved from the DBMS).
    */
-  public function delegatelistTableNames();
+  public function delegateListTableNames();
 
   /**
    * Checks if a table exists.
