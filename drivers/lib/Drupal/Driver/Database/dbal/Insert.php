@@ -31,6 +31,7 @@ class Insert extends QueryInsert {
       $insert_transaction = $this->connection->startTransaction();
     }
 
+    $last_insert_id = NULL;
     if (empty($this->fromQuery)) {
       // Deal with a single INSERT or a bulk INSERT.
       if ($this->insertValues) {
@@ -103,6 +104,8 @@ class Insert extends QueryInsert {
     $dbal_connection = $this->connection->getDbalConnection();
 
     $sql = '';
+
+    // Use special syntax, if available, for an insert of only default values.
     if (count($this->insertFields) === 0 && empty($this->fromQuery) && $this->connection->getDbalExtension()->delegateDefaultsOnlyInsertSql($sql, $this->table)) {
       return $comments . $sql;
     }
