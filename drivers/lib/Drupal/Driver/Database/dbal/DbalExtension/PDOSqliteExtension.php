@@ -502,6 +502,30 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
+  public function delegateFieldSetDefault($drupal_table_name, $field_name, $default) {
+    $old_schema = $this->introspectSchema($drupal_table_name);
+    $new_schema = $old_schema;
+
+    $new_schema['fields'][$field_name]['default'] = $default;
+    $this->alterTable($drupal_table_name, $old_schema, $new_schema);
+    return TRUE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateFieldSetNoDefault($drupal_table_name, $field_name) {
+    $old_schema = $this->introspectSchema($drupal_table_name);
+    $new_schema = $old_schema;
+
+    unset($new_schema['fields'][$field_name]['default']);
+    $this->alterTable($drupal_table_name, $old_schema, $new_schema);
+    return TRUE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function delegateGetIndexName($drupal_table_name, $index_name, array $table_prefix_info) {
     return $table_prefix_info['schema'] . '_' . $table_prefix_info['table'] . '_' . $index_name;
   }
@@ -673,6 +697,53 @@ class PDOSqliteExtension extends AbstractExtension {
       $this->dropTable($table);
       $this->renameTable($new_table, $table);
     }
+  }
+
+  /**
+   * This maps a generic data type in combination with its data size
+   * to the engine-specific data type.
+   */
+  protected function getFieldTypeMap() {
+    // Put :normal last so it gets preserved by array_flip. This makes
+    // it much easier for modules (such as schema.module) to map
+    // database types back into schema types.
+    // $map does not use drupal_static as its value never changes.
+    static $map = [
+      'varchar_ascii:normal' => 'VARCHAR',
+
+      'varchar:normal'  => 'VARCHAR',
+      'char:normal'     => 'CHAR',
+
+      'text:tiny'       => 'TEXT',
+      'text:small'      => 'TEXT',
+      'text:medium'     => 'TEXT',
+      'text:big'        => 'TEXT',
+      'text:normal'     => 'TEXT',
+
+      'serial:tiny'     => 'INTEGER',
+      'serial:small'    => 'INTEGER',
+      'serial:medium'   => 'INTEGER',
+      'serial:big'      => 'INTEGER',
+      'serial:normal'   => 'INTEGER',
+
+      'int:tiny'        => 'INTEGER',
+      'int:small'       => 'INTEGER',
+      'int:medium'      => 'INTEGER',
+      'int:big'         => 'INTEGER',
+      'int:normal'      => 'INTEGER',
+
+      'float:tiny'      => 'FLOAT',
+      'float:small'     => 'FLOAT',
+      'float:medium'    => 'FLOAT',
+      'float:big'       => 'FLOAT',
+      'float:normal'    => 'FLOAT',
+
+      'numeric:normal'  => 'NUMERIC',
+
+      'blob:big'        => 'BLOB',
+      'blob:normal'     => 'BLOB',
+    ];
+    return $map;
   }
 
 }
