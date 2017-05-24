@@ -444,6 +444,12 @@ class PDOSqliteExtension extends AbstractExtension {
     // @see https://github.com/doctrine/dbal/issues/2380
     // @todo remove the version check once DBAL 2.6.0 is out.
     if (isset($drupal_field_specs['type']) && in_array($drupal_field_specs['type'], ['float', 'numeric', 'serial', 'int']) && !empty($drupal_field_specs['unsigned']) && (bool) $drupal_field_specs['unsigned'] === TRUE) {
+//if (strpos($field_name, '_column') !== FALSE) // @todo work it out better
+//{
+  $dbal_column_definition = preg_replace('/^(DOUBLE PRECISION |[A-Z]+ )(?!:UNSIGNED)/', "$0UNSIGNED ", $dbal_column_definition);
+  $dbal_column_definition = preg_replace('/^(NUMERIC)(\(.+\) )/', "$1 UNSIGNED$2", $dbal_column_definition);
+  $dbal_column_definition = preg_replace('/UNSIGNED UNSIGNED/', 'UNSIGNED', $dbal_column_definition);
+//}
       $dbal_column_definition .= ' CHECK (' . $field_name . '>= 0)';
     }
     // @todo added to avoid edge cases; maybe this can be overridden in alterDbalColumnOptions
@@ -640,6 +646,7 @@ class PDOSqliteExtension extends AbstractExtension {
     $info = $this->connection->schema()->getPrefixInfoPublic($table);
     $result = $this->connection->query('PRAGMA ' . $info['schema'] . '.table_info(' . $info['table'] . ')');
     foreach ($result as $row) {
+//debug($row);
       if (preg_match('/^([^(]+)\((.*)\)$/', $row->type, $matches)) {
         $type = $matches[1];
         $length = $matches[2];
@@ -648,7 +655,7 @@ class PDOSqliteExtension extends AbstractExtension {
         $type = $row->type;
         $length = NULL;
       }
-      $type = preg_replace('/ UNSIGNED/', '', $type);
+      $type = preg_replace('/ UNSIGNED/', '', $type); // @todo this was added to avoid test failure, not sure this is correct
       if (isset($mapped_fields[$type])) {
         list($type, $size) = explode(':', $mapped_fields[$type]);
         $schema['fields'][$row->name] = [
@@ -665,6 +672,11 @@ class PDOSqliteExtension extends AbstractExtension {
         }
         if ($row->pk) {
           $schema['primary key'][] = $row->name;
+        }
+        // @todo this was added to avoid test failure, not sure this is correct
+//        if (preg_match('/ CHECK \\((?:.*)>= 0\\)/', $row->type, $matches)) {
+        if (preg_match('/ UNSIGNED/', $row->type, $matches)) {
+          $schema['fields'][$row->name]['unsigned'] = TRUE;
         }
       }
       else {
