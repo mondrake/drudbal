@@ -667,9 +667,9 @@ if (strpos($field_name, '_column') !== FALSE) // @todo work it out better
           'not null' => !empty($row->notnull),
           'default' => trim($row->dflt_value, "'"),
         ];
-        if ($row->pk) { // @todo this was added to avoid test failure, not sure this is correct
-          $schema['fields'][$row->name]['not null'] = FALSE;
-        }
+//        if ($row->pk) { // @todo this was added to avoid test failure, not sure this is correct
+//          $schema['fields'][$row->name]['not null'] = FALSE;
+//        }
         if ($length) {
           $schema['fields'][$row->name]['length'] = $length;
         }
