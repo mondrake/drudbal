@@ -440,20 +440,16 @@ class PDOSqliteExtension extends AbstractExtension {
    * {@inheritdoc}
    */
   public function alterDbalColumnDefinition($context, &$dbal_column_definition, array $dbal_column_options, $dbal_type, array $drupal_field_specs, $field_name) {
-    // DBAL does not support unsigned float/numeric columns.
-    // @see https://github.com/doctrine/dbal/issues/2380
-    // @todo remove the version check once DBAL 2.6.0 is out.
     if (isset($drupal_field_specs['type']) && in_array($drupal_field_specs['type'], ['float', 'numeric', 'serial', 'int']) && !empty($drupal_field_specs['unsigned']) && (bool) $drupal_field_specs['unsigned'] === TRUE) {
-if (strpos($field_name, '_column') !== FALSE) // @todo work it out better
+/*if (strpos($field_name, '_column') !== FALSE) // @todo work it out better
 {
   $dbal_column_definition = preg_replace('/^(DOUBLE PRECISION |[A-Z]+ )(?!:UNSIGNED)/', "$0UNSIGNED ", $dbal_column_definition);
   $dbal_column_definition = preg_replace('/^(NUMERIC)(\(.+\) )/', "$1 UNSIGNED$2", $dbal_column_definition);
   $dbal_column_definition = preg_replace('/UNSIGNED UNSIGNED/', 'UNSIGNED', $dbal_column_definition);
-}
+}*/
       $dbal_column_definition .= ' CHECK (' . $field_name . '>= 0)';
     }
     // @todo added to avoid edge cases; maybe this can be overridden in alterDbalColumnOptions
-//if (in_array($field_name, ['test_field'])) debug([$field_name, var_export($drupal_field_specs, TRUE)]);
     if (array_key_exists('default', $drupal_field_specs) && $drupal_field_specs['default'] === '') {
       $dbal_column_definition = preg_replace('/DEFAULT (?!:\'\')/', "$0 ''", $dbal_column_definition);
     }
@@ -473,39 +469,62 @@ if (strpos($field_name, '_column') !== FALSE) // @todo work it out better
    * {@inheritdoc}
    */
   public function delegateAddField(&$primary_key_processed_by_extension, $drupal_table_name, $field_name, array $drupal_field_specs, array $keys_new_specs, array $dbal_column_options) {
-    // We cannot add the field directly. Use the slower table alteration
-    // method, starting from the old schema.
-    $old_schema = $this->introspectSchema($drupal_table_name);
-    $new_schema = $old_schema;
+    // SQLite doesn't have a full-featured ALTER TABLE statement. It only
+    // supports adding new fields to a table, in some simple cases. In most
+    // cases, we have to create a new table and copy the data over.
+    if (empty($keys_new_specs) && (empty($drupal_field_specs['not null']) || isset($drupal_field_specs['default']))) {
+      // When we don't have to create new keys and we are not creating a
+      // NOT NULL column without a default value, we can use the quicker version.
+      $query = 'ALTER TABLE {' . $drupal_table_name . '} ADD ' . $this->createFieldSql($field_name, $this->processField($drupal_field_specs));
+      $this->connection->query($query);
 
-    // Add the new field.
-    $new_schema['fields'][$field_name] = $drupal_field_specs;
-
-    // Build the mapping between the old fields and the new fields.
-    $mapping = [];
-    if (isset($drupal_field_specs['initial'])) {
-      // If we have a initial value, copy it over.
-      $mapping[$field_name] = [
-        'expression' => ':newfieldinitial',
-        'arguments' => [':newfieldinitial' => $drupal_field_specs['initial']],
-      ];
-    }
-    elseif (isset($drupal_field_specs['initial_from_field'])) {
-      // If we have a initial value, copy it over.
-      $mapping[$field_name] = [
-        'expression' => $drupal_field_specs['initial_from_field'],
-        'arguments' => [],
-      ];
+      // Apply the initial value if set.
+      if (isset($drupal_field_specs['initial'])) {
+        $this->connection->update($drupal_table_name)
+          ->fields([$field_name => $drupal_field_specs['initial']])
+          ->execute();
+      }
+      if (isset($drupal_field_specs['initial_from_field'])) {
+        $this->connection->update($drupal_table_name)
+          ->expression($field_name, $drupal_field_specs['initial_from_field'])
+          ->execute();
+      }
     }
     else {
-      // Else use the default of the field.
-      $mapping[$field_name] = NULL;
+      // We cannot add the field directly. Use the slower table alteration
+      // method, starting from the old schema.
+      $old_schema = $this->introspectSchema($drupal_table_name);
+      $new_schema = $old_schema;
+
+      // Add the new field.
+      $new_schema['fields'][$field_name] = $drupal_field_specs;
+
+      // Build the mapping between the old fields and the new fields.
+      $mapping = [];
+      if (isset($drupal_field_specs['initial'])) {
+        // If we have a initial value, copy it over.
+        $mapping[$field_name] = [
+          'expression' => ':newfieldinitial',
+          'arguments' => [':newfieldinitial' => $drupal_field_specs['initial']],
+        ];
+      }
+      elseif (isset($drupal_field_specs['initial_from_field'])) {
+        // If we have a initial value, copy it over.
+        $mapping[$field_name] = [
+          'expression' => $drupal_field_specs['initial_from_field'],
+          'arguments' => [],
+        ];
+      }
+      else {
+        // Else use the default of the field.
+        $mapping[$field_name] = NULL;
+      }
+
+      // Add the new indexes.
+      $new_schema += $keys_new_specs;
+
+      $this->alterTable($drupal_table_name, $old_schema, $new_schema, $mapping);
     }
-
-    // Add the new indexes.
-    $new_schema += $keys_new_specs;
-
-    $this->alterTable($drupal_table_name, $old_schema, $new_schema, $mapping);
     return TRUE;
   }
 
@@ -513,9 +532,6 @@ if (strpos($field_name, '_column') !== FALSE) // @todo work it out better
    * {@inheritdoc}
    */
   public function delegateDropField($drupal_table_name, $field_name) {
-    // @todo readd possibility to use ALTER TABLE like in sqlite core driver;
-    // check what is DBAL actually doing
-
     $old_schema = $this->introspectSchema($drupal_table_name);
     $new_schema = $old_schema;
 
@@ -649,7 +665,6 @@ if (strpos($field_name, '_column') !== FALSE) // @todo work it out better
     $info = $this->connection->schema()->getPrefixInfoPublic($table);
     $result = $this->connection->query('PRAGMA ' . $info['schema'] . '.table_info(' . $info['table'] . ')');
     foreach ($result as $row) {
-//debug($row);
       if (preg_match('/^([^(]+)\((.*)\)$/', $row->type, $matches)) {
         $type = $matches[1];
         $length = $matches[2];
@@ -667,9 +682,9 @@ if (strpos($field_name, '_column') !== FALSE) // @todo work it out better
           'not null' => !empty($row->notnull),
           'default' => trim($row->dflt_value, "'"),
         ];
-//        if ($row->pk) { // @todo this was added to avoid test failure, not sure this is correct
-//          $schema['fields'][$row->name]['not null'] = FALSE;
-//        }
+        if ($row->pk) { // @todo this was added to avoid test failure, not sure this is correct
+          $schema['fields'][$row->name]['not null'] = FALSE;
+        }
         if ($length) {
           $schema['fields'][$row->name]['length'] = $length;
         }
@@ -677,7 +692,6 @@ if (strpos($field_name, '_column') !== FALSE) // @todo work it out better
           $schema['primary key'][] = $row->name;
         }
         // @todo this was added to avoid test failure, not sure this is correct
-//        if (preg_match('/ CHECK \\((?:.*)>= 0\\)/', $row->type, $matches)) {
         if (preg_match('/ UNSIGNED/', $row->type, $matches)) {
           $schema['fields'][$row->name]['unsigned'] = TRUE;
         }
@@ -830,7 +844,7 @@ if (strpos($field_name, '_column') !== FALSE) // @todo work it out better
       'float:small'     => 'DOUBLE PRECISION',
       'float:medium'    => 'DOUBLE PRECISION',
       'float:big'       => 'DOUBLE PRECISION',
-      'float:normal'    => 'DOUBLE PRECISION',
+      'float:normal'    => 'FLOAT', // @todo check!!
 
       'numeric:normal'  => 'NUMERIC',
 
@@ -838,6 +852,97 @@ if (strpos($field_name, '_column') !== FALSE) // @todo work it out better
       'blob:normal'     => 'BLOB',
     ];
     return $map;
+  }
+
+  /**
+   * Set database-engine specific properties for a field.
+   *
+   * @param $field
+   *   A field description array, as specified in the schema documentation.
+   */
+  protected function processField($field) {
+    if (!isset($field['size'])) {
+      $field['size'] = 'normal';
+    }
+
+    // Set the correct database-engine specific datatype.
+    // In case one is already provided, force it to uppercase.
+    if (isset($field['sqlite_type'])) {
+      $field['sqlite_type'] = Unicode::strtoupper($field['sqlite_type']);
+    }
+    else {
+      $map = $this->getFieldTypeMap();
+      $field['sqlite_type'] = $map[$field['type'] . ':' . $field['size']];
+
+      // Numeric fields with a specified scale have to be stored as floats.
+      if ($field['sqlite_type'] === 'NUMERIC' && isset($field['scale'])) {
+        $field['sqlite_type'] = 'FLOAT';
+      }
+    }
+
+    if (isset($field['type']) && $field['type'] == 'serial') {
+      $field['auto_increment'] = TRUE;
+    }
+
+    return $field;
+  }
+
+  /**
+   * Create an SQL string for a field to be used in table creation or alteration.
+   *
+   * Before passing a field out of a schema definition into this function it has
+   * to be processed by db_processField().
+   *
+   * @param $name
+   *    Name of the field.
+   * @param $spec
+   *    The field specification, as per the schema data structure format.
+   */
+  protected function createFieldSql($name, $spec) {
+    if (!empty($spec['auto_increment'])) {
+      $sql = $name . " INTEGER PRIMARY KEY AUTOINCREMENT";
+      if (!empty($spec['unsigned'])) {
+        $sql .= ' CHECK (' . $name . '>= 0)';
+      }
+    }
+    else {
+      $sql = $name . ' ' . $spec['sqlite_type'];
+
+      if (in_array($spec['sqlite_type'], ['VARCHAR', 'TEXT'])) {
+        if (isset($spec['length'])) {
+          $sql .= '(' . $spec['length'] . ')';
+        }
+
+        if (isset($spec['binary']) && $spec['binary'] === FALSE) {
+          $sql .= ' COLLATE NOCASE_UTF8';
+        }
+      }
+
+      if (isset($spec['not null'])) {
+        if ($spec['not null']) {
+          $sql .= ' NOT NULL';
+        }
+        else {
+          $sql .= ' NULL';
+        }
+      }
+
+      if (!empty($spec['unsigned'])) {
+        $sql .= ' CHECK (' . $name . '>= 0)';
+      }
+
+      if (isset($spec['default'])) {
+        if (is_string($spec['default'])) {
+          $spec['default'] = $this->connection->quote($spec['default']);
+        }
+        $sql .= ' DEFAULT ' . $spec['default'];
+      }
+
+      if (empty($spec['not null']) && !isset($spec['default'])) {
+        $sql .= ' DEFAULT NULL';
+      }
+    }
+    return $sql;
   }
 
 }
