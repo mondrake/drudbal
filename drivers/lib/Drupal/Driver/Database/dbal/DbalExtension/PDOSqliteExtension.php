@@ -431,7 +431,7 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function getDbalEncodedStringForDDLSql($string) {
+  public function getStringForDefault($string) {
     // Encode single quotes.
     return str_replace('\'', self::SINGLE_QUOTE_IDENTIFIER_REPLACEMENT, $string);
   }
@@ -447,11 +447,12 @@ class PDOSqliteExtension extends AbstractExtension {
       $dbal_column_definition .= ' CHECK (' . $field_name . '>= 0)';
     }
     // @todo added to avoid edge cases; maybe this can be overridden in alterDbalColumnOptions
-    if (array_key_exists('not null', $drupal_field_specs) && $drupal_field_specs['not null'] === FALSE && array_key_exists('default', $drupal_field_specs) && $drupal_field_specs['default'] === NULL) {
+//if (in_array($field_name, ['serial_column'])) debug([$field_name, var_export($drupal_field_specs, TRUE)]);
+    if (array_key_exists('not null', $drupal_field_specs) && $drupal_field_specs['not null'] === FALSE && array_key_exists('default', $drupal_field_specs) && $drupal_field_specs['default'] === '') {
       $dbal_column_definition .= "''";
     }
     // Decode single quotes.
-    $dbal_column_definition = str_replace(self::SINGLE_QUOTE_IDENTIFIER_REPLACEMENT, '>mxmx<', $dbal_column_definition);
+    $dbal_column_definition = str_replace(self::SINGLE_QUOTE_IDENTIFIER_REPLACEMENT, '\'\'', $dbal_column_definition);
     // DBAL duplicates the COMMENT part when creating a table, or adding a
     // field, if comment is already in the 'customDefinition' option. Here,
     // just drop comment from the column definition string.
@@ -797,16 +798,16 @@ class PDOSqliteExtension extends AbstractExtension {
       'text:big'        => 'TEXT',
       'text:normal'     => 'TEXT',
 
-      'serial:tiny'     => 'INTEGER',
-      'serial:small'    => 'INTEGER',
+      'serial:tiny'     => 'SMALLINT',
+      'serial:small'    => 'SMALLINT',
       'serial:medium'   => 'INTEGER',
-      'serial:big'      => 'INTEGER',
+      'serial:big'      => 'BIGINT',
       'serial:normal'   => 'INTEGER',
 
-      'int:tiny'        => 'INTEGER',
-      'int:small'       => 'INTEGER',
+      'int:tiny'        => 'SMALLINT',
+      'int:small'       => 'SMALLINT',
       'int:medium'      => 'INTEGER',
-      'int:big'         => 'INTEGER',
+      'int:big'         => 'BIGINT',
       'int:normal'      => 'INTEGER',
 
       'float:tiny'      => 'DOUBLE PRECISION',

@@ -437,7 +437,7 @@ interface DbalExtensionInterface {
    * @return string
    *   A string valid to be used in a DBAL DDL statement.
    */
-  public function getDbalEncodedStringForDDLSql($string);
+  public function getStringForDefault($string);
 
   /**
    * Alters the DBAL column definition.

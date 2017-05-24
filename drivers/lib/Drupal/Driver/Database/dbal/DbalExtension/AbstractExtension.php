@@ -277,7 +277,7 @@ class AbstractExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function getDbalEncodedStringForDDLSql($string) {
+  public function getStringForDefault($string) {
     throw new \LogicException("Method " . __METHOD__ . " not implemented for '" . $this->dbalConnection->getDriver()->getName() . "''");
   }
 

@@ -539,7 +539,7 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function getDbalEncodedStringForDDLSql($string) {
+  public function getStringForDefault($string) {
     // Encode single quotes.
     return str_replace('\'', self::SINGLE_QUOTE_IDENTIFIER_REPLACEMENT, $string);
   }

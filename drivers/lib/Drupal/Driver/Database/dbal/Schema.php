@@ -212,7 +212,7 @@ class Schema extends DatabaseSchema {
         }
       }
       else {
-        $options['default'] = $this->dbalExtension->getDbalEncodedStringForDDLSql($field['default']);
+        $options['default'] = $this->dbalExtension->getStringForDefault($field['default']);
       }
     }
 
