@@ -465,6 +465,76 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
+  public function delegateAddField(&$primary_key_processed_by_extension, $drupal_table_name, $field_name, array $drupal_field_specs, array $keys_new_specs, array $dbal_column_options) {
+    // We cannot add the field directly. Use the slower table alteration
+    // method, starting from the old schema.
+    $old_schema = $this->introspectSchema($drupal_table_name);
+    $new_schema = $old_schema;
+
+    // Add the new field.
+    $new_schema['fields'][$field_name] = $drupal_field_specs;
+
+    // Build the mapping between the old fields and the new fields.
+    $mapping = [];
+    if (isset($drupal_field_specs['initial'])) {
+      // If we have a initial value, copy it over.
+      $mapping[$field_name] = [
+        'expression' => ':newfieldinitial',
+        'arguments' => [':newfieldinitial' => $drupal_field_specs['initial']],
+      ];
+    }
+    elseif (isset($drupal_field_specs['initial_from_field'])) {
+      // If we have a initial value, copy it over.
+      $mapping[$field_name] = [
+        'expression' => $drupal_field_specs['initial_from_field'],
+        'arguments' => [],
+      ];
+    }
+    else {
+      // Else use the default of the field.
+      $mapping[$field_name] = NULL;
+    }
+
+    // Add the new indexes.
+    $new_schema += $keys_new_specs;
+
+    $this->alterTable($drupal_table_name, $old_schema, $new_schema, $mapping);
+    return TRUE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateDropField($drupal_table_name, $field_name) {
+    $old_schema = $this->introspectSchema($drupal_table_name);
+    $new_schema = $old_schema;
+
+    unset($new_schema['fields'][$field_name]);
+
+    // Handle possible primary key changes.
+    if (isset($new_schema['primary key']) && ($key = array_search($field_name, $new_schema['primary key'])) !== FALSE) {
+      unset($new_schema['primary key'][$key]);
+    }
+
+    // Handle possible index changes.
+    foreach ($new_schema['indexes'] as $index => $fields) {
+      foreach ($fields as $key => $field) {
+        if ($field == $field_name) {
+          unset($new_schema['indexes'][$index][$key]);
+        }
+      }
+      // If this index has no more fields then remove it.
+      if (empty($new_schema['indexes'][$index])) {
+        unset($new_schema['indexes'][$index]);
+      }
+    }
+    $this->alterTable($drupal_table_name, $old_schema, $new_schema);
+    return TRUE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function delegateChangeField(&$primary_key_processed_by_extension, $drupal_table_name, $field_name, $field_new_name, array $drupal_field_new_specs, array $keys_new_specs, array $dbal_column_options) {
     $old_schema = $this->introspectSchema($drupal_table_name);
     $new_schema = $old_schema;

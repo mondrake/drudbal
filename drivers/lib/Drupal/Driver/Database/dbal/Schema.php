@@ -423,6 +423,12 @@ class Schema extends DatabaseSchema {
       return FALSE;
     }
 
+    // Delegate to DBAL extension.
+    if ($this->dbalExtension->delegateDropField($table, $field)) {
+      $this->dbalSchemaForceReload();
+      return;
+    }
+
     $current_schema = $this->dbalSchema();
     $to_schema = clone $current_schema;
     $to_schema->getTable($this->tableName($table))->dropColumn($field);
