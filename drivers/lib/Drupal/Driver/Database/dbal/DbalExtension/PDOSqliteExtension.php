@@ -447,7 +447,7 @@ class PDOSqliteExtension extends AbstractExtension {
       $dbal_column_definition .= ' CHECK (' . $field_name . '>= 0)';
     }
     // @todo added to avoid edge cases; maybe this can be overridden in alterDbalColumnOptions
-    if (array_key_exists('not null', $drupal_field_specs) && empty($drupal_field_specs['not null']) && array_key_exists('default', $drupal_field_specs) && empty($drupal_field_specs['default'])) {
+    if (array_key_exists('not null', $drupal_field_specs) && $drupal_field_specs['not null'] === FALSE && array_key_exists('default', $drupal_field_specs) && $drupal_field_specs['default'] === NULL) {
       $dbal_column_definition .= "''";
     }
     // Decode single quotes.
