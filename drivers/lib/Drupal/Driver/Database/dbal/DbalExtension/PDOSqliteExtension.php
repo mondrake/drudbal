@@ -447,9 +447,9 @@ class PDOSqliteExtension extends AbstractExtension {
       $dbal_column_definition .= ' CHECK (' . $field_name . '>= 0)';
     }
     // @todo added to avoid edge cases; maybe this can be overridden in alterDbalColumnOptions
-//if (in_array($field_name, ['serial_column'])) debug([$field_name, var_export($drupal_field_specs, TRUE)]);
-    if (array_key_exists('not null', $drupal_field_specs) && $drupal_field_specs['not null'] === FALSE && array_key_exists('default', $drupal_field_specs) && $drupal_field_specs['default'] === '') {
-      $dbal_column_definition .= "''";
+//if (in_array($field_name, ['test_field'])) debug([$field_name, var_export($drupal_field_specs, TRUE)]);
+    if (array_key_exists('default', $drupal_field_specs) && $drupal_field_specs['default'] === '') {
+      $dbal_column_definition = preg_replace('/DEFAULT (?!:\'\')/', "$0 ''", $dbal_column_definition);
     }
     // Decode single quotes.
     $dbal_column_definition = str_replace(self::SINGLE_QUOTE_IDENTIFIER_REPLACEMENT, '\'\'', $dbal_column_definition);
@@ -648,6 +648,7 @@ class PDOSqliteExtension extends AbstractExtension {
         $type = $row->type;
         $length = NULL;
       }
+      $type = preg_replace('/ UNSIGNED/', '', $type);
       if (isset($mapped_fields[$type])) {
         list($type, $size) = explode(':', $mapped_fields[$type]);
         $schema['fields'][$row->name] = [
