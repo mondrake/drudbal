@@ -437,7 +437,7 @@ interface DbalExtensionInterface {
    * @return string
    *   A string valid to be used in a DBAL DDL statement.
    */
-  public function getDbalEncodedStringForDDLSql($string);
+  public function getStringForDefault($string);
 
   /**
    * Alters the DBAL column definition.
@@ -488,6 +488,20 @@ interface DbalExtensionInterface {
    *   by DBAL.
    */
   public function delegateAddField(&$primary_key_processed_by_extension, $drupal_table_name, $field_name, array $drupal_field_specs, array $keys_new_specs, array $dbal_column_options);
+
+  /**
+   * Drops a field from a table.
+   *
+   * @param string $drupal_table_name
+   *   A string with the Drupal name of the table.
+   * @param string $field_name
+   *   The name of the field.
+   *
+   * @return bool
+   *   TRUE if the extension dropped the field, FALSE if it has to be handled
+   *   by DBAL.
+   */
+  public function delegateDropField($drupal_table_name, $field_name);
 
   /**
    * Change a field definition.

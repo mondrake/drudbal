@@ -212,7 +212,7 @@ class Schema extends DatabaseSchema {
         }
       }
       else {
-        $options['default'] = $this->dbalExtension->getDbalEncodedStringForDDLSql($field['default']);
+        $options['default'] = $this->dbalExtension->getStringForDefault($field['default']);
       }
     }
 
@@ -421,6 +421,12 @@ class Schema extends DatabaseSchema {
   public function dropField($table, $field) {
     if (!$this->fieldExists($table, $field)) {
       return FALSE;
+    }
+
+    // Delegate to DBAL extension.
+    if ($this->dbalExtension->delegateDropField($table, $field)) {
+      $this->dbalSchemaForceReload();
+      return;
     }
 
     $current_schema = $this->dbalSchema();
@@ -901,6 +907,24 @@ class Schema extends DatabaseSchema {
     $tables = preg_grep('/^' . $table_expression . '$/i', $tables);
 
     return $tables;
+  }
+
+  /**
+   * Get information about the table name and schema from the prefix.
+   *
+   * @todo double check we cannot avoid this
+   *
+   * @param
+   *   Name of table to look prefix up for. Defaults to 'default' because that's
+   *   default key for prefix.
+   * @param $add_prefix
+   *   Boolean that indicates whether the given table name should be prefixed.
+   *
+   * @return
+   *   A keyed array with information about the schema, table name and prefix.
+   */
+  public function getPrefixInfoPublic($table = 'default', $add_prefix = TRUE) {
+    return $this->getPrefixInfo($table, $add_prefix);
   }
 
 }

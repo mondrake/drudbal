@@ -49,7 +49,7 @@ before_install:
   # Get Drupal core and dependencies
   - git clone http://git.drupal.org/project/drupal.git $DRUPAL_PATH
   - cd $DRUPAL_PATH
-  - composer install
+  - composer install --no-progress
 
   # Apply Drupal core patches
   # [#2605284] Testing framework does not work with contributed database drivers
@@ -71,7 +71,7 @@ before_install:
   #- composer require "drupal/console:~1.0" --prefer-dist --optimize-autoloader
 
   # Get Doctrine DBAL
-  - composer require "doctrine/dbal:^2.5.12"
+  - composer require "doctrine/dbal:^2.5.12" --no-progress
 
 install:
   # Copy the repo to the modules/contrib directory.
