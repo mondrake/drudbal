@@ -26,6 +26,16 @@ interface DbalExtensionInterface {
   public function getDbalConnection();
 
   /**
+   * Get a fully qualified table name.
+   *
+   * @param string $drupal_table_name
+   *   The name of the table in question.
+   *
+   * @return string
+   */
+  public function delegateFullQualifiedTableName($drupal_table_name);
+
+  /**
    * Connection delegated methods.
    */
 

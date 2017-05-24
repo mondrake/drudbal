@@ -667,6 +667,8 @@ class Connection extends DatabaseConnection {
   /**
    * Pushes an option to be retrieved by the Statement object.
    *
+   * @todo try to remove
+   *
    * @param string $option
    *   The option identifier.
    * @param string $value
@@ -685,6 +687,8 @@ class Connection extends DatabaseConnection {
   /**
    * Pops an option retrieved by the Statement object.
    *
+   * @todo try to remove
+   *
    * @param string $option
    *   The option identifier.
    *
@@ -696,6 +700,13 @@ class Connection extends DatabaseConnection {
       return NULL;
     }
     return array_pop($this->statementOptions[$option]);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getFullQualifiedTableName($table) {
+    return $this->getDbalExtension()->delegateFullQualifiedTableName($table);
   }
 
   /**

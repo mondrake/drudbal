@@ -196,6 +196,15 @@ class PDOSqliteExtension extends AbstractExtension {
   }
 
   /**
+   * {@inheritdoc}
+   */
+  public function delegateFullQualifiedTableName($drupal_table_name) {
+    $prefix = $this->connection->tablePrefix($drupal_table_name);
+    // Don't include the SQLite database file name as part of the table name.
+    return $prefix . $drupal_table_name;
+  }
+
+  /**
    * Connection delegated methods.
    */
 
