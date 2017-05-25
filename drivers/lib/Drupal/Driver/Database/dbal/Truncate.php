@@ -53,7 +53,6 @@ class Truncate extends QueryTruncate {
     }
     else {
       $sql = $dbal_connection->getDatabasePlatform()->getTruncateTableSql($prefixed_table);
-$sql = preg_replace('/(DELETE FROM (?:[^_]+))(__)(.*)/', "$1.$3", $sql);
       return $comments . $sql;
     }
   }
