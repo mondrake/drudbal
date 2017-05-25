@@ -130,7 +130,7 @@ class PDOSqliteExtension extends AbstractExtension {
     $this->statementClass = $statement_class;
 
     // Attach one database for each registered prefix.
-    $prefixes = $this->connection->getPrefixes();
+/*    $prefixes = $this->connection->getPrefixes();
     foreach ($prefixes as &$prefix) {
       // Empty prefix means query the main database -- no need to attach anything.
       if (!empty($prefix)) {
@@ -155,7 +155,7 @@ class PDOSqliteExtension extends AbstractExtension {
     }
 
     // Regenerate the prefixes replacement table.
-    $this->connection->setPrefixPublic($prefixes);
+    $this->connection->setPrefixPublic($prefixes);*/
   }
 
   /**
@@ -199,9 +199,9 @@ class PDOSqliteExtension extends AbstractExtension {
    * {@inheritdoc}
    */
   public function delegateFullQualifiedTableName($drupal_table_name) {
-    $prefix = $this->connection->tablePrefix($drupal_table_name);
-    // Don't include the SQLite database file name as part of the table name.
-    return $prefix . $drupal_table_name;
+    // @todo needs cleanup!!! vs other similar methods and finding index name
+    $table_prefix_info = $this->connection->schema()->getPrefixInfoPublic($drupal_table_name);
+    return $table_prefix_info['schema'] . '.' . $table_prefix_info['table'];
   }
 
   /**
@@ -381,8 +381,8 @@ class PDOSqliteExtension extends AbstractExtension {
       'pass' => [],
     ];
 
-    // @todo is DBAL creating the db on connect? if so, and file path is wrong,
-    // what happens?
+    // @todo is DBAL creating the db on connect? YES
+    // if file path is wrong, what happens? EXCEPTION CODE 14
 
     return $results;
   }
