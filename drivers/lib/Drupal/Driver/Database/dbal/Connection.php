@@ -96,14 +96,14 @@ class Connection extends DatabaseConnection {
    * Constructs a Connection object.
    */
   public function __construct(DbalConnection $dbal_connection, array $connection_options = []) {
-    $this->connectionOptions = $connection_options;
-    $this->setPrefix(isset($connection_options['prefix']) ? $connection_options['prefix'] : '');
     $dbal_extension_class = static::getDbalExtensionClass($connection_options);
     $this->statementClass = static::getStatementClass($connection_options);
     $this->dbalExtension = new $dbal_extension_class($this, $dbal_connection, $this->statementClass);
     $this->dbalPlatform = $dbal_connection->getDatabasePlatform();
     $this->transactionSupport = $this->dbalExtension->delegateTransactionSupport($connection_options);
     $this->transactionalDDLSupport = $this->dbalExtension->delegateTransactionalDDLSupport($connection_options);
+    $this->setPrefix(isset($connection_options['prefix']) ? $connection_options['prefix'] : '');
+    $this->connectionOptions = $connection_options;
     // Unset $this->connection so that __get() can return the wrapped
     // DbalConnection on the extension instead.
     unset($this->connection);
