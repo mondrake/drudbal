@@ -141,10 +141,10 @@ class PDOSqliteExtension extends AbstractExtension {
             // In memory database use ':memory:' as database name. According to
             // http://www.sqlite.org/inmemorydb.html it will open a unique
             // database so attaching it twice is not a problem.
-            $this->connection->query('ATTACH DATABASE :database AS :prefix', [':database' => $this->connection->getConnectionOptions()['database'], ':prefix' => $prefix]);
+            $this->dbalConnection->executeQuery('ATTACH DATABASE :database AS :prefix', [':database' => $this->connection->getConnectionOptions()['database'], ':prefix' => $prefix]);
           }
           else {
-            $this->connection->query('ATTACH DATABASE :database AS :prefix', [':database' => $this->connection->getConnectionOptions()['database'] . '-' . $prefix, ':prefix' => $prefix]);
+            $this->dbalConnection->executeQuery('ATTACH DATABASE :database AS :prefix', [':database' => $this->connection->getConnectionOptions()['database'] . '-' . $prefix, ':prefix' => $prefix]);
           }
         }
 
@@ -415,6 +415,17 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
+  public function delegateTableExists(&$result, $drupal_table_name) {
+    $info = $this->connection->schema()->getPrefixInfoPublic($drupal_table_name);
+    // Don't use {} around sqlite_master table.
+    $sql = 'SELECT 1 FROM ' . $info['schema'] . '.sqlite_master WHERE type = :type AND name = :name';
+    $result = (bool) $this->dbalConnection->executeQuery($sql, [':type' => 'table', ':name' => $info['table']])->fetchColumn();
+    return TRUE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function alterDefaultSchema(&$default_schema) {
     $default_schema = 'main';
     return $this;
@@ -636,7 +647,7 @@ class PDOSqliteExtension extends AbstractExtension {
    * {@inheritdoc}
    */
   public function delegateGetIndexName($drupal_table_name, $index_name, array $table_prefix_info) {
-    return $table_prefix_info['schema'] . '_' . $table_prefix_info['table'] . '_' . $index_name;
+    return $table_prefix_info['schema'] . '____' . $table_prefix_info['table'] . '_' . $index_name;
   }
 
   /**

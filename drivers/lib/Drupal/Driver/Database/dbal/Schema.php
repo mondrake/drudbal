@@ -834,8 +834,16 @@ class Schema extends DatabaseSchema {
    *   TRUE if no exceptions were raised.
    */
   protected function dbalExecuteSchemaChange(DbalSchema $to_schema) {
-    foreach ($this->dbalSchema()->getMigrateToSql($to_schema, $this->dbalPlatform) as $sql) {
-//if (strpos($sql, 'unsigned_table_') !== FALSE) debug($sql);
+    $commands = $this->dbalSchema()->getMigrateToSql($to_schema, $this->dbalPlatform);
+    foreach ($commands as &$command) {
+$command = preg_replace('/(CREATE TABLE (?:[^_]+))(__)(.*)/', "$1.$3", $command);
+$command = preg_replace('/(CREATE.+INDEX .*)(____)(.*)/', "$1.$3", $command);
+$command = preg_replace('/(CREATE.+INDEX .+ ON )([^\.]+\.)(.+)/', "$1$3", $command);
+$command = preg_replace('/(DROP.+INDEX .*)(____)(.*)/', "$1.$3", $command);
+$command = preg_replace('/(__temp__[^\.]+)(\.)/', "$1__", $command);
+    }
+//var_export($commands);echo"<br/>\n";
+    foreach ($commands as $sql) {
       $this->connection->getDbalConnection()->exec($sql);
     }
     $this->dbalSetCurrentSchema($to_schema);
