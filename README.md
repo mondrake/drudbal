@@ -25,7 +25,7 @@ The code in the ```master``` branch is meant to be working on a __MySql database
 
 'Working' means:
 1. it is possible to install a Drupal site via the installer, selecting 'Doctrine DBAL' as the database of choice;
-2. it is passing a selection of core PHPUnit tests for the Database, Cache and Entity groups of tests, executed on Travis CI.
+2. it is passing a selection of core PHPUnit tests for the Database, Cache and Entity groups of tests, executed on Travis CI. Latest patches for the issues listed in 'Related Drual issues' below need to be applied to get a clear test run.
 
 The status of the driver classes implementation is as follows:
 
@@ -105,3 +105,4 @@ tbd | Add tests for Upsert with default values |
 [2874499](https://www.drupal.org/node/2874499) | Test failures when db driver is set to not support transactions |
 [2875679](https://www.drupal.org/node/2875679) | BasicSyntaxTest::testConcatFields fails with contrib driver |
 [2879677](https://www.drupal.org/node/2879677) | Decouple getting table vs column comments in Schema |
+[2881522](https://www.drupal.org/node/2881522) | Add a Schema::getPrimaryKeyColumns method to remove database specific logic from test |
