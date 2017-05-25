@@ -129,33 +129,11 @@ class PDOSqliteExtension extends AbstractExtension {
     $this->dbalConnection = $dbal_connection;
     $this->statementClass = $statement_class;
 
-    // Attach one database for each registered prefix.
-/*    $prefixes = $this->connection->getPrefixes();
-    foreach ($prefixes as &$prefix) {
-      // Empty prefix means query the main database -- no need to attach anything.
-      if (!empty($prefix)) {
-        // Only attach the database once.
-        if (!isset($this->attachedDatabases[$prefix])) {
-          $this->attachedDatabases[$prefix] = $prefix;
-          if ($this->connection->getConnectionOptions()['database'] === ':memory:') {
-            // In memory database use ':memory:' as database name. According to
-            // http://www.sqlite.org/inmemorydb.html it will open a unique
-            // database so attaching it twice is not a problem.
-            $this->connection->query('ATTACH DATABASE :database AS :prefix', [':database' => $this->connection->getConnectionOptions()['database'], ':prefix' => $prefix]);
-          }
-          else {
-            $this->connection->query('ATTACH DATABASE :database AS :prefix', [':database' => $this->connection->getConnectionOptions()['database'] . '-' . $prefix, ':prefix' => $prefix]);
-          }
-        }
+    // @todo DBAL schema manager does not manage namespaces, so instead of
+    // having a separate attached database for each prefix like in core Sqlite
+    // driver, we have all the tables in the same main db.
 
-        // Add a ., so queries become prefix.table, which is proper syntax for
-        // querying an attached database.
-        $prefix .= '.';
-      }
-    }
-
-    // Regenerate the prefixes replacement table.
-    $this->connection->setPrefixPublic($prefixes);*/
+    // @todo still check how :memory: database works.
   }
 
   /**
@@ -440,6 +418,17 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
+  public function delegateGetDbalColumnType(&$dbal_type, array $drupal_field_specs) {
+    if (isset($drupal_field_specs['sqlite_type'])) {
+      $dbal_type = $this->dbalConnection->getDatabasePlatform()->getDoctrineTypeMapping($drupal_field_specs['sqlite_type']);
+      return TRUE;
+    }
+    return FALSE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function getStringForDefault($string) {
     // Encode single quotes.
     return str_replace('\'', self::SINGLE_QUOTE_IDENTIFIER_REPLACEMENT, $string);
@@ -636,7 +625,24 @@ class PDOSqliteExtension extends AbstractExtension {
    * {@inheritdoc}
    */
   public function delegateGetIndexName($drupal_table_name, $index_name, array $table_prefix_info) {
-    return $table_prefix_info['schema'] . '_' . $table_prefix_info['table'] . '_' . $index_name;
+    return $table_prefix_info['table'] . '____' . $index_name;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateIndexExists(&$result, DbalSchema $dbal_schema, $drupal_table_name, $index_name) {
+    $schema = $this->introspectSchema($drupal_table_name);
+    if (in_array($index_name, array_keys($schema['unique keys']))) {
+      $result = TRUE;
+    }
+    elseif (in_array($index_name, array_keys($schema['indexes']))) {
+      $result = TRUE;
+    }
+    else {
+      $result = FALSE;
+    }
+    return TRUE;
   }
 
   /**
@@ -722,10 +728,13 @@ class PDOSqliteExtension extends AbstractExtension {
     foreach ($indexes as $index) {
       $name = $index['name'];
       // Get index name without prefix.
-      $index_name = substr($name, strlen($info['table']) + 1);
-      $result = $this->connection->query('PRAGMA ' . $info['schema'] . '.index_info(' . $name . ')');
-      foreach ($result as $row) {
-        $schema[$index['schema_key']][$index_name][] = $row->name;
+      $matches = NULL;
+      if (preg_match('/.*____(.+)/', $name, $matches)) {
+        $index_name = $matches[1];
+        $result = $this->connection->query('PRAGMA ' . $info['schema'] . '.index_info(' . $name . ')');
+        foreach ($result as $row) {
+          $schema[$index['schema_key']][$index_name][] = $row->name;
+        }
       }
     }
     return $schema;
