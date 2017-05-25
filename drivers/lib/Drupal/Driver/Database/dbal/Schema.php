@@ -7,6 +7,7 @@ use Drupal\Core\Database\SchemaObjectDoesNotExistException;
 use Drupal\Core\Database\Schema as DatabaseSchema;
 use Drupal\Component\Utility\Unicode;
 
+use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\Schema\Schema as DbalSchema;
 use Doctrine\DBAL\Types\Type as DbalType;
 
@@ -300,7 +301,7 @@ class Schema extends DatabaseSchema {
     }
 
     // DBAL Schema will drop the old table and create a new one, so we go for
-    // using the manager instead that allows in-place renaming.
+    // using the manager instead, that allows in-place renaming.
     // @see https://github.com/doctrine/migrations/issues/17
     $this->dbalSchemaManager->renameTable($this->tableName($table), $this->tableName($new_name));
     $this->dbalSchemaForceReload();
@@ -541,6 +542,21 @@ class Schema extends DatabaseSchema {
     $to_schema->getTable($this->tableName($table))->dropPrimaryKey();
     $this->dbalExecuteSchemaChange($to_schema);
     return TRUE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getPrimaryKeyColumns($table) {
+    if (!$this->tableExists($table)) {
+      return FALSE;
+    }
+    try {
+      return $this->dbalSchema()->getTable($this->tableName($table))->getPrimaryKeyColumns();
+    }
+    catch (DBALException $e) {
+      return FALSE;
+    }
   }
 
   /**

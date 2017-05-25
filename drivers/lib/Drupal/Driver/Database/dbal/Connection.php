@@ -91,14 +91,14 @@ class Connection extends DatabaseConnection {
    * Constructs a Connection object.
    */
   public function __construct(DbalConnection $dbal_connection, array $connection_options = []) {
+    $this->connectionOptions = $connection_options;
+    $this->setPrefix(isset($connection_options['prefix']) ? $connection_options['prefix'] : '');
     $dbal_extension_class = static::getDbalExtensionClass($connection_options);
     $this->statementClass = static::getStatementClass($connection_options);
     $this->dbalExtension = new $dbal_extension_class($this, $dbal_connection, $this->statementClass);
     $this->dbalPlatform = $dbal_connection->getDatabasePlatform();
     $this->transactionSupport = $this->dbalExtension->delegateTransactionSupport($connection_options);
     $this->transactionalDDLSupport = $this->dbalExtension->delegateTransactionalDDLSupport($connection_options);
-    $this->setPrefix(isset($connection_options['prefix']) ? $connection_options['prefix'] : '');
-    $this->connectionOptions = $connection_options;
     // Unset $this->connection so that __get() can return the wrapped
     // DbalConnection on the extension instead.
     unset($this->connection);
@@ -662,6 +662,8 @@ class Connection extends DatabaseConnection {
   /**
    * Pushes an option to be retrieved by the Statement object.
    *
+   * @todo try to remove
+   *
    * @param string $option
    *   The option identifier.
    * @param string $value
@@ -680,6 +682,8 @@ class Connection extends DatabaseConnection {
   /**
    * Pops an option retrieved by the Statement object.
    *
+   * @todo try to remove
+   *
    * @param string $option
    *   The option identifier.
    *
@@ -691,6 +695,13 @@ class Connection extends DatabaseConnection {
       return NULL;
     }
     return array_pop($this->statementOptions[$option]);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getFullQualifiedTableName($table) {
+    return $this->getDbalExtension()->delegateFullQualifiedTableName($table);
   }
 
   /**
