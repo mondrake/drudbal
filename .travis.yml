@@ -68,6 +68,7 @@ before_install:
   - curl https://www.drupal.org/files/issues/2875679-2.patch | git apply
   # [#2879677] Decouple getting table vs column comments in Schema
   - curl https://www.drupal.org/files/issues/2879677-3.patch | git apply
+  - curl https://www.drupal.org/files/issues/2874378-18-do-not-test.patch | git apply
 
   # Get Drupal Console
   #- composer require "drupal/console:~1.0" --prefer-dist --optimize-autoloader
