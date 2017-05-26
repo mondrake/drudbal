@@ -200,7 +200,7 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateTransactionalDDLSupport(array &$connection_options = []) {
+  public function delegateTransactionalDdlSupport(array &$connection_options = []) {
     // MySQL never supports transactional DDL.
     return FALSE;
   }

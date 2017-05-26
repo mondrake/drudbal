@@ -103,7 +103,7 @@ class Connection extends DatabaseConnection {
     $this->dbalExtension = new $dbal_extension_class($this, $dbal_connection, $this->statementClass);
     $this->dbalPlatform = $dbal_connection->getDatabasePlatform();
     $this->transactionSupport = $this->dbalExtension->delegateTransactionSupport($connection_options);
-    $this->transactionalDDLSupport = $this->dbalExtension->delegateTransactionalDDLSupport($connection_options);
+    $this->transactionalDDLSupport = $this->dbalExtension->delegateTransactionalDdlSupport($connection_options);
     // Unset $this->connection so that __get() can return the wrapped
     // DbalConnection on the extension instead.
     unset($this->connection);

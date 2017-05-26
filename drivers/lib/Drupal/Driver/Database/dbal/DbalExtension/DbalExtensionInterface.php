@@ -104,7 +104,7 @@ interface DbalExtensionInterface {
    * @return bool
    *   TRUE if DDL transactions are supported, FALSE otherwise.
    */
-  public function delegateTransactionalDDLSupport(array &$connection_options = []);
+  public function delegateTransactionalDdlSupport(array &$connection_options = []);
 
   /**
    * Prepares creating a database.

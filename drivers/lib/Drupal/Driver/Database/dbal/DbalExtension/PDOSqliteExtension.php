@@ -197,7 +197,7 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateTransactionalDDLSupport(array &$connection_options = []) {
+  public function delegateTransactionalDdlSupport(array &$connection_options = []) {
     return !isset($connection_options['transactions']) || ($connection_options['transactions'] !== FALSE);
   }
 
@@ -394,6 +394,7 @@ class PDOSqliteExtension extends AbstractExtension {
     if (array_key_exists('default', $drupal_field_specs) && $drupal_field_specs['default'] === '') {
       $dbal_column_definition = preg_replace('/DEFAULT (?!:\'\')/', "$0 ''", $dbal_column_definition);
     }
+    $dbal_column_definition = preg_replace('/DEFAULT\s+\'\'\'\'/', "DEFAULT ''", $dbal_column_definition);
     // Decode single quotes.
     $dbal_column_definition = str_replace(self::SINGLE_QUOTE_IDENTIFIER_REPLACEMENT, '\'\'', $dbal_column_definition);
     // DBAL duplicates the COMMENT part when creating a table, or adding a
