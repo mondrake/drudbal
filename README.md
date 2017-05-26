@@ -25,7 +25,7 @@ The code in the ```master``` branch is meant to be working on a __MySql database
 
 'Working' means:
 1. it is possible to install a Drupal site via the installer, selecting 'Doctrine DBAL' as the database of choice;
-2. it is passing a selection of core PHPUnit tests for the Database, Cache and Entity groups of tests, executed on Travis CI. Latest patches for the issues listed in 'Related Drual issues' below need to be applied to get a clear test run.
+2. it is passing a selection of core PHPUnit tests for the Database, Cache and Entity groups of tests, executed on Travis CI. Latest patches for the issues listed in 'Related Drupal issues' below need to be applied to get a clear test run.
 
 The status of the driver classes implementation is as follows:
 
@@ -92,7 +92,7 @@ https://github.com/doctrine/dbal/pull/2412       | Add mysql specific indexes wi
 https://github.com/doctrine/dbal/issues/2380     | Unsigned numeric columns not generated correctly | Fixed in 2.6.0 |
 https://github.com/doctrine/migrations/issues/17 | Data loss on table renaming. | |
 https://github.com/doctrine/dbal/pull/2720       | SQLParserUtils::getPlaceholderPositions fails if there are quoted strings containing only backslashes | Fixed in 2.5.13 |
-https://github.com/doctrine/dbal/pull/2725       | Duplicate 'COMMENT' part in SQL statement | |
+https://github.com/doctrine/dbal/pull/2730       | Duplicate 'COMMENT' part in SQL statement | |
 
 ## Related Drupal issues
 Issue | Description   |
