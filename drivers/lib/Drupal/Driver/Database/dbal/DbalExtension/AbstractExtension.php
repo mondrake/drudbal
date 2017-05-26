@@ -34,12 +34,6 @@ class AbstractExtension implements DbalExtensionInterface {
   protected $statementClass;
 
   /**
-   * @todo shouldn't serialization being avoided?? this is from mysql core
-   */
-  public function serialize() {
-  }
-
-  /**
    * {@inheritdoc}
    */
   public function destroy() {
@@ -123,7 +117,7 @@ class AbstractExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function delegateTransactionalDDLSupport(array &$connection_options = []) {
+  public function delegateTransactionalDdlSupport(array &$connection_options = []) {
     throw new \LogicException("Method " . __METHOD__ . " not implemented for '" . $this->dbalConnection->getDriver()->getName() . "''");
   }
 
@@ -244,7 +238,7 @@ class AbstractExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function delegateListTableNames(){
+  public function delegateListTableNames() {
     return $this->getDbalConnection()->getSchemaManager()->listTableNames();
   }
 

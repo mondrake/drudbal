@@ -16,10 +16,12 @@ use Drupal\Core\Database\TransactionNameNonUniqueException;
 use Drupal\Core\Database\TransactionNoActiveException;
 use Drupal\Core\Database\TransactionOutOfOrderException;
 
-use Drupal\Driver\Database\dbal\DbalExtension\PDOMySqlExtension;
 use Drupal\Driver\Database\dbal\DbalExtension\MysqliExtension;
-use Drupal\Driver\Database\dbal\Statement\PDODbalStatement;
+use Drupal\Driver\Database\dbal\DbalExtension\PDOMySqlExtension;
+use Drupal\Driver\Database\dbal\DbalExtension\PDOSqliteExtension;
 use Drupal\Driver\Database\dbal\Statement\MysqliDbalStatement;
+use Drupal\Driver\Database\dbal\Statement\PDODbalStatement;
+use Drupal\Driver\Database\dbal\Statement\PDOSqliteDbalStatement;
 
 use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\ConnectionException as DbalConnectionException;
@@ -47,8 +49,9 @@ class Connection extends DatabaseConnection {
    * @var array[]
    */
   protected static $dbalClassMap = array(
-    'pdo_mysql' => [PDOMySqlExtension::class, PDODbalStatement::class],
     'mysqli' => [MysqliExtension::class, MysqliDbalStatement::class],
+    'pdo_mysql' => [PDOMySqlExtension::class, PDODbalStatement::class],
+    'pdo_sqlite' => [PDOSqliteExtension::class, PDOSqliteDbalStatement::class],
   );
 
   /**
@@ -59,7 +62,9 @@ class Connection extends DatabaseConnection {
   protected static $driverSchemeAliases = array(
     'mysql' => 'pdo_mysql',
     'mysql2' => 'pdo_mysql',
-  );
+    'sqlite' => 'pdo_sqlite',
+    'sqlite3' => 'pdo_sqlite',
+   );
 
   /**
    * The DruDbal extension for the DBAL driver.
@@ -98,7 +103,7 @@ class Connection extends DatabaseConnection {
     $this->dbalExtension = new $dbal_extension_class($this, $dbal_connection, $this->statementClass);
     $this->dbalPlatform = $dbal_connection->getDatabasePlatform();
     $this->transactionSupport = $this->dbalExtension->delegateTransactionSupport($connection_options);
-    $this->transactionalDDLSupport = $this->dbalExtension->delegateTransactionalDDLSupport($connection_options);
+    $this->transactionalDDLSupport = $this->dbalExtension->delegateTransactionalDdlSupport($connection_options);
     // Unset $this->connection so that __get() can return the wrapped
     // DbalConnection on the extension instead.
     unset($this->connection);
