@@ -32,11 +32,6 @@ env:
     - DBAL_URL="sqlite:///sites/default/files/.ht.sqlite" SIMPLETEST_DB="sqlite://test_user:test_pass@test_host:3306/sites/default/files/.ht.sqlite"
     - DBAL_URL="sqlite:///sites/default/files/.ht.sqlite" SIMPLETEST_DB="dbal://fake/sites/default/files/.ht.sqlite?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=pdo_sqlite"
 
-mysql:
-  database: drudbal
-  username: root
-  encoding: utf8
-
 matrix:
   fast_finish: true
   allow_failures:
@@ -68,8 +63,8 @@ before_install:
   - curl https://www.drupal.org/files/issues/2875679-2.patch | git apply
   # [#2879677] Decouple getting table vs column comments in Schema
   - curl https://www.drupal.org/files/issues/2879677-3.patch | git apply
-  # Add Schema::getPrimaryKeyColumns
-  - curl https://www.drupal.org/files/issues/2874378-23.patch | git apply
+  # [#2881522] Add a Schema::getPrimaryKeyColumns method to remove database specific logic from test
+  - curl https://www.drupal.org/files/issues/2881522-2.patch | git apply
 
   # Get Drupal Console
   #- composer require "drupal/console:~1.0" --prefer-dist --optimize-autoloader
