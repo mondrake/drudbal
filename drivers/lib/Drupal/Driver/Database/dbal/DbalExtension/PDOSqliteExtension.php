@@ -519,7 +519,7 @@ class PDOSqliteExtension extends AbstractExtension {
       }
 
       // Add the new indexes.
-      $new_schema += $keys_new_specs;
+      $new_schema = array_merge($new_schema, $keys_new_specs);
 
       $this->alterTable($drupal_table_name, $old_schema, $new_schema, $mapping);
     }
