@@ -381,22 +381,36 @@ class PDOSqliteExtension extends AbstractExtension {
    * {@inheritdoc}
    */
   public function alterDbalColumnDefinition($context, &$dbal_column_definition, array $dbal_column_options, $dbal_type, array $drupal_field_specs, $field_name) {
+    // DBAL does not support BINARY option for char/varchar columns.
+    if (isset($drupal_field_specs['binary']) && $drupal_field_specs['binary'] === FALSE) {
+      $dbal_column_definition = preg_replace('/CHAR\(([0-9]+)\)/', '$0 COLLATE NOCASE_UTF8', $dbal_column_definition);
+      $dbal_column_definition = preg_replace('/TEXT\(([0-9]+)\)/', '$0 COLLATE NOCASE_UTF8', $dbal_column_definition);
+    }
+/*    if (in_array($spec['sqlite_type'], ['VARCHAR', 'TEXT'])) {
+      if (isset($spec['length'])) {
+        $sql .= '(' . $spec['length'] . ')';
+      }
+
+      if (isset($spec['binary']) && $spec['binary'] === FALSE) {
+        $sql .= ' COLLATE NOCASE_UTF8';
+      }
+    }*/
+
+    // @todo just setting 'unsigned' to true does not enforce values >=0 in the
+    // field in Sqlite, so add a CHECK >= 0 constraint.
     if (isset($drupal_field_specs['type']) && in_array($drupal_field_specs['type'], ['float', 'numeric', 'serial', 'int']) && !empty($drupal_field_specs['unsigned']) && (bool) $drupal_field_specs['unsigned'] === TRUE) {
-/*if (strpos($field_name, '_column') !== FALSE) // @todo work it out better
-{
-  $dbal_column_definition = preg_replace('/^(DOUBLE PRECISION |[A-Z]+ )(?!:UNSIGNED)/', "$0UNSIGNED ", $dbal_column_definition);
-  $dbal_column_definition = preg_replace('/^(NUMERIC)(\(.+\) )/', "$1 UNSIGNED$2", $dbal_column_definition);
-  $dbal_column_definition = preg_replace('/UNSIGNED UNSIGNED/', 'UNSIGNED', $dbal_column_definition);
-}*/
       $dbal_column_definition .= ' CHECK (' . $field_name . '>= 0)';
     }
+
     // @todo added to avoid edge cases; maybe this can be overridden in alterDbalColumnOptions
     if (array_key_exists('default', $drupal_field_specs) && $drupal_field_specs['default'] === '') {
       $dbal_column_definition = preg_replace('/DEFAULT (?!:\'\')/', "$0 ''", $dbal_column_definition);
     }
     $dbal_column_definition = preg_replace('/DEFAULT\s+\'\'\'\'/', "DEFAULT ''", $dbal_column_definition);
+
     // Decode single quotes.
     $dbal_column_definition = str_replace(self::SINGLE_QUOTE_IDENTIFIER_REPLACEMENT, '\'\'', $dbal_column_definition);
+
     // DBAL duplicates the COMMENT part when creating a table, or adding a
     // field, if comment is already in the 'customDefinition' option. Here,
     // just drop comment from the column definition string.
