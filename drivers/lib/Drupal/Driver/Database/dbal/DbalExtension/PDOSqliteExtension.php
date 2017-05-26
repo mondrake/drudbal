@@ -4,23 +4,15 @@ namespace Drupal\Driver\Database\dbal\DbalExtension;
 
 use Drupal\Component\Utility\Unicode;
 use Drupal\Core\Database\Database;
-use Drupal\Core\Database\DatabaseException;
 use Drupal\Core\Database\DatabaseExceptionWrapper;
 use Drupal\Core\Database\DatabaseNotFoundException;
 use Drupal\Core\Database\IntegrityConstraintViolationException;
-use Drupal\Core\Database\SchemaException;
-use Drupal\Core\Database\TransactionCommitFailedException;
 use Drupal\Core\Database\Driver\sqlite\Connection as SqliteConnectionBase;
 use Drupal\Driver\Database\dbal\Connection as DruDbalConnection;
 
 use Doctrine\DBAL\Connection as DbalConnection;
-use Doctrine\DBAL\ConnectionException as DbalConnectionException;
-use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
-use Doctrine\DBAL\Exception\ConnectionException as DbalExceptionConnectionException;
 use Doctrine\DBAL\Schema\Schema as DbalSchema;
-use Doctrine\DBAL\Schema\Table as DbalTable;
-use Doctrine\DBAL\Version as DbalVersion;
 
 /**
  * Driver specific methods for pdo_sqlite.
@@ -57,26 +49,6 @@ class PDOSqliteExtension extends AbstractExtension {
   ];
 
   /**
-   * All databases attached to the current database. This is used to allow
-   * prefixes to be safely handled without locking the table.
-   *
-   * @var array
-   */
-  protected $attachedDatabases = [];
-
-  /**
-   * Whether or not a table has been dropped this request: the destructor will
-   * only try to get rid of unnecessary databases if there is potential of them
-   * being empty.
-   *
-   * This variable is set to public because Schema needs to
-   * access it. However, it should not be manually set.
-   *
-   * @var bool
-   */
-  public $tableDropped = FALSE;
-
-  /**
    * Replacement for single quote identifiers.
    *
    * @todo DBAL uses single quotes instead of backticks to produce DDL
@@ -86,36 +58,7 @@ class PDOSqliteExtension extends AbstractExtension {
   const SINGLE_QUOTE_IDENTIFIER_REPLACEMENT = ']]]]SINGLEQUOTEIDENTIFIERDRUDBAL[[[[';
 
   /**
-   * Flag to indicate if the cleanup function in __destruct() should run.
-   *
-   * @var bool
-   */
-  protected $needsCleanup = FALSE;
-
-  /**
-   * @todo shouldn't serialization being avoided?? this is from mysql core
-   */
-  public function serialize() {
-    // Cleanup the connection, much like __destruct() does it as well.
-    if ($this->needsCleanup) {
-      $this->nextIdDelete();
-    }
-    $this->needsCleanup = FALSE;
-
-    return parent::serialize();
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function __destruct() {
-    if ($this->needsCleanup) {
-      $this->nextIdDelete();
-    }
-  }
-
-  /**
-   * Constructs a PDOMySqlExtension object.
+   * Constructs a PDOSqliteExtension object.
    *
    * @param \Drupal\Driver\Database\dbal\Connection $drudbal_connection
    *   The Drupal database connection object for this extension.
