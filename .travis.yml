@@ -51,6 +51,8 @@ before_install:
   # Apply Drupal core patches
   # [#2605284] Testing framework does not work with contributed database drivers
   - curl https://www.drupal.org/files/issues/simpletest_is_broken_on-2605284-89.patch | git apply
+  # [#2867788] Log::findCaller fails to report the correct caller function with non-core drivers.
+  - curl https://www.drupal.org/files/issues/2867788-17.patch | git apply
   # [#2871374] SelectTest::testVulnerableComment fails when driver overrides Select::__toString
   - curl https://www.drupal.org/files/issues/2871374-2.patch | git apply
   # [#2868273] Missing a test for table TRUNCATE while in transaction
