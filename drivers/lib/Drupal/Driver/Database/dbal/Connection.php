@@ -123,6 +123,13 @@ class Connection extends DatabaseConnection {
   /**
    * {@inheritdoc}
    */
+  public function getNamespace() {
+    return __NAMESPACE__;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function destroy() {
     $this->dbalExtension->destroy();
     $this->schema = NULL;
