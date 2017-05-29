@@ -623,6 +623,13 @@ class Schema extends DatabaseSchema {
     if (!$this->indexExists($table, $name)) {
       return FALSE;
     }
+
+    // Delegate to DBAL extension.
+    if ($this->dbalExtension->delegateDropIndex($table, $name)) {
+      $this->dbalSchemaForceReload();
+      return TRUE;
+    }
+
     $index_name = $this->dbalExtension->delegateGetIndexName($table, $name, $this->getPrefixInfo($table));
     $current_schema = $this->dbalSchema();
     $to_schema = clone $current_schema;

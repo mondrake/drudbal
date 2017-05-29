@@ -364,6 +364,13 @@ class AbstractExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
+  public function delegateDropIndex($drupal_table_name, $index_name) {
+    return FALSE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function delegateGetTableComment(DbalSchema $dbal_schema, $drupal_table_name) {
     throw new \RuntimeException("Table comments are not supported for '" . $this->dbalConnection->getDriver()->getName() . "''");
   }
