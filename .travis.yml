@@ -96,14 +96,7 @@ script:
   - cd $DRUPAL_PATH/core
   # Only run selected tests to avoid Travis timeout.
   - ../vendor/bin/phpunit --testsuite unit --group Database,Cache,Entity
-  - ../vendor/bin/phpunit --testsuite kernel --group Database,Cache
-  - ../vendor/bin/phpunit tests/Drupal/KernelTests/Core/Entity/ConfigEntityQueryTest.php
-  - ../vendor/bin/phpunit tests/Drupal/KernelTests/Core/Entity/EntityQueryTest.php
-  - ../vendor/bin/phpunit tests/Drupal/KernelTests/Core/Entity/EntityQueryAggregateTest.php
-  - ../vendor/bin/phpunit tests/Drupal/KernelTests/Core/Entity/EntityQueryRelationshipTest.php
-  - ../vendor/bin/phpunit tests/Drupal/KernelTests/Core/Entity/FieldSqlStorageTest.php
-  - ../vendor/bin/phpunit tests/Drupal/KernelTests/Core/Entity/FieldTranslationSqlStorageTest.php
-  - ../vendor/bin/phpunit tests/Drupal/KernelTests/Core/Entity/EntityTranslationTest.php
+  - ../vendor/bin/phpunit --testsuite kernel --group Database,Cache,Entity
   - ../vendor/bin/phpunit modules/views/tests/src/Kernel/Handler/FilterStringTest.php
 
 after_script:
