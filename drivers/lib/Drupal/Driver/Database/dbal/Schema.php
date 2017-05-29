@@ -571,6 +571,19 @@ class Schema extends DatabaseSchema {
     }
 
     // Delegate to DBAL extension.
+if ($table === 'entity_test_update_0') {
+  $output = [];
+  $tables = $this->dbalSchema()->getTables();
+  foreach ($tables as $table_o) {
+    $indexes = $table_o->getIndexes();
+    foreach ($indexes as $index) {
+      if (strpos($index->getName(), 'entity_test_update_field__uuid__value') !== FALSE) {
+        $output[] = 'Table: ' . $table_o->getName() . ' Index: ' . $index->getName();
+      }
+    }
+  }
+  print_r(var_export($output, TRUE));
+}
     if ($this->dbalExtension->delegateAddUniqueKey($table, $name, $fields)) {
       $this->dbalSchemaForceReload();
       return;
