@@ -386,15 +386,6 @@ class PDOSqliteExtension extends AbstractExtension {
       $dbal_column_definition = preg_replace('/CHAR\(([0-9]+)\)/', '$0 COLLATE NOCASE_UTF8', $dbal_column_definition);
       $dbal_column_definition = preg_replace('/TEXT\(([0-9]+)\)/', '$0 COLLATE NOCASE_UTF8', $dbal_column_definition);
     }
-/*    if (in_array($spec['sqlite_type'], ['VARCHAR', 'TEXT'])) {
-      if (isset($spec['length'])) {
-        $sql .= '(' . $spec['length'] . ')';
-      }
-
-      if (isset($spec['binary']) && $spec['binary'] === FALSE) {
-        $sql .= ' COLLATE NOCASE_UTF8';
-      }
-    }*/
 
     // @todo just setting 'unsigned' to true does not enforce values >=0 in the
     // field in Sqlite, so add a CHECK >= 0 constraint.
@@ -600,6 +591,39 @@ class PDOSqliteExtension extends AbstractExtension {
     else {
       $result = FALSE;
     }
+    return TRUE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateAddUniqueKey($drupal_table_name, $index_name, array $drupal_field_specs) {
+    $schema['unique keys'][$index_name] = $drupal_field_specs;
+    $statements = $this->createIndexSql($drupal_table_name, $schema);
+    foreach ($statements as $statement) {
+      $this->connection->query($statement);
+    }
+    return TRUE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateAddIndex($drupal_table_name, $index_name, array $drupal_field_specs, array $indexes_spec) {
+    $schema['indexes'][$index_name] = $drupal_field_specs;
+    $statements = $this->createIndexSql($drupal_table_name, $schema);
+    foreach ($statements as $statement) {
+      $this->connection->query($statement);
+    }
+    return TRUE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateDropIndex($drupal_table_name, $index_name) {
+    $info = $this->connection->schema()->getPrefixInfoPublic($drupal_table_name);
+    $this->connection->query('DROP INDEX ' . $info['table'] . '____' . $index_name);
     return TRUE;
   }
 
@@ -919,6 +943,41 @@ class PDOSqliteExtension extends AbstractExtension {
       }
     }
     return $sql;
+  }
+
+  /**
+   * Build the SQL expression for indexes.
+   */
+  protected function createIndexSql($tablename, $schema) {
+    $sql = [];
+    $info = $this->connection->schema()->getPrefixInfoPublic($tablename);
+    if (!empty($schema['unique keys'])) {
+      foreach ($schema['unique keys'] as $key => $fields) {
+        $sql[] = 'CREATE UNIQUE INDEX ' . $info['table'] . '____' . $key . ' ON ' . $info['table'] . ' (' . $this->createKeySql($fields) . ")\n";
+      }
+    }
+    if (!empty($schema['indexes'])) {
+      foreach ($schema['indexes'] as $key => $fields) {
+        $sql[] = 'CREATE INDEX ' . $info['table'] . '____' . $key . ' ON ' . $info['table'] . ' (' . $this->createKeySql($fields) . ")\n";
+      }
+    }
+    return $sql;
+  }
+
+  /**
+   * Build the SQL expression for keys.
+   */
+  protected function createKeySql($fields) {
+    $return = [];
+    foreach ($fields as $field) {
+      if (is_array($field)) {
+        $return[] = $field[0];
+      }
+      else {
+        $return[] = $field;
+      }
+    }
+    return implode(', ', $return);
   }
 
 }
