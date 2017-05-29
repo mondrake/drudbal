@@ -650,10 +650,24 @@ interface DbalExtensionInterface {
    *   specification.
    *
    * @return bool
-   *   TRUE if the extension added the unique key, FALSE if it has to be
-   *   handled by DBAL.
+   *   TRUE if the extension added the index, FALSE if it has to be handled by
+   *   DBAL.
    */
   public function delegateAddIndex($drupal_table_name, $index_name, array $drupal_field_specs, array $indexes_spec);
+
+  /**
+   * Drops an index.
+   *
+   * @param string $drupal_table_name
+   *   A string with the Drupal name of the table.
+   * @param string $index_name
+   *   A string with the name of the index.
+   *
+   * @return bool
+   *   TRUE if the extension dropped the index, FALSE if it has to be handled
+   *   by DBAL.
+   */
+  public function delegateDropIndex($drupal_table_name, $index_name);
 
   /**
    * Retrieves a table comment.
