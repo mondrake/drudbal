@@ -770,6 +770,14 @@ class PDOSqliteExtension extends AbstractExtension {
       $new_table = $table . '_' . $i++;
     } while ($this->connection->schema()->tableExists($new_table));
 
+    // Drop any existing index from the old table.
+    $dbal_schema = $this->dbalConnection->getSchemaManager()->createSchema();
+    $dbal_table_name = $this->tableName($table);
+    $dbal_table = $dbal_schema->getTable($dbal_table_name);
+    foreach ($dbal_table->getIndexes() as $dbal_index) {
+      $this->connection->query('DROP INDEX ' . $dbal_index->getName());
+    }
+
     $this->connection->schema()->createTable($new_table, $new_schema);
 
     // Build a SQL query to migrate the data from the old table to the new.
