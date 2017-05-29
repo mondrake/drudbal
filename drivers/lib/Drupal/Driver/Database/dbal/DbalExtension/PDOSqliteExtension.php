@@ -775,7 +775,9 @@ class PDOSqliteExtension extends AbstractExtension {
     $dbal_table_name = $this->tableName($table);
     $dbal_table = $dbal_schema->getTable($dbal_table_name);
     foreach ($dbal_table->getIndexes() as $dbal_index) {
-      $this->connection->query('DROP INDEX ' . $dbal_index->getName());
+      if ($dbal_index->getName() !== 'primary') {
+        $this->connection->query('DROP INDEX ' . $dbal_index->getName());
+      }
     }
 
     $this->connection->schema()->createTable($new_table, $new_schema);
