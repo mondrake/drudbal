@@ -572,6 +572,7 @@ class Schema extends DatabaseSchema {
 
     // Delegate to DBAL extension.
 if ($table === 'entity_test_update_0') {
+  $this->dbalSchemaForceReload();
   $output = [];
   $tables = $this->dbalSchema()->getTables();
   foreach ($tables as $table_o) {
