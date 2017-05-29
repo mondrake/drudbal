@@ -834,9 +834,9 @@ if ($table === 'entity_test_update_0') {
    *   The DBAL schema of the database.
    */
   protected function dbalSchema() {
-    if ($this->dbalCurrentSchema === NULL) {
+//    if ($this->dbalCurrentSchema === NULL) {
       $this->dbalSetCurrentSchema($this->dbalSchemaManager->createSchema());
-    }
+//    }
     return $this->dbalCurrentSchema;
   }
 
