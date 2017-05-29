@@ -657,6 +657,7 @@ class PDOSqliteExtension extends AbstractExtension {
       'primary key' => [],
       'unique keys' => [],
       'indexes' => [],
+      'full_index_names' => [],
     ];
 
     $info = $this->connection->schema()->getPrefixInfoPublic($table);
@@ -701,6 +702,7 @@ class PDOSqliteExtension extends AbstractExtension {
     $result = $this->connection->query('PRAGMA ' . $info['schema'] . '.index_list(' . $info['table'] . ')');
     foreach ($result as $row) {
       if (strpos($row->name, 'sqlite_autoindex_') !== 0) {
+        $schema['full_index_names'][] = $row->name;
         $indexes[] = [
           'schema_key' => $row->unique ? 'unique keys' : 'indexes',
           'name' => $row->name,
@@ -771,13 +773,8 @@ class PDOSqliteExtension extends AbstractExtension {
     } while ($this->connection->schema()->tableExists($new_table));
 
     // Drop any existing index from the old table.
-    $dbal_schema = $this->dbalConnection->getSchemaManager()->createSchema();
-    $dbal_table_name = $this->tableName($table);
-    $dbal_table = $dbal_schema->getTable($dbal_table_name);
-    foreach ($dbal_table->getIndexes() as $dbal_index) {
-      if ($dbal_index->getName() !== 'primary') {
-        $this->connection->query('DROP INDEX ' . $dbal_index->getName());
-      }
+    foreach ($old_schema['full_index_names'] as $full_index_name) {
+      $this->connection->query('DROP INDEX ' . $full_index_name);
     }
 
     $this->connection->schema()->createTable($new_table, $new_schema);
