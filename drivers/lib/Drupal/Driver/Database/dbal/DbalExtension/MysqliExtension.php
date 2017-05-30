@@ -56,6 +56,7 @@ class MysqliExtension extends AbstractMySqlExtension {
     if ($e instanceof DatabaseExceptionWrapper) {
       $e = $e->getPrevious();
     }
+print_r(get_class($e));
     // Match all SQLSTATE 23xxx errors.
     if (substr($e->getSqlState(), -6, -3) == '23') {
       throw new IntegrityConstraintViolationException($message, $e->getCode(), $e);

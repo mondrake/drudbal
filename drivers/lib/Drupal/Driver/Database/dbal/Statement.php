@@ -165,6 +165,14 @@ class Statement implements \IteratorAggregate, StatementInterface {
    * {@inheritdoc}
    */
   public function fetch($mode = NULL, $cursor_orientation = NULL, $cursor_offset = NULL) {
+    if (is_string($mode)) {
+      $this->setFetchMode(\PDO::FETCH_CLASS, $mode);
+      $mode = \PDO::FETCH_CLASS;
+    }
+    else {
+      $mode = $mode ?: $this->_defaultFetchMode;
+    }
+
     if ($mode <= \PDO::FETCH_BOTH) {
       return $this->dbalStatement->fetch($mode);
     }
