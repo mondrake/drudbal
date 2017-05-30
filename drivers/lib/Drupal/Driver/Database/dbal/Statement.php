@@ -295,7 +295,7 @@ class Statement implements \IteratorAggregate, StatementInterface {
   public function rowCount() {
     // SELECT query should not use the method.
     if ($this->allowRowCount) {
-      return $this->dbh->getDbalExtension()->delegateRowCount($this);
+      return $this->dbh->getDbalExtension()->delegateRowCount($this->dbalStatement);
     }
     else {
       throw new RowCountException();
