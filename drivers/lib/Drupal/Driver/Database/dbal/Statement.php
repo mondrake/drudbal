@@ -186,15 +186,15 @@ class Statement implements \IteratorAggregate, StatementInterface {
           return (object) $row;
 
         case \PDO::FETCH_CLASS:
-          $ret = new $this->fetchClass();   // @todo fix
-          for ($i = 0; $i < count($values); $i++) {
-            $property = $this->_columnNames[$i];
-            $ret->$property = $values[$i];
+          $ret = new $this->fetchClass();
+          foreach ($row as $column => $value) {
+            $ret->$column = $value;
           }
           return $ret;
 
         default:
           throw new MysqliException("Unknown fetch type '{$mode}'");  // @todo generic exc
+
       }
     }
   }
@@ -336,13 +336,12 @@ class Statement implements \IteratorAggregate, StatementInterface {
     // SELECT query should not use the method.
     if ($this->allowRowCount) {
       if ($this->_conn->info === NULL) {
-        return $this->dbalStatement->affected_rows;
+        return $this->dbalStatement->rowCount();
       }
       else {
         list($matched, $changed, $warnings) = sscanf($this->_conn->info, "Rows matched: %d Changed: %d Warnings: %d");
         return $matched;
       }
-      return $this->dbalStatement->num_rows;
     }
     else {
       throw new RowCountException();
