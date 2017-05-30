@@ -38,51 +38,12 @@ class Statement implements \IteratorAggregate, StatementInterface {
   /**
    * @todo
    */
-  protected $_conn;
-
-  /**
-   * @todo
-   */
   protected $dbalStatement;
-
-  /**
-   * @var null|boolean|array
-   */
-  protected $_columnNames;
-
-  /**
-   * @var null|array
-   */
-  protected $_rowBindedValues;
-
-  /**
-   * @var array
-   */
-  protected $_bindedValues;
-
-  /**
-   * @var string
-   */
-  protected $types;
-
-  /**
-   * Contains ref values for bindValue().
-   *
-   * @var array
-   */
-  protected $_values = array();
 
   /**
    * @var integer
    */
-  protected $_defaultFetchMode;
-
-  /**
-   * Indicates whether the statement is in the state when fetching results is possible
-   *
-   * @var bool
-   */
-  protected $result = false;
+  protected $defaultFetchMode;
 
   /**
    * @todo
@@ -110,7 +71,7 @@ class Statement implements \IteratorAggregate, StatementInterface {
 
     $this->dbh = $dbh;
     $this->setFetchMode(\PDO::FETCH_OBJ);
-    if (($allow_row_count = $this->dbh->popStatementOption('allowRowCount')) !== NULL) {
+    if (($allow_row_count = $this->dbh->popStatementOption('allowRowCount')) !== NULL) {  // @todo remove
       $this->allowRowCount = $allow_row_count;
     }
 
@@ -121,7 +82,6 @@ class Statement implements \IteratorAggregate, StatementInterface {
     $positional_statement = strtr($positional_statement, [
        "]]]]DOUBLESLASHESDRUDBAL[[[[" => '\\\\',  // @todo remove once DBAL 2.5.13 is out
     ]);
-    $this->_conn = $dbh->getDbalConnection()->getWrappedConnection()->getWrappedResourceHandle();
     try {
       $this->dbalStatement = $dbh->getDbalConnection()->prepare($positional_statement);
     }
@@ -175,32 +135,40 @@ class Statement implements \IteratorAggregate, StatementInterface {
       $mode = \PDO::FETCH_CLASS;
     }
     else {
-      $mode = $mode ?: $this->_defaultFetchMode;
+      $mode = $mode ?: $this->defaultFetchMode;
     }
 
-    if ($mode <= \PDO::FETCH_BOTH) {
-      return $this->dbalStatement->fetch($mode);
+    $row = $this->dbalStatement->fetch(\PDO::FETCH_ASSOC);
+    if (!$row) {
+      return FALSE;
     }
-    else {
-      $row = $this->dbalStatement->fetch(\PDO::FETCH_ASSOC);
-      if (!$row) {
-        return FALSE;
-      }
-      switch ($mode) {
-        case \PDO::FETCH_OBJ:
-          return (object) $row;
+    foreach ($row as $column => &$value) {
+      $value = (string) $value;
+    }
+    switch ($mode) {
+      case \PDO::FETCH_NUM:
+        return array_values($row);
 
-        case \PDO::FETCH_CLASS:
-          $ret = new $this->fetchClass();
-          foreach ($row as $column => $value) {
-            $ret->$column = $value;
-          }
-          return $ret;
+      case \PDO::FETCH_ASSOC:
+        return $row;
 
-        default:
-          throw new MysqliException("Unknown fetch type '{$mode}'");  // @todo generic exc
+      case \PDO::FETCH_BOTH:
+        $row += array_values($row);
+        return $row;
 
-      }
+      case \PDO::FETCH_OBJ:
+        return (object) $row;
+
+      case \PDO::FETCH_CLASS:
+        $ret = new $this->fetchClass();
+        foreach ($row as $column => $value) {
+          $ret->$column = $value;
+        }
+        return $ret;
+
+      default:
+        throw new MysqliException("Unknown fetch type '{$mode}'");  // @todo generic exc
+
     }
   }
 
@@ -208,7 +176,7 @@ class Statement implements \IteratorAggregate, StatementInterface {
    * {@inheritdoc}
    */
   public function fetchAll($mode = NULL, $column_index = NULL, $constructor_arguments = NULL) {
-    $mode = $mode ?: $this->_defaultFetchMode;
+    $mode = $mode ?: $this->defaultFetchMode;
 
     $rows = array();
     if (\PDO::FETCH_COLUMN == $mode) {
@@ -261,7 +229,7 @@ class Statement implements \IteratorAggregate, StatementInterface {
         $this->setFetchMode(\PDO::FETCH_CLASS, $fetch);
       }
       else {
-        $this->setFetchMode($fetch ?: $this->_defaultFetchMode);
+        $this->setFetchMode($fetch ?: $this->defaultFetchMode);
       }
     }
 
@@ -318,12 +286,13 @@ class Statement implements \IteratorAggregate, StatementInterface {
    */
   public function rowCount() {
     // SELECT query should not use the method.
+    $_conn = $dbh->getDbalConnection()->getWrappedConnection()->getWrappedResourceHandle();
     if ($this->allowRowCount) {
-      if ($this->_conn->info === NULL) {
+      if ($_conn->info === NULL) {
         return $this->dbalStatement->rowCount();
       }
       else {
-        list($matched, $changed, $warnings) = sscanf($this->_conn->info, "Rows matched: %d Changed: %d Warnings: %d");
+        list($matched, $changed, $warnings) = sscanf($_conn->info, "Rows matched: %d Changed: %d Warnings: %d");
         return $matched;
       }
     }
@@ -336,7 +305,7 @@ class Statement implements \IteratorAggregate, StatementInterface {
    * {@inheritdoc}
    */
   public function setFetchMode($mode, $a1 = NULL, $a2 = []) {
-    $this->_defaultFetchMode = $mode;
+    $this->defaultFetchMode = $mode;
     if ($mode === \PDO::FETCH_CLASS) {
       $this->fetchClass = $a1;
     }
