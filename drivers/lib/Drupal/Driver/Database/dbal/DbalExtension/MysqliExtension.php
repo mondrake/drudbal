@@ -71,4 +71,18 @@ class MysqliExtension extends AbstractMySqlExtension {
     return FALSE;
   }
 
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateRowCount($dbal_statement) {
+    $wrapped_connection = $this->getDbalConnection()->getWrappedConnection()->getWrappedResourceHandle();
+    if ($wrapped_connection->info === NULL) {
+      return $dbal_statement->rowCount();
+    }
+    else {
+      list($matched, $changed, $warnings) = sscanf($wrapped_connection->info, "Rows matched: %d Changed: %d Warnings: %d");
+      return $matched;
+    }
+  }
+
 }

@@ -294,15 +294,8 @@ class Statement implements \IteratorAggregate, StatementInterface {
    */
   public function rowCount() {
     // SELECT query should not use the method.
-    $_conn = $this->dbh->getDbalConnection()->getWrappedConnection()->getWrappedResourceHandle();
     if ($this->allowRowCount) {
-      if ($_conn->info === NULL) {
-        return $this->dbalStatement->rowCount();
-      }
-      else {
-        list($matched, $changed, $warnings) = sscanf($_conn->info, "Rows matched: %d Changed: %d Warnings: %d");
-        return $matched;
-      }
+      return $this->dbh->getDbalExtension()->delegateRowCount($this);
     }
     else {
       throw new RowCountException();

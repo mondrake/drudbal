@@ -175,6 +175,13 @@ class AbstractExtension implements DbalExtensionInterface {
   }
 
   /**
+   * {@inheritdoc}
+   */
+  public function delegateRowCount($dbal_statement) {
+    return $dbal_statement->rowCount();
+  }
+
+  /**
    * Insert delegated methods.
    */
 
