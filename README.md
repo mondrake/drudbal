@@ -9,23 +9,20 @@ The concept is to use Doctrine DBAL as an additional database abstraction layer.
 to be 'database agnostic', i.e. the driver should be able to execute on any db platform that DBAL supports (in theory, practically
 there still need to be db-platform specific hacks through the concept of DBAL extensions, see below).
 
-The Drupal database ```Connection``` class that this driver implements opens a ```DBAL\Connection```, and hands over
-statements' execution to it. DBAL\Connection itself wraps a ```PDO``` connection (at least for the pdo_mysql driver). In addition,
-the DBAL connection provides additional features like the Schema Manager that can introspect a database schema and build
-DDL statements, a Query Builder that can build SQL statements based on the database platform in use, etc. etc.
+The Drupal database ```Connection``` class that this driver implements opens a ```DBAL\Connection```, and hands over statements' execution to it. DBAL\Connection itself wraps a lower level driver connection (```PDO``` for pdo_mysql and pdo_sqlite drivers, ```mysqli``` for the mysqli driver). In addition, the DBAL connection provides additional features like the Schema Manager that can introspect a database schema and build DDL statements, a Query Builder that can build SQL statements based on the database platform in use, etc. etc.
 
 To overcome DBAL limitations and/or fit Drupal specifics, the DBAL Drupal database driver also instantiates an additional object
 called ```DBALExtension```, unique for the DBAL Driver in use, to which some operations that are db- or Drupal-specific are
 delegated.
 
 ## Status
-(Updated: May 5, 2017)
+(Updated: May 30, 2017)
 
-The code in the ```master``` branch is meant to be working on a __MySql database, using either the 'mysql' or the 'mysqli' DBAL driver__.
+The code in the ```master``` branch is meant to be working on a __MySql database, using either the 'mysql' or the 'mysqli' DBAL driver, and on a SQlite database, using the 'sqlite' DBAL driver__.
 
 'Working' means:
 1. it is possible to install a Drupal site via the installer, selecting 'Doctrine DBAL' as the database of choice;
-2. it is passing a selection of core PHPUnit tests for the Database, Cache and Entity groups of tests, executed on Travis CI. Latest patches for the issues listed in 'Related Drupal issues' below need to be applied to get a clear test run.
+2. it is passing a selection of core PHPUnit tests for the Database, Cache and Entity groups of tests, executed on Travis CI. The latest patches for the issues listed in 'Related Drupal issues' below need to be applied to get a clean test run.
 
 The status of the driver classes implementation is as follows:
 
@@ -42,8 +39,6 @@ Truncate                      | Implemented with overrides to the ```execute``` 
 Update                        | Implemented. |
 Upsert                        | Implemented with overrides to the ```execute``` and ```::__toString``` methods. DBAL does not support UPSERT, so implementation opens a transaction and proceeds with an INSERT attempt, falling back to UPDATE in case of failure. |
 Install/Tasks	                | Implemented. |
-Statement/MysqliDbalStatement	| Implements a wrapper to the _mysqli_ statement. |
-Statement/PDODbalStatement  	| Overrides the base class ```\Drupal\Core\Database\Statement```, to allow executing DBAL queries directly. |
 
 ## Installation
 
@@ -70,7 +65,7 @@ $ ln -s [DRUPAL_ROOT]/[path_to_contrib_modules]/drudbal/drivers/lib/Drupal/Drive
 ```
 
 5. Launch the interactive installer. Proceed as usual and when on the db selection form, select 'Doctrine DBAL'
-and enter a 'database URL' compliant with Doctrine DBAL syntax. __Note:__ the driver only works for mysql or mysqli DBAL drivers.
+and enter a 'database URL' compliant with Doctrine DBAL syntax. __Note:__ the driver works only with mysql, mysqli or sqlite DBAL drivers.
 
 ![configuration](https://cloud.githubusercontent.com/assets/1174864/24586418/7f86feb4-17a0-11e7-820f-eb1483dad07f.png)
 
