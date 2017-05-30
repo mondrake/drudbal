@@ -2,6 +2,7 @@
 
 namespace Drupal\Driver\Database\dbal;
 
+use Drupal\Core\Database\DatabaseExceptionWrapper;
 use Drupal\Core\Database\StatementInterface;
 use Drupal\Core\Database\RowCountException;
 use Drupal\Driver\Database\dbal\Connection as DruDbalConnection;
@@ -121,7 +122,12 @@ class Statement implements \IteratorAggregate, StatementInterface {
        "]]]]DOUBLESLASHESDRUDBAL[[[[" => '\\\\',  // @todo remove once DBAL 2.5.13 is out
     ]);
     $this->_conn = $dbh->getDbalConnection()->getWrappedConnection()->getWrappedResourceHandle();
-    $this->dbalStatement = $dbh->getDbalConnection()->prepare($positional_statement);
+    try {
+      $this->dbalStatement = $dbh->getDbalConnection()->prepare($positional_statement);
+    }
+    catch (MysqliException $e) {
+      throw new DatabaseExceptionWrapper($e->getMessage(), $e->getCode(), $e);
+    }
   }
 
   /**
@@ -151,7 +157,6 @@ class Statement implements \IteratorAggregate, StatementInterface {
     }
 
     $statement_executed = $this->dbalStatement->execute($positional_args);
-//var_export([$positional_statement, $positional_args, $statement_executed]);
 
     if (!empty($logger)) {
       $query_end = microtime(TRUE);
@@ -222,27 +227,6 @@ class Statement implements \IteratorAggregate, StatementInterface {
     }
 
     return $rows;
-  }
-
-  /**
-   * @todo
-   */
-  public function errorCode() {
-    return $this->dbalStatement->errorCode();
-  }
-
-  /**
-   * @todo
-   */
-  public function errorInfo() {
-    return $this->dbalStatement->errorInfo();
-  }
-
-  /**
-   * @todo
-   */
-  public function closeCursor() {
-    return $this->dbalStatement->closeCursor();
   }
 
   /**

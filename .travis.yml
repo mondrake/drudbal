@@ -96,9 +96,9 @@ script:
   - cd $DRUPAL_PATH/core
   # Only run selected tests to avoid Travis timeout.
   #- ../vendor/bin/phpunit --testsuite unit --group Database,Cache,Entity
-  #- ../vendor/bin/phpunit --testsuite kernel --group Database,Cache,Entity,views
-  #- ../vendor/bin/phpunit modules/views/tests/src/Kernel/Handler/FilterStringTest.php
-  - ../vendor/bin/phpunit --testsuite kernel --group Database
+  - ../vendor/bin/phpunit --testsuite kernel --group Database,Cache,Entity,views
+  - ../vendor/bin/phpunit modules/views/tests/src/Kernel/Handler/FilterStringTest.php
+  #- ../vendor/bin/phpunit --testsuite kernel --group Database
 
 after_script:
   - cd $DRUPAL_PATH/modules/contrib/drudbal
