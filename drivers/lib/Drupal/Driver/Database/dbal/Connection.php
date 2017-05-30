@@ -20,7 +20,6 @@ use Drupal\Driver\Database\dbal\DbalExtension\MysqliExtension;
 use Drupal\Driver\Database\dbal\DbalExtension\PDOMySqlExtension;
 use Drupal\Driver\Database\dbal\DbalExtension\PDOSqliteExtension;
 use Drupal\Driver\Database\dbal\Statement\PDODbalStatement;
-use Drupal\Driver\Database\dbal\Statement\PDOSqliteDbalStatement;
 
 use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\ConnectionException as DbalConnectionException;
@@ -50,7 +49,7 @@ class Connection extends DatabaseConnection {
   protected static $dbalClassMap = array(
     'mysqli' => [MysqliExtension::class, Statement::class],
     'pdo_mysql' => [PDOMySqlExtension::class, PDODbalStatement::class],
-    'pdo_sqlite' => [PDOSqliteExtension::class, PDOSqliteDbalStatement::class],
+    'pdo_sqlite' => [PDOSqliteExtension::class, Statement::class],
   );
 
   /**
