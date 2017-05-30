@@ -6,6 +6,7 @@ use Drupal\Core\Database\DatabaseExceptionWrapper;
 use Drupal\Core\Database\StatementInterface;
 use Drupal\Core\Database\RowCountException;
 use Drupal\Driver\Database\dbal\Connection as DruDbalConnection;
+use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\Driver\Mysqli\MysqliException;  // @todo no
 use Doctrine\DBAL\SQLParserUtils;                 // @todo no if possible
 
@@ -85,7 +86,7 @@ class Statement implements \IteratorAggregate, StatementInterface {
     try {
       $this->dbalStatement = $dbh->getDbalConnection()->prepare($positional_statement);
     }
-    catch (MysqliException $e) {
+    catch (DBALException $e) {
       throw new DatabaseExceptionWrapper($e->getMessage(), $e->getCode(), $e);
     }
   }
@@ -286,7 +287,7 @@ class Statement implements \IteratorAggregate, StatementInterface {
    */
   public function rowCount() {
     // SELECT query should not use the method.
-    $_conn = $dbh->getDbalConnection()->getWrappedConnection()->getWrappedResourceHandle();
+    $_conn = $this->dbh->getDbalConnection()->getWrappedConnection()->getWrappedResourceHandle();
     if ($this->allowRowCount) {
       if ($_conn->info === NULL) {
         return $this->dbalStatement->rowCount();
