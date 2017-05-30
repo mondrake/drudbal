@@ -442,7 +442,7 @@ class Connection extends DatabaseConnection {
    */
   public function prepareQueryWithParams($query, array $args = [], array $driver_options = []) {
     $query = $this->prefixTables($query);
-    return $this->dbalExtension->delegatePrepare($query, $args, $driver_options);
+    return new $this->statementClass($this, $query, $args, $driver_options);
   }
 
   /**
@@ -464,7 +464,7 @@ class Connection extends DatabaseConnection {
     // driver is not able to process named placeholders. Use
     // ::prepareQueryWithParams instead.
     // @todo raise an exception and fail hard??
-    return $this->dbalExtension->delegatePrepare($statement, [], $driver_options);
+    return new $this->statementClass($this, $statement, [], $driver_options);
   }
 
   /**

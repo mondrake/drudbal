@@ -89,13 +89,6 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegatePrepare($statement, array $params, array $driver_options = []) {
-    return new $this->statementClass($this->connection->getDbalConnection(), $this->connection, $statement, $driver_options);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function delegateQueryExceptionProcess($query, array $args, array $options, $message, \Exception $e) {
     // The database schema might be changed by another process in between the
     // time that the statement was prepared and the time the statement was run

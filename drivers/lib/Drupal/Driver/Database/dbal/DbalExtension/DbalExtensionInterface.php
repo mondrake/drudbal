@@ -156,30 +156,6 @@ interface DbalExtensionInterface {
   public function delegateNextId($existing_id = 0);
 
   /**
-   * Prepares a statement for execution and returns a statement object.
-   *
-   * @param string $statement
-   *   This must be a valid SQL statement for the target database server.
-   * @param array $params
-   *   An array of arguments for the prepared statement. If the prepared
-   *   statement uses ? placeholders, this array must be an indexed array.
-   *   If it contains named placeholders, it must be an associative array.
-   * @param array $driver_options
-   *   (optional) This array holds one or more key=>value pairs to set
-   *   attribute values for the StatementInterface object that this method
-   *   returns.
-   *
-   * @return \Drupal\Core\Database\StatementInterface|false
-   *   If the database server successfully prepares the statement, returns a
-   *   StatementInterface object.
-   *   If the database server cannot successfully prepare the statement,
-   *   returns FALSE or throes a DatabaseExceptionWrapper exception.
-   *
-   * @throws \Drupal\Core\Database\DatabaseExceptionWrapper
-   */
-  public function delegatePrepare($statement, array $params, array $driver_options = []);
-
-  /**
    * Handles a DBALExceptions thrown by Connection::query().
    *
    * @param string $query
@@ -254,6 +230,18 @@ interface DbalExtensionInterface {
    *   For any other error.
    */
   public function delegateReleaseSavepointExceptionProcess(DbalDriverException $e);
+
+  /**
+   * Statement delegated methods.
+   */
+
+  /**
+   * Informs the Statement on whether named placeholders are supported.
+   *
+   * @return bool
+   *   TRUE if named placeholders are supported, FALSE otherwise.
+   */
+  public function delegateNamedPlaceholdersSupport();
 
   /**
    * Insert delegated methods.

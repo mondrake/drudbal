@@ -74,18 +74,6 @@ class PDOMySqlExtension extends AbstractMySqlExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegatePrepare($statement, array $params, array $driver_options = []) {
-    try {
-      return $this->getDbalConnection()->getWrappedConnection()->prepare($statement, $driver_options);
-    }
-    catch (\PDOException $e) {
-      throw new DatabaseExceptionWrapper($e->getMessage(), $e->getCode(), $e);
-    }
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function delegateQueryExceptionProcess($query, array $args, array $options, $message, \Exception $e) {
     // Match all SQLSTATE 23xxx errors.
     if (substr($e->getCode(), -6, -3) == '23') {

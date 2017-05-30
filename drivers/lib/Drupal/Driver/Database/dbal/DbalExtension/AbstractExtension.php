@@ -49,13 +49,6 @@ class AbstractExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function delegatePrepare($statement, array $params, array $driver_options = []) {
-    throw new \LogicException("Method " . __METHOD__ . " not implemented for '" . $this->dbalConnection->getDriver()->getName() . "''");
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function delegateQueryExceptionProcess($query, array $args, array $options, $message, \Exception $e) {
     throw new \LogicException("Method " . __METHOD__ . " not implemented for '" . $this->dbalConnection->getDriver()->getName() . "''");
   }
@@ -168,6 +161,17 @@ class AbstractExtension implements DbalExtensionInterface {
    */
   public function delegateReleaseSavepointExceptionProcess(DbalDriverException $e) {
     throw new \LogicException("Method " . __METHOD__ . " not implemented for '" . $this->dbalConnection->getDriver()->getName() . "''");
+  }
+
+  /**
+   * Statement delegated methods.
+   */
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateNamedPlaceholdersSupport() {
+    return TRUE;
   }
 
   /**

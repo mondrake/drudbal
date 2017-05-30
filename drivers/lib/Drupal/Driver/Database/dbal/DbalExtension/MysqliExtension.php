@@ -40,18 +40,6 @@ class MysqliExtension extends AbstractMySqlExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegatePrepare($statement, array $params, array $driver_options = []) {
-    try {
-      return new $this->statementClass($this->connection, $statement, $params, $driver_options);
-    }
-    catch (MysqliException $e) {
-      throw new DatabaseExceptionWrapper($e->getMessage(), $e->getCode(), $e);
-    }
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function delegateQueryExceptionProcess($query, array $args, array $options, $message, \Exception $e) {
     if ($e instanceof DatabaseExceptionWrapper) {
       $e = $e->getPrevious();
@@ -70,6 +58,17 @@ class MysqliExtension extends AbstractMySqlExtension {
     else {
       throw new DatabaseExceptionWrapper($message, 0, $e);
     }
+  }
+
+  /**
+   * Statement delegated methods.
+   */
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateNamedPlaceholdersSupport() {
+    return FALSE;
   }
 
 }

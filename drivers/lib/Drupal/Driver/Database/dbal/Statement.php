@@ -76,15 +76,19 @@ class Statement implements \IteratorAggregate, StatementInterface {
       $this->allowRowCount = $allow_row_count;
     }
 
-    $statement = strtr($statement, [
-       '\\\\' => "]]]]DOUBLESLASHESDRUDBAL[[[[",  // @todo remove once DBAL 2.5.13 is out
-    ]);
-    list($positional_statement, $positional_params, $positional_types) = SQLParserUtils::expandListParameters($statement, $params, []);
-    $positional_statement = strtr($positional_statement, [
-       "]]]]DOUBLESLASHESDRUDBAL[[[[" => '\\\\',  // @todo remove once DBAL 2.5.13 is out
-    ]);
+    // Replace named placeholders with positional ones if needed.
+    if (!$this->dbh->getDbalExtension()->delegateNamedPlaceholdersSupport()) {
+      $statement = strtr($statement, [
+         '\\\\' => "]]]]DOUBLESLASHESDRUDBAL[[[[",  // @todo remove once DBAL 2.5.13 is out
+      ]);
+      list($statement, $params) = SQLParserUtils::expandListParameters($statement, $params, []);
+      $statement = strtr($statement, [
+         "]]]]DOUBLESLASHESDRUDBAL[[[[" => '\\\\',  // @todo remove once DBAL 2.5.13 is out
+      ]);
+    }
+
     try {
-      $this->dbalStatement = $dbh->getDbalConnection()->prepare($positional_statement);
+      $this->dbalStatement = $dbh->getDbalConnection()->prepare($statement);
     }
     catch (DBALException $e) {
       throw new DatabaseExceptionWrapper($e->getMessage(), $e->getCode(), $e);
@@ -95,13 +99,16 @@ class Statement implements \IteratorAggregate, StatementInterface {
    * {@inheritdoc}
    */
   public function execute($args = [], $options = []) {
-    $statement = strtr($this->queryString, [  // @todo remove once DBAL 2.5.13 is out
-       '\\\\' => "]]]]DOUBLESLASHESDRUDBAL[[[[",
-    ]);
-    list($positional_statement, $positional_args, $positional_types) = SQLParserUtils::expandListParameters($statement, $args, []);
-    $positional_statement = strtr($positional_statement, [  // @todo remove once DBAL 2.5.13 is out
-       "]]]]DOUBLESLASHESDRUDBAL[[[[" => '\\\\',
-    ]);
+    // Replace named placeholders with positional ones if needed.
+    if (!$this->dbh->getDbalExtension()->delegateNamedPlaceholdersSupport()) {
+      $statement = strtr($this->queryString, [  // @todo remove once DBAL 2.5.13 is out
+         '\\\\' => "]]]]DOUBLESLASHESDRUDBAL[[[[",
+      ]);
+      list($statement, $args) = SQLParserUtils::expandListParameters($statement, $args, []);
+      $statement = strtr($statement, [  // @todo remove once DBAL 2.5.13 is out
+         "]]]]DOUBLESLASHESDRUDBAL[[[[" => '\\\\',
+      ]);
+    }
 
     if (isset($options['fetch'])) {
       if (is_string($options['fetch'])) {
@@ -117,7 +124,7 @@ class Statement implements \IteratorAggregate, StatementInterface {
       $query_start = microtime(TRUE);
     }
 
-    $statement_executed = $this->dbalStatement->execute($positional_args);
+    $statement_executed = $this->dbalStatement->execute($args);
 
     if (!empty($logger)) {
       $query_end = microtime(TRUE);
