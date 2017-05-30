@@ -19,7 +19,6 @@ use Drupal\Core\Database\TransactionOutOfOrderException;
 use Drupal\Driver\Database\dbal\DbalExtension\MysqliExtension;
 use Drupal\Driver\Database\dbal\DbalExtension\PDOMySqlExtension;
 use Drupal\Driver\Database\dbal\DbalExtension\PDOSqliteExtension;
-use Drupal\Driver\Database\dbal\Statement\MysqliDbalStatement;
 use Drupal\Driver\Database\dbal\Statement\PDODbalStatement;
 use Drupal\Driver\Database\dbal\Statement\PDOSqliteDbalStatement;
 
@@ -49,7 +48,7 @@ class Connection extends DatabaseConnection {
    * @var array[]
    */
   protected static $dbalClassMap = array(
-    'mysqli' => [MysqliExtension::class, MysqliDbalStatement::class],
+    'mysqli' => [MysqliExtension::class, Statement::class],
     'pdo_mysql' => [PDOMySqlExtension::class, PDODbalStatement::class],
     'pdo_sqlite' => [PDOSqliteExtension::class, PDOSqliteDbalStatement::class],
   );
@@ -87,6 +86,8 @@ class Connection extends DatabaseConnection {
    * prepare/execute methods. Overcome that by storing here options required,
    * so that the custom Statement classes defined by the driver can manage that
    * on construction.
+   *
+   * @todo remove
    *
    * @var array[]
    */
