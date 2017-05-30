@@ -90,6 +90,9 @@ class PDOSqliteExtension extends AbstractExtension {
    * {@inheritdoc}
    */
   public function delegateQueryExceptionProcess($query, array $args, array $options, $message, \Exception $e) {
+    if ($e instanceof DatabaseExceptionWrapper) {
+      $e = $e->getPrevious();
+    }
     // The database schema might be changed by another process in between the
     // time that the statement was prepared and the time the statement was run
     // (e.g. usually happens when running tests). In this case, we need to
