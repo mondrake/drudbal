@@ -148,6 +148,9 @@ class Statement implements \IteratorAggregate, StatementInterface {
 
     if ($mode <= \PDO::FETCH_BOTH) {
       $row = $this->dbalStatement->fetch($mode);
+      if (!$row) {
+        return FALSE;
+      }
       if ($mode === \PDO::FETCH_ASSOC) {
         foreach ($row as $column => &$value) {
           $value = (string) $value;
