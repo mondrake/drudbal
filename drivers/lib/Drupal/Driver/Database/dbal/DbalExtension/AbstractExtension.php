@@ -182,6 +182,13 @@ class AbstractExtension implements DbalExtensionInterface {
   }
 
   /**
+   * {@inheritdoc}
+   */
+  public function delegateFetch($dbal_statement, $mode, $fetch_class, $cursor_orientation, $cursor_offset) {
+    throw new \LogicException("Method " . __METHOD__ . " not implemented for '" . $this->dbalConnection->getDriver()->getName() . "''");
+  }
+
+  /**
    * Insert delegated methods.
    */
 

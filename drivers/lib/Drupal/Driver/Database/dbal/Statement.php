@@ -146,75 +146,7 @@ class Statement implements \IteratorAggregate, StatementInterface {
       $mode = $mode ?: $this->defaultFetchMode;
     }
 
-    if ($mode <= \PDO::FETCH_BOTH) {
-      $row = $this->dbalStatement->fetch($mode);
-      if (!$row) {
-        return FALSE;
-      }
-      if ($mode === \PDO::FETCH_ASSOC) {
-        foreach ($row as $column => &$value) {
-          $value = (string) $value;
-        }
-      }
-      return $row;
-    }
-    else {
-      $row = $this->dbalStatement->fetch(\PDO::FETCH_ASSOC);
-      if (!$row) {
-        return FALSE;
-      }
-      switch ($mode) {
-        case \PDO::FETCH_OBJ:
-          $ret = new \stdClass();
-          foreach ($row as $column => $value) {
-            $ret->$column = (string) $value;
-          }
-          return $ret;
-
-        case \PDO::FETCH_CLASS:
-          $ret = new $this->fetchClass();
-          foreach ($row as $column => $value) {
-            $ret->$column = (string) $value;
-          }
-          return $ret;
-
-        default:
-          throw new MysqliException("Unknown fetch type '{$mode}'");  // @todo generic exc
-      }
-    }
-
- /*    $row = $this->dbalStatement->fetch(\PDO::FETCH_ASSOC);
-    if (!$row) {
-      return FALSE;
-    }
-    foreach ($row as $column => &$value) {
-      $value = (string) $value;
-    }
-    switch ($mode) {
-      case \PDO::FETCH_NUM:
-        return array_values($row);
-
-      case \PDO::FETCH_ASSOC:
-        return $row;
-
-      case \PDO::FETCH_BOTH:
-        $row += array_values($row);
-        return $row;
-
-      case \PDO::FETCH_OBJ:
-        return (object) $row;
-
-      case \PDO::FETCH_CLASS:
-        $ret = new $this->fetchClass();
-        foreach ($row as $column => $value) {
-          $ret->$column = $value;
-        }
-        return $ret;
-
-      default:
-        throw new MysqliException("Unknown fetch type '{$mode}'");  // @todo generic exc
-
-    }*/
+    return $this->dbh->getDbalExtension()->delegateFetch($this->dbalStatement, $mode, $this->fetchClass, $cursor_orientation, $cursor_offset);
   }
 
   /**

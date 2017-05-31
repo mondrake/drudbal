@@ -249,6 +249,11 @@ interface DbalExtensionInterface {
   public function delegateRowCount($dbal_statement);
 
   /**
+   * @todo
+   */
+  public function delegateFetch($dbal_statement, $mode, $fetch_class, $cursor_orientation, $cursor_offset);
+
+  /**
    * Insert delegated methods.
    */
 
