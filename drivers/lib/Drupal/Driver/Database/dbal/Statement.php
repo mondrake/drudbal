@@ -147,7 +147,13 @@ class Statement implements \IteratorAggregate, StatementInterface {
     }
 
     if ($mode <= \PDO::FETCH_BOTH) {
-      return $this->dbalStatement->fetch($mode);
+      $row = $this->dbalStatement->fetch($mode);
+      if ($mode === \PDO::FETCH_ASSOC) {
+        foreach ($row as $column => &$value) {
+          $value = (string) $value;
+        }
+      }
+      return $row;
     }
     else {
       $row = $this->dbalStatement->fetch(\PDO::FETCH_ASSOC);
@@ -156,12 +162,16 @@ class Statement implements \IteratorAggregate, StatementInterface {
       }
       switch ($mode) {
         case \PDO::FETCH_OBJ:
-          return (object) $row;
+          $ret = new \stdClass();
+          foreach ($row as $column => $value) {
+            $ret->$column = (string) $value;
+          }
+          return $ret;
 
         case \PDO::FETCH_CLASS:
           $ret = new $this->fetchClass();
           foreach ($row as $column => $value) {
-            $ret->$column = $value;
+            $ret->$column = (string) $value;
           }
           return $ret;
 
