@@ -275,42 +275,10 @@ class PDOSqliteExtension extends AbstractExtension {
    * {@inheritdoc}
    */
   public function delegateFetch($dbal_statement, $mode, $fetch_class, $cursor_orientation, $cursor_offset) {
-    if ($mode <= \PDO::FETCH_BOTH) {
-      $row = $dbal_statement->fetch($mode);
-      if (!$row) {
-        return FALSE;
-      }
-      if ($mode === \PDO::FETCH_ASSOC) {               // @todo stringify also FETCH_NUM and FETCH_BOTH
-        foreach ($row as $column => &$value) {
-          $value = (string) $value;
-        }
-      }
-      return $row;
+    if ($mode === \PDO::FETCH_CLASS) {
+      $dbal_statement->setFetchMode($mode, $fetch_class);
     }
-    else {
-      $row = $dbal_statement->fetch(\PDO::FETCH_ASSOC);
-      if (!$row) {
-        return FALSE;
-      }
-      switch ($mode) {
-        case \PDO::FETCH_OBJ:
-          $ret = new \stdClass();
-          foreach ($row as $column => $value) {
-            $ret->$column = (string) $value;
-          }
-          return $ret;
-
-        case \PDO::FETCH_CLASS:
-          $ret = new $fetch_class();
-          foreach ($row as $column => $value) {
-            $ret->$column = (string) $value;
-          }
-          return $ret;
-
-        default:
-          throw new DBALException("Unknown fetch type '{$mode}'");
-      }
-    }
+    return $dbal_statement->fetch($mode, $cursor_orientation, $cursor_offset);
   }
 
   /**
