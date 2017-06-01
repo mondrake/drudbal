@@ -271,7 +271,7 @@ interface DbalExtensionInterface {
    *   The class to be used for returning row results if \PDO::FETCH_CLASS
    *   is specified for $mode.
    *
-   * @return
+   * @return mixed
    *   A result, formatted according to $mode.
    */
   public function delegateFetch(DbalStatement $dbal_statement, $mode, $fetch_class);
@@ -282,7 +282,7 @@ interface DbalExtensionInterface {
    * @param \Doctrine\DBAL\Statement $dbal_statement
    *   The DBAL statement.
    *
-   * @return
+   * @return int
    *   The number of rows affected by the last DELETE, INSERT, or UPDATE
    *   statement.
    */

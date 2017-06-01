@@ -2,14 +2,11 @@
 
 namespace Drupal\Driver\Database\dbal;
 
-use Drupal\Component\Utility\Unicode;
 use Drupal\Core\Database\Connection as DatabaseConnection;
 use Drupal\Core\Database\ConnectionNotDefinedException;
 use Drupal\Core\Database\Database;
-use Drupal\Core\Database\DatabaseException;
 use Drupal\Core\Database\DatabaseExceptionWrapper;
 use Drupal\Core\Database\DatabaseNotFoundException;
-use Drupal\Core\Database\IntegrityConstraintViolationException;
 use Drupal\Core\Database\StatementInterface;
 use Drupal\Core\Database\TransactionCommitFailedException;
 use Drupal\Core\Database\TransactionNameNonUniqueException;
@@ -40,28 +37,27 @@ use Psr\Http\Message\UriInterface;
 class Connection extends DatabaseConnection {
 
   /**
-   * List of supported drivers and their mapping to the DBAL extension
-   * classes to use.
+   * Supported DBAL drivers and DBAL extension classes to use.
    *
    * @var string[]
    */
-  protected static $dbalClassMap = array(
+  protected static $dbalClassMap = [
     'mysqli' => MysqliExtension::class,
     'pdo_mysql' => PDOMySqlExtension::class,
     'pdo_sqlite' => PDOSqliteExtension::class,
-  );
+  ];
 
   /**
    * List of URL schemes from a database URL and their mappings to driver.
    *
    * @var string[]
    */
-  protected static $driverSchemeAliases = array(
+  protected static $driverSchemeAliases = [
     'mysql' => 'pdo_mysql',
     'mysql2' => 'pdo_mysql',
     'sqlite' => 'pdo_sqlite',
     'sqlite3' => 'pdo_sqlite',
-   );
+  ];
 
   /**
    * The DruDbal extension for the DBAL driver.
@@ -85,9 +81,9 @@ class Connection extends DatabaseConnection {
    * so that the custom Statement classes defined by the driver can manage that
    * on construction.
    *
-   * @todo remove
-   *
    * @var array[]
+   *
+   * @todo remove
    */
   protected $statementOptions;
 
@@ -138,7 +134,7 @@ class Connection extends DatabaseConnection {
    * Returns a prefixed table name.
    *
    * @param string $table_name
-   *   A Drupal table name
+   *   A Drupal table name.
    *
    * @return string
    *   A fully prefixed table name, suitable for direct usage in db queries.
@@ -184,14 +180,18 @@ class Connection extends DatabaseConnection {
       switch ($options['return']) {
         case Database::RETURN_STATEMENT:
           return $stmt;
+
         case Database::RETURN_AFFECTED:
           $stmt->allowRowCount = TRUE;
           return $stmt->rowCount();
+
         case Database::RETURN_INSERT_ID:
           $sequence_name = isset($options['sequence_name']) ? $options['sequence_name'] : NULL;
           return (string) $this->connection->lastInsertId($sequence_name);
+
         case Database::RETURN_NULL:
           return NULL;
+
         default:
           throw new DBALException('Invalid return directive: ' . $options['return']);
       }
@@ -209,7 +209,7 @@ class Connection extends DatabaseConnection {
    *
    * @param \Exception $e
    *   The exception thrown by query().
-   * @param $query
+   * @param string $query
    *   The query executed by query().
    * @param array $args
    *   An array of arguments for the prepared statement.
@@ -222,7 +222,7 @@ class Connection extends DatabaseConnection {
    *
    * @throws \Drupal\Core\Database\DatabaseExceptionWrapper
    */
-  protected function handleDbalQueryException(\Exception $e, $query, array $args = [], $options = []) {
+  protected function handleDbalQueryException(\Exception $e, $query, array $args = [], array $options = []) {
     if ($options['throw_exception']) {
       // Wrap the exception in another exception, because PHP does not allow
       // overriding Exception::getMessage(). Its message is the extra database
@@ -254,7 +254,7 @@ class Connection extends DatabaseConnection {
         // If 'dbal_url' is also missing, then we are in a very very wrong
         // situation, as DBAL would not be able to determine the driver it
         // needs to use.
-        throw new ConnectionNotDefinedException(t('Database connection is not defined properly for the \'dbal\' driver. The \'dbal_url\' key is missing. Check the database connection definition in settings.php.'));
+        throw new ConnectionNotDefinedException(t("Database connection is not defined properly for the 'dbal' driver. The 'dbal_url' key is missing. Check the database connection definition in settings.php."));
       }
       $dbal_connection = DbalDriverManager::getConnection([
         'url' => $connection_options['dbal_url'],
@@ -326,10 +326,10 @@ class Connection extends DatabaseConnection {
       $options['host'] = $connection_options['host'];
     }
     if (isset($connection_options['port'])) {
-      $options['port'] =  $connection_options['port'];
+      $options['port'] = $connection_options['port'];
     }
     if (isset($connection_options['dbal_url'])) {
-      $options['url'] =  $connection_options['dbal_url'];
+      $options['url'] = $connection_options['dbal_url'];
     }
     if (isset($connection_options['dbal_driver'])) {
       $options['driver'] = $connection_options['dbal_driver'];
@@ -726,4 +726,5 @@ class Connection extends DatabaseConnection {
   public function setPrefixPublic($prefix) {
     return $this->setPrefix($prefix);
   }
+
 }

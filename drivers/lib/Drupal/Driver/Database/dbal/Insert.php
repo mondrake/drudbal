@@ -28,7 +28,7 @@ class Insert extends QueryInsert {
     // DBAL does not support multiple insert statements. In such case, open a
     // transaction (if supported), and process separately each values set.
     if ((count($this->insertValues) > 1 || !empty($this->fromQuery)) && $this->connection->supportsTransactions()) {
-      $insert_transaction = $this->connection->startTransaction();
+      $this->connection->startTransaction();
     }
 
     $last_insert_id = NULL;
@@ -85,11 +85,6 @@ class Insert extends QueryInsert {
       }
     }
 
-    // Close transaction if open and operation is successful.
-    if ($this->connection->inTransaction()) {
-      $insert_transaction = NULL;
-    }
-
     // Re-initialize the values array so that we can re-use this query.
     $this->insertValues = [];
 
@@ -118,7 +113,7 @@ class Insert extends QueryInsert {
     // select (i.e. we have a SELECT * FROM ...), then we have to fetch the
     // target column names from the table to be INSERTed to, since DBAL does
     // not support 'INSERT INTO ... SELECT * FROM' constructs.
-    if (!empty($this->fromQuery) && empty($this->fromQuery->getFields())){
+    if (!empty($this->fromQuery) && empty($this->fromQuery->getFields())) {
       $insert_fields = array_keys($dbal_connection->getSchemaManager()->listTableColumns($prefixed_table));
     }
     else {

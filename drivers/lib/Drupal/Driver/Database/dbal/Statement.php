@@ -85,18 +85,21 @@ class Statement implements \IteratorAggregate, StatementInterface {
     $this->queryString = $statement;
     $this->dbh = $dbh;
     $this->setFetchMode(\PDO::FETCH_OBJ);
-    if (($allow_row_count = $this->dbh->popStatementOption('allowRowCount')) !== NULL) {  // @todo remove
+    // @todo remove
+    if (($allow_row_count = $this->dbh->popStatementOption('allowRowCount')) !== NULL) {
       $this->allowRowCount = $allow_row_count;
     }
 
     // Replace named placeholders with positional ones if needed.
     if (!$this->dbh->getDbalExtension()->delegateNamedPlaceholdersSupport()) {
+      // @todo remove once DBAL 2.5.13 is out
       $statement = strtr($statement, [
-         '\\\\' => "]]]]DOUBLESLASHESDRUDBAL[[[[",  // @todo remove once DBAL 2.5.13 is out
+        '\\\\' => "]]]]DOUBLESLASHESDRUDBAL[[[[",
       ]);
       list($statement, $params) = SQLParserUtils::expandListParameters($statement, $params, []);
+      // @todo remove once DBAL 2.5.13 is out
       $statement = strtr($statement, [
-         "]]]]DOUBLESLASHESDRUDBAL[[[[" => '\\\\',  // @todo remove once DBAL 2.5.13 is out
+        "]]]]DOUBLESLASHESDRUDBAL[[[[" => '\\\\',
       ]);
     }
 
@@ -115,12 +118,14 @@ class Statement implements \IteratorAggregate, StatementInterface {
   public function execute($args = [], $options = []) {
     // Replace named placeholders with positional ones if needed.
     if (!$this->dbh->getDbalExtension()->delegateNamedPlaceholdersSupport()) {
+      // @todo remove once DBAL 2.5.13 is out
       $statement = strtr($this->queryString, [  // @todo remove once DBAL 2.5.13 is out
-         '\\\\' => "]]]]DOUBLESLASHESDRUDBAL[[[[",
+        '\\\\' => "]]]]DOUBLESLASHESDRUDBAL[[[[",
       ]);
       list($statement, $args) = SQLParserUtils::expandListParameters($statement, $args, []);
-      $statement = strtr($statement, [  // @todo remove once DBAL 2.5.13 is out
-         "]]]]DOUBLESLASHESDRUDBAL[[[[" => '\\\\',
+      // @todo remove once DBAL 2.5.13 is out
+      $statement = strtr($statement, [
+        "]]]]DOUBLESLASHESDRUDBAL[[[[" => '\\\\',
       ]);
     }
 
@@ -138,14 +143,14 @@ class Statement implements \IteratorAggregate, StatementInterface {
       $query_start = microtime(TRUE);
     }
 
-    $statement_executed = $this->dbalStatement->execute($args);
+    $this->dbalStatement->execute($args);
 
     if (!empty($logger)) {
       $query_end = microtime(TRUE);
       $logger->log($this, $args, $query_end - $query_start);
     }
 
-    return true;
+    return TRUE;
   }
 
   /**
@@ -175,7 +180,7 @@ class Statement implements \IteratorAggregate, StatementInterface {
       $mode = $mode ?: $this->defaultFetchMode;
     }
 
-    $rows = array();
+    $rows = [];
     if (\PDO::FETCH_COLUMN == $mode) {
       if ($column_index === NULL) {
         $column_index = 0;
@@ -186,7 +191,7 @@ class Statement implements \IteratorAggregate, StatementInterface {
       }
     }
     else {
-      while (($row = $this->fetch($mode)) !== false) {
+      while (($row = $this->fetch($mode)) !== FALSE) {
         $rows[] = $row;
       }
     }
@@ -299,7 +304,7 @@ class Statement implements \IteratorAggregate, StatementInterface {
     if ($mode === \PDO::FETCH_CLASS) {
       $this->fetchClass = $a1;
     }
-    return true;
+    return TRUE;
   }
 
 }

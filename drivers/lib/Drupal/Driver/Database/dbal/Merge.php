@@ -12,4 +12,6 @@ use Drupal\Core\Database\Query\Merge as QueryMerge;
  * code in Drupal\Driver\Database\dbal\DbalExtension\[dbal_driver_name]
  * classes and execution handed over to there.
  */
-class Merge extends QueryMerge { }
+class Merge extends QueryMerge {
+
+}

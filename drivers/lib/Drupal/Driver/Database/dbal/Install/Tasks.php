@@ -87,7 +87,7 @@ class Tasks extends InstallTasks {
       // the connection.
       Database::setActiveConnection();
       // Now actually try to get a full Drupal connection object.
-      $connection = Database::getConnection();
+      Database::getConnection();
       $this->pass(t('Drupal can CONNECT to the database ok.'));
       return TRUE;
     }
