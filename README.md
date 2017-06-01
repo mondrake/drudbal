@@ -9,7 +9,7 @@ The concept is to use Doctrine DBAL as an additional database abstraction layer.
 to be 'database agnostic', i.e. the driver should be able to execute on any db platform that DBAL supports (in theory, practically
 there still need to be db-platform specific hacks through the concept of DBAL extensions, see below).
 
-The Drupal database ```Connection``` class that this driver implements opens a ```DBAL\Connection```, and hands over statements' execution to it. DBAL\Connection itself wraps a lower level driver connection (```PDO``` for pdo_mysql and pdo_sqlite drivers, ```mysqli``` for the mysqli driver). In addition, the DBAL connection provides additional features like the Schema Manager that can introspect a database schema and build DDL statements, a Query Builder that can build SQL statements based on the database platform in use, etc. etc.
+The Drupal database ```Connection``` class that this driver implements opens a ```DBAL\Connection```, and hands over statements' execution to it. DBAL\Connection itself wraps a lower level driver connection (```PDO``` for pdo_mysql and pdo_sqlite drivers, ```mysqli``` for the mysqli driver).
 Similarly, the ```Statement``` class is a wrapper of a ```DBAL\Statement```, which itself wraps a DBAL-driver level Statement.
 The DBAL connection provides additional features like the Schema Manager that can introspect a database schema and build DDL statements, a Query Builder that can build SQL statements based on the database platform in use, etc. etc.
 
