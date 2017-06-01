@@ -8,6 +8,7 @@ use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
 use Doctrine\DBAL\Schema\Schema as DbalSchema;
 use Doctrine\DBAL\Schema\Table as DbalTable;
+use Doctrine\DBAL\Statement as DbalStatement;
 
 /**
  * Abstract DBAL Extension.
@@ -195,21 +196,21 @@ class AbstractExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function alterStatement(&$query, &$args) {
+  public function alterStatement(&$query, array &$args) {
     return $this;
   }
 
   /**
    * {@inheritdoc}
    */
-  public function delegateFetch($dbal_statement, $mode, $fetch_class, $cursor_orientation, $cursor_offset) {
+  public function delegateFetch(DbalStatement $dbal_statement, $mode, $fetch_class) {
     throw new \LogicException("Method " . __METHOD__ . " not implemented for '" . $this->dbalConnection->getDriver()->getName() . "''");
   }
 
   /**
    * {@inheritdoc}
    */
-  public function delegateRowCount($dbal_statement) {
+  public function delegateRowCount(DbalStatement $dbal_statement) {
     return $dbal_statement->rowCount();
   }
 

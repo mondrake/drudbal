@@ -7,7 +7,7 @@ use Drupal\Core\Database\StatementInterface;
 use Drupal\Core\Database\RowCountException;
 use Drupal\Driver\Database\dbal\Connection as DruDbalConnection;
 use Doctrine\DBAL\DBALException;
-use Doctrine\DBAL\SQLParserUtils;                 // @todo no if possible
+use Doctrine\DBAL\SQLParserUtils;
 
 /**
  * DruDbal implementation of \Drupal\Core\Database\Statement.
@@ -36,24 +36,33 @@ class Statement implements \IteratorAggregate, StatementInterface {
   public $allowRowCount = FALSE;
 
   /**
-   * @todo
+   * The DBAL statement.
+   *
+   * @var \Doctrine\DBAL\Statement
    */
   protected $dbalStatement;
 
   /**
-   * @var integer
+   * The default fetch mode.
+   *
+   * See http://php.net/manual/pdo.constants.php for the definition of the
+   * constants used.
+   *
+   * @var int
    */
   protected $defaultFetchMode;
 
   /**
-   * @todo
+   * The query string, in its form with placeholders.
    *
    * @var string
    */
   protected $queryString;
 
   /**
-   * @todo
+   * The class to be used for returning row results.
+   *
+   * Used when fetch mode is \PDO::FETCH_CLASS.
    *
    * @var string
    */
@@ -64,8 +73,15 @@ class Statement implements \IteratorAggregate, StatementInterface {
    *
    * @param \Drupal\Driver\Database\dbal\Connection $dbh
    *   The database connection object for this statement.
+   * @param string $statement
+   *   A string containing an SQL query. Passed by reference.
+   * @param array $params
+   *   (optional) An array of values to substitute into the query at placeholder
+   *   markers. Passed by reference.
+   * @param array $driver_options
+   *   (optional) An array of driver options for this query.
    */
-  public function __construct(DruDbalConnection $dbh, &$statement, &$params, array $driver_options = []) {
+  public function __construct(DruDbalConnection $dbh, &$statement, array &$params, array $driver_options = []) {
     $this->queryString = $statement;
     $this->dbh = $dbh;
     $this->setFetchMode(\PDO::FETCH_OBJ);
@@ -144,7 +160,7 @@ class Statement implements \IteratorAggregate, StatementInterface {
       $mode = $mode ?: $this->defaultFetchMode;
     }
 
-    return $this->dbh->getDbalExtension()->delegateFetch($this->dbalStatement, $mode, $this->fetchClass, $cursor_orientation, $cursor_offset);
+    return $this->dbh->getDbalExtension()->delegateFetch($this->dbalStatement, $mode, $this->fetchClass);
   }
 
   /**

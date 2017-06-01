@@ -6,7 +6,9 @@ use Drupal\Component\Utility\Unicode;
 use Drupal\Core\Database\DatabaseExceptionWrapper;
 use Drupal\Core\Database\IntegrityConstraintViolationException;
 use Drupal\Driver\Database\dbal\Connection as DruDbalConnection;
+
 use Doctrine\DBAL\Connection as DbalConnection;
+use Doctrine\DBAL\Statement as DbalStatement;
 
 /**
  * Driver specific methods for pdo_mysql.
@@ -52,7 +54,7 @@ class PDOMySqlExtension extends AbstractMySqlExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateFetch($dbal_statement, $mode, $fetch_class, $cursor_orientation, $cursor_offset) {
+  public function delegateFetch(DbalStatement $dbal_statement, $mode, $fetch_class) {
     if ($mode === \PDO::FETCH_CLASS) {
       $dbal_statement->setFetchMode($mode, $fetch_class);
     }

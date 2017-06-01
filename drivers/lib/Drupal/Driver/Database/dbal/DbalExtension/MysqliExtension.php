@@ -6,8 +6,10 @@ use Drupal\Component\Utility\Unicode;
 use Drupal\Core\Database\DatabaseExceptionWrapper;
 use Drupal\Core\Database\IntegrityConstraintViolationException;
 use Drupal\Driver\Database\dbal\Connection as DruDbalConnection;
+
 use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\Driver\Mysqli\MysqliException;
+use Doctrine\DBAL\Statement as DbalStatement;
 
 /**
  * Driver specific methods for mysqli.
@@ -35,7 +37,7 @@ class MysqliExtension extends AbstractMySqlExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateFetch($dbal_statement, $mode, $fetch_class, $cursor_orientation, $cursor_offset) {
+  public function delegateFetch(DbalStatement $dbal_statement, $mode, $fetch_class) {
     if ($mode <= \PDO::FETCH_BOTH) {
       $row = $dbal_statement->fetch($mode);
       if (!$row) {
@@ -77,7 +79,7 @@ class MysqliExtension extends AbstractMySqlExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateRowCount($dbal_statement) {
+  public function delegateRowCount(DbalStatement $dbal_statement) {
     $wrapped_connection = $this->getDbalConnection()->getWrappedConnection()->getWrappedResourceHandle();
     if ($wrapped_connection->info === NULL) {
       return $dbal_statement->rowCount();

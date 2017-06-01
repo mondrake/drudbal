@@ -14,6 +14,7 @@ use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
 use Doctrine\DBAL\Schema\Schema as DbalSchema;
+use Doctrine\DBAL\Statement as DbalStatement;
 
 /**
  * Driver specific methods for pdo_sqlite.
@@ -259,7 +260,7 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function alterStatement(&$query, &$args) {
+  public function alterStatement(&$query, array &$args) {
    /*
    * The PDO SQLite layer doesn't replace numeric placeholders in queries
    * correctly, and this makes numeric expressions (such as COUNT(*) >= :count)
@@ -325,11 +326,11 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateFetch($dbal_statement, $mode, $fetch_class, $cursor_orientation, $cursor_offset) {
+  public function delegateFetch(DbalStatement $dbal_statement, $mode, $fetch_class) {
     if ($mode === \PDO::FETCH_CLASS) {
       $dbal_statement->setFetchMode($mode, $fetch_class);
     }
-    return $dbal_statement->fetch($mode, $cursor_orientation, $cursor_offset);
+    return $dbal_statement->fetch($mode);
   }
 
   /**

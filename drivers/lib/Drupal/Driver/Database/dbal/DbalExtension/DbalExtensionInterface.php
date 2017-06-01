@@ -6,6 +6,7 @@ use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
 use Doctrine\DBAL\Schema\Schema as DbalSchema;
 use Doctrine\DBAL\Schema\Table as DbalTable;
+use Doctrine\DBAL\Statement as DbalStatement;
 
 /**
  * Provides an interface for Dbal extensions.
@@ -244,19 +245,48 @@ interface DbalExtensionInterface {
   public function delegateNamedPlaceholdersSupport();
 
   /**
-   * {@inheritdoc}
+   * Alters the SQL query and its arguments before preparing the statement.
+   *
+   * @param string $query
+   *   A string containing an SQL query. Passed by reference.
+   * @param array $args
+   *   (optional) An array of values to substitute into the query at placeholder
+   *   markers. Passed by reference.
+   *
+   * @return $this
    */
-  public function alterStatement(&$query, &$args);
+  public function alterStatement(&$query, array &$args);
 
   /**
-   * @todo
+   * Fetches the next row from a result set.
+   *
+   * See http://php.net/manual/pdo.constants.php for the definition of the
+   * constants used.
+   *
+   * @param \Doctrine\DBAL\Statement $dbal_statement
+   *   The DBAL statement.
+   * @param int $mode
+   *   One of the PDO::FETCH_* constants.
+   * @param string $fetch_class
+   *   The class to be used for returning row results if \PDO::FETCH_CLASS
+   *   is specified for $mode.
+   *
+   * @return
+   *   A result, formatted according to $mode.
    */
-  public function delegateFetch($dbal_statement, $mode, $fetch_class, $cursor_orientation, $cursor_offset);
+  public function delegateFetch(DbalStatement $dbal_statement, $mode, $fetch_class);
 
   /**
-   * @todo
+   * Returns the number of rows affected by the last SQL statement.
+   *
+   * @param \Doctrine\DBAL\Statement $dbal_statement
+   *   The DBAL statement.
+   *
+   * @return
+   *   The number of rows affected by the last DELETE, INSERT, or UPDATE
+   *   statement.
    */
-  public function delegateRowCount($dbal_statement);
+  public function delegateRowCount(DbalStatement $dbal_statement);
 
   /**
    * Insert delegated methods.
