@@ -26,17 +26,6 @@ class PDOMySqlExtension extends AbstractMySqlExtension {
   public function __construct(DruDbalConnection $drudbal_connection, DbalConnection $dbal_connection, $statement_class) {
     $this->connection = $drudbal_connection;
     $this->dbalConnection = $dbal_connection;
-    $this->dbalConnection->getWrappedConnection()->setAttribute(\PDO::ATTR_STATEMENT_CLASS, [$statement_class, [$this->connection]]);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function destroy() {
-    if (!empty($this->statementClass)) {
-      $this->getDbalConnection()->getWrappedConnection()->setAttribute(\PDO::ATTR_STATEMENT_CLASS, ['PDOStatement', []]);
-    }
-    parent::destroy();
   }
 
   /**
@@ -89,6 +78,20 @@ class PDOMySqlExtension extends AbstractMySqlExtension {
     else {
       throw new DatabaseExceptionWrapper($message, 0, $e);
     }
+  }
+
+  /**
+   * Statement delegated methods.
+   */
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateFetch($dbal_statement, $mode, $fetch_class, $cursor_orientation, $cursor_offset) {
+    if ($mode === \PDO::FETCH_CLASS) {
+      $dbal_statement->setFetchMode($mode, $fetch_class);
+    }
+    return $dbal_statement->fetch($mode, $cursor_orientation, $cursor_offset);
   }
 
 }

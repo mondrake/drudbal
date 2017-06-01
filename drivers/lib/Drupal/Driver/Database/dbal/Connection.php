@@ -19,7 +19,6 @@ use Drupal\Core\Database\TransactionOutOfOrderException;
 use Drupal\Driver\Database\dbal\DbalExtension\MysqliExtension;
 use Drupal\Driver\Database\dbal\DbalExtension\PDOMySqlExtension;
 use Drupal\Driver\Database\dbal\DbalExtension\PDOSqliteExtension;
-use Drupal\Driver\Database\dbal\Statement\PDODbalStatement;
 
 use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\ConnectionException as DbalConnectionException;
@@ -48,7 +47,7 @@ class Connection extends DatabaseConnection {
    */
   protected static $dbalClassMap = array(
     'mysqli' => [MysqliExtension::class, Statement::class],
-    'pdo_mysql' => [PDOMySqlExtension::class, PDODbalStatement::class],
+    'pdo_mysql' => [PDOMySqlExtension::class, Statement::class],
     'pdo_sqlite' => [PDOSqliteExtension::class, Statement::class],
   );
 
@@ -464,7 +463,8 @@ class Connection extends DatabaseConnection {
     // driver is not able to process named placeholders. Use
     // ::prepareQueryWithParams instead.
     // @todo raise an exception and fail hard??
-    return new $this->statementClass($this, $statement, [], $driver_options);
+    $params = [];
+    return new $this->statementClass($this, $statement, $params, $driver_options);
   }
 
   /**
