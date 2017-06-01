@@ -58,27 +58,12 @@ class PDOSqliteExtension extends AbstractExtension {
    */
   const SINGLE_QUOTE_IDENTIFIER_REPLACEMENT = ']]]]SINGLEQUOTEIDENTIFIERDRUDBAL[[[[';
 
-  /**
-   * Constructs a PDOSqliteExtension object.
-   *
-   * @param \Drupal\Driver\Database\dbal\Connection $drudbal_connection
-   *   The Drupal database connection object for this extension.
-   * @param \Doctrine\DBAL\Connection $dbal_connection
-   *   The DBAL connection.
-   * @param string $statement_class
-   *   The StatementInterface class to be used.
-   */
-  public function __construct(DruDbalConnection $drudbal_connection, DbalConnection $dbal_connection, $statement_class) {
-    $this->connection = $drudbal_connection;
-    $this->dbalConnection = $dbal_connection;
-    $this->statementClass = $statement_class;
 
     // @todo DBAL schema manager does not manage namespaces, so instead of
     // having a separate attached database for each prefix like in core Sqlite
     // driver, we have all the tables in the same main db.
 
     // @todo still check how :memory: database works.
-  }
 
   /**
    * {@inheritdoc}

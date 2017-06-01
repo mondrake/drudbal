@@ -2,6 +2,8 @@
 
 namespace Drupal\Driver\Database\dbal\DbalExtension;
 
+use Drupal\Driver\Database\dbal\Connection as DruDbalConnection;
+
 use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
 use Doctrine\DBAL\Schema\Schema as DbalSchema;
@@ -32,6 +34,22 @@ class AbstractExtension implements DbalExtensionInterface {
    * @var \Drupal\Core\Database\StatementInterface
    */
   protected $statementClass;
+
+  /**
+   * Constructs a DBAL extension object.
+   *
+   * @param \Drupal\Driver\Database\dbal\Connection $drudbal_connection
+   *   The Drupal database connection object for this extension.
+   * @param \Doctrine\DBAL\Connection $dbal_connection
+   *   The DBAL connection.
+   * @param string $statement_class
+   *   The StatementInterface class to be used.
+   */
+  public function __construct(DruDbalConnection $drudbal_connection, DbalConnection $dbal_connection, $statement_class) {
+    $this->connection = $drudbal_connection;
+    $this->dbalConnection = $dbal_connection;
+    $this->statementClass = $statement_class;
+  }
 
   /**
    * {@inheritdoc}

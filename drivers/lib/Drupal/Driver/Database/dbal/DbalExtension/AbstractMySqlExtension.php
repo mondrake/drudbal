@@ -5,6 +5,7 @@ namespace Drupal\Driver\Database\dbal\DbalExtension;
 use Drupal\Component\Utility\Unicode;
 use Drupal\Core\Database\Database;
 use Drupal\Core\Database\DatabaseException;
+use Drupal\Core\Database\DatabaseExceptionWrapper;
 use Drupal\Core\Database\DatabaseNotFoundException;
 use Drupal\Core\Database\SchemaException;
 use Drupal\Core\Database\TransactionCommitFailedException;
@@ -110,22 +111,6 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
    * @var bool
    */
   protected $needsCleanup = FALSE;
-
-  /**
-   * Constructs an AbstractMySqlExtension object.
-   *
-   * @param \Drupal\Driver\Database\dbal\Connection $drudbal_connection
-   *   The Drupal database connection object for this extension.
-   * @param \Doctrine\DBAL\Connection $dbal_connection
-   *   The DBAL connection.
-   * @param string $statement_class
-   *   The StatementInterface class to be used.
-   */
-  public function __construct(DruDbalConnection $drudbal_connection, DbalConnection $dbal_connection, $statement_class) {
-    $this->connection = $drudbal_connection;
-    $this->dbalConnection = $dbal_connection;
-    $this->statementClass = $statement_class;
-  }
 
   /**
    * @todo shouldn't serialization being avoided?? this is from mysql core

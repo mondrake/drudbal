@@ -41,14 +41,14 @@ class Connection extends DatabaseConnection {
 
   /**
    * List of supported drivers and their mapping to the DBAL extension
-   * and the statement classes to use.
+   * classes to use.
    *
-   * @var array[]
+   * @var string[]
    */
   protected static $dbalClassMap = array(
-    'mysqli' => [MysqliExtension::class, Statement::class],
-    'pdo_mysql' => [PDOMySqlExtension::class, Statement::class],
-    'pdo_sqlite' => [PDOSqliteExtension::class, Statement::class],
+    'mysqli' => MysqliExtension::class,
+    'pdo_mysql' => PDOMySqlExtension::class,
+    'pdo_sqlite' => PDOSqliteExtension::class,
   );
 
   /**
@@ -607,7 +607,7 @@ class Connection extends DatabaseConnection {
     if (isset(static::$driverSchemeAliases[$driver_name])) {
       $driver_name = static::$driverSchemeAliases[$driver_name];
     }
-    return static::$dbalClassMap[$driver_name][0];
+    return static::$dbalClassMap[$driver_name];
   }
 
   /**
@@ -623,11 +623,7 @@ class Connection extends DatabaseConnection {
     if (isset($connection_options['dbal_statement_class'])) {
       return $connection_options['dbal_statement_class'];
     }
-    $driver_name = $connection_options['dbal_driver'];
-    if (isset(static::$driverSchemeAliases[$driver_name])) {
-      $driver_name = static::$driverSchemeAliases[$driver_name];
-    }
-    return static::$dbalClassMap[$driver_name][1];
+    return Statement::class;
   }
 
   /**
