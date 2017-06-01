@@ -58,7 +58,7 @@ class PDOMySqlExtension extends AbstractMySqlExtension {
     if ($mode === \PDO::FETCH_CLASS) {
       $dbal_statement->setFetchMode($mode, $fetch_class);
     }
-    return $dbal_statement->fetch($mode, $cursor_orientation, $cursor_offset);
+    return $dbal_statement->fetch($mode);
   }
 
 }
