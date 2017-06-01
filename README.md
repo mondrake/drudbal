@@ -10,13 +10,15 @@ to be 'database agnostic', i.e. the driver should be able to execute on any db p
 there still need to be db-platform specific hacks through the concept of DBAL extensions, see below).
 
 The Drupal database ```Connection``` class that this driver implements opens a ```DBAL\Connection```, and hands over statements' execution to it. DBAL\Connection itself wraps a lower level driver connection (```PDO``` for pdo_mysql and pdo_sqlite drivers, ```mysqli``` for the mysqli driver). In addition, the DBAL connection provides additional features like the Schema Manager that can introspect a database schema and build DDL statements, a Query Builder that can build SQL statements based on the database platform in use, etc. etc.
+Similarly, the ```Statement``` class is a wrapper of a ```DBAL\Statement```, which itself wraps a DBAL-driver level Statement.
+The DBAL connection provides additional features like the Schema Manager that can introspect a database schema and build DDL statements, a Query Builder that can build SQL statements based on the database platform in use, etc. etc.
 
 To overcome DBAL limitations and/or fit Drupal specifics, the DBAL Drupal database driver also instantiates an additional object
 called ```DBALExtension```, unique for the DBAL Driver in use, to which some operations that are db- or Drupal-specific are
 delegated.
 
 ## Status
-(Updated: May 30, 2017)
+(Updated: June 1, 2017)
 
 The code in the ```master``` branch is meant to be working on a __MySql database, using either the 'mysql' or the 'mysqli' DBAL driver, and on a SQlite database, using the 'sqlite' DBAL driver__.
 
@@ -28,12 +30,13 @@ The status of the driver classes implementation is as follows:
 
 Class                         | Status        |
 ------------------------------|---------------|
-Connection                    | Implemented. |
+Connection                    | Implemented as a wrapper around ```DBAL\Connection```. |
 Delete                        | Implemented. Can execute DBAL queries directly if no comments are required in the SQL statement.  |
 Insert                        | Implemented with overrides to the ```execute``` and ```::__toString``` methods. |
 Merge                         | Inheriting from ```\Drupal\Core\Database\Query\Merge```. DBAL does not support MERGE constructs, the INSERT with UPDATE fallback implemented by the base class fits the purpose. |
 Schema                        | Implemented. |
 Select                        | Implemented with override to the ```::__toString``` method. Consider integrating at higher level. |
+Statement                     | Implemented as a wrapper around ```DBAL\Statement```. |
 Transaction                   | Inheriting from ```\Drupal\Core\Database\Transaction```. Maybe in the future look into DBAL Transaction Management features. |
 Truncate                      | Implemented with overrides to the ```execute``` and ```::__toString``` methods. |
 Update                        | Implemented. |
@@ -44,7 +47,7 @@ Install/Tasks	                | Implemented. |
 
 Very rough instructions to install Drupal from scratch with this db driver under the hood:
 
-1. Get a fresh code build of Drupal via Composer. Use latest Drupal dev. Use PHP 7.0+.
+1. Requirements: build a Drupal code base via Composer, using latest Drupal development branch code and PHP 7.0+.
 
 2. Get Doctrine DBAL, use latest version:
 ```
