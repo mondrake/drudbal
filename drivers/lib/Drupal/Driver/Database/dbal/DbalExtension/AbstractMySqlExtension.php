@@ -10,7 +10,6 @@ use Drupal\Core\Database\DatabaseNotFoundException;
 use Drupal\Core\Database\IntegrityConstraintViolationException;
 use Drupal\Core\Database\SchemaException;
 use Drupal\Core\Database\TransactionCommitFailedException;
-use Drupal\Driver\Database\dbal\Connection as DruDbalConnection;
 
 use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\ConnectionException as DbalConnectionException;
@@ -112,19 +111,6 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
    * @var bool
    */
   protected $needsCleanup = FALSE;
-
-  /**
-   * @todo shouldn't serialization being avoided?? this is from mysql core
-   */
-  public function serialize() {
-    // Cleanup the connection, much like __destruct() does it as well.
-    if ($this->needsCleanup) {
-      $this->nextIdDelete();
-    }
-    $this->needsCleanup = FALSE;
-
-    return parent::serialize();
-  }
 
   /**
    * {@inheritdoc}
@@ -324,7 +310,8 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
       }
       // If one SAVEPOINT was released automatically, then all were.
       // Therefore, clean the transaction stack.
-      return 'all';  // @todo use a const
+      // @todo use a const
+      return 'all';
     }
     else {
       throw $e;

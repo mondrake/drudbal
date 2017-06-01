@@ -326,11 +326,11 @@ class Schema extends DatabaseSchema {
 
     // @todo preferred way:
     // if ($this->dbalSchema()->hasTable($this->tableName($table))) {
-    //   $current_schema = $this->dbalSchema();
-    //   $to_schema = clone $current_schema;
-    //   $to_schema->dropTable($this->tableName($table));
-    //   $this->dbalExecuteSchemaChange($to_schema);
-    //   return TRUE;
+    //  $current_schema = $this->dbalSchema();
+    //  $to_schema = clone $current_schema;
+    //  $to_schema->dropTable($this->tableName($table));
+    //  $this->dbalExecuteSchemaChange($to_schema);
+    //  return TRUE;
     // }
     // return FALSE;
   }
@@ -645,7 +645,7 @@ class Schema extends DatabaseSchema {
     if (!$this->fieldExists($table, $field)) {
       throw new SchemaObjectDoesNotExistException(t("Cannot change the definition of field @table.@name: field doesn't exist.", [
         '@table' => $table,
-        '@name' => $field
+        '@name' => $field,
       ]));
     }
     if (($field != $field_new) && $this->fieldExists($table, $field_new)) {
@@ -938,13 +938,13 @@ class Schema extends DatabaseSchema {
    *
    * @todo double check we cannot avoid this
    *
-   * @param
+   * @param string $table
    *   Name of table to look prefix up for. Defaults to 'default' because that's
    *   default key for prefix.
-   * @param $add_prefix
+   * @param bool $add_prefix
    *   Boolean that indicates whether the given table name should be prefixed.
    *
-   * @return
+   * @return array
    *   A keyed array with information about the schema, table name and prefix.
    */
   public function getPrefixInfoPublic($table = 'default', $add_prefix = TRUE) {

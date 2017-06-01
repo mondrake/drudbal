@@ -31,7 +31,7 @@ class Upsert extends QueryUpsert {
     $sql = (string) $this;
 
     if ($this->connection->supportsTransactions()) {
-      $upsert_transaction = $this->connection->startTransaction();
+      $trn = $this->connection->startTransaction();
     }
 
     // Loop through the values to be UPSERTed.
@@ -64,11 +64,6 @@ class Upsert extends QueryUpsert {
         // violation.
         $this->fallbackUpdate([]);
       }
-    }
-
-    // Close transaction if open and operation is successful.
-    if ($this->connection->inTransaction()) {
-      $upsert_transaction = NULL;
     }
 
     // Re-initialize the values array so that we can re-use this query.
@@ -138,7 +133,8 @@ class Upsert extends QueryUpsert {
 
     // Execute the DBAL query directly.
     // @todo note this drops support for comments.
-    $this->connection->pushStatementOption('allowRowCount', TRUE);  // @todo revise this if Statement is not PDO
+    // @todo revise this if Statement is not PDO.
+    $this->connection->pushStatementOption('allowRowCount', TRUE);
     return $dbal_query->execute();
   }
 

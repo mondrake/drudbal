@@ -2,11 +2,6 @@
 
 namespace Drupal\Driver\Database\dbal\DbalExtension;
 
-use Drupal\Component\Utility\Unicode;
-use Drupal\Core\Database\DatabaseExceptionWrapper;
-use Drupal\Core\Database\IntegrityConstraintViolationException;
-use Drupal\Driver\Database\dbal\Connection as DruDbalConnection;
-
 use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\Driver\Mysqli\MysqliException;
 use Doctrine\DBAL\Statement as DbalStatement;
@@ -43,7 +38,8 @@ class MysqliExtension extends AbstractMySqlExtension {
       if (!$row) {
         return FALSE;
       }
-      if ($mode === \PDO::FETCH_ASSOC) {               // @todo stringify also FETCH_NUM and FETCH_BOTH
+      // @todo stringify also FETCH_NUM and FETCH_BOTH
+      if ($mode === \PDO::FETCH_ASSOC) {
         foreach ($row as $column => &$value) {
           $value = (string) $value;
         }
@@ -85,7 +81,7 @@ class MysqliExtension extends AbstractMySqlExtension {
       return $dbal_statement->rowCount();
     }
     else {
-      list($matched, $changed, $warnings) = sscanf($wrapped_connection->info, "Rows matched: %d Changed: %d Warnings: %d");
+      list($matched) = sscanf($wrapped_connection->info, "Rows matched: %d Changed: %d Warnings: %d");
       return $matched;
     }
   }
