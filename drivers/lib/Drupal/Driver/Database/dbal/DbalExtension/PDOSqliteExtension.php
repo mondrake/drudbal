@@ -11,8 +11,10 @@ use Drupal\Core\Database\Driver\sqlite\Connection as SqliteConnectionBase;
 use Drupal\Driver\Database\dbal\Connection as DruDbalConnection;
 
 use Doctrine\DBAL\Connection as DbalConnection;
+use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
 use Doctrine\DBAL\Schema\Schema as DbalSchema;
+use Doctrine\DBAL\Statement as DbalStatement;
 
 /**
  * Driver specific methods for pdo_sqlite.
@@ -57,27 +59,12 @@ class PDOSqliteExtension extends AbstractExtension {
    */
   const SINGLE_QUOTE_IDENTIFIER_REPLACEMENT = ']]]]SINGLEQUOTEIDENTIFIERDRUDBAL[[[[';
 
-  /**
-   * Constructs a PDOSqliteExtension object.
-   *
-   * @param \Drupal\Driver\Database\dbal\Connection $drudbal_connection
-   *   The Drupal database connection object for this extension.
-   * @param \Doctrine\DBAL\Connection $dbal_connection
-   *   The DBAL connection.
-   * @param string $statement_class
-   *   The StatementInterface class to be used.
-   */
-  public function __construct(DruDbalConnection $drudbal_connection, DbalConnection $dbal_connection, $statement_class) {
-    $this->connection = $drudbal_connection;
-    $this->dbalConnection = $dbal_connection;
-    $this->statementClass = $statement_class;
 
     // @todo DBAL schema manager does not manage namespaces, so instead of
     // having a separate attached database for each prefix like in core Sqlite
     // driver, we have all the tables in the same main db.
 
     // @todo still check how :memory: database works.
-  }
 
   /**
    * {@inheritdoc}
@@ -89,14 +76,10 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegatePrepare($statement, array $params, array $driver_options = []) {
-    return new $this->statementClass($this->connection->getDbalConnection(), $this->connection, $statement, $driver_options);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function delegateQueryExceptionProcess($query, array $args, array $options, $message, \Exception $e) {
+    if ($e instanceof DatabaseExceptionWrapper) {
+      $e = $e->getPrevious();
+    }
     // The database schema might be changed by another process in between the
     // time that the statement was prepared and the time the statement was run
     // (e.g. usually happens when running tests). In this case, we need to
@@ -268,6 +251,86 @@ class PDOSqliteExtension extends AbstractExtension {
    */
   public function delegateReleaseSavepointExceptionProcess(DbalDriverException $e) {
     // @todo
+  }
+
+  /**
+   * Statement delegated methods.
+   */
+
+  /**
+   * {@inheritdoc}
+   */
+  public function alterStatement(&$query, array &$args) {
+   /*
+   * The PDO SQLite layer doesn't replace numeric placeholders in queries
+   * correctly, and this makes numeric expressions (such as COUNT(*) >= :count)
+   * fail. We replace numeric placeholders in the query ourselves to work
+   * around this bug.
+   *
+   * See http://bugs.php.net/bug.php?id=45259 for more details.
+   */
+    if (count($args)) {
+      // Check if $args is a simple numeric array.
+      if (range(0, count($args) - 1) === array_keys($args)) {
+        // In that case, we have unnamed placeholders.
+        $count = 0;
+        $new_args = [];
+        foreach ($args as $value) {
+          if (is_float($value) || is_int($value)) {
+            if (is_float($value)) {
+              // Force the conversion to float so as not to loose precision
+              // in the automatic cast.
+              $value = sprintf('%F', $value);
+            }
+            $query = substr_replace($query, $value, strpos($query, '?'), 1);
+          }
+          else {
+            $placeholder = ':db_statement_placeholder_' . $count++;
+            $query = substr_replace($query, $placeholder, strpos($query, '?'), 1);
+            $new_args[$placeholder] = $value;
+          }
+        }
+        $args = $new_args;
+      }
+      else {
+        // Else, this is using named placeholders.
+        foreach ($args as $placeholder => $value) {
+          if (is_float($value) || is_int($value)) {
+            if (is_float($value)) {
+              // Force the conversion to float so as not to loose precision
+              // in the automatic cast.
+              $value = sprintf('%F', $value);
+            }
+
+            // We will remove this placeholder from the query as PDO throws an
+            // exception if the number of placeholders in the query and the
+            // arguments does not match.
+            unset($args[$placeholder]);
+            // PDO allows placeholders to not be prefixed by a colon. See
+            // http://marc.info/?l=php-internals&m=111234321827149&w=2 for
+            // more.
+            if ($placeholder[0] != ':') {
+              $placeholder = ":$placeholder";
+            }
+            // When replacing the placeholders, make sure we search for the
+            // exact placeholder. For example, if searching for
+            // ':db_placeholder_1', do not replace ':db_placeholder_11'.
+            $query = preg_replace('/' . preg_quote($placeholder) . '\b/', $value, $query);
+          }
+        }
+      }
+    }
+    return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateFetch(DbalStatement $dbal_statement, $mode, $fetch_class) {
+    if ($mode === \PDO::FETCH_CLASS) {
+      $dbal_statement->setFetchMode($mode, $fetch_class);
+    }
+    return $dbal_statement->fetch($mode);
   }
 
   /**

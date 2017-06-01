@@ -2,10 +2,13 @@
 
 namespace Drupal\Driver\Database\dbal\DbalExtension;
 
+use Drupal\Driver\Database\dbal\Connection as DruDbalConnection;
+
 use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
 use Doctrine\DBAL\Schema\Schema as DbalSchema;
 use Doctrine\DBAL\Schema\Table as DbalTable;
+use Doctrine\DBAL\Statement as DbalStatement;
 
 /**
  * Abstract DBAL Extension.
@@ -34,6 +37,22 @@ class AbstractExtension implements DbalExtensionInterface {
   protected $statementClass;
 
   /**
+   * Constructs a DBAL extension object.
+   *
+   * @param \Drupal\Driver\Database\dbal\Connection $drudbal_connection
+   *   The Drupal database connection object for this extension.
+   * @param \Doctrine\DBAL\Connection $dbal_connection
+   *   The DBAL connection.
+   * @param string $statement_class
+   *   The StatementInterface class to be used.
+   */
+  public function __construct(DruDbalConnection $drudbal_connection, DbalConnection $dbal_connection, $statement_class) {
+    $this->connection = $drudbal_connection;
+    $this->dbalConnection = $dbal_connection;
+    $this->statementClass = $statement_class;
+  }
+
+  /**
    * {@inheritdoc}
    */
   public function destroy() {
@@ -43,13 +62,6 @@ class AbstractExtension implements DbalExtensionInterface {
    * {@inheritdoc}
    */
   public function delegateClientVersion() {
-    throw new \LogicException("Method " . __METHOD__ . " not implemented for '" . $this->dbalConnection->getDriver()->getName() . "''");
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function delegatePrepare($statement, array $params, array $driver_options = []) {
     throw new \LogicException("Method " . __METHOD__ . " not implemented for '" . $this->dbalConnection->getDriver()->getName() . "''");
   }
 
@@ -168,6 +180,38 @@ class AbstractExtension implements DbalExtensionInterface {
    */
   public function delegateReleaseSavepointExceptionProcess(DbalDriverException $e) {
     throw new \LogicException("Method " . __METHOD__ . " not implemented for '" . $this->dbalConnection->getDriver()->getName() . "''");
+  }
+
+  /**
+   * Statement delegated methods.
+   */
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateNamedPlaceholdersSupport() {
+    return TRUE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function alterStatement(&$query, array &$args) {
+    return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateFetch(DbalStatement $dbal_statement, $mode, $fetch_class) {
+    throw new \LogicException("Method " . __METHOD__ . " not implemented for '" . $this->dbalConnection->getDriver()->getName() . "''");
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateRowCount(DbalStatement $dbal_statement) {
+    return $dbal_statement->rowCount();
   }
 
   /**

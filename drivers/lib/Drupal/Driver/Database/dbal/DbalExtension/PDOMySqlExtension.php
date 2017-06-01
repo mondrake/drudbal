@@ -6,38 +6,14 @@ use Drupal\Component\Utility\Unicode;
 use Drupal\Core\Database\DatabaseExceptionWrapper;
 use Drupal\Core\Database\IntegrityConstraintViolationException;
 use Drupal\Driver\Database\dbal\Connection as DruDbalConnection;
+
 use Doctrine\DBAL\Connection as DbalConnection;
+use Doctrine\DBAL\Statement as DbalStatement;
 
 /**
  * Driver specific methods for pdo_mysql.
  */
 class PDOMySqlExtension extends AbstractMySqlExtension {
-
-  /**
-   * Constructs a PDOMySqlExtension object.
-   *
-   * @param \Drupal\Driver\Database\dbal\Connection $drudbal_connection
-   *   The Drupal database connection object for this extension.
-   * @param \Doctrine\DBAL\Connection $dbal_connection
-   *   The DBAL connection.
-   * @param string $statement_class
-   *   The StatementInterface class to be used.
-   */
-  public function __construct(DruDbalConnection $drudbal_connection, DbalConnection $dbal_connection, $statement_class) {
-    $this->connection = $drudbal_connection;
-    $this->dbalConnection = $dbal_connection;
-    $this->dbalConnection->getWrappedConnection()->setAttribute(\PDO::ATTR_STATEMENT_CLASS, [$statement_class, [$this->connection]]);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function destroy() {
-    if (!empty($this->statementClass)) {
-      $this->getDbalConnection()->getWrappedConnection()->setAttribute(\PDO::ATTR_STATEMENT_CLASS, ['PDOStatement', []]);
-    }
-    parent::destroy();
-  }
 
   /**
    * {@inheritdoc}
@@ -72,35 +48,17 @@ class PDOMySqlExtension extends AbstractMySqlExtension {
   }
 
   /**
-   * {@inheritdoc}
+   * Statement delegated methods.
    */
-  public function delegatePrepare($statement, array $params, array $driver_options = []) {
-    try {
-      return $this->getDbalConnection()->getWrappedConnection()->prepare($statement, $driver_options);
-    }
-    catch (\PDOException $e) {
-      throw new DatabaseExceptionWrapper($e->getMessage(), $e->getCode(), $e);
-    }
-  }
 
   /**
    * {@inheritdoc}
    */
-  public function delegateQueryExceptionProcess($query, array $args, array $options, $message, \Exception $e) {
-    // Match all SQLSTATE 23xxx errors.
-    if (substr($e->getCode(), -6, -3) == '23') {
-      throw new IntegrityConstraintViolationException($message, $e->getCode(), $e);
+  public function delegateFetch(DbalStatement $dbal_statement, $mode, $fetch_class) {
+    if ($mode === \PDO::FETCH_CLASS) {
+      $dbal_statement->setFetchMode($mode, $fetch_class);
     }
-    elseif ($e->errorInfo[1] == 1153) {
-      // If a max_allowed_packet error occurs the message length is truncated.
-      // This should prevent the error from recurring if the exception is
-      // logged to the database using dblog or the like.
-      $message = Unicode::truncateBytes($e->getMessage(), self::MIN_MAX_ALLOWED_PACKET);
-      throw new DatabaseExceptionWrapper($message, $e->getCode(), $e);
-    }
-    else {
-      throw new DatabaseExceptionWrapper($message, 0, $e);
-    }
+    return $dbal_statement->fetch($mode);
   }
 
 }

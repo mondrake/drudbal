@@ -19,9 +19,6 @@ use Drupal\Core\Database\TransactionOutOfOrderException;
 use Drupal\Driver\Database\dbal\DbalExtension\MysqliExtension;
 use Drupal\Driver\Database\dbal\DbalExtension\PDOMySqlExtension;
 use Drupal\Driver\Database\dbal\DbalExtension\PDOSqliteExtension;
-use Drupal\Driver\Database\dbal\Statement\MysqliDbalStatement;
-use Drupal\Driver\Database\dbal\Statement\PDODbalStatement;
-use Drupal\Driver\Database\dbal\Statement\PDOSqliteDbalStatement;
 
 use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\ConnectionException as DbalConnectionException;
@@ -44,14 +41,14 @@ class Connection extends DatabaseConnection {
 
   /**
    * List of supported drivers and their mapping to the DBAL extension
-   * and the statement classes to use.
+   * classes to use.
    *
-   * @var array[]
+   * @var string[]
    */
   protected static $dbalClassMap = array(
-    'mysqli' => [MysqliExtension::class, MysqliDbalStatement::class],
-    'pdo_mysql' => [PDOMySqlExtension::class, PDODbalStatement::class],
-    'pdo_sqlite' => [PDOSqliteExtension::class, PDOSqliteDbalStatement::class],
+    'mysqli' => MysqliExtension::class,
+    'pdo_mysql' => PDOMySqlExtension::class,
+    'pdo_sqlite' => PDOSqliteExtension::class,
   );
 
   /**
@@ -87,6 +84,8 @@ class Connection extends DatabaseConnection {
    * prepare/execute methods. Overcome that by storing here options required,
    * so that the custom Statement classes defined by the driver can manage that
    * on construction.
+   *
+   * @todo remove
    *
    * @var array[]
    */
@@ -424,11 +423,12 @@ class Connection extends DatabaseConnection {
    *
    * @param string $query
    *   The query string as SQL, with curly-braces surrounding the
-   *   table names.
+   *   table names. Passed by reference to allow altering by DBAL extensions.
    * @param array $args
    *   An array of arguments for the prepared statement. If the prepared
    *   statement uses ? placeholders, this array must be an indexed array.
    *   If it contains named placeholders, it must be an associative array.
+   *   Passed by reference to allow altering by DBAL extensions.
    * @param array $driver_options
    *   (optional) This array holds one or more key=>value pairs to set
    *   attribute values for the Statement object that this method returns.
@@ -439,9 +439,9 @@ class Connection extends DatabaseConnection {
    *   If the database server cannot successfully prepare the statement  returns
    *   FALSE or emits an Exception (depending on error handling).
    */
-  public function prepareQueryWithParams($query, array $args = [], array $driver_options = []) {
+  public function prepareQueryWithParams(&$query, array &$args = [], array $driver_options = []) {
     $query = $this->prefixTables($query);
-    return $this->dbalExtension->delegatePrepare($query, $args, $driver_options);
+    return new $this->statementClass($this, $query, $args, $driver_options);
   }
 
   /**
@@ -463,7 +463,8 @@ class Connection extends DatabaseConnection {
     // driver is not able to process named placeholders. Use
     // ::prepareQueryWithParams instead.
     // @todo raise an exception and fail hard??
-    return $this->dbalExtension->delegatePrepare($statement, [], $driver_options);
+    $params = [];
+    return new $this->statementClass($this, $statement, $params, $driver_options);
   }
 
   /**
@@ -606,7 +607,7 @@ class Connection extends DatabaseConnection {
     if (isset(static::$driverSchemeAliases[$driver_name])) {
       $driver_name = static::$driverSchemeAliases[$driver_name];
     }
-    return static::$dbalClassMap[$driver_name][0];
+    return static::$dbalClassMap[$driver_name];
   }
 
   /**
@@ -622,11 +623,7 @@ class Connection extends DatabaseConnection {
     if (isset($connection_options['dbal_statement_class'])) {
       return $connection_options['dbal_statement_class'];
     }
-    $driver_name = $connection_options['dbal_driver'];
-    if (isset(static::$driverSchemeAliases[$driver_name])) {
-      $driver_name = static::$driverSchemeAliases[$driver_name];
-    }
-    return static::$dbalClassMap[$driver_name][1];
+    return Statement::class;
   }
 
   /**

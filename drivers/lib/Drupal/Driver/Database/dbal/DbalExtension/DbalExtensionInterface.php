@@ -6,6 +6,7 @@ use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
 use Doctrine\DBAL\Schema\Schema as DbalSchema;
 use Doctrine\DBAL\Schema\Table as DbalTable;
+use Doctrine\DBAL\Statement as DbalStatement;
 
 /**
  * Provides an interface for Dbal extensions.
@@ -156,30 +157,6 @@ interface DbalExtensionInterface {
   public function delegateNextId($existing_id = 0);
 
   /**
-   * Prepares a statement for execution and returns a statement object.
-   *
-   * @param string $statement
-   *   This must be a valid SQL statement for the target database server.
-   * @param array $params
-   *   An array of arguments for the prepared statement. If the prepared
-   *   statement uses ? placeholders, this array must be an indexed array.
-   *   If it contains named placeholders, it must be an associative array.
-   * @param array $driver_options
-   *   (optional) This array holds one or more key=>value pairs to set
-   *   attribute values for the StatementInterface object that this method
-   *   returns.
-   *
-   * @return \Drupal\Core\Database\StatementInterface|false
-   *   If the database server successfully prepares the statement, returns a
-   *   StatementInterface object.
-   *   If the database server cannot successfully prepare the statement,
-   *   returns FALSE or throes a DatabaseExceptionWrapper exception.
-   *
-   * @throws \Drupal\Core\Database\DatabaseExceptionWrapper
-   */
-  public function delegatePrepare($statement, array $params, array $driver_options = []);
-
-  /**
    * Handles a DBALExceptions thrown by Connection::query().
    *
    * @param string $query
@@ -254,6 +231,62 @@ interface DbalExtensionInterface {
    *   For any other error.
    */
   public function delegateReleaseSavepointExceptionProcess(DbalDriverException $e);
+
+  /**
+   * Statement delegated methods.
+   */
+
+  /**
+   * Informs the Statement on whether named placeholders are supported.
+   *
+   * @return bool
+   *   TRUE if named placeholders are supported, FALSE otherwise.
+   */
+  public function delegateNamedPlaceholdersSupport();
+
+  /**
+   * Alters the SQL query and its arguments before preparing the statement.
+   *
+   * @param string $query
+   *   A string containing an SQL query. Passed by reference.
+   * @param array $args
+   *   (optional) An array of values to substitute into the query at placeholder
+   *   markers. Passed by reference.
+   *
+   * @return $this
+   */
+  public function alterStatement(&$query, array &$args);
+
+  /**
+   * Fetches the next row from a result set.
+   *
+   * See http://php.net/manual/pdo.constants.php for the definition of the
+   * constants used.
+   *
+   * @param \Doctrine\DBAL\Statement $dbal_statement
+   *   The DBAL statement.
+   * @param int $mode
+   *   One of the PDO::FETCH_* constants.
+   * @param string $fetch_class
+   *   The class to be used for returning row results if \PDO::FETCH_CLASS
+   *   is specified for $mode.
+   *
+   * @return
+   *   A result, formatted according to $mode.
+   */
+  public function delegateFetch(DbalStatement $dbal_statement, $mode, $fetch_class);
+
+  /**
+   * Returns the number of rows affected by the last SQL statement.
+   *
+   * @param \Doctrine\DBAL\Statement $dbal_statement
+   *   The DBAL statement.
+   *
+   * @return
+   *   The number of rows affected by the last DELETE, INSERT, or UPDATE
+   *   statement.
+   */
+  public function delegateRowCount(DbalStatement $dbal_statement);
 
   /**
    * Insert delegated methods.
