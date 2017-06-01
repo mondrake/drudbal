@@ -61,15 +61,13 @@ class Statement implements \IteratorAggregate, StatementInterface {
   protected $fetchClass;
 
   /**
-   * Constructs a MysqliDbalStatement object.
+   * Constructs a Statement object.
    *
    * @param \Drupal\Driver\Database\dbal\Connection $dbh
    *   The database connection object for this statement.
    */
-  public function __construct(DruDbalConnection $dbh, $statement, $params, array $driver_options = []) {
-
+  public function __construct(DruDbalConnection $dbh, &$statement, &$params, array $driver_options = []) {
     $this->queryString = $statement;
-
     $this->dbh = $dbh;
     $this->setFetchMode(\PDO::FETCH_OBJ);
     if (($allow_row_count = $this->dbh->popStatementOption('allowRowCount')) !== NULL) {  // @todo remove
@@ -88,6 +86,7 @@ class Statement implements \IteratorAggregate, StatementInterface {
     }
 
     try {
+      $this->dbh->getDbalExtension()->alterStatement($statement, $params);
       $this->dbalStatement = $dbh->getDbalConnection()->prepare($statement);
     }
     catch (DBALException $e) {

@@ -244,14 +244,19 @@ interface DbalExtensionInterface {
   public function delegateNamedPlaceholdersSupport();
 
   /**
-   * @todo
+   * {@inheritdoc}
    */
-  public function delegateRowCount($dbal_statement);
+  public function alterStatement(&$query, &$args);
 
   /**
    * @todo
    */
   public function delegateFetch($dbal_statement, $mode, $fetch_class, $cursor_orientation, $cursor_offset);
+
+  /**
+   * @todo
+   */
+  public function delegateRowCount($dbal_statement);
 
   /**
    * Insert delegated methods.

@@ -177,8 +177,8 @@ class AbstractExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function delegateRowCount($dbal_statement) {
-    return $dbal_statement->rowCount();
+  public function alterStatement(&$query, &$args) {
+    return $this;
   }
 
   /**
@@ -186,6 +186,13 @@ class AbstractExtension implements DbalExtensionInterface {
    */
   public function delegateFetch($dbal_statement, $mode, $fetch_class, $cursor_orientation, $cursor_offset) {
     throw new \LogicException("Method " . __METHOD__ . " not implemented for '" . $this->dbalConnection->getDriver()->getName() . "''");
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateRowCount($dbal_statement) {
+    return $dbal_statement->rowCount();
   }
 
   /**

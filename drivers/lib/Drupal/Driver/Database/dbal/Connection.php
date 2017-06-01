@@ -424,11 +424,12 @@ class Connection extends DatabaseConnection {
    *
    * @param string $query
    *   The query string as SQL, with curly-braces surrounding the
-   *   table names.
+   *   table names. Passed by reference to allow altering by DBAL extensions.
    * @param array $args
    *   An array of arguments for the prepared statement. If the prepared
    *   statement uses ? placeholders, this array must be an indexed array.
    *   If it contains named placeholders, it must be an associative array.
+   *   Passed by reference to allow altering by DBAL extensions.
    * @param array $driver_options
    *   (optional) This array holds one or more key=>value pairs to set
    *   attribute values for the Statement object that this method returns.
@@ -439,7 +440,7 @@ class Connection extends DatabaseConnection {
    *   If the database server cannot successfully prepare the statement  returns
    *   FALSE or emits an Exception (depending on error handling).
    */
-  public function prepareQueryWithParams($query, array $args = [], array $driver_options = []) {
+  public function prepareQueryWithParams(&$query, array &$args = [], array $driver_options = []) {
     $query = $this->prefixTables($query);
     return new $this->statementClass($this, $query, $args, $driver_options);
   }
