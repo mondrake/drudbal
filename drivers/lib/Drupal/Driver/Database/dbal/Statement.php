@@ -7,7 +7,6 @@ use Drupal\Core\Database\StatementInterface;
 use Drupal\Core\Database\RowCountException;
 use Drupal\Driver\Database\dbal\Connection as DruDbalConnection;
 use Doctrine\DBAL\DBALException;
-use Doctrine\DBAL\Driver\Mysqli\MysqliException;  // @todo no
 use Doctrine\DBAL\SQLParserUtils;                 // @todo no if possible
 
 /**
@@ -152,7 +151,13 @@ class Statement implements \IteratorAggregate, StatementInterface {
    * {@inheritdoc}
    */
   public function fetchAll($mode = NULL, $column_index = NULL, $constructor_arguments = NULL) {
-    $mode = $mode ?: $this->defaultFetchMode;
+    if (is_string($mode)) {
+      $this->setFetchMode(\PDO::FETCH_CLASS, $mode);
+      $mode = \PDO::FETCH_CLASS;
+    }
+    else {
+      $mode = $mode ?: $this->defaultFetchMode;
+    }
 
     $rows = array();
     if (\PDO::FETCH_COLUMN == $mode) {
