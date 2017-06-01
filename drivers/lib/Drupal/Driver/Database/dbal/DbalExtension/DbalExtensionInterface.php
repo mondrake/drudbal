@@ -14,7 +14,9 @@ use Doctrine\DBAL\Statement as DbalStatement;
 interface DbalExtensionInterface {
 
   /**
-   * @todo
+   * Destroys this Extension object.
+   *
+   * Handed over from the Connection object when it gets destroyed too.
    */
   public function destroy();
 
@@ -33,6 +35,7 @@ interface DbalExtensionInterface {
    *   The name of the table in question.
    *
    * @return string
+   *   The fully qualified table name.
    */
   public function delegateFullQualifiedTableName($drupal_table_name);
 

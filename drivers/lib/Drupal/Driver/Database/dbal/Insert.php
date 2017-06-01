@@ -28,7 +28,7 @@ class Insert extends QueryInsert {
     // DBAL does not support multiple insert statements. In such case, open a
     // transaction (if supported), and process separately each values set.
     if ((count($this->insertValues) > 1 || !empty($this->fromQuery)) && $this->connection->supportsTransactions()) {
-      $this->connection->startTransaction();
+      $trn = $this->connection->startTransaction();
     }
 
     $last_insert_id = NULL;

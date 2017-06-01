@@ -38,8 +38,8 @@ class MysqliExtension extends AbstractMySqlExtension {
       if (!$row) {
         return FALSE;
       }
-       // @todo stringify also FETCH_NUM and FETCH_BOTH
-       if ($mode === \PDO::FETCH_ASSOC) {
+      // @todo stringify also FETCH_NUM and FETCH_BOTH
+      if ($mode === \PDO::FETCH_ASSOC) {
         foreach ($row as $column => &$value) {
           $value = (string) $value;
         }

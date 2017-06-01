@@ -31,7 +31,7 @@ class Upsert extends QueryUpsert {
     $sql = (string) $this;
 
     if ($this->connection->supportsTransactions()) {
-      $this->connection->startTransaction();
+      $trn = $this->connection->startTransaction();
     }
 
     // Loop through the values to be UPSERTed.

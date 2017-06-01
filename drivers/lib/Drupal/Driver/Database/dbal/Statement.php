@@ -119,7 +119,7 @@ class Statement implements \IteratorAggregate, StatementInterface {
     // Replace named placeholders with positional ones if needed.
     if (!$this->dbh->getDbalExtension()->delegateNamedPlaceholdersSupport()) {
       // @todo remove once DBAL 2.5.13 is out
-      $statement = strtr($this->queryString, [  // @todo remove once DBAL 2.5.13 is out
+      $statement = strtr($this->queryString, [
         '\\\\' => "]]]]DOUBLESLASHESDRUDBAL[[[[",
       ]);
       list($statement, $args) = SQLParserUtils::expandListParameters($statement, $args, []);
