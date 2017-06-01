@@ -64,11 +64,14 @@ class PDOMySqlExtension extends AbstractMySqlExtension {
    * {@inheritdoc}
    */
   public function delegateQueryExceptionProcess($query, array $args, array $options, $message, \Exception $e) {
+    if ($e instanceof DatabaseExceptionWrapper) {
+      $e = $e->getPrevious();
+    }
     // Match all SQLSTATE 23xxx errors.
-    if (substr($e->getCode(), -6, -3) == '23') {
+    if (substr($e->getSqlState(), -6, -3) == '23') {
       throw new IntegrityConstraintViolationException($message, $e->getCode(), $e);
     }
-    elseif ($e->errorInfo[1] == 1153) {
+    elseif ($e->getErrorCode() == 1153) {
       // If a max_allowed_packet error occurs the message length is truncated.
       // This should prevent the error from recurring if the exception is
       // logged to the database using dblog or the like.
