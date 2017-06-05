@@ -324,15 +324,17 @@ class Schema extends DatabaseSchema {
     $this->dbalSchemaForceReload();
     return TRUE;
 
+    // @codingStandardsIgnoreStart
     // @todo preferred way:
     // if ($this->dbalSchema()->hasTable($this->tableName($table))) {
-    //  $current_schema = $this->dbalSchema();
-    //  $to_schema = clone $current_schema;
-    //  $to_schema->dropTable($this->tableName($table));
-    //  $this->dbalExecuteSchemaChange($to_schema);
-    //  return TRUE;
+    //   $current_schema = $this->dbalSchema();
+    //   $to_schema = clone $current_schema;
+    //   $to_schema->dropTable($this->tableName($table));
+    //   $this->dbalExecuteSchemaChange($to_schema);
+    //   return TRUE;
     // }
     // return FALSE;
+    // @codingStandardsIgnoreEnd
   }
 
   /**

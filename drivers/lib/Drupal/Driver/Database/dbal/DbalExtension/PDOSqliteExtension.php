@@ -60,11 +60,11 @@ class PDOSqliteExtension extends AbstractExtension {
   const SINGLE_QUOTE_IDENTIFIER_REPLACEMENT = ']]]]SINGLEQUOTEIDENTIFIERDRUDBAL[[[[';
 
 
-    // @todo DBAL schema manager does not manage namespaces, so instead of
-    // having a separate attached database for each prefix like in core Sqlite
-    // driver, we have all the tables in the same main db.
+  // @todo DBAL schema manager does not manage namespaces, so instead of
+  // having a separate attached database for each prefix like in core Sqlite
+  // driver, we have all the tables in the same main db.
 
-    // @todo still check how :memory: database works.
+  // @todo still check how :memory: database works.
 
   /**
    * {@inheritdoc}
@@ -207,6 +207,7 @@ class PDOSqliteExtension extends AbstractExtension {
    * {@inheritdoc}
    */
   public function delegateNextId($existing_id = 0) {
+    // @codingStandardsIgnoreLine
     $trn = $this->connection->startTransaction();
     // We can safely use literal queries here instead of the slower query
     // builder because if a given database breaks here then it can simply
@@ -261,14 +262,13 @@ class PDOSqliteExtension extends AbstractExtension {
    * {@inheritdoc}
    */
   public function alterStatement(&$query, array &$args) {
-   /*
-   * The PDO SQLite layer doesn't replace numeric placeholders in queries
-   * correctly, and this makes numeric expressions (such as COUNT(*) >= :count)
-   * fail. We replace numeric placeholders in the query ourselves to work
-   * around this bug.
-   *
-   * See http://bugs.php.net/bug.php?id=45259 for more details.
-   */
+    // The PDO SQLite layer doesn't replace numeric placeholders in queries
+    // correctly, and this makes numeric expressions (such as
+    // COUNT(*) >= :count) fail.
+    // We replace numeric placeholders in the query ourselves to work around
+    // this bug.
+    //
+    // See http://bugs.php.net/bug.php?id=45259 for more details.
     if (count($args)) {
       // Check if $args is a simple numeric array.
       if (range(0, count($args) - 1) === array_keys($args)) {
@@ -407,7 +407,7 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateListTableNames(){
+  public function delegateListTableNames() {
     try {
       return $this->getDbalConnection()->getSchemaManager()->listTableNames();
     }
@@ -465,13 +465,6 @@ class PDOSqliteExtension extends AbstractExtension {
     // Decode single quotes.
     $dbal_column_definition = str_replace(self::SINGLE_QUOTE_IDENTIFIER_REPLACEMENT, '\'\'', $dbal_column_definition);
 
-    // DBAL duplicates the COMMENT part when creating a table, or adding a
-    // field, if comment is already in the 'customDefinition' option. Here,
-    // just drop comment from the column definition string.
-    // @see https://github.com/doctrine/dbal/pull/2725
-//    if (in_array($context, ['createTable', 'addField'])) {
-//      $dbal_column_definition = preg_replace("/ COMMENT (?:(?:'(?:\\\\\\\\)+'|'(?:[^'\\\\]|\\\\'?|'')*'))?/s", '', $dbal_column_definition);
-//    }
     return $this;
   }
 
@@ -484,7 +477,8 @@ class PDOSqliteExtension extends AbstractExtension {
     // cases, we have to create a new table and copy the data over.
     if (empty($keys_new_specs) && (empty($drupal_field_specs['not null']) || isset($drupal_field_specs['default']))) {
       // When we don't have to create new keys and we are not creating a
-      // NOT NULL column without a default value, we can use the quicker version.
+      // NOT NULL column without a default value, we can use the quicker
+      // version.
       $query = 'ALTER TABLE {' . $drupal_table_name . '} ADD ' . $this->createFieldSql($field_name, $this->processField($drupal_field_specs));
       $this->connection->query($query);
 
@@ -595,9 +589,9 @@ class PDOSqliteExtension extends AbstractExtension {
       }
     }
 
-    // Add in the keys from $keys_new.
-    if (isset($keys_new['primary key'])) {
-      $new_schema['primary key'] = $keys_new['primary key'];
+    // Add in the keys from $keys_new_specs.
+    if (isset($keys_new_specs['primary key'])) {
+      $new_schema['primary key'] = $keys_new_specs['primary key'];
     }
     foreach (['unique keys', 'indexes'] as $k) {
       if (!empty($keys_new_specs[$k])) {
@@ -704,10 +698,10 @@ class PDOSqliteExtension extends AbstractExtension {
    * create a schema array. This is useful, for example, during update when
    * the old schema is not available.
    *
-   * @param $table
+   * @param string $table
    *   Name of the table.
    *
-   * @return
+   * @return array
    *   An array representing the schema, from drupal_get_schema().
    *
    * @throws \Exception
@@ -734,7 +728,8 @@ class PDOSqliteExtension extends AbstractExtension {
         $type = $row->type;
         $length = NULL;
       }
-      $type = preg_replace('/ UNSIGNED/', '', $type); // @todo this was added to avoid test failure, not sure this is correct
+      // @todo this was added to avoid test failure, not sure this is correct
+      $type = preg_replace('/ UNSIGNED/', '', $type);
       if (isset($mapped_fields[$type])) {
         list($type, $size) = explode(':', $mapped_fields[$type]);
         $schema['fields'][$row->name] = [
@@ -743,7 +738,8 @@ class PDOSqliteExtension extends AbstractExtension {
           'not null' => !empty($row->notnull),
           'default' => trim($row->dflt_value, "'"),
         ];
-        if ($row->pk) { // @todo this was added to avoid test failure, not sure this is correct
+        // @todo this was added to avoid test failure, not sure it is correct.
+        if ($row->pk) {
           $schema['fields'][$row->name]['not null'] = FALSE;
         }
         if ($length) {
@@ -790,9 +786,9 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * Utility method: rename columns in an index definition according to a new mapping.
    *
-   * @param $key_definition
+   * @param array $key_definition
    *   The key definition.
-   * @param $mapping
+   * @param array $mapping
    *   The new mapping.
    */
   protected function mapKeyDefinition(array $key_definition, array $mapping) {
@@ -814,13 +810,13 @@ class PDOSqliteExtension extends AbstractExtension {
    * As SQLite does not support ALTER TABLE (with a few exceptions) it is
    * necessary to create a new table and copy over the old content.
    *
-   * @param $table
+   * @param string $table
    *   Name of the table to be altered.
-   * @param $old_schema
+   * @param array $old_schema
    *   The old schema array for the table.
-   * @param $new_schema
+   * @param array $new_schema
    *   The new schema array for the table.
-   * @param $mapping
+   * @param array $mapping
    *   An optional mapping between the fields of the old specification and the
    *   fields of the new specification. An associative array, whose keys are
    *   the fields of the new table, and values can take two possible forms:
@@ -829,7 +825,7 @@ class PDOSqliteExtension extends AbstractExtension {
    *     - an associative array with two keys 'expression' and 'arguments',
    *       that will be used as an expression field.
    */
-  protected function alterTable($table, $old_schema, $new_schema, array $mapping = []) {
+  protected function alterTable($table, array $old_schema, array $new_schema, array $mapping = []) {
     $i = 0;
     do {
       $new_table = $table . '_' . $i++;
@@ -887,7 +883,7 @@ class PDOSqliteExtension extends AbstractExtension {
     // database types back into schema types.
     // $map does not use drupal_static as its value never changes.
     static $map = [
-      'varchar_ascii:normal' => 'CLOB',    // @todo not sure this is correct
+      'varchar_ascii:normal' => 'CLOB',
 
       'varchar:normal'  => 'VARCHAR',
       'char:normal'     => 'CHAR',
@@ -914,7 +910,7 @@ class PDOSqliteExtension extends AbstractExtension {
       'float:small'     => 'DOUBLE PRECISION',
       'float:medium'    => 'DOUBLE PRECISION',
       'float:big'       => 'DOUBLE PRECISION',
-      'float:normal'    => 'FLOAT', // @todo check!!
+      'float:normal'    => 'FLOAT',
 
       'numeric:normal'  => 'NUMERIC',
 
@@ -927,10 +923,10 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * Set database-engine specific properties for a field.
    *
-   * @param $field
+   * @param array $field
    *   A field description array, as specified in the schema documentation.
    */
-  protected function processField($field) {
+  protected function processField(array $field) {
     if (!isset($field['size'])) {
       $field['size'] = 'normal';
     }
@@ -958,17 +954,17 @@ class PDOSqliteExtension extends AbstractExtension {
   }
 
   /**
-   * Create an SQL string for a field to be used in table creation or alteration.
+   * Create an SQL string for a field to be used in table create/alter.
    *
    * Before passing a field out of a schema definition into this function it has
    * to be processed by db_processField().
    *
-   * @param $name
-   *    Name of the field.
-   * @param $spec
-   *    The field specification, as per the schema data structure format.
+   * @param string $name
+   *   Name of the field.
+   * @param array $spec
+   *   The field specification, as per the schema data structure format.
    */
-  protected function createFieldSql($name, $spec) {
+  protected function createFieldSql($name, array $spec) {
     if (!empty($spec['auto_increment'])) {
       $sql = $name . " INTEGER PRIMARY KEY AUTOINCREMENT";
       if (!empty($spec['unsigned'])) {
