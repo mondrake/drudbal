@@ -710,7 +710,7 @@ class PDOSqliteExtension extends AbstractExtension {
    *   If a column of the table could not be parsed.
    */
   protected function introspectSchema($table) {
-    $mapped_fields = array_flip($this->connection->getFieldTypeMap());
+    $mapped_fields = array_flip($this->connection->schema()->getFieldTypeMap());
     $schema = [
       'fields' => [],
       'primary key' => [],
