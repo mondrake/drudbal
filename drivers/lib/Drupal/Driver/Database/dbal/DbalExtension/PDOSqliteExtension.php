@@ -710,7 +710,7 @@ class PDOSqliteExtension extends AbstractExtension {
    *   If a column of the table could not be parsed.
    */
   protected function introspectSchema($table) {
-    $mapped_fields = array_flip($this->getFieldTypeMap());
+    $mapped_fields = array_flip($this->connection->schema()->getFieldTypeMap());
     $schema = [
       'fields' => [],
       'primary key' => [],
@@ -732,8 +732,9 @@ class PDOSqliteExtension extends AbstractExtension {
       }
       // @todo this was added to avoid test failure, not sure this is correct
       $type = preg_replace('/ UNSIGNED/', '', $type);
-      if (isset($mapped_fields[$type])) {
-        list($type, $size) = explode(':', $mapped_fields[$type]);
+      $dbal_type = $this->dbalConnection->getDatabasePlatform()->getDoctrineTypeMapping($type);
+      if (isset($mapped_fields[$dbal_type])) {
+        list($type, $size) = explode(':', $mapped_fields[$dbal_type]);
         $schema['fields'][$row->name] = [
           'type' => $type,
           'size' => $size,
@@ -873,53 +874,6 @@ class PDOSqliteExtension extends AbstractExtension {
       $this->connection->schema()->dropTable($table);
       $this->connection->schema()->renameTable($new_table, $table);
     }
-  }
-
-  /**
-   * This maps a generic data type in combination with its data size
-   * to the engine-specific data type.
-   */
-  protected function getFieldTypeMap() {
-    // Put :normal last so it gets preserved by array_flip. This makes
-    // it much easier for modules (such as schema.module) to map
-    // database types back into schema types.
-    // $map does not use drupal_static as its value never changes.
-    static $map = [
-      'varchar_ascii:normal' => 'CLOB',
-
-      'varchar:normal'  => 'VARCHAR',
-      'char:normal'     => 'CHAR',
-
-      'text:tiny'       => 'TEXT',
-      'text:small'      => 'TEXT',
-      'text:medium'     => 'TEXT',
-      'text:big'        => 'TEXT',
-      'text:normal'     => 'TEXT',
-
-      'serial:tiny'     => 'SMALLINT',
-      'serial:small'    => 'SMALLINT',
-      'serial:medium'   => 'INTEGER',
-      'serial:big'      => 'BIGINT',
-      'serial:normal'   => 'INTEGER',
-
-      'int:tiny'        => 'SMALLINT',
-      'int:small'       => 'SMALLINT',
-      'int:medium'      => 'INTEGER',
-      'int:big'         => 'BIGINT',
-      'int:normal'      => 'INTEGER',
-
-      'float:tiny'      => 'DOUBLE PRECISION',
-      'float:small'     => 'DOUBLE PRECISION',
-      'float:medium'    => 'DOUBLE PRECISION',
-      'float:big'       => 'DOUBLE PRECISION',
-      'float:normal'    => 'FLOAT',
-
-      'numeric:normal'  => 'NUMERIC',
-
-      'blob:big'        => 'BLOB',
-      'blob:normal'     => 'BLOB',
-    ];
-    return $map;
   }
 
   /**
