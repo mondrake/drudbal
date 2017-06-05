@@ -479,11 +479,7 @@ class PDOSqliteExtension extends AbstractExtension {
       // When we don't have to create new keys and we are not creating a
       // NOT NULL column without a default value, we can use the quicker
       // version.
-      if (!isset($drupal_field_specs['size'])) {
-        $drupal_field_specs['size'] = 'normal';
-      }
-      $dbal_map = $this->connection->schema()->getFieldTypeMap();
-      $dbal_type = $dbal_map[$drupal_field_specs['type'] . ':' . $drupal_field_specs['size']];
+      $dbal_type = $this->connection->schema()->getDbalColumnType($drupal_field_specs);
       $dbal_column_options = $this->connection->schema()->getDbalColumnOptions('addField', $field_name, $dbal_type, $drupal_field_specs);
       $query = 'ALTER TABLE {' . $drupal_table_name . '} ADD ' . $field_name . ' ' . $dbal_column_options['columnDefinition'];
       $this->connection->query($query);
