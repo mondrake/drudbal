@@ -479,7 +479,9 @@ class PDOSqliteExtension extends AbstractExtension {
       // When we don't have to create new keys and we are not creating a
       // NOT NULL column without a default value, we can use the quicker
       // version.
-      $query = 'ALTER TABLE {' . $drupal_table_name . '} ADD ' . $this->createFieldSql($field_name, $this->processField($drupal_field_specs));
+      $dbal_type = $this->connection->schema()->getDbalColumnType($drupal_field_specs);
+      $dbal_column_options = $this->connection->schema()->getDbalColumnOptions('addField', $field_name, $dbal_type, $drupal_field_specs);
+      $query = 'ALTER TABLE {' . $drupal_table_name . '} ADD ' . $field_name . ' ' . $dbal_column_options['columnDefinition'];
       $this->connection->query($query);
 
       // Apply the initial value if set.
@@ -918,97 +920,6 @@ class PDOSqliteExtension extends AbstractExtension {
       'blob:normal'     => 'BLOB',
     ];
     return $map;
-  }
-
-  /**
-   * Set database-engine specific properties for a field.
-   *
-   * @param array $field
-   *   A field description array, as specified in the schema documentation.
-   */
-  protected function processField(array $field) {
-    if (!isset($field['size'])) {
-      $field['size'] = 'normal';
-    }
-
-    // Set the correct database-engine specific datatype.
-    // In case one is already provided, force it to uppercase.
-    if (isset($field['sqlite_type'])) {
-      $field['sqlite_type'] = Unicode::strtoupper($field['sqlite_type']);
-    }
-    else {
-      $map = $this->getFieldTypeMap();
-      $field['sqlite_type'] = $map[$field['type'] . ':' . $field['size']];
-
-      // Numeric fields with a specified scale have to be stored as floats.
-      if ($field['sqlite_type'] === 'NUMERIC' && isset($field['scale'])) {
-        $field['sqlite_type'] = 'FLOAT';
-      }
-    }
-
-    if (isset($field['type']) && $field['type'] == 'serial') {
-      $field['auto_increment'] = TRUE;
-    }
-
-    return $field;
-  }
-
-  /**
-   * Create an SQL string for a field to be used in table create/alter.
-   *
-   * Before passing a field out of a schema definition into this function it has
-   * to be processed by db_processField().
-   *
-   * @param string $name
-   *   Name of the field.
-   * @param array $spec
-   *   The field specification, as per the schema data structure format.
-   */
-  protected function createFieldSql($name, array $spec) {
-    if (!empty($spec['auto_increment'])) {
-      $sql = $name . " INTEGER PRIMARY KEY AUTOINCREMENT";
-      if (!empty($spec['unsigned'])) {
-        $sql .= ' CHECK (' . $name . '>= 0)';
-      }
-    }
-    else {
-      $sql = $name . ' ' . $spec['sqlite_type'];
-
-      if (in_array($spec['sqlite_type'], ['VARCHAR', 'TEXT'])) {
-        if (isset($spec['length'])) {
-          $sql .= '(' . $spec['length'] . ')';
-        }
-
-        if (isset($spec['binary']) && $spec['binary'] === FALSE) {
-          $sql .= ' COLLATE NOCASE_UTF8';
-        }
-      }
-
-      if (isset($spec['not null'])) {
-        if ($spec['not null']) {
-          $sql .= ' NOT NULL';
-        }
-        else {
-          $sql .= ' NULL';
-        }
-      }
-
-      if (!empty($spec['unsigned'])) {
-        $sql .= ' CHECK (' . $name . '>= 0)';
-      }
-
-      if (isset($spec['default'])) {
-        if (is_string($spec['default'])) {
-          $spec['default'] = $this->connection->quote($spec['default']);
-        }
-        $sql .= ' DEFAULT ' . $spec['default'];
-      }
-
-      if (empty($spec['not null']) && !isset($spec['default'])) {
-        $sql .= ' DEFAULT NULL';
-      }
-    }
-    return $sql;
   }
 
   /**
