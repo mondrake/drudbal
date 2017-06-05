@@ -180,7 +180,7 @@ class Schema extends DatabaseSchema {
    *   An array of DBAL column options, including the SQL column definition
    *   specification in the 'columnDefinition' option.
    */
-  protected function getDbalColumnOptions($context, $field_name, $dbal_type, array $field) {
+  public function getDbalColumnOptions($context, $field_name, $dbal_type, array $field) {
     $options = [];
 
     $options['type'] = DbalType::getType($dbal_type);
