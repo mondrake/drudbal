@@ -133,8 +133,6 @@ class Upsert extends QueryUpsert {
 
     // Execute the DBAL query directly.
     // @todo note this drops support for comments.
-    // @todo revise this if Statement is not PDO.
-    $this->connection->pushStatementOption('allowRowCount', TRUE);
     return $dbal_query->execute();
   }
 

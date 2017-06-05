@@ -85,10 +85,6 @@ class Statement implements \IteratorAggregate, StatementInterface {
     $this->queryString = $statement;
     $this->dbh = $dbh;
     $this->setFetchMode(\PDO::FETCH_OBJ);
-    // @todo remove
-    if (($allow_row_count = $this->dbh->popStatementOption('allowRowCount')) !== NULL) {
-      $this->allowRowCount = $allow_row_count;
-    }
 
     // Replace named placeholders with positional ones if needed.
     if (!$this->dbh->getDbalExtension()->delegateNamedPlaceholdersSupport()) {

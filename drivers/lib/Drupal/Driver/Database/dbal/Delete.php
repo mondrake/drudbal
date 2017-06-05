@@ -25,18 +25,7 @@ class Delete extends QueryDelete {
    * {@inheritdoc}
    */
   public function execute() {
-    if (empty($this->comments)) {
-      // If no comments, we can directly execute the DBAL query.
-      $this->compileDbalQuery();
-      // Instruct the Statement object to allow row count.
-      $this->connection->pushStatementOption('allowRowCount', TRUE);
-      return $this->dbalQuery->execute();
-    }
-    else {
-      // Otherwise, we need to fall back to __toString to build the appropriate
-      // SQL statement, and pass it to the DruDbal connection query.
-      return $this->connection->query((string) $this, $this->dbalQuery->getParameters(), $this->queryOptions);
-    }
+    return $this->connection->query((string) $this, $this->dbalQuery->getParameters(), $this->queryOptions);
   }
 
   /**
