@@ -657,39 +657,6 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateAddUniqueKey($drupal_table_name, $index_name, array $drupal_field_specs) {
-    $schema['unique keys'][$index_name] = $drupal_field_specs;
-    $statements = $this->createIndexSql($drupal_table_name, $schema);
-    foreach ($statements as $statement) {
-      $this->connection->query($statement);
-    }
-    return TRUE;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function delegateAddIndex($drupal_table_name, $index_name, array $drupal_field_specs, array $indexes_spec) {
-    $schema['indexes'][$index_name] = $drupal_field_specs;
-    $statements = $this->createIndexSql($drupal_table_name, $schema);
-    foreach ($statements as $statement) {
-      $this->connection->query($statement);
-    }
-    return TRUE;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function delegateDropIndex($drupal_table_name, $index_name) {
-    $info = $this->connection->schema()->getPrefixInfoPublic($drupal_table_name);
-    $this->connection->query('DROP INDEX ' . $info['table'] . '____' . $index_name);
-    return TRUE;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function delegateGetTableComment(DbalSchema $dbal_schema, $drupal_table_name) {
     throw new \RuntimeException('Table comments are not supported in SQlite.');
   }
@@ -875,41 +842,6 @@ class PDOSqliteExtension extends AbstractExtension {
       $this->connection->schema()->dropTable($table);
       $this->connection->schema()->renameTable($new_table, $table);
     }
-  }
-
-  /**
-   * Build the SQL expression for indexes.
-   */
-  protected function createIndexSql($tablename, $schema) {
-    $sql = [];
-    $info = $this->connection->schema()->getPrefixInfoPublic($tablename);
-    if (!empty($schema['unique keys'])) {
-      foreach ($schema['unique keys'] as $key => $fields) {
-        $sql[] = 'CREATE UNIQUE INDEX ' . $info['table'] . '____' . $key . ' ON ' . $info['table'] . ' (' . $this->createKeySql($fields) . ")\n";
-      }
-    }
-    if (!empty($schema['indexes'])) {
-      foreach ($schema['indexes'] as $key => $fields) {
-        $sql[] = 'CREATE INDEX ' . $info['table'] . '____' . $key . ' ON ' . $info['table'] . ' (' . $this->createKeySql($fields) . ")\n";
-      }
-    }
-    return $sql;
-  }
-
-  /**
-   * Build the SQL expression for keys.
-   */
-  protected function createKeySql($fields) {
-    $return = [];
-    foreach ($fields as $field) {
-      if (is_array($field)) {
-        $return[] = $field[0];
-      }
-      else {
-        $return[] = $field;
-      }
-    }
-    return implode(', ', $return);
   }
 
 }
