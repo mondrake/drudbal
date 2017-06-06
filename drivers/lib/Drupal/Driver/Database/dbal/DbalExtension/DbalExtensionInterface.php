@@ -776,4 +776,14 @@ interface DbalExtensionInterface {
    */
   public function alterSetColumnComment(&$comment, $dbal_type, array $drupal_field_specs, $field_name);
 
+  /**
+   * Alters a DDL SQL statement.
+   *
+   * @param string $sql
+   *   The SQL statement. Passed by reference.
+   *
+   * @return $this
+   */
+  public function alterDdlSqlStatement(&$sql);
+
 }

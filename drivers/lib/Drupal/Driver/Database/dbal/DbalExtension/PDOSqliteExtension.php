@@ -435,17 +435,6 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function alterDbalColumnOptions($context, array &$dbal_column_options, $dbal_type, array $drupal_field_specs, $field_name) {
-    if (array_key_exists('type', $drupal_field_specs) && in_array($drupal_field_specs['type'], ['int', 'serial', 'float', 'numeric']) && array_key_exists('default', $drupal_field_specs) && $drupal_field_specs['default'] === NULL && !array_key_exists('not null', $drupal_field_specs)) {
-      $dbal_column_options['notnull'] = FALSE;
-      $dbal_column_options['default'] = NULL;
-    }
-    return $this;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function getStringForDefault($string) {
     // Encode single quotes.
     return str_replace('\'', self::SINGLE_QUOTE_IDENTIFIER_REPLACEMENT, $string);
@@ -670,6 +659,16 @@ class PDOSqliteExtension extends AbstractExtension {
    */
   public function delegateGetTableComment(DbalSchema $dbal_schema, $drupal_table_name) {
     throw new \RuntimeException('Table comments are not supported in SQlite.');
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function alterDdlSqlStatement(&$sql) {
+    // @todo pretty bad. Seems DBAL has a problem fetching from schema a
+    // column with DEFAULT NULL and 'notnull' = FALSE.
+    $sql = str_replace('INTEGER DEFAULT , ', 'INTEGER DEFAULT NULL, ', $sql);
+    return $this;
   }
 
   /**

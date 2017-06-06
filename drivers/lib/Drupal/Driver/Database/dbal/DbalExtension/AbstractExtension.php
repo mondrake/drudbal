@@ -445,4 +445,11 @@ class AbstractExtension implements DbalExtensionInterface {
     return $this;
   }
 
+  /**
+   * {@inheritdoc}
+   */
+  public function alterDdlSqlStatement(&$sql) {
+    return $this;
+  }
+
 }
