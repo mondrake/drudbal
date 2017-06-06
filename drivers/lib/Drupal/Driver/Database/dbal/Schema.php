@@ -500,8 +500,8 @@ class Schema extends DatabaseSchema {
     }
 
     // DBAL extension did not pick up, proceed with DBAL.
-    $index_name = $this->dbalExtension->getIndexFullName('indexExists', $this->dbalSchema(), $table, $name, $this->getPrefixInfo($table));
-    return in_array($index_name, array_keys($this->dbalSchemaManager->listTableIndexes($this->tableName($table))));
+    $index_full_name = $this->dbalExtension->getIndexFullName('indexExists', $this->dbalSchema(), $table, $name, $this->getPrefixInfo($table));
+    return $this->dbalSchema()->getTable($this->tableName($table))->hasIndex($index_full_name);
   }
 
   /**
@@ -579,10 +579,10 @@ class Schema extends DatabaseSchema {
     }
 
     // DBAL extension did not pick up, proceed with DBAL.
-    $index_name = $this->dbalExtension->getIndexFullName('addUniqueKey', $this->dbalSchema(), $table, $name, $this->getPrefixInfo($table));
+    $index_full_name = $this->dbalExtension->getIndexFullName('addUniqueKey', $this->dbalSchema(), $table, $name, $this->getPrefixInfo($table));
     $current_schema = $this->dbalSchema();
     $to_schema = clone $current_schema;
-    $to_schema->getTable($this->tableName($table))->addUniqueIndex($this->dbalGetFieldList($fields), $index_name);
+    $to_schema->getTable($this->tableName($table))->addUniqueIndex($this->dbalGetFieldList($fields), $index_full_name);
     $this->dbalExecuteSchemaChange($to_schema);
   }
 
@@ -611,10 +611,10 @@ class Schema extends DatabaseSchema {
     }
 
     // DBAL extension did not pick up, proceed with DBAL.
-    $index_name = $this->dbalExtension->getIndexFullName('addIndex', $this->dbalSchema(), $table, $name, $this->getPrefixInfo($table));
+    $index_full_name = $this->dbalExtension->getIndexFullName('addIndex', $this->dbalSchema(), $table, $name, $this->getPrefixInfo($table));
     $current_schema = $this->dbalSchema();
     $to_schema = clone $current_schema;
-    $to_schema->getTable($this->tableName($table))->addIndex($this->dbalGetFieldList($fields), $index_name);
+    $to_schema->getTable($this->tableName($table))->addIndex($this->dbalGetFieldList($fields), $index_full_name);
     $this->dbalExecuteSchemaChange($to_schema);
   }
 
@@ -632,10 +632,10 @@ class Schema extends DatabaseSchema {
       return TRUE;
     }
 
-    $index_name = $this->dbalExtension->getIndexFullName('dropIndex', $this->dbalSchema(), $table, $name, $this->getPrefixInfo($table));
+    $index_full_name = $this->dbalExtension->getIndexFullName('dropIndex', $this->dbalSchema(), $table, $name, $this->getPrefixInfo($table));
     $current_schema = $this->dbalSchema();
     $to_schema = clone $current_schema;
-    $to_schema->getTable($this->tableName($table))->dropIndex($index_name);
+    $to_schema->getTable($this->tableName($table))->dropIndex($index_full_name);
     $this->dbalExecuteSchemaChange($to_schema);
     return TRUE;
   }
