@@ -501,7 +501,10 @@ class Schema extends DatabaseSchema {
 
     // DBAL extension did not pick up, proceed with DBAL.
     $index_full_name = $this->dbalExtension->getIndexFullName('indexExists', $this->dbalSchema(), $table, $name, $this->getPrefixInfo($table));
-    return $this->dbalSchema()->getTable($this->tableName($table))->hasIndex($index_full_name);
+    return in_array($index_full_name, array_keys($this->dbalSchemaManager->listTableIndexes($this->tableName($table))));
+    // @todo it would be preferred to do
+    // return $this->dbalSchema()->getTable($this->tableName($table))->hasIndex($index_full_name);
+    // but this fails on Drupal\KernelTests\Core\Entity\EntityDefinitionUpdateTest::testBaseFieldCreateUpdateDeleteWithoutData
   }
 
   /**
@@ -861,6 +864,7 @@ class Schema extends DatabaseSchema {
    */
   protected function dbalExecuteSchemaChange(DbalSchema $to_schema) {
     foreach ($this->dbalSchema()->getMigrateToSql($to_schema, $this->dbalPlatform) as $sql) {
+      $sql = str_replace('INTEGER DEFAULT , ', 'INTEGER DEFAULT NULL, ', $sql); // @todo
       $this->connection->getDbalConnection()->exec($sql);
     }
     $this->dbalSetCurrentSchema($to_schema);
