@@ -632,58 +632,26 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateGetIndexName($drupal_table_name, $index_name, array $table_prefix_info) {
-    return $table_prefix_info['table'] . '____' . $index_name;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function delegateIndexExists(&$result, DbalSchema $dbal_schema, $drupal_table_name, $index_name) {
-    $schema = $this->introspectSchema($drupal_table_name);
-    if (in_array($index_name, array_keys($schema['unique keys']))) {
-      $result = TRUE;
-    }
-    elseif (in_array($index_name, array_keys($schema['indexes']))) {
-      $result = TRUE;
+  public function getIndexFullName($context, DbalSchema $dbal_schema, $drupal_table_name, $index_name, array $table_prefix_info) {
+    // If checking for index existence or dropping, see if an index exists
+    // with the Drupal name, regardless of prefix. It may be a table was
+    // renamed so the prefix is no longer relevant.
+    if (in_array($context, ['indexExists', 'dropIndex'])) {
+      $dbal_table = $dbal_schema->getTable($this->tableName($drupal_table_name));
+      foreach ($dbal_table->getIndexes() as $index) {
+        $index_full_name = $index->getName();
+        $matches = [];
+        if (preg_match('/.*____(.+)/', $index_full_name, $matches)) {
+          if ($matches[1] === $index_name) {
+            return $index_full_name;
+          }
+        }
+      }
+      return FALSE;
     }
     else {
-      $result = FALSE;
+      return $table_prefix_info['table'] . '____' . $index_name;
     }
-    return TRUE;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function delegateAddUniqueKey($drupal_table_name, $index_name, array $drupal_field_specs) {
-    $schema['unique keys'][$index_name] = $drupal_field_specs;
-    $statements = $this->createIndexSql($drupal_table_name, $schema);
-    foreach ($statements as $statement) {
-      $this->connection->query($statement);
-    }
-    return TRUE;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function delegateAddIndex($drupal_table_name, $index_name, array $drupal_field_specs, array $indexes_spec) {
-    $schema['indexes'][$index_name] = $drupal_field_specs;
-    $statements = $this->createIndexSql($drupal_table_name, $schema);
-    foreach ($statements as $statement) {
-      $this->connection->query($statement);
-    }
-    return TRUE;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function delegateDropIndex($drupal_table_name, $index_name) {
-    $info = $this->connection->schema()->getPrefixInfoPublic($drupal_table_name);
-    $this->connection->query('DROP INDEX ' . $info['table'] . '____' . $index_name);
-    return TRUE;
   }
 
   /**
@@ -691,6 +659,16 @@ class PDOSqliteExtension extends AbstractExtension {
    */
   public function delegateGetTableComment(DbalSchema $dbal_schema, $drupal_table_name) {
     throw new \RuntimeException('Table comments are not supported in SQlite.');
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function alterDdlSqlStatement(&$sql) {
+    // @todo pretty bad. Seems DBAL has a problem fetching from schema a
+    // column with DEFAULT NULL and 'notnull' = FALSE.
+    $sql = str_replace('INTEGER DEFAULT , ', 'INTEGER DEFAULT NULL, ', $sql);
+    return $this;
   }
 
   /**
@@ -874,41 +852,6 @@ class PDOSqliteExtension extends AbstractExtension {
       $this->connection->schema()->dropTable($table);
       $this->connection->schema()->renameTable($new_table, $table);
     }
-  }
-
-  /**
-   * Build the SQL expression for indexes.
-   */
-  protected function createIndexSql($tablename, $schema) {
-    $sql = [];
-    $info = $this->connection->schema()->getPrefixInfoPublic($tablename);
-    if (!empty($schema['unique keys'])) {
-      foreach ($schema['unique keys'] as $key => $fields) {
-        $sql[] = 'CREATE UNIQUE INDEX ' . $info['table'] . '____' . $key . ' ON ' . $info['table'] . ' (' . $this->createKeySql($fields) . ")\n";
-      }
-    }
-    if (!empty($schema['indexes'])) {
-      foreach ($schema['indexes'] as $key => $fields) {
-        $sql[] = 'CREATE INDEX ' . $info['table'] . '____' . $key . ' ON ' . $info['table'] . ' (' . $this->createKeySql($fields) . ")\n";
-      }
-    }
-    return $sql;
-  }
-
-  /**
-   * Build the SQL expression for keys.
-   */
-  protected function createKeySql($fields) {
-    $return = [];
-    foreach ($fields as $field) {
-      if (is_array($field)) {
-        $return[] = $field[0];
-      }
-      else {
-        $return[] = $field;
-      }
-    }
-    return implode(', ', $return);
   }
 
 }

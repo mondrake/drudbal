@@ -373,7 +373,7 @@ class AbstractExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function delegateGetIndexName($drupal_table_name, $index_name, array $table_prefix_info) {
+  public function getIndexFullName($context, DbalSchema $dbal_schema, $drupal_table_name, $index_name, array $table_prefix_info) {
     return $index_name;
   }
 
@@ -442,6 +442,13 @@ class AbstractExtension implements DbalExtensionInterface {
    * {@inheritdoc}
    */
   public function alterSetColumnComment(&$comment, $dbal_type, array $drupal_field_specs, $field_name) {
+    return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function alterDdlSqlStatement(&$sql) {
     return $this;
   }
 
