@@ -436,8 +436,9 @@ class PDOSqliteExtension extends AbstractExtension {
    * {@inheritdoc}
    */
   public function alterDbalColumnOptions($context, array &$dbal_column_options, $dbal_type, array $drupal_field_specs, $field_name) {
-    if (in_array($drupal_field_specs['type'], ['int', 'serial', 'float', 'numeric']) && array_key_exists('default', $drupal_field_specs) && $drupal_field_specs['default'] === NULL && !array_key_exists('not null', $drupal_field_specs)) {
-      unset($dbal_column_options['default']);
+    if (array_key_exists('type', $drupal_field_specs) && in_array($drupal_field_specs['type'], ['int', 'serial', 'float', 'numeric']) && array_key_exists('default', $drupal_field_specs) && $drupal_field_specs['default'] === NULL && !array_key_exists('not null', $drupal_field_specs)) {
+      $dbal_column_options['notnull'] = FALSE;
+      $dbal_column_options['default'] = NULL;
     }
     return $this;
   }
