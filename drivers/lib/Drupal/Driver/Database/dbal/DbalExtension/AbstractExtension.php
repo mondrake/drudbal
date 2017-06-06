@@ -360,14 +360,14 @@ class AbstractExtension implements DbalExtensionInterface {
    * {@inheritdoc}
    */
   public function delegateFieldSetDefault($drupal_table_name, $field_name, $default) {
-    throw new \LogicException("Method " . __METHOD__ . " not implemented for '" . $this->dbalConnection->getDriver()->getName() . "''");
+    return FALSE;
   }
 
   /**
    * {@inheritdoc}
    */
   public function delegateFieldSetNoDefault($drupal_table_name, $field_name) {
-    throw new \LogicException("Method " . __METHOD__ . " not implemented for '" . $this->dbalConnection->getDriver()->getName() . "''");
+    return FALSE;
   }
 
   /**
