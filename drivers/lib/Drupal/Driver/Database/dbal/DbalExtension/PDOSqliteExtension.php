@@ -632,7 +632,7 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateGetIndexName($drupal_table_name, $index_name, array $table_prefix_info) {
+  public function getIndexFullName($context, DbalSchema $dbal_schema, $drupal_table_name, $index_name, array $table_prefix_info) {
     return $table_prefix_info['table'] . '____' . $index_name;
   }
 

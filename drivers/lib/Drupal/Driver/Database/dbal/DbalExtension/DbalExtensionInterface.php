@@ -610,6 +610,11 @@ interface DbalExtensionInterface {
   /**
    * Calculates an index name.
    *
+   * @param string $context
+   *   The context from where the method is called. Can be 'indexExists',
+   *   'addUniqueKey', 'addIndex', 'dropIndex'.
+   * @param \Doctrine\DBAL\Schema\Schema $dbal_schema
+   *   The DBAL schema object.
    * @param string $drupal_table_name
    *   A string with the Drupal name of the table.
    * @param string $index_name
@@ -620,7 +625,7 @@ interface DbalExtensionInterface {
    * @return string
    *   A string with the name of the index to be used in the DBMS.
    */
-  public function delegateGetIndexName($drupal_table_name, $index_name, array $table_prefix_info);
+  public function getIndexFullName($context, DbalSchema $dbal_schema, $drupal_table_name, $index_name, array $table_prefix_info);
 
   /**
    * Checks if an index exists.
