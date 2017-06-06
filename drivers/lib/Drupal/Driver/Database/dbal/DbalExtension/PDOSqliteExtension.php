@@ -435,6 +435,16 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
+  public function alterDbalColumnOptions($context, array &$dbal_column_options, $dbal_type, array $drupal_field_specs, $field_name) {
+    if (in_array($drupal_field_specs['type'], ['int', 'serial', 'float', 'numeric']) && array_key_exists('default', $drupal_field_specs) && $drupal_field_specs['default'] === NULL && !array_key_exists('not null', $drupal_field_specs)) {
+      unset($dbal_column_options['default']);
+    }
+    return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function getStringForDefault($string) {
     // Encode single quotes.
     return str_replace('\'', self::SINGLE_QUOTE_IDENTIFIER_REPLACEMENT, $string);

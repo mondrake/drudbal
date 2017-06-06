@@ -864,7 +864,7 @@ class Schema extends DatabaseSchema {
    */
   protected function dbalExecuteSchemaChange(DbalSchema $to_schema) {
     foreach ($this->dbalSchema()->getMigrateToSql($to_schema, $this->dbalPlatform) as $sql) {
-      $sql = str_replace('INTEGER DEFAULT , ', 'INTEGER DEFAULT NULL, ', $sql); // @todo
+//      $sql = str_replace('INTEGER DEFAULT , ', 'INTEGER DEFAULT NULL, ', $sql); // @todo
       $this->connection->getDbalConnection()->exec($sql);
     }
     $this->dbalSetCurrentSchema($to_schema);
