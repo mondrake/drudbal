@@ -443,7 +443,7 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function alterDbalColumnDefinition($context, &$dbal_column_definition, array $dbal_column_options, $dbal_type, array $drupal_field_specs, $field_name) {
+  public function alterDbalColumnDefinition($context, &$dbal_column_definition, array &$dbal_column_options, $dbal_type, array $drupal_field_specs, $field_name) {
     // DBAL does not support BINARY option for char/varchar columns.
     if (isset($drupal_field_specs['binary']) && $drupal_field_specs['binary'] === FALSE) {
       $dbal_column_definition = preg_replace('/CHAR\(([0-9]+)\)/', '$0 COLLATE NOCASE_UTF8', $dbal_column_definition);
@@ -463,6 +463,9 @@ class PDOSqliteExtension extends AbstractExtension {
     $dbal_column_definition = preg_replace('/DEFAULT\s+\'\'\'\'/', "DEFAULT ''", $dbal_column_definition);
 
     // Decode single quotes.
+    if (array_key_exists('default', $dbal_column_options)) {
+      $dbal_column_options['default'] = str_replace(self::SINGLE_QUOTE_IDENTIFIER_REPLACEMENT, '\'\'', $dbal_column_options['default']);
+    }
     $dbal_column_definition = str_replace(self::SINGLE_QUOTE_IDENTIFIER_REPLACEMENT, '\'\'', $dbal_column_definition);
 
     return $this;
@@ -471,7 +474,7 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateAddField(&$primary_key_processed_by_extension, $drupal_table_name, $field_name, array $drupal_field_specs, array $keys_new_specs, array $dbal_column_options) {
+  public function delegateAddField(&$primary_key_processed_by_extension, DbalSchema $dbal_schema, $drupal_table_name, $field_name, array $drupal_field_specs, array $keys_new_specs, array $dbal_column_options) {
     // SQLite doesn't have a full-featured ALTER TABLE statement. It only
     // supports adding new fields to a table, in some simple cases. In most
     // cases, we have to create a new table and copy the data over.
@@ -499,7 +502,7 @@ class PDOSqliteExtension extends AbstractExtension {
     else {
       // We cannot add the field directly. Use the slower table alteration
       // method, starting from the old schema.
-      $old_schema = $this->introspectSchema($drupal_table_name);
+      $old_schema = $this->introspectSchema($dbal_schema, $drupal_table_name);
       $new_schema = $old_schema;
 
       // Add the new field.
@@ -537,8 +540,8 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateDropField($drupal_table_name, $field_name) {
-    $old_schema = $this->introspectSchema($drupal_table_name);
+  public function delegateDropField(DbalSchema $dbal_schema, $drupal_table_name, $field_name) {
+    $old_schema = $this->introspectSchema($dbal_schema, $drupal_table_name);
     $new_schema = $old_schema;
 
     unset($new_schema['fields'][$field_name]);
@@ -567,8 +570,8 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateChangeField(&$primary_key_processed_by_extension, $drupal_table_name, $field_name, $field_new_name, array $drupal_field_new_specs, array $keys_new_specs, array $dbal_column_options) {
-    $old_schema = $this->introspectSchema($drupal_table_name);
+  public function delegateChangeField(&$primary_key_processed_by_extension, DbalSchema $dbal_schema, $drupal_table_name, $field_name, $field_new_name, array $drupal_field_new_specs, array $keys_new_specs, array $dbal_column_options) {
+    $old_schema = $this->introspectSchema($dbal_schema, $drupal_table_name);
     $new_schema = $old_schema;
 
     // Map the old field to the new field.
@@ -608,8 +611,8 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateFieldSetDefault($drupal_table_name, $field_name, $default) {
-    $old_schema = $this->introspectSchema($drupal_table_name);
+  public function delegateFieldSetDefault(DbalSchema $dbal_schema, $drupal_table_name, $field_name, $default) {
+    $old_schema = $this->introspectSchema($dbal_schema, $drupal_table_name);
     $new_schema = $old_schema;
 
     $new_schema['fields'][$field_name]['default'] = $default;
@@ -620,8 +623,8 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateFieldSetNoDefault($drupal_table_name, $field_name) {
-    $old_schema = $this->introspectSchema($drupal_table_name);
+  public function delegateFieldSetNoDefault(DbalSchema $dbal_schema, $drupal_table_name, $field_name) {
+    $old_schema = $this->introspectSchema($dbal_schema, $drupal_table_name);
     $new_schema = $old_schema;
 
     unset($new_schema['fields'][$field_name]['default']);
@@ -711,7 +714,7 @@ class PDOSqliteExtension extends AbstractExtension {
    * @throws \Exception
    *   If a column of the table could not be parsed.
    */
-  protected function introspectSchema($table) {
+  protected function introspectSchema($dbal_schema, $table) {
     $mapped_fields = array_flip($this->connection->schema()->getFieldTypeMap());
     $schema = [
       'fields' => [],
@@ -721,47 +724,40 @@ class PDOSqliteExtension extends AbstractExtension {
       'full_index_names' => [],
     ];
 
-    $info = $this->connection->schema()->getPrefixInfoPublic($table);
-    $result = $this->connection->query('PRAGMA ' . $info['schema'] . '.table_info(' . $info['table'] . ')');
-    foreach ($result as $row) {
-      if (preg_match('/^([^(]+)\((.*)\)$/', $row->type, $matches)) {
-        $type = $matches[1];
-        $length = $matches[2];
-      }
-      else {
-        $type = $row->type;
-        $length = NULL;
-      }
-      // @todo this was added to avoid test failure, not sure this is correct
-      $type = preg_replace('/ UNSIGNED/', '', $type);
-      $dbal_type = $this->dbalConnection->getDatabasePlatform()->getDoctrineTypeMapping($type);
+    $info = $this->connection->schema()->getPrefixInfoPublic($table);  // @todo remove
+
+    $dbal_table = $dbal_schema->getTable($this->tableName($table));
+
+    // Columns.
+    $columns = $dbal_table->getColumns();
+    foreach ($columns as $column) {
+      $dbal_type = $column->getType()->getName();
       if (isset($mapped_fields[$dbal_type])) {
         list($type, $size) = explode(':', $mapped_fields[$dbal_type]);
-        $schema['fields'][$row->name] = [
-          'type' => $type,
-          'size' => $size,
-          'not null' => !empty($row->notnull),
-          'default' => trim($row->dflt_value, "'"),
-        ];
-        // @todo this was added to avoid test failure, not sure it is correct.
-        if ($row->pk) {
-          $schema['fields'][$row->name]['not null'] = FALSE;
-        }
-        if ($length) {
-          $schema['fields'][$row->name]['length'] = $length;
-        }
-        if ($row->pk) {
-          $schema['primary key'][] = $row->name;
-        }
-        // @todo this was added to avoid test failure, not sure this is correct
-        if (preg_match('/ UNSIGNED/', $row->type, $matches)) {
-          $schema['fields'][$row->name]['unsigned'] = TRUE;
-        }
       }
-      else {
-        throw new \Exception("Unable to parse the column type " . $row->type);
+      $schema['fields'][$column->getName()] = [
+        'type' => $type,
+        'size' => $size,
+        'not null' => $column->getNotNull(),
+        'default' => ($column->getDefault() === NULL && $column->getNotNull() === FALSE) ? 'NULL' : $column->getDefault(),
+      ];
+      if ($column->getUnsigned() !== NULL) {
+        $schema['fields'][$column->getName()]['unsigned'] = $column->getUnsigned();
+      }
+      if ($column->getLength() !== NULL) {
+        $schema['fields'][$column->getName()]['lenght'] = $column->getLength();
+      }
+      if ($column->getComment() !== NULL) {
+        $schema['fields'][$column->getName()]['comment'] = $column->getComment();
       }
     }
+
+    // Primary key.
+    if ($dbal_table->hasPrimaryKey()) {
+      $schema['primary key'] = $dbal_table->getPrimaryKey()->getColumns();
+    }
+
+    // @todo
     $indexes = [];
     $result = $this->connection->query('PRAGMA ' . $info['schema'] . '.index_list(' . $info['table'] . ')');
     foreach ($result as $row) {

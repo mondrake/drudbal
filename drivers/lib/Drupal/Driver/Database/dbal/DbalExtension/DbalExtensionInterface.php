@@ -496,7 +496,7 @@ interface DbalExtensionInterface {
    *   Passed by reference.
    * @param array $dbal_column_options
    *   An array of DBAL column options, including the SQL column definition
-   *   specification in the 'columnDefinition' option.
+   *   specification in the 'columnDefinition' option. Passed by reference.
    * @param string $dbal_type
    *   The DBAL type related to the field specified.
    * @param array $drupal_field_specs
@@ -506,7 +506,7 @@ interface DbalExtensionInterface {
    *
    * @return $this
    */
-  public function alterDbalColumnDefinition($context, &$dbal_column_definition, array $dbal_column_options, $dbal_type, array $drupal_field_specs, $field_name);
+  public function alterDbalColumnDefinition($context, &$dbal_column_definition, array &$dbal_column_options, $dbal_type, array $drupal_field_specs, $field_name);
 
   /**
    * Adds a new field to a table.
