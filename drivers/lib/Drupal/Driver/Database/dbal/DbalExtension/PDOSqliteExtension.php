@@ -2,16 +2,13 @@
 
 namespace Drupal\Driver\Database\dbal\DbalExtension;
 
-use Drupal\Component\Utility\Unicode;
 use Drupal\Core\Database\Database;
 use Drupal\Core\Database\DatabaseExceptionWrapper;
 use Drupal\Core\Database\DatabaseNotFoundException;
 use Drupal\Core\Database\IntegrityConstraintViolationException;
 use Drupal\Core\Database\Driver\sqlite\Connection as SqliteConnectionBase;
-use Drupal\Driver\Database\dbal\Connection as DruDbalConnection;
 
 use Doctrine\DBAL\Connection as DbalConnection;
-use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
 use Doctrine\DBAL\Schema\Schema as DbalSchema;
 use Doctrine\DBAL\Statement as DbalStatement;
@@ -602,30 +599,6 @@ class PDOSqliteExtension extends AbstractExtension {
     }
 
     $this->alterTable($drupal_table_name, $old_schema, $new_schema, $mapping);
-    return TRUE;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function delegateFieldSetDefault($drupal_table_name, $field_name, $default) {
-    $old_schema = $this->introspectSchema($drupal_table_name);
-    $new_schema = $old_schema;
-
-    $new_schema['fields'][$field_name]['default'] = $default;
-    $this->alterTable($drupal_table_name, $old_schema, $new_schema);
-    return TRUE;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function delegateFieldSetNoDefault($drupal_table_name, $field_name) {
-    $old_schema = $this->introspectSchema($drupal_table_name);
-    $new_schema = $old_schema;
-
-    unset($new_schema['fields'][$field_name]['default']);
-    $this->alterTable($drupal_table_name, $old_schema, $new_schema);
     return TRUE;
   }
 
