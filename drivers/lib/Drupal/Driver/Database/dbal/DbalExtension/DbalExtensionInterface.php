@@ -664,6 +664,8 @@ interface DbalExtensionInterface {
   /**
    * Adds a unique key.
    *
+   * @param \Doctrine\DBAL\Schema\Schema $dbal_schema
+   *   The DBAL schema object.
    * @param string $drupal_table_name
    *   A string with the Drupal name of the table.
    * @param string $index_name
@@ -675,11 +677,13 @@ interface DbalExtensionInterface {
    *   TRUE if the extension added the unique key, FALSE if it has to be
    *   handled by DBAL.
    */
-  public function delegateAddUniqueKey($drupal_table_name, $index_name, array $drupal_field_specs);
+  public function delegateAddUniqueKey(DbalSchema $dbal_schema, $drupal_table_name, $index_name, array $drupal_field_specs);
 
   /**
    * Adds an index.
    *
+   * @param \Doctrine\DBAL\Schema\Schema $dbal_schema
+   *   The DBAL schema object.
    * @param string $drupal_table_name
    *   A string with the Drupal name of the table.
    * @param string $index_name
@@ -694,11 +698,13 @@ interface DbalExtensionInterface {
    *   TRUE if the extension added the index, FALSE if it has to be handled by
    *   DBAL.
    */
-  public function delegateAddIndex($drupal_table_name, $index_name, array $drupal_field_specs, array $indexes_spec);
+  public function delegateAddIndex(DbalSchema $dbal_schema, $drupal_table_name, $index_name, array $drupal_field_specs, array $indexes_spec);
 
   /**
    * Drops an index.
    *
+   * @param \Doctrine\DBAL\Schema\Schema $dbal_schema
+   *   The DBAL schema object.
    * @param string $drupal_table_name
    *   A string with the Drupal name of the table.
    * @param string $index_name
@@ -708,7 +714,7 @@ interface DbalExtensionInterface {
    *   TRUE if the extension dropped the index, FALSE if it has to be handled
    *   by DBAL.
    */
-  public function delegateDropIndex($drupal_table_name, $index_name);
+  public function delegateDropIndex(DbalSchema $dbal_schema, $drupal_table_name, $index_name);
 
   /**
    * Retrieves a table comment.
@@ -775,15 +781,5 @@ interface DbalExtensionInterface {
    * @return $this
    */
   public function alterSetColumnComment(&$comment, $dbal_type, array $drupal_field_specs, $field_name);
-
-  /**
-   * Alters a DDL SQL statement.
-   *
-   * @param string $sql
-   *   The SQL statement. Passed by reference.
-   *
-   * @return $this
-   */
-  public function alterDdlSqlStatement(&$sql);
 
 }

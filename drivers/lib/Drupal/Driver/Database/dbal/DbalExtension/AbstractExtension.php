@@ -394,21 +394,21 @@ class AbstractExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function delegateAddUniqueKey($drupal_table_name, $index_name, array $drupal_field_specs) {
+  public function delegateAddUniqueKey(DbalSchema $dbal_schema, $drupal_table_name, $index_name, array $drupal_field_specs) {
     return FALSE;
   }
 
   /**
    * {@inheritdoc}
    */
-  public function delegateAddIndex($drupal_table_name, $index_name, array $drupal_field_specs, array $indexes_spec) {
+  public function delegateAddIndex(DbalSchema $dbal_schema, $drupal_table_name, $index_name, array $drupal_field_specs, array $indexes_spec) {
     return FALSE;
   }
 
   /**
    * {@inheritdoc}
    */
-  public function delegateDropIndex($drupal_table_name, $index_name) {
+  public function delegateDropIndex(DbalSchema $dbal_schema, $drupal_table_name, $index_name) {
     return FALSE;
   }
 
@@ -442,13 +442,6 @@ class AbstractExtension implements DbalExtensionInterface {
    * {@inheritdoc}
    */
   public function alterSetColumnComment(&$comment, $dbal_type, array $drupal_field_specs, $field_name) {
-    return $this;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function alterDdlSqlStatement(&$sql) {
     return $this;
   }
 

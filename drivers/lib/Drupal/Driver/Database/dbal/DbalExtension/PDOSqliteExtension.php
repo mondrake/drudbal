@@ -657,18 +657,42 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateGetTableComment(DbalSchema $dbal_schema, $drupal_table_name) {
-    throw new \RuntimeException('Table comments are not supported in SQlite.');
+  public function delegateAddUniqueKey(DbalSchema $dbal_schema, $drupal_table_name, $index_name, array $drupal_field_specs) {
+    $schema['unique keys'][$index_name] = $drupal_field_specs;
+    $statements = $this->createIndexSql($dbal_schema, $drupal_table_name, $schema);
+    foreach ($statements as $statement) {
+      $this->connection->query($statement);
+    }
+    return TRUE;
   }
 
   /**
    * {@inheritdoc}
    */
-  public function alterDdlSqlStatement(&$sql) {
-    // @todo pretty bad. Seems DBAL has a problem fetching from schema a
-    // column with DEFAULT NULL and 'notnull' = FALSE.
-    $sql = str_replace('INTEGER DEFAULT , ', 'INTEGER DEFAULT NULL, ', $sql);
-    return $this;
+  public function delegateAddIndex(DbalSchema $dbal_schema, $drupal_table_name, $index_name, array $drupal_field_specs, array $indexes_spec) {
+    $schema['indexes'][$index_name] = $drupal_field_specs;
+    $statements = $this->createIndexSql($dbal_schema, $drupal_table_name, $schema);
+    foreach ($statements as $statement) {
+      $this->connection->query($statement);
+    }
+    return TRUE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateDropIndex(DbalSchema $dbal_schema, $drupal_table_name, $index_name) {
+    $info = $this->connection->schema()->getPrefixInfoPublic($drupal_table_name);
+    $index_full_name = $this->getIndexFullName('dropIndex', $dbal_schema, $table_name, $index_name, $info);
+    $this->connection->query('DROP INDEX ' . $index_full_name);
+    return TRUE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateGetTableComment(DbalSchema $dbal_schema, $drupal_table_name) {
+    throw new \RuntimeException('Table comments are not supported in SQlite.');
   }
 
   /**
@@ -852,6 +876,30 @@ class PDOSqliteExtension extends AbstractExtension {
       $this->connection->schema()->dropTable($table);
       $this->connection->schema()->renameTable($new_table, $table);
     }
+  }
+
+  /**
+   * Build the SQL expression for indexes.
+   *
+   * @param \Doctrine\DBAL\Schema\Schema $dbal_schema
+   *   The DBAL schema object.
+   */
+  protected function createIndexSql(DbalSchema $dbal_schema, $table_name, array $schema) {
+    $sql = [];
+    $info = $this->connection->schema()->getPrefixInfoPublic($table_name);
+    if (!empty($schema['unique keys'])) {
+      foreach ($schema['unique keys'] as $key => $fields) {
+        $index_name = $this->getIndexFullName('addUniqueKey', $dbal_schema, $table_name, $key, $info);
+        $sql[] = 'CREATE UNIQUE INDEX ' . $index_name . ' ON ' . $info['table'] . ' (' . implode(', ', $this->connection->schema()->dbalGetFieldList($fields)) . ")\n";
+      }
+    }
+    if (!empty($schema['indexes'])) {
+      foreach ($schema['indexes'] as $key => $fields) {
+        $index_name = $this->getIndexFullName('addIndex', $dbal_schema, $table_name, $key, $info);
+        $sql[] = 'CREATE INDEX ' . $index_name . ' ON ' . $info['table'] . ' (' . implode(', ', $this->connection->schema()->dbalGetFieldList($fields)) . ")\n";
+      }
+    }
+    return $sql;
   }
 
 }
