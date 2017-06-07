@@ -432,6 +432,7 @@ class Schema extends DatabaseSchema {
       return;
     }
 
+    // DBAL extension did not pick up, proceed with DBAL.
     $current_schema = $this->dbalSchema();
     $to_schema = clone $current_schema;
     $to_schema->getTable($this->tableName($table))->dropColumn($field);
@@ -576,7 +577,7 @@ class Schema extends DatabaseSchema {
     }
 
     // Delegate to DBAL extension.
-    if ($this->dbalExtension->delegateAddUniqueKey($table, $name, $fields)) {
+    if ($this->dbalExtension->delegateAddUniqueKey($this->dbalSchema(), $table, $name, $fields)) {
       $this->dbalSchemaForceReload();
       return;
     }
@@ -608,7 +609,7 @@ class Schema extends DatabaseSchema {
     }
 
     // Delegate to DBAL extension.
-    if ($this->dbalExtension->delegateAddIndex($table, $name, $fields, $spec)) {
+    if ($this->dbalExtension->delegateAddIndex($this->dbalSchema(), $table, $name, $fields, $spec)) {
       $this->dbalSchemaForceReload();
       return;
     }
@@ -630,11 +631,12 @@ class Schema extends DatabaseSchema {
     }
 
     // Delegate to DBAL extension.
-    if ($this->dbalExtension->delegateDropIndex($table, $name)) {
+    if ($this->dbalExtension->delegateDropIndex($this->dbalSchema(), $table, $name)) {
       $this->dbalSchemaForceReload();
       return TRUE;
     }
 
+    // DBAL extension did not pick up, proceed with DBAL.
     $index_full_name = $this->dbalExtension->getIndexFullName('dropIndex', $this->dbalSchema(), $table, $name, $this->getPrefixInfo($table));
     $current_schema = $this->dbalSchema();
     $to_schema = clone $current_schema;
@@ -849,7 +851,7 @@ class Schema extends DatabaseSchema {
    *
    * @return $this
    */
-  protected function dbalSchemaForceReload() {
+  public function dbalSchemaForceReload() {
     return $this->dbalSetCurrentSchema(NULL);
   }
 
@@ -864,7 +866,6 @@ class Schema extends DatabaseSchema {
    */
   protected function dbalExecuteSchemaChange(DbalSchema $to_schema) {
     foreach ($this->dbalSchema()->getMigrateToSql($to_schema, $this->dbalPlatform) as $sql) {
-      $this->dbalExtension->alterDdlSqlStatement($sql);
       $this->connection->getDbalConnection()->exec($sql);
     }
     $this->dbalSetCurrentSchema($to_schema);
@@ -883,7 +884,7 @@ class Schema extends DatabaseSchema {
    * @return string[]
    *   The list of columns.
    */
-  protected function dbalGetFieldList(array $fields) {
+  public function dbalGetFieldList(array $fields) {
     $return = [];
     foreach ($fields as $field) {
       if (is_array($field)) {

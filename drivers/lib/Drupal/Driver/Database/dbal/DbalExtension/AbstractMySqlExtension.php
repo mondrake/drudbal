@@ -671,7 +671,7 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateAddUniqueKey($drupal_table_name, $index_name, array $drupal_field_specs) {
+  public function delegateAddUniqueKey(DbalSchema $dbal_schema, $drupal_table_name, $index_name, array $drupal_field_specs) {
     // DBAL does not support creating indexes with column lenghts.
     // @see https://github.com/doctrine/dbal/pull/2412
     if ($this->dbalResolveIndexColumnNames($drupal_field_specs) === FALSE) {
@@ -684,7 +684,7 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateAddIndex($drupal_table_name, $index_name, array $drupal_field_specs, array $indexes_spec) {
+  public function delegateAddIndex(DbalSchema $dbal_schema, $drupal_table_name, $index_name, array $drupal_field_specs, array $indexes_spec) {
     // DBAL does not support creating indexes with column lenghts.
     // @see https://github.com/doctrine/dbal/pull/2412
     $indexes_spec['indexes'][$index_name] = $drupal_field_specs;
