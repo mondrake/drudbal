@@ -514,6 +514,8 @@ interface DbalExtensionInterface {
    * @param bool $primary_key_processed_by_extension
    *   Passed by reference. TRUE if the extension also processed adding the
    *   primary key for the table, FALSE otherwise.
+   * @param \Doctrine\DBAL\Schema\Schema $dbal_schema
+   *   The DBAL schema object.
    * @param string $drupal_table_name
    *   A string with the Drupal name of the table.
    * @param string $field_name
@@ -533,11 +535,13 @@ interface DbalExtensionInterface {
    *   TRUE if the extension added the field, FALSE if it has to be handled
    *   by DBAL.
    */
-  public function delegateAddField(&$primary_key_processed_by_extension, $drupal_table_name, $field_name, array $drupal_field_specs, array $keys_new_specs, array $dbal_column_options);
+  public function delegateAddField(&$primary_key_processed_by_extension, DbalSchema $dbal_schema, $drupal_table_name, $field_name, array $drupal_field_specs, array $keys_new_specs, array $dbal_column_options);
 
   /**
    * Drops a field from a table.
    *
+   * @param \Doctrine\DBAL\Schema\Schema $dbal_schema
+   *   The DBAL schema object.
    * @param string $drupal_table_name
    *   A string with the Drupal name of the table.
    * @param string $field_name
@@ -547,7 +551,7 @@ interface DbalExtensionInterface {
    *   TRUE if the extension dropped the field, FALSE if it has to be handled
    *   by DBAL.
    */
-  public function delegateDropField($drupal_table_name, $field_name);
+  public function delegateDropField(DbalSchema $dbal_schema, $drupal_table_name, $field_name);
 
   /**
    * Change a field definition.
@@ -555,6 +559,8 @@ interface DbalExtensionInterface {
    * @param bool $primary_key_processed_by_extension
    *   Passed by reference. TRUE if the extension also processed adding the
    *   primary key for the table, FALSE otherwise.
+   * @param \Doctrine\DBAL\Schema\Schema $dbal_schema
+   *   The DBAL schema object.
    * @param string $drupal_table_name
    *   A string with the Drupal name of the table.
    * @param string $field_name
@@ -575,11 +581,13 @@ interface DbalExtensionInterface {
    *   TRUE if the extension changed the field, FALSE if it has to be handled
    *   by DBAL.
    */
-  public function delegateChangeField(&$primary_key_processed_by_extension, $drupal_table_name, $field_name, $field_new_name, array $drupal_field_new_specs, array $keys_new_specs, array $dbal_column_options);
+  public function delegateChangeField(&$primary_key_processed_by_extension, DbalSchema $dbal_schema, $drupal_table_name, $field_name, $field_new_name, array $drupal_field_new_specs, array $keys_new_specs, array $dbal_column_options);
 
   /**
    * Sets the default value for a field.
    *
+   * @param \Doctrine\DBAL\Schema\Schema $dbal_schema
+   *   The DBAL schema object.
    * @param string $drupal_table_name
    *   A string with the Drupal name of the table.
    * @param string $field_name
@@ -591,11 +599,13 @@ interface DbalExtensionInterface {
    *   TRUE if the extension changed the default, FALSE if it has to be handled
    *   by DBAL.
    */
-  public function delegateFieldSetDefault($drupal_table_name, $field_name, $default);
+  public function delegateFieldSetDefault(DbalSchema $dbal_schema, $drupal_table_name, $field_name, $default);
 
   /**
    * Set a field to have no default value.
    *
+   * @param \Doctrine\DBAL\Schema\Schema $dbal_schema
+   *   The DBAL schema object.
    * @param string $drupal_table_name
    *   A string with the Drupal name of the table.
    * @param string $field_name
@@ -605,7 +615,7 @@ interface DbalExtensionInterface {
    *   TRUE if the extension changed the default, FALSE if it has to be handled
    *   by DBAL.
    */
-  public function delegateFieldSetNoDefault($drupal_table_name, $field_name);
+  public function delegateFieldSetNoDefault(DbalSchema $dbal_schema, $drupal_table_name, $field_name);
 
   /**
    * Calculates an index name.

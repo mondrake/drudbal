@@ -371,7 +371,7 @@ class Schema extends DatabaseSchema {
     $primary_key_processed_by_extension = FALSE;
     $dbal_type = $this->getDbalColumnType($spec);
     $dbal_column_options = $this->getDbalColumnOptions('addField', $field, $dbal_type, $spec);
-    if ($this->dbalExtension->delegateAddField($primary_key_processed_by_extension, $table, $field, $spec, $keys_new, $dbal_column_options)) {
+    if ($this->dbalExtension->delegateAddField($primary_key_processed_by_extension, $this->dbalSchema(), $table, $field, $spec, $keys_new, $dbal_column_options)) {
       $this->dbalSchemaForceReload();
     }
     else {
@@ -427,7 +427,7 @@ class Schema extends DatabaseSchema {
     }
 
     // Delegate to DBAL extension.
-    if ($this->dbalExtension->delegateDropField($table, $field)) {
+    if ($this->dbalExtension->delegateDropField($this->dbalSchema(), $table, $field)) {
       $this->dbalSchemaForceReload();
       return;
     }
@@ -449,7 +449,7 @@ class Schema extends DatabaseSchema {
     }
 
     // Delegate to DBAL extension.
-    if ($this->dbalExtension->delegateFieldSetDefault($table, $field, $this->escapeDefaultValue($default))) {
+    if ($this->dbalExtension->delegateFieldSetDefault($this->dbalSchema(), $table, $field, $this->escapeDefaultValue($default))) {
       $this->dbalSchemaForceReload();
       return;
     }
@@ -472,7 +472,7 @@ class Schema extends DatabaseSchema {
     }
 
     // Delegate to DBAL extension.
-    if ($this->dbalExtension->delegateFieldSetNoDefault($table, $field)) {
+    if ($this->dbalExtension->delegateFieldSetNoDefault($this->dbalSchema(), $table, $field)) {
       $this->dbalSchemaForceReload();
       return;
     }
@@ -670,7 +670,7 @@ class Schema extends DatabaseSchema {
     // fallback to platform specific syntax.
     // @see https://github.com/doctrine/dbal/issues/1033
     $primary_key_processed_by_extension = FALSE;
-    if (!$this->dbalExtension->delegateChangeField($primary_key_processed_by_extension, $table, $field, $field_new, $spec, $keys_new, $dbal_column_options)) {
+    if (!$this->dbalExtension->delegateChangeField($primary_key_processed_by_extension, $this->dbalSchema(), $table, $field, $field_new, $spec, $keys_new, $dbal_column_options)) {
       return;
     }
     // We need to reload the schema at next get.
