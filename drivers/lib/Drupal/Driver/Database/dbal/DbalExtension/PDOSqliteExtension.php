@@ -683,7 +683,7 @@ class PDOSqliteExtension extends AbstractExtension {
    */
   public function delegateDropIndex(DbalSchema $dbal_schema, $drupal_table_name, $index_name) {
     $info = $this->connection->schema()->getPrefixInfoPublic($drupal_table_name);
-    $index_full_name = $this->getIndexFullName('dropIndex', $dbal_schema, $table_name, $index_name, $info);
+    $index_full_name = $this->getIndexFullName('dropIndex', $dbal_schema, $drupal_table_name, $index_name, $info);
     $this->connection->query('DROP INDEX ' . $index_full_name);
     return TRUE;
   }
