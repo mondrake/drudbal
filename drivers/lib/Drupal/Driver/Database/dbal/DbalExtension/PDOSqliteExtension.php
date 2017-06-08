@@ -19,6 +19,8 @@ use Doctrine\DBAL\Statement as DbalStatement;
  * NOTE: DBAL Schema Manager does not manage namespaces, so instead of
  * having a separate attached database for each prefix like in core Sqlite
  * driver, we have all the tables in the same main db.
+ *
+ * @todo see if :memory: database can pass tests.
  */
 class PDOSqliteExtension extends AbstractExtension {
 
@@ -33,18 +35,6 @@ class PDOSqliteExtension extends AbstractExtension {
   const DATABASE_NOT_FOUND = 14;
 
   /**
-   * A map of condition operators to SQLite operators.
-   *
-   * We don't want to override any of the defaults.
-   */
-  protected static $sqliteConditionOperatorMap = [
-    'LIKE' => ['postfix' => " ESCAPE '\\'"],
-    'NOT LIKE' => ['postfix' => " ESCAPE '\\'"],
-    'LIKE BINARY' => ['postfix' => " ESCAPE '\\'", 'operator' => 'GLOB'],
-    'NOT LIKE BINARY' => ['postfix' => " ESCAPE '\\'", 'operator' => 'NOT GLOB'],
-  ];
-
-  /**
    * Replacement for single quote identifiers.
    *
    * @todo DBAL uses single quotes instead of backticks to produce DDL
@@ -52,6 +42,18 @@ class PDOSqliteExtension extends AbstractExtension {
    * single quotes inside.
    */
   const SINGLE_QUOTE_IDENTIFIER_REPLACEMENT = ']]]]SINGLEQUOTEIDENTIFIERDRUDBAL[[[[';
+
+  /**
+   * A map of condition operators to SQLite operators.
+   *
+   * @var array
+   */
+  protected static $sqliteConditionOperatorMap = [
+    'LIKE' => ['postfix' => " ESCAPE '\\'"],
+    'NOT LIKE' => ['postfix' => " ESCAPE '\\'"],
+    'LIKE BINARY' => ['postfix' => " ESCAPE '\\'", 'operator' => 'GLOB'],
+    'NOT LIKE BINARY' => ['postfix' => " ESCAPE '\\'", 'operator' => 'NOT GLOB'],
+  ];
 
   /**
    * {@inheritdoc}
@@ -711,7 +713,7 @@ class PDOSqliteExtension extends AbstractExtension {
    * @throws \Exception
    *   If a column of the table could not be parsed.
    */
-  protected function buildTableSpecFromDbalSchema($dbal_schema, $table) {
+  protected function buildTableSpecFromDbalSchema(DbalSchema $dbal_schema, $table) {
     $mapped_fields = array_flip($this->connection->schema()->getFieldTypeMap());
     $schema = [
       'fields' => [],
