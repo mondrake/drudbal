@@ -515,21 +515,22 @@ class Schema extends DatabaseSchema {
     if (!$this->tableExists($table)) {
       throw new SchemaObjectDoesNotExistException(t("Cannot add primary key to table @table: table doesn't exist.", ['@table' => $table]));
     }
-
-    if ($this->dbalSchema()->getTable($this->tableName($table))->hasPrimaryKey()) {
+    $table_full_name = $this->tableName($table);
+    if ($this->dbalSchema()->getTable($table_full_name)->hasPrimaryKey()) {
       throw new SchemaObjectExistsException(t("Cannot add primary key to table @table: primary key already exists.", ['@table' => $table]));
     }
 
     // Delegate to DBAL extension.
-    if ($this->dbalExtension->delegateAddPrimaryKey($this->dbalSchema(), $table, $fields)) {
-      $this->dbalSchemaForceReload();
+    if ($this->dbalExtension->delegateAddPrimaryKey($this->dbalSchema(), $table, $fields)) {    // @todo change delegateAddPrimaryKey to take resolved parameters
+      //$this->dbalSchemaForceReload();
+      $this->dbalSchema()->getTable($table_full_name)->setPrimaryKey($this->dbalGetFieldList($fields));
       return;
     }
 
     // DBAL extension did not pick up, proceed with DBAL.
     $current_schema = $this->dbalSchema();
     $to_schema = clone $current_schema;
-    $to_schema->getTable($this->tableName($table))->setPrimaryKey($this->dbalGetFieldList($fields));
+    $to_schema->getTable($table_full_name)->setPrimaryKey($this->dbalGetFieldList($fields));
     $this->dbalExecuteSchemaChange($to_schema);
   }
 
@@ -540,12 +541,13 @@ class Schema extends DatabaseSchema {
     if (!$this->tableExists($table)) {
       return FALSE;
     }
-    if (!$this->dbalSchema()->getTable($this->tableName($table))->hasPrimaryKey()) {
+    $table_full_name = $this->tableName($table);
+    if (!$this->dbalSchema()->getTable($table_full_name)->hasPrimaryKey()) {
       return FALSE;
     }
     $current_schema = $this->dbalSchema();
     $to_schema = clone $current_schema;
-    $to_schema->getTable($this->tableName($table))->dropPrimaryKey();
+    $to_schema->getTable($table_full_name)->dropPrimaryKey();
     $this->dbalExecuteSchemaChange($to_schema);
     return TRUE;
   }
@@ -581,7 +583,6 @@ class Schema extends DatabaseSchema {
 
     // Delegate to DBAL extension.
     if ($this->dbalExtension->delegateAddUniqueKey($this->dbalSchema(), $table, $name, $fields)) {   // @todo change delegateAddUniqueKey to take resolved parameters
-      //$this->dbalSchemaForceReload();
       $this->dbalSchema()->getTable($table_full_name)->addUniqueIndex($this->dbalGetFieldList($fields), $index_full_name);
       return;
     }
@@ -615,8 +616,7 @@ class Schema extends DatabaseSchema {
     $index_full_name = $this->dbalExtension->getIndexFullName('addIndex', $this->dbalSchema(), $table, $name, $this->getPrefixInfo($table));
 
     // Delegate to DBAL extension.
-    if ($this->dbalExtension->delegateAddIndex($this->dbalSchema(), $table, $name, $fields, $spec)) {  // @todo change delegateAddIndex to take resolved parameters
-      //$this->dbalSchemaForceReload();
+    if ($this->dbalExtension->delegateAddIndex($this->dbalSchema(), $table_full_name, $index_full_name, $table, $name, $fields, $spec)) {
       $this->dbalSchema()->getTable($table_full_name)->addIndex($this->dbalGetFieldList($fields), $index_full_name);
       return;
     }
@@ -640,8 +640,7 @@ class Schema extends DatabaseSchema {
     $index_full_name = $this->dbalExtension->getIndexFullName('dropIndex', $this->dbalSchema(), $table, $name, $this->getPrefixInfo($table));
 
     // Delegate to DBAL extension.
-    if ($this->dbalExtension->delegateDropIndex($this->dbalSchema(), $table, $name)) {  // @todo change delegateDropIndex to take resolved parameters
-      //$this->dbalSchemaForceReload();
+    if ($this->dbalExtension->delegateDropIndex($this->dbalSchema(), $table_full_name, $index_full_name, $table, $name)) {
       $this->dbalSchema()->getTable($table_full_name)->dropIndex($index_full_name);
       return TRUE;
     }

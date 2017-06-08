@@ -670,20 +670,15 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateAddIndex(DbalSchema $dbal_schema, $drupal_table_name, $index_name, array $drupal_field_specs, array $indexes_spec) {
-    $info = $this->connection->schema()->getPrefixInfoPublic($drupal_table_name);
-    $index_full_name = $this->getIndexFullName('addIndex', $dbal_schema, $drupal_table_name, $index_name, $info);
-    $sql = 'CREATE INDEX ' . $index_full_name . ' ON ' . $info['table'] . ' (' . implode(', ', $this->connection->schema()->dbalGetFieldList($drupal_field_specs)) . ")";
-    $this->connection->query($sql);
+  public function delegateAddIndex(DbalSchema $dbal_schema, $table_full_name, $index_full_name, $drupal_table_name, $drupal_index_name, array $drupal_field_specs, array $indexes_spec) {
+    $this->connection->query('CREATE INDEX ' . $index_full_name . ' ON ' . $table_full_name . ' (' . implode(', ', $this->connection->schema()->dbalGetFieldList($drupal_field_specs)) . ")");
     return TRUE;
   }
 
   /**
    * {@inheritdoc}
    */
-  public function delegateDropIndex(DbalSchema $dbal_schema, $drupal_table_name, $index_name) {
-    $info = $this->connection->schema()->getPrefixInfoPublic($drupal_table_name);
-    $index_full_name = $this->getIndexFullName('dropIndex', $dbal_schema, $drupal_table_name, $index_name, $info);
+  public function delegateDropIndex(DbalSchema $dbal_schema, $table_full_name, $index_full_name, $drupal_table_name, $drupal_index_name) {
     $this->connection->query('DROP INDEX ' . $index_full_name);
     return TRUE;
   }
