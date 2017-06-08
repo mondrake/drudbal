@@ -228,10 +228,15 @@ interface DbalExtensionInterface {
    * @param \Doctrine\DBAL\Exception\DriverException $e
    *   The exception thrown by query().
    *
+   * @return string
+   *   A return code identifying the result of the exception handling.
+   *
    * @throws \Drupal\Core\Database\TransactionCommitFailedException
    *   When commit fails.
    * @throws \Exception
    *   For any other error.
+   *
+   * @todo convert return to int, and add a const for 'all'
    */
   public function delegateReleaseSavepointExceptionProcess(DbalDriverException $e);
 
