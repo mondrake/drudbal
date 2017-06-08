@@ -331,42 +331,42 @@ class AbstractExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function alterDbalColumnDefinition($context, &$dbal_column_definition, array $dbal_column_options, $dbal_type, array $drupal_field_specs, $field_name) {
+  public function alterDbalColumnDefinition($context, &$dbal_column_definition, array &$dbal_column_options, $dbal_type, array $drupal_field_specs, $field_name) {
     return $this;
   }
 
   /**
    * {@inheritdoc}
    */
-  public function delegateAddField(&$primary_key_processed_by_extension, $drupal_table_name, $field_name, array $drupal_field_specs, array $keys_new_specs, array $dbal_column_options) {
+  public function delegateAddField(&$primary_key_processed_by_extension, DbalSchema $dbal_schema, $drupal_table_name, $field_name, array $drupal_field_specs, array $keys_new_specs, array $dbal_column_options) {
     return FALSE;
   }
 
   /**
    * {@inheritdoc}
    */
-  public function delegateDropField($drupal_table_name, $field_name) {
+  public function delegateDropField(DbalSchema $dbal_schema, $drupal_table_name, $field_name) {
     return FALSE;
   }
 
   /**
    * {@inheritdoc}
    */
-  public function delegateChangeField(&$primary_key_processed_by_extension, $drupal_table_name, $field_name, $field_new_name, array $drupal_field_new_specs, array $keys_new_specs, array $dbal_column_options) {
+  public function delegateChangeField(&$primary_key_processed_by_extension, DbalSchema $dbal_schema, $drupal_table_name, $field_name, $field_new_name, array $drupal_field_new_specs, array $keys_new_specs, array $dbal_column_options) {
     throw new \LogicException("Method " . __METHOD__ . " not implemented for '" . $this->dbalConnection->getDriver()->getName() . "''");
   }
 
   /**
    * {@inheritdoc}
    */
-  public function delegateFieldSetDefault($drupal_table_name, $field_name, $default) {
+  public function delegateFieldSetDefault(DbalSchema $dbal_schema, $drupal_table_name, $field_name, $default) {
     throw new \LogicException("Method " . __METHOD__ . " not implemented for '" . $this->dbalConnection->getDriver()->getName() . "''");
   }
 
   /**
    * {@inheritdoc}
    */
-  public function delegateFieldSetNoDefault($drupal_table_name, $field_name) {
+  public function delegateFieldSetNoDefault(DbalSchema $dbal_schema, $drupal_table_name, $field_name) {
     throw new \LogicException("Method " . __METHOD__ . " not implemented for '" . $this->dbalConnection->getDriver()->getName() . "''");
   }
 

@@ -443,7 +443,7 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function alterDbalColumnDefinition($context, &$dbal_column_definition, array $dbal_column_options, $dbal_type, array $drupal_field_specs, $field_name) {
+  public function alterDbalColumnDefinition($context, &$dbal_column_definition, array &$dbal_column_options, $dbal_type, array $drupal_field_specs, $field_name) {
     // DBAL does not support BINARY option for char/varchar columns.
     if (isset($drupal_field_specs['binary']) && $drupal_field_specs['binary'] === FALSE) {
       $dbal_column_definition = preg_replace('/CHAR\(([0-9]+)\)/', '$0 COLLATE NOCASE_UTF8', $dbal_column_definition);
@@ -463,6 +463,9 @@ class PDOSqliteExtension extends AbstractExtension {
     $dbal_column_definition = preg_replace('/DEFAULT\s+\'\'\'\'/', "DEFAULT ''", $dbal_column_definition);
 
     // Decode single quotes.
+    if (array_key_exists('default', $dbal_column_options)) {
+      $dbal_column_options['default'] = str_replace(self::SINGLE_QUOTE_IDENTIFIER_REPLACEMENT, '\'\'', $dbal_column_options['default']);
+    }
     $dbal_column_definition = str_replace(self::SINGLE_QUOTE_IDENTIFIER_REPLACEMENT, '\'\'', $dbal_column_definition);
 
     return $this;
@@ -471,7 +474,7 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateAddField(&$primary_key_processed_by_extension, $drupal_table_name, $field_name, array $drupal_field_specs, array $keys_new_specs, array $dbal_column_options) {
+  public function delegateAddField(&$primary_key_processed_by_extension, DbalSchema $dbal_schema, $drupal_table_name, $field_name, array $drupal_field_specs, array $keys_new_specs, array $dbal_column_options) {
     // SQLite doesn't have a full-featured ALTER TABLE statement. It only
     // supports adding new fields to a table, in some simple cases. In most
     // cases, we have to create a new table and copy the data over.
@@ -499,7 +502,7 @@ class PDOSqliteExtension extends AbstractExtension {
     else {
       // We cannot add the field directly. Use the slower table alteration
       // method, starting from the old schema.
-      $old_schema = $this->introspectSchema($drupal_table_name);
+      $old_schema = $this->buildTableSpecFromDbalSchema($dbal_schema, $drupal_table_name);
       $new_schema = $old_schema;
 
       // Add the new field.
@@ -537,8 +540,8 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateDropField($drupal_table_name, $field_name) {
-    $old_schema = $this->introspectSchema($drupal_table_name);
+  public function delegateDropField(DbalSchema $dbal_schema, $drupal_table_name, $field_name) {
+    $old_schema = $this->buildTableSpecFromDbalSchema($dbal_schema, $drupal_table_name);
     $new_schema = $old_schema;
 
     unset($new_schema['fields'][$field_name]);
@@ -567,8 +570,8 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateChangeField(&$primary_key_processed_by_extension, $drupal_table_name, $field_name, $field_new_name, array $drupal_field_new_specs, array $keys_new_specs, array $dbal_column_options) {
-    $old_schema = $this->introspectSchema($drupal_table_name);
+  public function delegateChangeField(&$primary_key_processed_by_extension, DbalSchema $dbal_schema, $drupal_table_name, $field_name, $field_new_name, array $drupal_field_new_specs, array $keys_new_specs, array $dbal_column_options) {
+    $old_schema = $this->buildTableSpecFromDbalSchema($dbal_schema, $drupal_table_name);
     $new_schema = $old_schema;
 
     // Map the old field to the new field.
@@ -608,8 +611,8 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateFieldSetDefault($drupal_table_name, $field_name, $default) {
-    $old_schema = $this->introspectSchema($drupal_table_name);
+  public function delegateFieldSetDefault(DbalSchema $dbal_schema, $drupal_table_name, $field_name, $default) {
+    $old_schema = $this->buildTableSpecFromDbalSchema($dbal_schema, $drupal_table_name);
     $new_schema = $old_schema;
 
     $new_schema['fields'][$field_name]['default'] = $default;
@@ -620,8 +623,8 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateFieldSetNoDefault($drupal_table_name, $field_name) {
-    $old_schema = $this->introspectSchema($drupal_table_name);
+  public function delegateFieldSetNoDefault(DbalSchema $dbal_schema, $drupal_table_name, $field_name) {
+    $old_schema = $this->buildTableSpecFromDbalSchema($dbal_schema, $drupal_table_name);
     $new_schema = $old_schema;
 
     unset($new_schema['fields'][$field_name]['default']);
@@ -658,11 +661,10 @@ class PDOSqliteExtension extends AbstractExtension {
    * {@inheritdoc}
    */
   public function delegateAddUniqueKey(DbalSchema $dbal_schema, $drupal_table_name, $index_name, array $drupal_field_specs) {
-    $schema['unique keys'][$index_name] = $drupal_field_specs;
-    $statements = $this->createIndexSql($dbal_schema, $drupal_table_name, $schema);
-    foreach ($statements as $statement) {
-      $this->connection->query($statement);
-    }
+    $info = $this->connection->schema()->getPrefixInfoPublic($drupal_table_name);
+    $index_full_name = $this->getIndexFullName('addUniqueKey', $dbal_schema, $drupal_table_name, $index_name, $info);
+    $sql = 'CREATE UNIQUE INDEX ' . $index_full_name . ' ON ' . $info['table'] . ' (' . implode(', ', $this->connection->schema()->dbalGetFieldList($drupal_field_specs)) . ")";
+    $this->connection->query($sql);
     return TRUE;
   }
 
@@ -670,11 +672,10 @@ class PDOSqliteExtension extends AbstractExtension {
    * {@inheritdoc}
    */
   public function delegateAddIndex(DbalSchema $dbal_schema, $drupal_table_name, $index_name, array $drupal_field_specs, array $indexes_spec) {
-    $schema['indexes'][$index_name] = $drupal_field_specs;
-    $statements = $this->createIndexSql($dbal_schema, $drupal_table_name, $schema);
-    foreach ($statements as $statement) {
-      $this->connection->query($statement);
-    }
+    $info = $this->connection->schema()->getPrefixInfoPublic($drupal_table_name);
+    $index_full_name = $this->getIndexFullName('addIndex', $dbal_schema, $drupal_table_name, $index_name, $info);
+    $sql = 'CREATE INDEX ' . $index_full_name . ' ON ' . $info['table'] . ' (' . implode(', ', $this->connection->schema()->dbalGetFieldList($drupal_field_specs)) . ")";
+    $this->connection->query($sql);
     return TRUE;
   }
 
@@ -711,7 +712,7 @@ class PDOSqliteExtension extends AbstractExtension {
    * @throws \Exception
    *   If a column of the table could not be parsed.
    */
-  protected function introspectSchema($table) {
+  protected function buildTableSpecFromDbalSchema($dbal_schema, $table) {
     $mapped_fields = array_flip($this->connection->schema()->getFieldTypeMap());
     $schema = [
       'fields' => [],
@@ -721,70 +722,58 @@ class PDOSqliteExtension extends AbstractExtension {
       'full_index_names' => [],
     ];
 
-    $info = $this->connection->schema()->getPrefixInfoPublic($table);
-    $result = $this->connection->query('PRAGMA ' . $info['schema'] . '.table_info(' . $info['table'] . ')');
-    foreach ($result as $row) {
-      if (preg_match('/^([^(]+)\((.*)\)$/', $row->type, $matches)) {
-        $type = $matches[1];
-        $length = $matches[2];
-      }
-      else {
-        $type = $row->type;
-        $length = NULL;
-      }
-      // @todo this was added to avoid test failure, not sure this is correct
-      $type = preg_replace('/ UNSIGNED/', '', $type);
-      $dbal_type = $this->dbalConnection->getDatabasePlatform()->getDoctrineTypeMapping($type);
+    // Table.
+    $dbal_table = $dbal_schema->getTable($this->tableName($table));
+
+    // Columns.
+    $columns = $dbal_table->getColumns();
+    foreach ($columns as $column) {
+      $dbal_type = $column->getType()->getName();
       if (isset($mapped_fields[$dbal_type])) {
         list($type, $size) = explode(':', $mapped_fields[$dbal_type]);
-        $schema['fields'][$row->name] = [
-          'type' => $type,
-          'size' => $size,
-          'not null' => !empty($row->notnull),
-          'default' => trim($row->dflt_value, "'"),
-        ];
-        // @todo this was added to avoid test failure, not sure it is correct.
-        if ($row->pk) {
-          $schema['fields'][$row->name]['not null'] = FALSE;
-        }
-        if ($length) {
-          $schema['fields'][$row->name]['length'] = $length;
-        }
-        if ($row->pk) {
-          $schema['primary key'][] = $row->name;
-        }
-        // @todo this was added to avoid test failure, not sure this is correct
-        if (preg_match('/ UNSIGNED/', $row->type, $matches)) {
-          $schema['fields'][$row->name]['unsigned'] = TRUE;
-        }
+      }
+      $schema['fields'][$column->getName()] = [
+        'size' => $size,
+        'not null' => $column->getNotNull(),
+        'default' => ($column->getDefault() === NULL && $column->getNotNull() === FALSE) ? 'NULL' : $column->getDefault(),
+      ];
+      if ($column->getAutoincrement() === TRUE && in_array($dbal_type, ['smallint', 'integer', 'bigint'])) {
+        $schema['fields'][$column->getName()]['type'] = 'serial';
       }
       else {
-        throw new \Exception("Unable to parse the column type " . $row->type);
+        $schema['fields'][$column->getName()]['type'] = $type;
+      }
+      if ($column->getUnsigned() !== NULL) {
+        $schema['fields'][$column->getName()]['unsigned'] = $column->getUnsigned();
+      }
+      if ($column->getLength() !== NULL) {
+        $schema['fields'][$column->getName()]['lenght'] = $column->getLength();
+      }
+      if ($column->getComment() !== NULL) {
+        $schema['fields'][$column->getName()]['comment'] = $column->getComment();
       }
     }
-    $indexes = [];
-    $result = $this->connection->query('PRAGMA ' . $info['schema'] . '.index_list(' . $info['table'] . ')');
-    foreach ($result as $row) {
-      if (strpos($row->name, 'sqlite_autoindex_') !== 0) {
-        $schema['full_index_names'][] = $row->name;
-        $indexes[] = [
-          'schema_key' => $row->unique ? 'unique keys' : 'indexes',
-          'name' => $row->name,
-        ];
-      }
+
+    // Primary key.
+    if ($dbal_table->hasPrimaryKey()) {
+      $schema['primary key'] = $dbal_table->getPrimaryKey()->getColumns();
     }
+
+    // Indexes.
+    $indexes = $dbal_table->getIndexes();
     foreach ($indexes as $index) {
-      $name = $index['name'];
+      if ($index->isPrimary()) {
+        continue;
+      }
+      $schema_key = $index->isUnique() ? 'unique keys' : 'indexes';
       // Get index name without prefix.
       $matches = NULL;
-      if (preg_match('/.*____(.+)/', $name, $matches)) {
-        $index_name = $matches[1];
-        $result = $this->connection->query('PRAGMA ' . $info['schema'] . '.index_info(' . $name . ')');
-        foreach ($result as $row) {
-          $schema[$index['schema_key']][$index_name][] = $row->name;
-        }
-      }
+      preg_match('/.*____(.+)/', $index->getName(), $matches);
+      $index_name = $matches[1];
+      $schema[$schema_key][$index_name] = $index->getColumns();
+      $schema['full_index_names'][] = $index->getName();
     }
+
     return $schema;
   }
 
@@ -876,30 +865,6 @@ class PDOSqliteExtension extends AbstractExtension {
       $this->connection->schema()->dropTable($table);
       $this->connection->schema()->renameTable($new_table, $table);
     }
-  }
-
-  /**
-   * Build the SQL expression for indexes.
-   *
-   * @param \Doctrine\DBAL\Schema\Schema $dbal_schema
-   *   The DBAL schema object.
-   */
-  protected function createIndexSql(DbalSchema $dbal_schema, $table_name, array $schema) {
-    $sql = [];
-    $info = $this->connection->schema()->getPrefixInfoPublic($table_name);
-    if (!empty($schema['unique keys'])) {
-      foreach ($schema['unique keys'] as $key => $fields) {
-        $index_name = $this->getIndexFullName('addUniqueKey', $dbal_schema, $table_name, $key, $info);
-        $sql[] = 'CREATE UNIQUE INDEX ' . $index_name . ' ON ' . $info['table'] . ' (' . implode(', ', $this->connection->schema()->dbalGetFieldList($fields)) . ")\n";
-      }
-    }
-    if (!empty($schema['indexes'])) {
-      foreach ($schema['indexes'] as $key => $fields) {
-        $index_name = $this->getIndexFullName('addIndex', $dbal_schema, $table_name, $key, $info);
-        $sql[] = 'CREATE INDEX ' . $index_name . ' ON ' . $info['table'] . ' (' . implode(', ', $this->connection->schema()->dbalGetFieldList($fields)) . ")\n";
-      }
-    }
-    return $sql;
   }
 
 }
