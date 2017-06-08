@@ -726,6 +726,54 @@ class PDOSqliteExtension extends AbstractExtension {
 
     $info = $this->connection->schema()->getPrefixInfoPublic($table);  // @todo remove
 
+/*
+    $result = $this->connection->query('PRAGMA ' . $info['schema'] . '.table_info(' . $info['table'] . ')');
+    foreach ($result as $row) {
+      if (preg_match('/^([^(]+)\((.*)\)$/', $row->type, $matches)) {
+        $type = $matches[1];
+        $length = $matches[2];
+      }
+      else {
+        $type = $row->type;
+        $length = NULL;
+      }
+      // @todo this was added to avoid test failure, not sure this is correct
+      $type = preg_replace('/ UNSIGNED/', '', $type);
+      $dbal_type = $this->dbalConnection->getDatabasePlatform()->getDoctrineTypeMapping($type);
+      if (isset($mapped_fields[$dbal_type])) {
+        list($type, $size) = explode(':', $mapped_fields[$dbal_type]);
+        $schema['fields'][$row->name] = [
+          'type' => $type,
+          'size' => $size,
+          'not null' => !empty($row->notnull),
+          'default' => trim($row->dflt_value, "'"),
+        ];
+        // @todo this was added to avoid test failure, not sure it is correct.
+        if ($row->pk) {
+          $schema['fields'][$row->name]['not null'] = FALSE;
+        }
+        if ($length) {
+          $schema['fields'][$row->name]['length'] = $length;
+        }
+        if ($row->pk) {
+          $schema['primary key'][] = $row->name;
+        }
+        // @todo this was added to avoid test failure, not sure this is correct
+        if (preg_match('/ UNSIGNED/', $row->type, $matches)) {
+          $schema['fields'][$row->name]['unsigned'] = TRUE;
+        }
+      }
+      else {
+        throw new \Exception("Unable to parse the column type " . $row->type);
+      }
+    }
+*/
+
+
+
+
+
+
     $dbal_table = $dbal_schema->getTable($this->tableName($table));
 
     // Columns.
@@ -736,11 +784,16 @@ class PDOSqliteExtension extends AbstractExtension {
         list($type, $size) = explode(':', $mapped_fields[$dbal_type]);
       }
       $schema['fields'][$column->getName()] = [
-        'type' => $type,
         'size' => $size,
         'not null' => $column->getNotNull(),
         'default' => ($column->getDefault() === NULL && $column->getNotNull() === FALSE) ? 'NULL' : $column->getDefault(),
       ];
+      if ($column->getAutoincrement() === TRUE && in_array($dbal_type, ['smallint', 'integer', 'bigint'])) {
+        $schema['fields'][$column->getName()]['type'] = 'serial';
+      }
+      else {
+        $schema['fields'][$column->getName()]['type'] = $type;
+      }
       if ($column->getUnsigned() !== NULL) {
         $schema['fields'][$column->getName()]['unsigned'] = $column->getUnsigned();
       }
@@ -756,6 +809,7 @@ class PDOSqliteExtension extends AbstractExtension {
     if ($dbal_table->hasPrimaryKey()) {
       $schema['primary key'] = $dbal_table->getPrimaryKey()->getColumns();
     }
+//if ($this->connection->schema()->xxx) debug($schema);
 
     // @todo
     $indexes = [];
