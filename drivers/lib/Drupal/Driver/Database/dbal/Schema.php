@@ -48,7 +48,6 @@ class Schema extends DatabaseSchema {
    * @var \Drupal\Driver\Database\dbal\DbalExtension\DbalExtensionInterface
    */
   protected $dbalExtension;
-//  public $xxx;  @todo
 
   /**
    * Constructs a Schema object.
@@ -81,7 +80,6 @@ class Schema extends DatabaseSchema {
    * {@inheritdoc}
    */
   public function createTable($name, $table) {
-// @todo if (strpos($name, 'test_table') !== FALSE) {$this->xxx = TRUE;}
     if ($this->tableExists($name)) {
       throw new SchemaObjectExistsException(t('Table @name already exists.', ['@name' => $name]));
     }
@@ -665,7 +663,6 @@ class Schema extends DatabaseSchema {
       ]));
     }
 
-// @todo if (strpos($table, 'test_table') !== FALSE) {$this->xxx = TRUE;}
     $dbal_type = $this->getDbalColumnType($spec);
     $dbal_column_options = $this->getDbalColumnOptions('changeField', $field_new, $dbal_type, $spec);
     // DBAL is limited here, if we pass only 'columnDefinition' to
@@ -869,10 +866,8 @@ class Schema extends DatabaseSchema {
    */
   protected function dbalExecuteSchemaChange(DbalSchema $to_schema) {
     foreach ($this->dbalSchema()->getMigrateToSql($to_schema, $this->dbalPlatform) as $sql) {
-// @todo if ($this->xxx) debug($sql);
       $this->connection->getDbalConnection()->exec($sql);
     }
-// @todo $this->xxx = FALSE;
     $this->dbalSetCurrentSchema($to_schema);
     return TRUE;
   }
