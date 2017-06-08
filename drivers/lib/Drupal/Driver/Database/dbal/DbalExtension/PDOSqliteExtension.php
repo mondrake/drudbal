@@ -2,22 +2,25 @@
 
 namespace Drupal\Driver\Database\dbal\DbalExtension;
 
-use Drupal\Component\Utility\Unicode;
 use Drupal\Core\Database\Database;
 use Drupal\Core\Database\DatabaseExceptionWrapper;
 use Drupal\Core\Database\DatabaseNotFoundException;
 use Drupal\Core\Database\IntegrityConstraintViolationException;
 use Drupal\Core\Database\Driver\sqlite\Connection as SqliteConnectionBase;
-use Drupal\Driver\Database\dbal\Connection as DruDbalConnection;
 
 use Doctrine\DBAL\Connection as DbalConnection;
-use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
 use Doctrine\DBAL\Schema\Schema as DbalSchema;
 use Doctrine\DBAL\Statement as DbalStatement;
 
 /**
  * Driver specific methods for pdo_sqlite.
+ *
+ * NOTE: DBAL Schema Manager does not manage namespaces, so instead of
+ * having a separate attached database for each prefix like in core Sqlite
+ * driver, we have all the tables in the same main db.
+ *
+ * @todo see if :memory: database can pass tests.
  */
 class PDOSqliteExtension extends AbstractExtension {
 
@@ -32,25 +35,6 @@ class PDOSqliteExtension extends AbstractExtension {
   const DATABASE_NOT_FOUND = 14;
 
   /**
-   * Whether or not the active transaction (if any) will be rolled back.
-   *
-   * @var bool
-   */
-  protected $willRollback;
-
-  /**
-   * A map of condition operators to SQLite operators.
-   *
-   * We don't want to override any of the defaults.
-   */
-  protected static $sqliteConditionOperatorMap = [
-    'LIKE' => ['postfix' => " ESCAPE '\\'"],
-    'NOT LIKE' => ['postfix' => " ESCAPE '\\'"],
-    'LIKE BINARY' => ['postfix' => " ESCAPE '\\'", 'operator' => 'GLOB'],
-    'NOT LIKE BINARY' => ['postfix' => " ESCAPE '\\'", 'operator' => 'NOT GLOB'],
-  ];
-
-  /**
    * Replacement for single quote identifiers.
    *
    * @todo DBAL uses single quotes instead of backticks to produce DDL
@@ -59,12 +43,17 @@ class PDOSqliteExtension extends AbstractExtension {
    */
   const SINGLE_QUOTE_IDENTIFIER_REPLACEMENT = ']]]]SINGLEQUOTEIDENTIFIERDRUDBAL[[[[';
 
-
-  // @todo DBAL schema manager does not manage namespaces, so instead of
-  // having a separate attached database for each prefix like in core Sqlite
-  // driver, we have all the tables in the same main db.
-
-  // @todo still check how :memory: database works.
+  /**
+   * A map of condition operators to SQLite operators.
+   *
+   * @var array
+   */
+  protected static $sqliteConditionOperatorMap = [
+    'LIKE' => ['postfix' => " ESCAPE '\\'"],
+    'NOT LIKE' => ['postfix' => " ESCAPE '\\'"],
+    'LIKE BINARY' => ['postfix' => " ESCAPE '\\'", 'operator' => 'GLOB'],
+    'NOT LIKE BINARY' => ['postfix' => " ESCAPE '\\'", 'operator' => 'NOT GLOB'],
+  ];
 
   /**
    * {@inheritdoc}
@@ -251,7 +240,7 @@ class PDOSqliteExtension extends AbstractExtension {
    * {@inheritdoc}
    */
   public function delegateReleaseSavepointExceptionProcess(DbalDriverException $e) {
-    // @todo
+    throw $e;
   }
 
   /**
@@ -365,8 +354,13 @@ class PDOSqliteExtension extends AbstractExtension {
       'pass' => [],
     ];
 
-    // @todo is DBAL creating the db on connect? YES
-    // if file path is wrong, what happens? EXCEPTION CODE 14
+    // DBAL creates the database based on the specified file on connection
+    // opening. If the file is not writable, or the file path is wrong, we
+    // get a DATABASE_NOT_FOUND error. In such case we need the user to
+    // correct the URL.
+    if ($e->getErrorCode() === self::DATABASE_NOT_FOUND) {
+      $results['fail'][] = t('There is a problem with the database URL. Likely, the database file specified is not writable, or the file path is wrong. Doctrine DBAL reports the following message: %message', ['%message' => $e->getMessage()]);
+    }
 
     return $results;
   }
@@ -452,11 +446,16 @@ class PDOSqliteExtension extends AbstractExtension {
 
     // @todo just setting 'unsigned' to true does not enforce values >=0 in the
     // field in Sqlite, so add a CHECK >= 0 constraint.
-    if (isset($drupal_field_specs['type']) && in_array($drupal_field_specs['type'], ['float', 'numeric', 'serial', 'int']) && !empty($drupal_field_specs['unsigned']) && (bool) $drupal_field_specs['unsigned'] === TRUE) {
+    if (isset($drupal_field_specs['type']) && in_array($drupal_field_specs['type'], [
+      'float', 'numeric', 'serial', 'int',
+    ]) && !empty($drupal_field_specs['unsigned']) && (bool) $drupal_field_specs['unsigned'] === TRUE) {
       $dbal_column_definition .= ' CHECK (' . $field_name . '>= 0)';
     }
 
-    // @todo added to avoid edge cases; maybe this can be overridden in alterDbalColumnOptions
+    // @todo added to avoid edge cases; maybe this can be overridden in
+    // alterDbalColumnOptions.
+    // @todo there is a duplication of single quotes when table is
+    // introspected and re-created.
     if (array_key_exists('default', $drupal_field_specs) && $drupal_field_specs['default'] === '') {
       $dbal_column_definition = preg_replace('/DEFAULT (?!:\'\')/', "$0 ''", $dbal_column_definition);
     }
@@ -703,6 +702,8 @@ class PDOSqliteExtension extends AbstractExtension {
    * create a schema array. This is useful, for example, during update when
    * the old schema is not available.
    *
+   * @param \Doctrine\DBAL\Schema\Schema $dbal_schema
+   *   The DBAL schema object.
    * @param string $table
    *   Name of the table.
    *
@@ -712,7 +713,7 @@ class PDOSqliteExtension extends AbstractExtension {
    * @throws \Exception
    *   If a column of the table could not be parsed.
    */
-  protected function buildTableSpecFromDbalSchema($dbal_schema, $table) {
+  protected function buildTableSpecFromDbalSchema(DbalSchema $dbal_schema, $table) {
     $mapped_fields = array_flip($this->connection->schema()->getFieldTypeMap());
     $schema = [
       'fields' => [],
@@ -737,7 +738,9 @@ class PDOSqliteExtension extends AbstractExtension {
         'not null' => $column->getNotNull(),
         'default' => ($column->getDefault() === NULL && $column->getNotNull() === FALSE) ? 'NULL' : $column->getDefault(),
       ];
-      if ($column->getAutoincrement() === TRUE && in_array($dbal_type, ['smallint', 'integer', 'bigint'])) {
+      if ($column->getAutoincrement() === TRUE && in_array($dbal_type, [
+        'smallint', 'integer', 'bigint',
+      ])) {
         $schema['fields'][$column->getName()]['type'] = 'serial';
       }
       else {
@@ -778,7 +781,7 @@ class PDOSqliteExtension extends AbstractExtension {
   }
 
   /**
-   * Utility method: rename columns in an index definition according to a new mapping.
+   * Rename columns in an index definition according to a new mapping.
    *
    * @param array $key_definition
    *   The key definition.
