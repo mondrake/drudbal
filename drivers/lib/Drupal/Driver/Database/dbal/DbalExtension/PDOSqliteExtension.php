@@ -809,10 +809,25 @@ class PDOSqliteExtension extends AbstractExtension {
     if ($dbal_table->hasPrimaryKey()) {
       $schema['primary key'] = $dbal_table->getPrimaryKey()->getColumns();
     }
+
+    // Indexes.
+    $indexes = $dbal_table->getIndexes();
+    foreach ($indexes as $index) {
+      if ($index->isPrimary()) {
+        continue;
+      }
+      $schema_key = $index->isUnique() ? 'unique keys' : 'indexes';
+      // Get index name without prefix.
+      $matches = NULL;
+      preg_match('/.*____(.+)/', $index->getName(), $matches);
+      $index_name = $matches[1];
+      $schema[$schema_key][$index_name] = $index->getColumns();
+      $schema['full_index_names'][] = $index->getName();
+    }
 //if ($this->connection->schema()->xxx) debug($schema);
 
     // @todo
-    $indexes = [];
+/*    $indexes = [];
     $result = $this->connection->query('PRAGMA ' . $info['schema'] . '.index_list(' . $info['table'] . ')');
     foreach ($result as $row) {
       if (strpos($row->name, 'sqlite_autoindex_') !== 0) {
@@ -834,7 +849,8 @@ class PDOSqliteExtension extends AbstractExtension {
           $schema[$index['schema_key']][$index_name][] = $row->name;
         }
       }
-    }
+    }*/
+
     return $schema;
   }
 
