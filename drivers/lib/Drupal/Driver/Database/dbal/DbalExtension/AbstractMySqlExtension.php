@@ -658,11 +658,15 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateAddPrimaryKey(DbalSchema $dbal_schema, $drupal_table_name, array $drupal_field_specs) {
+  public function delegateAddPrimaryKey(DbalSchema $dbal_schema, $table_full_name, $drupal_table_name, array $drupal_field_specs) {
     // DBAL does not support creating indexes with column lenghts.
     // @see https://github.com/doctrine/dbal/pull/2412
     if ($this->dbalResolveIndexColumnNames($drupal_field_specs) === FALSE) {
-      $this->connection->query('ALTER TABLE {' . $drupal_table_name . '} ADD PRIMARY KEY (' . $this->createKeySql($drupal_field_specs) . ')');
+      $this->connection->query('ALTER TABLE ' . $table_full_name . ' ADD PRIMARY KEY (' . $this->createKeySql($drupal_field_specs) . ')');
+
+      // Update DBAL Schema.
+      $dbal_schema->getTable($table_full_name)->setPrimaryKey($this->connection->schema()->dbalGetFieldList($drupal_field_specs));
+
       return TRUE;
     }
     return FALSE;

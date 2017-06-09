@@ -521,9 +521,7 @@ class Schema extends DatabaseSchema {
     }
 
     // Delegate to DBAL extension.
-    if ($this->dbalExtension->delegateAddPrimaryKey($this->dbalSchema(), $table, $fields)) {    // @todo change delegateAddPrimaryKey to take resolved parameters
-      //$this->dbalSchemaForceReload();
-      $this->dbalSchema()->getTable($table_full_name)->setPrimaryKey($this->dbalGetFieldList($fields));
+    if ($this->dbalExtension->delegateAddPrimaryKey($this->dbalSchema(), $table_full_name, $table, $fields)) {
       return;
     }
 

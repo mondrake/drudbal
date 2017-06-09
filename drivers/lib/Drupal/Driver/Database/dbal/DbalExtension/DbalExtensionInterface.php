@@ -665,8 +665,10 @@ interface DbalExtensionInterface {
    *
    * @param \Doctrine\DBAL\Schema\Schema $dbal_schema
    *   The DBAL schema object.
+   * @param string $table_full_name
+   *   The name of the table.
    * @param string $drupal_table_name
-   *   A string with the Drupal name of the table.
+   *   The Drupal name of the table.
    * @param array $drupal_field_specs
    *   The field specification array, as taken from a schema definition.
    *
@@ -674,7 +676,7 @@ interface DbalExtensionInterface {
    *   TRUE if the extension added the primary key, FALSE if it has to be
    *   handled by DBAL.
    */
-  public function delegateAddPrimaryKey(DbalSchema $dbal_schema, $drupal_table_name, array $drupal_field_specs);
+  public function delegateAddPrimaryKey(DbalSchema $dbal_schema, $table_full_name, $drupal_table_name, array $drupal_field_specs);
 
   /**
    * Adds a unique key.
