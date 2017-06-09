@@ -647,9 +647,9 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateIndexExists(&$result, DbalSchema $dbal_schema, $drupal_table_name, $index_name) {
-    if ($index_name == 'PRIMARY') {
-      $result = $dbal_schema->getTable($this->tableName($drupal_table_name))->hasPrimaryKey();
+  public function delegateIndexExists(&$result, DbalSchema $dbal_schema, $table_full_name, $drupal_table_name, $drupal_index_name) {
+    if ($drupal_index_name == 'PRIMARY') {
+      $result = $dbal_schema->getTable($table_full_name)->hasPrimaryKey();
       return TRUE;
     }
     return FALSE;
@@ -658,11 +658,15 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateAddPrimaryKey(DbalSchema $dbal_schema, $drupal_table_name, array $drupal_field_specs) {
+  public function delegateAddPrimaryKey(DbalSchema $dbal_schema, $table_full_name, $drupal_table_name, array $drupal_field_specs) {
     // DBAL does not support creating indexes with column lenghts.
     // @see https://github.com/doctrine/dbal/pull/2412
     if ($this->dbalResolveIndexColumnNames($drupal_field_specs) === FALSE) {
-      $this->connection->query('ALTER TABLE {' . $drupal_table_name . '} ADD PRIMARY KEY (' . $this->createKeySql($drupal_field_specs) . ')');
+      $this->connection->query('ALTER TABLE ' . $table_full_name . ' ADD PRIMARY KEY (' . $this->createKeySql($drupal_field_specs) . ')');
+
+      // Update DBAL Schema.
+      $dbal_schema->getTable($table_full_name)->setPrimaryKey($this->connection->schema()->dbalGetFieldList($drupal_field_specs));
+
       return TRUE;
     }
     return FALSE;
@@ -671,11 +675,15 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateAddUniqueKey(DbalSchema $dbal_schema, $drupal_table_name, $index_name, array $drupal_field_specs) {
+  public function delegateAddUniqueKey(DbalSchema $dbal_schema, $table_full_name, $index_full_name, $drupal_table_name, $drupal_index_name, array $drupal_field_specs) {
     // DBAL does not support creating indexes with column lenghts.
     // @see https://github.com/doctrine/dbal/pull/2412
     if ($this->dbalResolveIndexColumnNames($drupal_field_specs) === FALSE) {
-      $this->connection->query('ALTER TABLE {' . $drupal_table_name . '} ADD UNIQUE KEY `' . $index_name . '` (' . $this->createKeySql($drupal_field_specs) . ')');
+      $this->connection->query('ALTER TABLE ' . $table_full_name . ' ADD UNIQUE KEY `' . $index_full_name . '` (' . $this->createKeySql($drupal_field_specs) . ')');
+
+      // Update DBAL Schema.
+      $dbal_schema->getTable($table_full_name)->addUniqueIndex($this->connection->schema()->dbalGetFieldList($drupal_field_specs), $index_full_name);
+
       return TRUE;
     }
     return FALSE;
@@ -684,13 +692,17 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateAddIndex(DbalSchema $dbal_schema, $drupal_table_name, $index_name, array $drupal_field_specs, array $indexes_spec) {
+  public function delegateAddIndex(DbalSchema $dbal_schema, $table_full_name, $index_full_name, $drupal_table_name, $drupal_index_name, array $drupal_field_specs, array $indexes_spec) {
     // DBAL does not support creating indexes with column lenghts.
     // @see https://github.com/doctrine/dbal/pull/2412
-    $indexes_spec['indexes'][$index_name] = $drupal_field_specs;
+    $indexes_spec['indexes'][$drupal_index_name] = $drupal_field_specs;
     $indexes = $this->getNormalizedIndexes($indexes_spec);
-    if ($this->dbalResolveIndexColumnNames($indexes[$index_name]) === FALSE) {
-      $this->connection->query('ALTER TABLE {' . $drupal_table_name . '} ADD INDEX `' . $index_name . '` (' . $this->createKeySql($indexes[$index_name]) . ')');
+    if ($this->dbalResolveIndexColumnNames($indexes[$drupal_index_name]) === FALSE) {
+      $this->connection->query('ALTER TABLE ' . $table_full_name . ' ADD INDEX `' . $index_full_name . '` (' . $this->createKeySql($indexes[$drupal_index_name]) . ')');
+
+      // Update DBAL Schema.
+      $dbal_schema->getTable($table_full_name)->addIndex($this->connection->schema()->dbalGetFieldList($drupal_field_specs), $index_full_name);
+
       return TRUE;
     }
     return FALSE;
