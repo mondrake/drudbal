@@ -649,16 +649,18 @@ interface DbalExtensionInterface {
    *   The result of the index existence check. Passed by reference.
    * @param \Doctrine\DBAL\Schema\Schema $dbal_schema
    *   The DBAL schema object.
+   * @param string $table_full_name
+   *   The name of the table.
    * @param string $drupal_table_name
-   *   A string with the Drupal name of the table.
-   * @param string $index_name
-   *   A string with the name of the index.
+   *   The Drupal name of the table.
+   * @param string $drupal_index_name
+   *   The Drupal name of the index.
    *
    * @return bool
    *   TRUE if the extension managed the check, FALSE if it has to be handled
    *   by DBAL.
    */
-  public function delegateIndexExists(&$result, DbalSchema $dbal_schema, $drupal_table_name, $index_name);
+  public function delegateIndexExists(&$result, DbalSchema $dbal_schema, $table_full_name, $drupal_table_name, $drupal_index_name);
 
   /**
    * Adds a primary key.

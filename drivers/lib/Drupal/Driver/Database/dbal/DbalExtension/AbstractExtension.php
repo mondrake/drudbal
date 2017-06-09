@@ -380,7 +380,7 @@ class AbstractExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function delegateIndexExists(&$result, DbalSchema $dbal_schema, $drupal_table_name, $index_name) {
+  public function delegateIndexExists(&$result, DbalSchema $dbal_schema, $table_full_name, $drupal_table_name, $drupal_index_name) {
     return FALSE;
   }
 

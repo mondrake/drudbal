@@ -493,16 +493,17 @@ class Schema extends DatabaseSchema {
     if (!$this->tableExists($table)) {
       return FALSE;
     }
+    $table_full_name = $this->tableName($table);
 
     // Delegate to DBAL extension.
     $result = FALSE;
-    if ($this->dbalExtension->delegateIndexExists($result, $this->dbalSchema(), $table, $name)) {
+    if ($this->dbalExtension->delegateIndexExists($result, $this->dbalSchema(), $table_full_name, $table, $name)) {
       return $result;
     }
 
     // DBAL extension did not pick up, proceed with DBAL.
     $index_full_name = $this->dbalExtension->getIndexFullName('indexExists', $this->dbalSchema(), $table, $name, $this->getPrefixInfo($table));
-    return in_array($index_full_name, array_keys($this->dbalSchemaManager->listTableIndexes($this->tableName($table))));
+    return in_array($index_full_name, array_keys($this->dbalSchemaManager->listTableIndexes($table_full_name)));
     // @todo it would be preferred to do
     // return $this->dbalSchema()->getTable($this->tableName($table))->hasIndex($index_full_name);
     // but this fails on Drupal\KernelTests\Core\Entity\EntityDefinitionUpdateTest::testBaseFieldCreateUpdateDeleteWithoutData
