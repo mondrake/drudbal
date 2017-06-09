@@ -316,8 +316,10 @@ class Schema extends DatabaseSchema {
       return FALSE;
     }
 
-    // DBAL Schema is slow here, especially for tearDown while testing, so we
-    // use the manager directly.
+    // We use the manager directly here, in some tests a table is added to a
+    // different connection and its DBAL schema will be a different object, so
+    // on drop it fails to find it.
+    // @todo open a Drupal issue to fix SchemaTest::findTables?
     // @todo this will affect possibility to drop FKs in an orderly way, so
     // we would need to revise at later stage if we want the driver to support
     // a broader set of capabilities.
@@ -329,7 +331,7 @@ class Schema extends DatabaseSchema {
     }
     catch (DbalSchemaException $e) {
       if ($e->getCode() === DbalSchemaException::TABLE_DOESNT_EXIST) {
-        // If it's not in the schema, then we are good anyway.
+        // If he table is not in the DBAL schema, then we are good anyway.
         return TRUE;
       }
       else {
