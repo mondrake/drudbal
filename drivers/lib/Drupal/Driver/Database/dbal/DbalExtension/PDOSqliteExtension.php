@@ -657,11 +657,14 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateAddUniqueKey(DbalSchema $dbal_schema, $drupal_table_name, $index_name, array $drupal_field_specs) {
-    $info = $this->connection->schema()->getPrefixInfoPublic($drupal_table_name);
-    $index_full_name = $this->getIndexFullName('addUniqueKey', $dbal_schema, $drupal_table_name, $index_name, $info);
-    $sql = 'CREATE UNIQUE INDEX ' . $index_full_name . ' ON ' . $info['table'] . ' (' . implode(', ', $this->connection->schema()->dbalGetFieldList($drupal_field_specs)) . ")";
-    $this->connection->query($sql);
+  public function delegateAddUniqueKey(DbalSchema $dbal_schema, $table_full_name, $index_full_name, $drupal_table_name, $drupal_index_name, array $drupal_field_specs) {
+    // Avoid DBAL managing of this that would go through table re-creation.
+    $index_columns = $this->connection->schema()->dbalGetFieldList($drupal_field_specs);
+    $this->connection->query('CREATE UNIQUE INDEX ' . $index_full_name . ' ON ' . $table_full_name . ' (' . implode(', ', $index_columns) . ")");
+
+    // Update DBAL Schema.
+    $dbal_schema->getTable($table_full_name)->addUniqueIndex($index_columns, $index_full_name);
+
     return TRUE;
   }
 

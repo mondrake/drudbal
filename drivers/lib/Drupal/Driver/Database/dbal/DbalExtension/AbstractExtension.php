@@ -394,7 +394,7 @@ class AbstractExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function delegateAddUniqueKey(DbalSchema $dbal_schema, $drupal_table_name, $index_name, array $drupal_field_specs) {
+  public function delegateAddUniqueKey(DbalSchema $dbal_schema, $table_full_name, $index_full_name, $drupal_table_name, $drupal_index_name, array $drupal_field_specs) {
     return FALSE;
   }
 

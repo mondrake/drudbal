@@ -681,10 +681,14 @@ interface DbalExtensionInterface {
    *
    * @param \Doctrine\DBAL\Schema\Schema $dbal_schema
    *   The DBAL schema object.
+   * @param string $table_full_name
+   *   The name of the table.
+   * @param string $index_full_name
+   *   The name of the index.
    * @param string $drupal_table_name
-   *   A string with the Drupal name of the table.
-   * @param string $index_name
-   *   A string with the name of the index.
+   *   The Drupal name of the table.
+   * @param string $drupal_index_name
+   *   The Drupal name of the index.
    * @param array $drupal_field_specs
    *   The field specification array, as taken from a schema definition.
    *
@@ -692,7 +696,7 @@ interface DbalExtensionInterface {
    *   TRUE if the extension added the unique key, FALSE if it has to be
    *   handled by DBAL.
    */
-  public function delegateAddUniqueKey(DbalSchema $dbal_schema, $drupal_table_name, $index_name, array $drupal_field_specs);
+  public function delegateAddUniqueKey(DbalSchema $dbal_schema, $table_full_name, $index_full_name, $drupal_table_name, $drupal_index_name, array $drupal_field_specs);
 
   /**
    * Adds an index.

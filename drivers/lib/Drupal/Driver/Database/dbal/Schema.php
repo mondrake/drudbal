@@ -582,8 +582,7 @@ class Schema extends DatabaseSchema {
     $index_full_name = $this->dbalExtension->getIndexFullName('addUniqueKey', $this->dbalSchema(), $table, $name, $this->getPrefixInfo($table));
 
     // Delegate to DBAL extension.
-    if ($this->dbalExtension->delegateAddUniqueKey($this->dbalSchema(), $table, $name, $fields)) {   // @todo change delegateAddUniqueKey to take resolved parameters
-      $this->dbalSchema()->getTable($table_full_name)->addUniqueIndex($this->dbalGetFieldList($fields), $index_full_name);
+    if ($this->dbalExtension->delegateAddUniqueKey($this->dbalSchema(), $table_full_name, $index_full_name, $table, $name, $fields)) {
       return;
     }
 
