@@ -617,7 +617,6 @@ class Schema extends DatabaseSchema {
 
     // Delegate to DBAL extension.
     if ($this->dbalExtension->delegateAddIndex($this->dbalSchema(), $table_full_name, $index_full_name, $table, $name, $fields, $spec)) {
-      $this->dbalSchema()->getTable($table_full_name)->addIndex($this->dbalGetFieldList($fields), $index_full_name);
       return;
     }
 
@@ -641,7 +640,6 @@ class Schema extends DatabaseSchema {
 
     // Delegate to DBAL extension.
     if ($this->dbalExtension->delegateDropIndex($this->dbalSchema(), $table_full_name, $index_full_name, $table, $name)) {
-      $this->dbalSchema()->getTable($table_full_name)->dropIndex($index_full_name);
       return TRUE;
     }
 

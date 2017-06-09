@@ -691,6 +691,10 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
     $indexes = $this->getNormalizedIndexes($indexes_spec);
     if ($this->dbalResolveIndexColumnNames($indexes[$drupal_index_name]) === FALSE) {
       $this->connection->query('ALTER TABLE ' . $table_full_name . ' ADD INDEX `' . $index_full_name . '` (' . $this->createKeySql($indexes[$drupal_index_name]) . ')');
+
+      // Update DBAL Schema.
+      $dbal_schema->getTable($table_full_name)->addIndex($this->connection->schema()->dbalGetFieldList($drupal_field_specs), $index_full_name);
+
       return TRUE;
     }
     return FALSE;
