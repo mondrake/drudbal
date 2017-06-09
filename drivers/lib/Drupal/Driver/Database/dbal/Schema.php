@@ -9,6 +9,7 @@ use Drupal\Component\Utility\Unicode;
 
 use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\Schema\Schema as DbalSchema;
+use Doctrine\DBAL\Schema\SchemaException as DbalSchemaException;
 use Doctrine\DBAL\Types\Type as DbalType;
 
 /**
@@ -323,20 +324,19 @@ class Schema extends DatabaseSchema {
     $table_full_name = $this->tableName($table);
     $current_schema = $this->dbalSchema();
     $this->dbalSchemaManager->dropTable($table_full_name);
-    $current_schema->dropTable($table_full_name);
+    try {
+      $current_schema->dropTable($table_full_name);
+    }
+    catch (DbalSchemaException $e) {
+      if ($e->getCode() === DbalSchemaException::TABLE_DOESNT_EXIST) {
+        // If it's not in the schema, then we are good anyway.
+        return TRUE;
+      }
+      else {
+        throw $e;
+      }
+    }
     return TRUE;
-
-    // @codingStandardsIgnoreStart
-    // @todo preferred way:
-    // if ($this->dbalSchema()->hasTable($this->tableName($table))) {
-    //   $current_schema = $this->dbalSchema();
-    //   $to_schema = clone $current_schema;
-    //   $to_schema->dropTable($this->tableName($table));
-    //   $this->dbalExecuteSchemaChange($to_schema);
-    //   return TRUE;
-    // }
-    // return FALSE;
-    // @codingStandardsIgnoreEnd
   }
 
   /**
