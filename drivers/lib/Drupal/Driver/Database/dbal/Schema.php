@@ -320,8 +320,9 @@ class Schema extends DatabaseSchema {
     // @todo this will affect possibility to drop FKs in an orderly way, so
     // we would need to revise at later stage if we want the driver to support
     // a broader set of capabilities.
-    $this->dbalSchemaManager->dropTable($this->tableName($table));
-    $this->dbalSchemaForceReload();
+    $table_full_name = $this->tableName($table);
+    $this->dbalSchemaManager->dropTable($table_full_name);
+    $this->dbalSchema()->dropTable($table_full_name);
     return TRUE;
 
     // @codingStandardsIgnoreStart
