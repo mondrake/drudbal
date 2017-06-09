@@ -321,8 +321,9 @@ class Schema extends DatabaseSchema {
     // we would need to revise at later stage if we want the driver to support
     // a broader set of capabilities.
     $table_full_name = $this->tableName($table);
+    $current_schema = $this->dbalSchema();
     $this->dbalSchemaManager->dropTable($table_full_name);
-    $this->dbalSchema()->dropTable($table_full_name);
+    $current_schema->dropTable($table_full_name);
     return TRUE;
 
     // @codingStandardsIgnoreStart
