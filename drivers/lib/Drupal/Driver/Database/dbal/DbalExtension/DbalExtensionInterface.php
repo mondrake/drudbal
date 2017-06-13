@@ -241,6 +241,17 @@ interface DbalExtensionInterface {
   public function delegateReleaseSavepointExceptionProcess(DbalDriverException $e);
 
   /**
+   * Handles quoting reserved keywords used as identifiers.
+   *
+   * @param string $identifier
+   *   The identifier to be quoted.
+   *
+   * @return string
+   *   The quoted identifier.
+   */
+  public function delegateQuoteIdentifier($identifier);
+
+  /**
    * Statement delegated methods.
    */
 
