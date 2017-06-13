@@ -19,6 +19,16 @@ use Doctrine\DBAL\Statement as DbalStatement;
 class Oci8Extension extends AbstractExtension {
 
   /**
+   * A map of condition operators to SQLite operators.
+   *
+   * @var array
+   */
+  protected static $oracleConditionOperatorMap = [
+    'LIKE' => ['postfix' => " ESCAPE '\\'"],
+    'NOT LIKE' => ['postfix' => " ESCAPE '\\'"],
+  ];
+
+  /**
    * Connection delegated methods.
    */
 
@@ -46,6 +56,32 @@ class Oci8Extension extends AbstractExtension {
    */
   public function delegateTransactionalDdlSupport(array &$connection_options = []) {
     return !isset($connection_options['transactions']) || ($connection_options['transactions'] !== FALSE);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateMapConditionOperator($operator) {
+    return isset(static::$oracleConditionOperatorMap[$operator]) ? static::$oracleConditionOperatorMap[$operator] : NULL;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateNextId($existing_id = 0) {
+    // @codingStandardsIgnoreLine
+    $trn = $this->connection->startTransaction();
+    $affected = $this->connection->query('UPDATE {sequences} SET value = GREATEST(value, :existing_id) + 1', [
+      ':existing_id' => $existing_id,
+    ], ['return' => Database::RETURN_AFFECTED]);
+    if (!$affected) {
+      $this->connection->query('INSERT INTO {sequences} (value) VALUES (:existing_id + 1)', [
+        ':existing_id' => $existing_id,
+      ]);
+    }
+    // The transaction gets committed when the transaction object gets destroyed
+    // because it gets out of scope.
+    return $this->connection->query('SELECT value FROM {sequences}')->fetchField();
   }
 
   /**
