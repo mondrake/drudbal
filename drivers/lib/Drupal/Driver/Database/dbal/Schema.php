@@ -284,8 +284,8 @@ class Schema extends DatabaseSchema {
 
       'numeric:normal'  => 'decimal',
 
-      'blob:big'        => 'blob',
-      'blob:normal'     => 'blob',
+      'blob:big'        => 'text',
+      'blob:normal'     => 'text',
     ];
     return $map;
   }

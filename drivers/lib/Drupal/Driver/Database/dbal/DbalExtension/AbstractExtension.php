@@ -109,14 +109,14 @@ class AbstractExtension implements DbalExtensionInterface {
    * {@inheritdoc}
    */
   public static function preConnectionOpen(array &$connection_options, array &$dbal_connection_options) {
-    throw new \LogicException("Method " . __METHOD__ . " not implemented for '" . $this->dbalConnection->getDriver()->getName() . "''");
+    throw new \LogicException("Method " . __METHOD__ . " not implemented.");
   }
 
   /**
    * {@inheritdoc}
    */
   public static function postConnectionOpen(DbalConnection $dbal_connection, array &$connection_options, array &$dbal_connection_options) {
-    throw new \LogicException("Method " . __METHOD__ . " not implemented for '" . $this->dbalConnection->getDriver()->getName() . "''");
+    throw new \LogicException("Method " . __METHOD__ . " not implemented.");
   }
 
   /**
@@ -180,6 +180,13 @@ class AbstractExtension implements DbalExtensionInterface {
    */
   public function delegateReleaseSavepointExceptionProcess(DbalDriverException $e) {
     throw new \LogicException("Method " . __METHOD__ . " not implemented for '" . $this->dbalConnection->getDriver()->getName() . "''");
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateQuoteIdentifier($identifier) {
+    return $identifier;
   }
 
   /**
