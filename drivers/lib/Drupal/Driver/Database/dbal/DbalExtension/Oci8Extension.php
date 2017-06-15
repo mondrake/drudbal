@@ -125,7 +125,7 @@ class Oci8Extension extends AbstractExtension {
   public function alterStatement(&$query, array &$args) {
     if (count($args)) {
       foreach ($args as $placeholder => &$value) {
-        $value = $value === '' ? '.' : $value;
+        $value = $value === '' ? '.' : $value;  // @todo here check
       }
     }
     return $this;
@@ -210,6 +210,22 @@ class Oci8Extension extends AbstractExtension {
   /**
    * Schema delegated methods.
    */
+
+  /**
+   * {@inheritdoc}
+   */
+  public function alterDbalColumnOptions($context, array &$dbal_column_options, $dbal_type, array $drupal_field_specs, $field_name) {
+    if (isset($drupal_field_specs['type']) && in_array($drupal_field_specs['type'], ['char', 'varchar', 'varchar_ascii', 'text', 'blob'])) {
+      $dbal_column_options['notnull'] = FALSE;
+      if (array_key_exists('default', $drupal_field_specs)) {
+        $dbal_column_options['default'] = empty($drupal_field_specs['default']) ? '.' : $drupal_field_specs['default'];  // @todo here check
+      }
+      else {
+        $dbal_column_options['default'] = '.';  // @todo here check
+      }
+    }
+    return $this;
+  }
 
   /**
    * {@inheritdoc}
