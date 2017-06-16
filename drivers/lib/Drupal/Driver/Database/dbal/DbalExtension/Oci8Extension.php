@@ -29,6 +29,43 @@ class Oci8Extension extends AbstractExtension {
   ];
 
   /**
+   * A list of Oracle keywords that collide with Drupal.
+   *
+   * @var string[]
+   */
+  protected static $oracleKeywords = [
+    'ACCESS',
+    'START',
+    'SESSION',
+    'FILE',
+    'SIZE',
+    'SUCCESSFUL',
+    'TABLE',
+    'OPTION',
+//    'CHECK',
+    'CLUSTER',
+    'INITIAL',
+    'PCTFREE',
+    'UID',
+    'COMMENT',
+    'COMPRESS',
+    'PUBLIC',
+    'RAW',
+//    'USER',
+    'CURRENT',
+    'DATE',
+    'LEVEL',
+    'RESOURCE',
+    'LOCK',
+    'ROW',
+    'ROWID',
+    'ROWNUM',
+    'MODE',
+    'ROWS',
+    'RANGE',
+  ];
+
+  /**
    * Connection delegated methods.
    */
 
@@ -128,8 +165,19 @@ class Oci8Extension extends AbstractExtension {
         $value = $value === '' ? '.' : $value;  // @todo here check
       }
     }
-    $query = str_replace(' uid', ' "uid"', $query);
-    $query = str_replace(' .uid', ' ."uid"', $query);
+
+
+
+error_log($query);
+    foreach (static::$oracleKeywords as $keyword) {
+/*      $query = str_ireplace(' ' . $keyword, ' "' . strtolower($keyword) . '"', $query);
+      $query = str_ireplace('.' . $keyword, '."' . strtolower($keyword) . '"', $query);
+      $query = str_ireplace('(' . $keyword, '("' . strtolower($keyword) . '"', $query);*/
+      $query = preg_replace('/([\s\.(])(' . strtolower($keyword) . ')([\s,)])/', '$1"$2"$3', $query);
+    }
+error_log($query);
+
+
     return $this;
   }
 

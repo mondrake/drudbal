@@ -16,7 +16,6 @@ use Drupal\Core\Database\TransactionOutOfOrderException;
 use Drupal\Driver\Database\dbal\DbalExtension\MysqliExtension;
 use Drupal\Driver\Database\dbal\DbalExtension\Oci8Extension;
 use Drupal\Driver\Database\dbal\DbalExtension\PDOMySqlExtension;
-use Drupal\Driver\Database\dbal\DbalExtension\PDOOracleExtension;
 use Drupal\Driver\Database\dbal\DbalExtension\PDOSqliteExtension;
 
 use Doctrine\DBAL\Connection as DbalConnection;
