@@ -85,11 +85,11 @@ class Upsert extends QueryUpsert {
     $dbal_query = $dbal_connection->createQueryBuilder()->insert($prefixed_table);
 
     foreach ($this->defaultFields as $field) {
-      $dbal_query->setValue($this->connection->getDbalExtension()->delegateQuoteIdentifier($field), 'DEFAULT');
+      $dbal_query->setValue($field, 'DEFAULT');
     }
     $max_placeholder = 0;
     foreach ($this->insertFields as $field) {
-      $dbal_query->setValue($this->connection->getDbalExtension()->delegateQuoteIdentifier($field), ':db_insert_placeholder_' . $max_placeholder++);
+      $dbal_query->setValue($field, ':db_insert_placeholder_' . $max_placeholder++);
     }
     return $comments . $dbal_query->getSQL();
   }
@@ -113,7 +113,7 @@ class Upsert extends QueryUpsert {
 
     // Set default fields first.
     foreach ($this->defaultFields as $field) {
-      $dbal_query->set($this->connection->getDbalExtension()->delegateQuoteIdentifier($field), 'DEFAULT');
+      $dbal_query->set($field, 'DEFAULT');
     }
 
     // Set values fields.
@@ -121,7 +121,7 @@ class Upsert extends QueryUpsert {
       if ($this->insertFields[$i] != $this->key) {
         // Updating the unique / primary key is not necessary.
         $dbal_query
-          ->set($this->connection->getDbalExtension()->delegateQuoteIdentifier($this->insertFields[$i]), ':db_update_placeholder_' . $i)
+          ->set($this->insertFields[$i], ':db_update_placeholder_' . $i)
           ->setParameter(':db_update_placeholder_' . $i, $insert_values[$i]);
       }
       else {
