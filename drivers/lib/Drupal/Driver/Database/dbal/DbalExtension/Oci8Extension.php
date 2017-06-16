@@ -128,6 +128,8 @@ class Oci8Extension extends AbstractExtension {
         $value = $value === '' ? '.' : $value;  // @todo here check
       }
     }
+    $query = str_replace(' uid', ' "uid"', $query);
+    $query = str_replace(' .uid', ' ."uid"', $query);
     return $this;
   }
 
