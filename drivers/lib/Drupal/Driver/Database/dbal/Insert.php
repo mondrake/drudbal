@@ -120,7 +120,7 @@ class Insert extends QueryInsert {
     else {
       if ($this->connection->getDbalExtension()->getAddDefaultsExplicitlyOnInsert()) {
         foreach ($this->defaultFields as $field) {
-          $dbal_query->setValue($this->connection->getDbalExtension()->delegateQuoteIdentifier($field), 'default');
+          $dbal_query->setValue($field, 'default');
         }
       }
       $insert_fields = $this->insertFields;
@@ -128,7 +128,7 @@ class Insert extends QueryInsert {
     $max_placeholder = 0;
 
     foreach ($insert_fields as $field) {
-      $dbal_query->setValue($this->connection->getDbalExtension()->delegateQuoteIdentifier($field), ':db_insert_placeholder_' . $max_placeholder++);
+      $dbal_query->setValue($field, ':db_insert_placeholder_' . $max_placeholder++);
     }
 
     return $comments . $dbal_query->getSQL();

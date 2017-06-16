@@ -62,13 +62,13 @@ class Update extends QueryUpdate {
       // just set the field to the expression.
       if ($data['expression'] instanceof SelectInterface) {
         $data['expression']->compile($this->connection, $this);
-        $this->dbalQuery->set($this->connection->getDbalExtension()->delegateQuoteIdentifier($field), '(' . $data['expression'] . ')');
+        $this->dbalQuery->set($field, '(' . $data['expression'] . ')');
         foreach ($data['expression']->arguments() as $placeholder => $value) {
           $this->dbalQuery->setParameter($placeholder, $value);
         }
       }
       else {
-        $this->dbalQuery->set($this->connection->getDbalExtension()->delegateQuoteIdentifier($field), $data['expression']);
+        $this->dbalQuery->set($field, $data['expression']);
       }
       unset($fields[$field]);
     }
@@ -77,7 +77,7 @@ class Update extends QueryUpdate {
     $max_placeholder = 0;
     foreach ($fields as $field => $value) {
       $this->dbalQuery
-        ->set($this->connection->getDbalExtension()->delegateQuoteIdentifier($field), ':db_update_placeholder_' . ($max_placeholder))
+        ->set($field, ':db_update_placeholder_' . ($max_placeholder))
         ->setParameter(':db_update_placeholder_' . ($max_placeholder), $value);
       $max_placeholder++;
     }
