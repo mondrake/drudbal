@@ -34,35 +34,35 @@ class Oci8Extension extends AbstractExtension {
    * @var string[]
    */
   protected static $oracleKeywords = [
-    'ACCESS',
-    'START',
-    'SESSION',
-    'FILE',
-    'SIZE',
-    'SUCCESSFUL',
-    'TABLE',
-    'OPTION',
-//    'CHECK',
-    'CLUSTER',
-    'INITIAL',
-    'PCTFREE',
-    'UID',
-    'COMMENT',
-    'COMPRESS',
-    'PUBLIC',
-    'RAW',
-//    'USER',
-    'CURRENT',
-    'DATE',
-    'LEVEL',
-    'RESOURCE',
-    'LOCK',
-    'ROW',
-    'ROWID',
-    'ROWNUM',
-    'MODE',
-    'ROWS',
-    'RANGE',
+    'access',
+    'start',
+    'session',
+    'file',
+    'size',
+    'successful',
+    'table',
+    'option',
+    'check',
+    'cluster',
+    'initial',
+    'pctfree',
+    'uid',
+    'comment',
+    'compress',
+    'public',
+    'raw',
+    'user',
+    'current',
+    'date',
+    'level',
+    'resource',
+    'lock',
+    'row',
+    'rowid',
+    'rownum',
+    'mode',
+    'rows',
+    'range',
   ];
 
   /**
@@ -140,6 +140,7 @@ class Oci8Extension extends AbstractExtension {
       throw new IntegrityConstraintViolationException($message, $e->getCode(), $e);
     }
     else {
+error_log('Exc: ' . get_class($e) . ' - ' . $message . ' for ' . $query);
       throw new DatabaseExceptionWrapper($message, 0, $e);
     }
   }
@@ -161,23 +162,27 @@ class Oci8Extension extends AbstractExtension {
    */
   public function alterStatement(&$query, array &$args) {
     if (count($args)) {
-      foreach ($args as $placeholder => &$value) {
-        $value = $value === '' ? '.' : $value;  // @todo here check
+      $temp_args = [];
+      foreach ($args as $placeholder => $value) {
+        $temp_pl = ltrim($placeholder, ':');
+        if (in_array($temp_pl, static::$oracleKeywords, TRUE)) {
+          $key = $placeholder . '____oracle';
+          $query = str_replace($placeholder , $placeholder . '____oracle', $query);
+        }
+        else {
+          $key = $placeholder;
+        }
+        $temp_args[$key] = $value === '' ? '.' : $value;  // @todo here check
       }
+      $args = $temp_args;
     }
 
 
-
-error_log($query);
     foreach (static::$oracleKeywords as $keyword) {
-/*      $query = str_ireplace(' ' . $keyword, ' "' . strtolower($keyword) . '"', $query);
-      $query = str_ireplace('.' . $keyword, '."' . strtolower($keyword) . '"', $query);
-      $query = str_ireplace('(' . $keyword, '("' . strtolower($keyword) . '"', $query);*/
-      $query = preg_replace('/([\s\.(])(' . strtolower($keyword) . ')([\s,)])/', '$1"$2"$3', $query);
+      $query = preg_replace('/([\s\.(])(' . $keyword . ')([\s,)])/', '$1"$2"$3', $query);
     }
-error_log($query);
 
-
+//error_log($query);
     return $this;
   }
 
@@ -260,6 +265,17 @@ error_log($query);
   /**
    * Schema delegated methods.
    */
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateGetDbalColumnType(&$dbal_type, array $drupal_field_specs) {
+    if (isset($drupal_field_specs['type']) && $drupal_field_specs['type'] === 'blob') {
+      $dbal_type = 'text';
+      return TRUE;
+    }
+    return FALSE;
+  }
 
   /**
    * {@inheritdoc}
