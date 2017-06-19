@@ -26,11 +26,11 @@ env:
     # Drupal PHPUnit test variables.
     - SIMPLETEST_BASE_URL="http://$HOST_ADDR:$HTTP_PORT"
   matrix:
-    - DBAL_URL="mysql://$DB_AUTH@$HOST_ADDR/drudbal" SIMPLETEST_DB="mysql://$DB_AUTH@$HOST_ADDR/drudbal#drudbal_"
-    - DBAL_URL="mysql://$DB_AUTH@$HOST_ADDR/drudbal" SIMPLETEST_DB="dbal://$DB_AUTH@$HOST_ADDR/drudbal?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=pdo_mysql#drudbal_"
-    - DBAL_URL="mysqli://$DB_AUTH@$HOST_ADDR/drudbal" SIMPLETEST_DB="dbal://$DB_AUTH@$HOST_ADDR/drudbal?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=mysqli#drudbal_"
-    - DBAL_URL="sqlite:///sites/default/files/.ht.sqlite" SIMPLETEST_DB="sqlite://test_user:test_pass@test_host:3306/sites/default/files/.ht.sqlite"
-    - DBAL_URL="sqlite:///sites/default/files/.ht.sqlite" SIMPLETEST_DB="dbal://fake/sites/default/files/.ht.sqlite?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=pdo_sqlite"
+    #- DBAL_URL="mysql://$DB_AUTH@$HOST_ADDR/drudbal" SIMPLETEST_DB="mysql://$DB_AUTH@$HOST_ADDR/drudbal#drudbal_"
+    #- DBAL_URL="mysql://$DB_AUTH@$HOST_ADDR/drudbal" SIMPLETEST_DB="dbal://$DB_AUTH@$HOST_ADDR/drudbal?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=pdo_mysql#drudbal_"
+    #- DBAL_URL="mysqli://$DB_AUTH@$HOST_ADDR/drudbal" SIMPLETEST_DB="dbal://$DB_AUTH@$HOST_ADDR/drudbal?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=mysqli#drudbal_"
+    #- DBAL_URL="sqlite:///sites/default/files/.ht.sqlite" SIMPLETEST_DB="sqlite://test_user:test_pass@test_host:3306/sites/default/files/.ht.sqlite"
+    #- DBAL_URL="sqlite:///sites/default/files/.ht.sqlite" SIMPLETEST_DB="dbal://fake/sites/default/files/.ht.sqlite?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=pdo_sqlite"
     - DBAL_URL="sqlite:///:memory:" SIMPLETEST_DB="dbal://fake/:memory:?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=pdo_sqlite"
 
 matrix:
@@ -43,35 +43,36 @@ before_install:
   - phpenv config-rm xdebug.ini
   # Add APCu extension.
   - echo "extension = apcu.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
+  - pecl install oci8
 
   # Get Drupal core and dependencies
-  - git clone http://git.drupal.org/project/drupal.git $DRUPAL_PATH
-  - cd $DRUPAL_PATH
-  - composer install --no-progress
+  #- git clone http://git.drupal.org/project/drupal.git $DRUPAL_PATH
+  #- cd $DRUPAL_PATH
+  #- composer install --no-progress
 
   # Apply Drupal core patches
   # [#2605284] Testing framework does not work with contributed database drivers
-  - curl https://www.drupal.org/files/issues/simpletest_is_broken_on-2605284-89.patch | git apply
+  #- curl https://www.drupal.org/files/issues/simpletest_is_broken_on-2605284-89.patch | git apply
   # [#2867788] Log::findCaller fails to report the correct caller function with non-core drivers.
-  - curl https://www.drupal.org/files/issues/2867788-22_0.patch | git apply
+  #- curl https://www.drupal.org/files/issues/2867788-22_0.patch | git apply
   # [#2871374] SelectTest::testVulnerableComment fails when driver overrides Select::__toString
-  - curl https://www.drupal.org/files/issues/2871374-2.patch | git apply
+  #- curl https://www.drupal.org/files/issues/2871374-2.patch | git apply
   # [#2868273] Missing a test for table TRUNCATE while in transaction
-  - curl https://www.drupal.org/files/issues/2868273-9.patch | git apply
+  #- curl https://www.drupal.org/files/issues/2868273-9.patch | git apply
   # [#2874499] Test failures when db driver is set to not support transactions
-  - curl https://www.drupal.org/files/issues/2874499-6-transaction-enabled.patch | git apply
+  #- curl https://www.drupal.org/files/issues/2874499-6-transaction-enabled.patch | git apply
   # [#2875679] BasicSyntaxTest::testConcatFields fails with contrib driver
-  - curl https://www.drupal.org/files/issues/2875679-2.patch | git apply
+  #- curl https://www.drupal.org/files/issues/2875679-2.patch | git apply
   # [#2879677] Decouple getting table vs column comments in Schema
-  - curl https://www.drupal.org/files/issues/2879677-3.patch | git apply
+  #- curl https://www.drupal.org/files/issues/2879677-3.patch | git apply
   # [#2881522] Add a Schema::getPrimaryKeyColumns method to remove database specific logic from test
-  - curl https://www.drupal.org/files/issues/2881522-2.patch | git apply
+  #- curl https://www.drupal.org/files/issues/2881522-2.patch | git apply
 
   # Get Drupal Console
   #- composer require "drupal/console:~1.0" --prefer-dist --optimize-autoloader
 
   # Get Doctrine DBAL
-  - composer require "doctrine/dbal:^2.5.12" --no-progress
+  #- composer require "doctrine/dbal:^2.5.12" --no-progress
 
 install:
   # Copy the repo to the modules/contrib directory.
@@ -80,13 +81,13 @@ install:
 
   # Create a directory for the driver, and symlink it to the module's one.
   - mkdir -p $DRUPAL_PATH/drivers/lib/Drupal/Driver/Database/
-  - cd $DRUPAL_PATH/drivers/lib/Drupal/Driver/Database/
-  - ln -s $DRUPAL_PATH/modules/contrib/drudbal/drivers/lib/Drupal/Driver/Database/dbal dbal
+  #- cd $DRUPAL_PATH/drivers/lib/Drupal/Driver/Database/
+  #- ln -s $DRUPAL_PATH/modules/contrib/drudbal/drivers/lib/Drupal/Driver/Database/dbal dbal
 
   # Install Drupal
-  - cd $DRUPAL_PATH/core
-  - cp $DRUPAL_PATH/modules/contrib/drudbal/misc/install_cli.php install_cli.php
-  - php install_cli.php
+  #- cd $DRUPAL_PATH/core
+  #- cp $DRUPAL_PATH/modules/contrib/drudbal/misc/install_cli.php install_cli.php
+  #- php install_cli.php
 
   # Get a webserver running.
   #- drupal --quiet server "$DRUPAL_SERVER_ADDRESS:$DRUPAL_SERVER_HTTP_PORT" &
@@ -94,13 +95,13 @@ install:
   #- drupal site:status
 
 script:
-  - cd $DRUPAL_PATH/core
+  #- cd $DRUPAL_PATH/core
   # Only run selected tests to avoid Travis timeout.
   - ../vendor/bin/phpunit --testsuite kernel --group Database,Cache,Entity,views
 
 after_script:
-  - cd $DRUPAL_PATH/modules/contrib/drudbal
-  - ../../../vendor/bin/phpcs
+  #- cd $DRUPAL_PATH/modules/contrib/drudbal
+  #- ../../../vendor/bin/phpcs
 
 notifications:
   email: false
