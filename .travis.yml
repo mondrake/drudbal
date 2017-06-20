@@ -53,7 +53,7 @@ before_install:
   # [#2605284] Testing framework does not work with contributed database drivers
   - curl https://www.drupal.org/files/issues/simpletest_is_broken_on-2605284-89.patch | git apply
   # [#2867788] Log::findCaller fails to report the correct caller function with non-core drivers.
-  - curl https://www.drupal.org/files/issues/2867788-22_0.patch | git apply
+  - curl https://www.drupal.org/files/issues/xx0620.patch | git apply
   # [#2871374] SelectTest::testVulnerableComment fails when driver overrides Select::__toString
   - curl https://www.drupal.org/files/issues/2871374-2.patch | git apply
   # [#2868273] Missing a test for table TRUNCATE while in transaction
@@ -96,7 +96,8 @@ install:
 script:
   - cd $DRUPAL_PATH/core
   # Only run selected tests to avoid Travis timeout.
-  - ../vendor/bin/phpunit --testsuite kernel --group Database,Cache,Entity,views
+  #- ../vendor/bin/phpunit --testsuite kernel --group Database,Cache,Entity,views
+  - ../vendor/bin/phpunit --testsuite kernel --group Database
 
 after_script:
   - cd $DRUPAL_PATH/modules/contrib/drudbal
