@@ -128,7 +128,13 @@ class Connection extends DatabaseConnection {
    *   A fully prefixed table name, suitable for direct usage in db queries.
    */
   public function getPrefixedTableName($table_name) {
-    return $this->prefixTables('{' . $table_name . '}');
+    $prefixed_table = $this->prefixTables('{' . $table_name . '}');
+if (strlen($prefixed_table > 30)) {
+  error_log('***** Found table lenght failure: ' . $prefixed_table);
+  $identifier_crc = hash('crc32b', $prefixed_table);
+  $prefixed_table = substr($prefixed_table, 0, 22) . $identifier_crc;
+}
+    return $prefixed_table;
   }
 
   /**

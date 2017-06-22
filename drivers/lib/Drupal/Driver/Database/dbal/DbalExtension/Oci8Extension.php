@@ -18,6 +18,9 @@ use Doctrine\DBAL\Statement as DbalStatement;
  */
 class Oci8Extension extends AbstractExtension {
 
+
+  const ORACLE_EMPTY_STRING_REPLACER = "\010";
+
   /**
    * A map of condition operators to SQLite operators.
    *
@@ -140,7 +143,13 @@ class Oci8Extension extends AbstractExtension {
       throw new IntegrityConstraintViolationException($message, $e->getCode(), $e);
     }
     else {
-error_log('Exc: ' . get_class($e) . ' - ' . $message . ' for ' . $query);
+$exc_class = get_class($e);
+if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException') {
+  error_log('***** Exception : ' . $exc_class);
+  error_log('***** Message   : ' . $message);
+  error_log('***** Query     : ' . $query);
+  error_log('***** Query args: ' . var_export($args, TRUE));
+}
       throw new DatabaseExceptionWrapper($message, 0, $e);
     }
   }
@@ -172,7 +181,7 @@ error_log('Exc: ' . get_class($e) . ' - ' . $message . ' for ' . $query);
         else {
           $key = $placeholder;
         }
-        $temp_args[$key] = $value === '' ? '.' : $value;  // @todo here check
+        $temp_args[$key] = $value === '' ? self::ORACLE_EMPTY_STRING_REPLACER : $value;  // @todo here check
       }
       $args = $temp_args;
     }
@@ -282,12 +291,8 @@ error_log('Exc: ' . get_class($e) . ' - ' . $message . ' for ' . $query);
    */
   public function alterDbalColumnOptions($context, array &$dbal_column_options, $dbal_type, array $drupal_field_specs, $field_name) {
     if (isset($drupal_field_specs['type']) && in_array($drupal_field_specs['type'], ['char', 'varchar', 'varchar_ascii', 'text', 'blob'])) {
-      $dbal_column_options['notnull'] = FALSE;
       if (array_key_exists('default', $drupal_field_specs)) {
-        $dbal_column_options['default'] = empty($drupal_field_specs['default']) ? '.' : $drupal_field_specs['default'];  // @todo here check
-      }
-      else {
-        $dbal_column_options['default'] = '.';  // @todo here check
+        $dbal_column_options['default'] = empty($drupal_field_specs['default']) ? self::ORACLE_EMPTY_STRING_REPLACER : $drupal_field_specs['default'];  // @todo here check
       }
     }
     return $this;
