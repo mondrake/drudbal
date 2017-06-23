@@ -19,7 +19,7 @@ use Doctrine\DBAL\Statement as DbalStatement;
 class Oci8Extension extends AbstractExtension {
 
 
-  const ORACLE_EMPTY_STRING_REPLACER = "\010";
+  const ORACLE_EMPTY_STRING_REPLACEMENT = "\010";
 
   /**
    * A map of condition operators to SQLite operators.
@@ -145,13 +145,64 @@ class Oci8Extension extends AbstractExtension {
     else {
 $exc_class = get_class($e);
 if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException') {
+  $backtrace = debug_backtrace();
   error_log('***** Exception : ' . $exc_class);
   error_log('***** Message   : ' . $message);
   error_log('***** Query     : ' . $query);
   error_log('***** Query args: ' . var_export($args, TRUE));
+  error_log("***** Backtrace : \n" . $this->formatBacktrace($backtrace));
 }
       throw new DatabaseExceptionWrapper($message, 0, $e);
     }
+  }
+
+  /**
+   * Formats a backtrace into a plain-text string.
+   *
+   * The calls show values for scalar arguments and type names for complex ones.
+   *
+   * @param array $backtrace
+   *   A standard PHP backtrace.
+   *
+   * @return string
+   *   A plain-text line-wrapped string ready to be put inside <pre>.
+   */
+  public static function formatBacktrace(array $backtrace) {
+    $return = '';
+
+    foreach ($backtrace as $trace) {
+      $call = ['function' => '', 'args' => []];
+
+      if (isset($trace['class'])) {
+        $call['function'] = $trace['class'] . $trace['type'] . $trace['function'];
+      }
+      elseif (isset($trace['function'])) {
+        $call['function'] = $trace['function'];
+      }
+      else {
+        $call['function'] = 'main';
+      }
+
+/*      if (isset($trace['args'])) {
+        foreach ($trace['args'] as $arg) {
+          if (is_scalar($arg)) {
+            $call['args'][] = is_string($arg) ? '\'' . $arg . '\'' : $arg;
+          }
+          else {
+            $call['args'][] = ucfirst(gettype($arg));
+          }
+        }
+      }*/
+
+      $line = '';
+      if (isset($trace['line'])) {
+        $line = " (Line: {$trace['line']})";
+      }
+
+      $return .= $call['function'] . '(' . /*implode(', ', $call['args']) .*/ ")$line\n";
+    }
+
+    return $return;
   }
 
   /**
@@ -181,7 +232,7 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException') {
         else {
           $key = $placeholder;
         }
-        $temp_args[$key] = $value === '' ? self::ORACLE_EMPTY_STRING_REPLACER : $value;  // @todo here check
+        $temp_args[$key] = $value === '' ? self::ORACLE_EMPTY_STRING_REPLACEMENT : $value;  // @todo here check
       }
       $args = $temp_args;
     }
@@ -209,7 +260,7 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException') {
         $adj_row = [];
         foreach ($row as $column => $value) {
           $column = strtolower($column);
-          $adj_row[$column] = (string) $value;
+          $adj_row[$column] = $value === self::ORACLE_EMPTY_STRING_REPLACEMENT ? '' : (string) $value;
         }
         $row = $adj_row;
       }
@@ -225,7 +276,7 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException') {
           $ret = new \stdClass();
           foreach ($row as $column => $value) {
             $column = strtolower($column);
-            $ret->$column = (string) $value;
+            $ret->$column = $value === self::ORACLE_EMPTY_STRING_REPLACEMENT ? '' : (string) $value;
           }
           return $ret;
 
@@ -233,7 +284,7 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException') {
           $ret = new $fetch_class();
           foreach ($row as $column => $value) {
             $column = strtolower($column);
-            $ret->$column = (string) $value;
+            $ret->$column = $value === self::ORACLE_EMPTY_STRING_REPLACEMENT ? '' : (string) $value;
           }
           return $ret;
 
@@ -292,7 +343,7 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException') {
   public function alterDbalColumnOptions($context, array &$dbal_column_options, $dbal_type, array $drupal_field_specs, $field_name) {
     if (isset($drupal_field_specs['type']) && in_array($drupal_field_specs['type'], ['char', 'varchar', 'varchar_ascii', 'text', 'blob'])) {
       if (array_key_exists('default', $drupal_field_specs)) {
-        $dbal_column_options['default'] = empty($drupal_field_specs['default']) ? self::ORACLE_EMPTY_STRING_REPLACER : $drupal_field_specs['default'];  // @todo here check
+        $dbal_column_options['default'] = empty($drupal_field_specs['default']) ? self::ORACLE_EMPTY_STRING_REPLACEMENT : $drupal_field_specs['default'];  // @todo here check
       }
     }
     return $this;

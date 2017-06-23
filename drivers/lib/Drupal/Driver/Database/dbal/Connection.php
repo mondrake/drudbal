@@ -129,7 +129,8 @@ class Connection extends DatabaseConnection {
    */
   public function getPrefixedTableName($table_name) {
     $prefixed_table = $this->prefixTables('{' . $table_name . '}');
-if (strlen($prefixed_table > 30)) {
+//error_log('Table: ' . $table_name . ' -> ' . $prefixed_table . ' -> ' . strlen($prefixed_table));
+if (strlen($prefixed_table) > 30) {
   error_log('***** Found table lenght failure: ' . $prefixed_table);
   $identifier_crc = hash('crc32b', $prefixed_table);
   $prefixed_table = substr($prefixed_table, 0, 22) . $identifier_crc;
@@ -180,8 +181,13 @@ if (strlen($prefixed_table > 30)) {
           return $stmt->rowCount();
 
         case Database::RETURN_INSERT_ID:
-          $sequence_name = isset($options['sequence_name']) ? $options['sequence_name'] : NULL;
-          return (string) $this->connection->lastInsertId($sequence_name);
+          try {
+            $sequence_name = isset($options['sequence_name']) ? $options['sequence_name'] : NULL;
+            return (string) $this->connection->lastInsertId($sequence_name);
+          }
+          catch (\Exception $e) {
+            return 0;
+          }
 
         case Database::RETURN_NULL:
           return NULL;
