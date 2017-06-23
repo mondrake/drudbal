@@ -53,7 +53,8 @@ before_install:
   - tar x -C .travis/oracle --strip-components=1 -f v2.0.2.tar.gz
   - .travis/oracle/download.sh
   - .travis/oracle/install.sh
-  #- pecl install oci8
+  # Install Oci8 extension for PHP.
+  - echo instantclient,/usr/local/lib | pecl install oci8
 
   # Get Drupal core and dependencies
   #- git clone http://git.drupal.org/project/drupal.git $DRUPAL_PATH
