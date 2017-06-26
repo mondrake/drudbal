@@ -58,11 +58,8 @@ before_install:
   - mkdir -p .travis/oracle
   - tar x -C .travis/oracle --strip-components=1 -f v2.0.2.tar.gz
   - .travis/oracle/download.sh
-  - ls -al
-  - ls -al $HOME/oracle_download
+  - find / -name oracle-xe-11.2.0-1.0.x86_64.rpm.zip
   - .travis/oracle/install.sh
-  - ls -al
-  - ls -al $HOME/oracle_download
   - $HOME/build/mondrake/drudbal/oracle_user.sh
   # Install Oci8 extension for PHP.
   - echo $ORACLE_HOME | pecl install oci8
@@ -123,8 +120,6 @@ script:
   - ../vendor/bin/phpunit --testsuite kernel tests/Drupal/KernelTests/Core/Database/SchemaTest.php
 
 after_script:
-  - ls -al
-  - ls -al $HOME/oracle_download
   - cd $DRUPAL_PATH/modules/contrib/drudbal
   - ../../../vendor/bin/phpcs
 
