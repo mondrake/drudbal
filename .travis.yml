@@ -60,7 +60,8 @@ before_install:
   #- .travis/oracle/download.sh
   #- cp .travis/oracle/oracle-xe-11.2.0-1.0.x86_64.rpm.zip $ORACLE_DOWNLOAD_DIR
   - ls -al $ORACLE_DOWNLOAD_DIR
-  - cp $ORACLE_DOWNLOAD_DIR/oracle-xe-11.2.0-1.0.x86_64.rpm.zip .
+  - cwd
+  - cp $ORACLE_DOWNLOAD_DIR/oracle-xe-11.2.0-1.0.x86_64.rpm.zip .travis/oracle/
   - .travis/oracle/install.sh
   - $HOME/build/mondrake/drudbal/oracle_user.sh
   # Install Oci8 extension for PHP.
