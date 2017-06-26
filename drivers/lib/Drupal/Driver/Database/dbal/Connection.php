@@ -127,8 +127,11 @@ class Connection extends DatabaseConnection {
     foreach ($matches as $match) {
       $table = $match[1];
       $table = $this->prefixes['default'] . $table;
-if (strlen($table) > 24) {  // @todo max lenght Oracle 30, but should be lower to allow triggers/sequences prefixes
-  error_log('***** Found table lenght failure: ' . $table);
+if ($table === 'comment') {
+  $table = 'comment_x';
+}
+elseif (strlen($table) > 24) {  // @todo max lenght Oracle 30, but should be lower to allow triggers/sequences prefixes
+//  error_log('***** Found table lenght failure: ' . $table);
   $identifier_crc = hash('crc32b', $table);
   $table = substr($table, 0, 16) . $identifier_crc;
 }
