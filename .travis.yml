@@ -54,12 +54,9 @@ before_install:
   - tar x -C .travis/oracle --strip-components=1 -f v2.0.2.tar.gz
   - .travis/oracle/download.sh
   - .travis/oracle/install.sh
-  #- chmod +x $HOME/build/mondrake/drudbal/oracle_user.sh
   - $HOME/build/mondrake/drudbal/oracle_user.sh
   # Install Oci8 extension for PHP.
   - echo $ORACLE_HOME | pecl install oci8
-  #- echo "extension = oci8.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
-  - php -i
 
   # Get Drupal core and dependencies
   - git clone http://git.drupal.org/project/drupal.git $DRUPAL_PATH
@@ -76,7 +73,7 @@ before_install:
   # [#2868273] Missing a test for table TRUNCATE while in transaction
   - curl https://www.drupal.org/files/issues/2868273-9.patch | git apply
   # [#2874499] Test failures when db driver is set to not support transactions
-  - curl https://www.drupal.org/files/issues/2874499-6-transaction-enabled.patch | git apply
+  - curl https://www.drupal.org/files/issues/2874499-7-transaction-enabled.patch | git apply
   # [#2875679] BasicSyntaxTest::testConcatFields fails with contrib driver
   - curl https://www.drupal.org/files/issues/2875679-2.patch | git apply
   # [#2879677] Decouple getting table vs column comments in Schema
