@@ -57,7 +57,7 @@ before_install:
   - wget 'https://github.com/cbandy/travis-oracle/archive/v2.0.2.tar.gz'
   - mkdir -p .travis/oracle
   - tar x -C .travis/oracle --strip-components=1 -f v2.0.2.tar.gz
-  #- .travis/oracle/download.sh
+  - .travis/oracle/download.sh
   - .travis/oracle/install.sh
   - $HOME/build/mondrake/drudbal/oracle_user.sh
   # Install Oci8 extension for PHP.
