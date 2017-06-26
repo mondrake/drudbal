@@ -18,8 +18,16 @@ use Doctrine\DBAL\Statement as DbalStatement;
  */
 class Oci8Extension extends AbstractExtension {
 
-
   const ORACLE_EMPTY_STRING_REPLACEMENT = "\010";
+
+  /**
+   * Replacement for single quote identifiers.
+   *
+   * @todo DBAL uses single quotes instead of backticks to produce DDL
+   * statements. This causes problems if fields defaults or comments have
+   * single quotes inside.
+   */
+  const SINGLE_QUOTE_IDENTIFIER_REPLACEMENT = ']]]]SINGLEQUOTEIDENTIFIERDRUDBAL[[[[';
 
   /**
    * A map of condition operators to SQLite operators.
@@ -354,7 +362,7 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException') {
    */
   public function getStringForDefault($string) {
     // Encode single quotes.
-    return $string;
+    return str_replace('\'', self::SINGLE_QUOTE_IDENTIFIER_REPLACEMENT, $string);
   }
 
   /**
