@@ -54,8 +54,10 @@ before_install:
   - .travis/oracle/download.sh
   - .travis/oracle/install.sh
   # Install Oci8 extension for PHP.
-  - find /u01
-  - echo instantclient,/u01/app/oracle/product/11.2.0/xe/lib | pecl install oci8
+  #- find /u01
+  - echo /u01/app/oracle/product/11.2.0/xe | pecl install oci8
+  - echo "extension = oci8.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
+  - php -i
 
   # Get Drupal core and dependencies
   #- git clone http://git.drupal.org/project/drupal.git $DRUPAL_PATH
