@@ -874,16 +874,6 @@ class Schema extends DatabaseSchema {
    */
   protected function dbalExecuteSchemaChange(DbalSchema $to_schema) {
     foreach ($this->dbalSchema()->getMigrateToSql($to_schema, $this->dbalPlatform) as $sql) {
-$matches = [];
-if (preg_match('/CREATE ([^\s]*) ([^\s]*)(.*)/s', $sql, $matches)) {
-  if (!empty($matches) && strlen($matches[2]) > 30) {
-//    error_log('***** Found identifier lenght failure: ' . $sql);
-    $identifier_crc = hash('crc32b', $matches[2]);
-    $adjusted_identifier = substr($matches[2], 0, 22) . $identifier_crc;
-    $sql = 'CREATE ' . $matches[1] . ' ' . $adjusted_identifier . $matches[3];
-  }
-}
-//error_log($sql);
       $this->connection->getDbalConnection()->exec($sql);
     }
     $this->dbalSetCurrentSchema($to_schema);
