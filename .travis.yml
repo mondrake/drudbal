@@ -36,7 +36,7 @@ env:
     #- DBAL_URL="sqlite:///sites/default/files/.ht.sqlite" SIMPLETEST_DB="sqlite://test_user:test_pass@test_host:3306/sites/default/files/.ht.sqlite"
     #- DBAL_URL="sqlite:///sites/default/files/.ht.sqlite" SIMPLETEST_DB="dbal://fake/sites/default/files/.ht.sqlite?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=pdo_sqlite"
     #- DBAL_URL="sqlite:///:memory:" SIMPLETEST_DB="dbal://fake/:memory:?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=pdo_sqlite"
-    - DBAL_URL="oci8://ROOT:DRUDBAL@$HOST_ADDR:1521/XE" SIMPLETEST_DB="dbal://$USER:@$HOST_ADDR:1521/XE?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=oci8"
+    - DBAL_URL="oci8://ORAROOT:DRUDBAL@$HOST_ADDR:1521/XE" SIMPLETEST_DB="dbal://ORAROOT:DRUDBAL@$HOST_ADDR:1521/XE?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=oci8"
 
 matrix:
   fast_finish: true
@@ -54,7 +54,7 @@ before_install:
   - tar x -C .travis/oracle --strip-components=1 -f v2.0.2.tar.gz
   - .travis/oracle/download.sh
   - .travis/oracle/install.sh
-  - "$ORACLE_HOME/bin/sqlplus" -L -S / AS SYSDBA << "CREATE USER ROOT IDENTIFIED BY DRUDBAL; GRANT DBA TO ROOT;"
+  - $HOME/build/mondrake/drudbal/oracle_user.sh
   # Install Oci8 extension for PHP.
   - echo $ORACLE_HOME | pecl install oci8
   #- echo "extension = oci8.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
@@ -114,7 +114,7 @@ script:
   # Only run selected tests to avoid Travis timeout.
   - ../vendor/bin/phpunit --testsuite kernel --group Database,Cache,Entity,views
 
-after_script:
+#after_script:
   #- cd $DRUPAL_PATH/modules/contrib/drudbal
   #- ../../../vendor/bin/phpcs
 
