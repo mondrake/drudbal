@@ -242,7 +242,7 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException') {
       $query = preg_replace('/([\s\.(])(' . $keyword . ')([\s,)])/', '$1"$2"$3', $query);
     }
 
-//error_log($query);
+error_log($query);
     return $this;
   }
 
@@ -363,8 +363,10 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException') {
   public function getIndexFullName($context, DbalSchema $dbal_schema, $drupal_table_name, $index_name, array $table_prefix_info) {
     $full_name = $table_prefix_info['table'] . '____' . $index_name;
     if (strlen($full_name) > 30) {
-      $full_name = $index_name . hash('crc32b', $full_name);
+      $identifier_crc = hash('crc32b', $full_name);
+      $full_name = substr($full_name, 0, 22) . $identifier_crc;
     }
+    return $full_name;
   }
 
 }

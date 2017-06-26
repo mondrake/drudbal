@@ -130,10 +130,10 @@ class Connection extends DatabaseConnection {
   public function getPrefixedTableName($table_name) {
     $prefixed_table = $this->prefixTables('{' . $table_name . '}');
 //error_log('Table: ' . $table_name . ' -> ' . $prefixed_table . ' -> ' . strlen($prefixed_table));
-if (strlen($prefixed_table) > 30) {
+if (strlen($prefixed_table) > 24) {  // @todo max lenght Oracle 30, but shoul be lower to allow triggers/sequences prefixes
   error_log('***** Found table lenght failure: ' . $prefixed_table);
   $identifier_crc = hash('crc32b', $prefixed_table);
-  $prefixed_table = substr($prefixed_table, 0, 22) . $identifier_crc;
+  $prefixed_table = substr($prefixed_table, 0, 16) . $identifier_crc;
 }
     return $prefixed_table;
   }
