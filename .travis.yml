@@ -54,7 +54,7 @@ before_install:
   - tar x -C .travis/oracle --strip-components=1 -f v2.0.2.tar.gz
   - .travis/oracle/download.sh
   - .travis/oracle/install.sh
-  - chmod +x $HOME/build/mondrake/drudbal/oracle_user.sh
+  #- chmod +x $HOME/build/mondrake/drudbal/oracle_user.sh
   - $HOME/build/mondrake/drudbal/oracle_user.sh
   # Install Oci8 extension for PHP.
   - echo $ORACLE_HOME | pecl install oci8
@@ -68,21 +68,21 @@ before_install:
 
   # Apply Drupal core patches
   # [#2605284] Testing framework does not work with contributed database drivers
-  #- curl https://www.drupal.org/files/issues/simpletest_is_broken_on-2605284-89.patch | git apply
+  - curl https://www.drupal.org/files/issues/simpletest_is_broken_on-2605284-89.patch | git apply
   # [#2867788] Log::findCaller fails to report the correct caller function with non-core drivers.
-  #- curl https://www.drupal.org/files/issues/2867788-22_0.patch | git apply
+  - curl https://www.drupal.org/files/issues/2867788-22_0.patch | git apply
   # [#2871374] SelectTest::testVulnerableComment fails when driver overrides Select::__toString
-  #- curl https://www.drupal.org/files/issues/2871374-2.patch | git apply
+  - curl https://www.drupal.org/files/issues/2871374-2.patch | git apply
   # [#2868273] Missing a test for table TRUNCATE while in transaction
-  #- curl https://www.drupal.org/files/issues/2868273-9.patch | git apply
+  - curl https://www.drupal.org/files/issues/2868273-9.patch | git apply
   # [#2874499] Test failures when db driver is set to not support transactions
-  #- curl https://www.drupal.org/files/issues/2874499-6-transaction-enabled.patch | git apply
+  - curl https://www.drupal.org/files/issues/2874499-6-transaction-enabled.patch | git apply
   # [#2875679] BasicSyntaxTest::testConcatFields fails with contrib driver
-  #- curl https://www.drupal.org/files/issues/2875679-2.patch | git apply
+  - curl https://www.drupal.org/files/issues/2875679-2.patch | git apply
   # [#2879677] Decouple getting table vs column comments in Schema
-  #- curl https://www.drupal.org/files/issues/2879677-3.patch | git apply
+  - curl https://www.drupal.org/files/issues/2879677-3.patch | git apply
   # [#2881522] Add a Schema::getPrimaryKeyColumns method to remove database specific logic from test
-  #- curl https://www.drupal.org/files/issues/2881522-2.patch | git apply
+  - curl https://www.drupal.org/files/issues/2881522-2.patch | git apply
 
   # Get Drupal Console
   #- composer require "drupal/console:~1.0" --prefer-dist --optimize-autoloader
@@ -115,9 +115,9 @@ script:
   # Only run selected tests to avoid Travis timeout.
   - ../vendor/bin/phpunit --testsuite kernel --group Database,Cache,Entity,views
 
-#after_script:
-  #- cd $DRUPAL_PATH/modules/contrib/drudbal
-  #- ../../../vendor/bin/phpcs
+after_script:
+  - cd $DRUPAL_PATH/modules/contrib/drudbal
+  - ../../../vendor/bin/phpcs
 
 notifications:
   email: false
