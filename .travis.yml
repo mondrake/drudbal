@@ -35,7 +35,8 @@ env:
     #- DBAL_URL="mysqli://$DB_AUTH@$HOST_ADDR/drudbal" SIMPLETEST_DB="dbal://$DB_AUTH@$HOST_ADDR/drudbal?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=mysqli#drudbal_"
     #- DBAL_URL="sqlite:///sites/default/files/.ht.sqlite" SIMPLETEST_DB="sqlite://test_user:test_pass@test_host:3306/sites/default/files/.ht.sqlite"
     #- DBAL_URL="sqlite:///sites/default/files/.ht.sqlite" SIMPLETEST_DB="dbal://fake/sites/default/files/.ht.sqlite?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=pdo_sqlite"
-    - DBAL_URL="sqlite:///:memory:" SIMPLETEST_DB="dbal://fake/:memory:?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=pdo_sqlite"
+    #- DBAL_URL="sqlite:///:memory:" SIMPLETEST_DB="dbal://fake/:memory:?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=pdo_sqlite"
+    - DBAL_URL="oci8://$USER:@$HOST_ADDR:1521/XE" SIMPLETEST_DB="dbal://$USER:@$HOST_ADDR:1521/XE?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=oci8"
 
 matrix:
   fast_finish: true
@@ -44,9 +45,9 @@ matrix:
 
 before_install:
   # Remove XDebug
-  #- phpenv config-rm xdebug.ini
+  - phpenv config-rm xdebug.ini
   # Add APCu extension.
-  #- echo "extension = apcu.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
+  - echo "extension = apcu.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
   # Get Oracle XE.
   - wget 'https://github.com/cbandy/travis-oracle/archive/v2.0.2.tar.gz'
   - mkdir -p .travis/oracle
@@ -54,15 +55,14 @@ before_install:
   - .travis/oracle/download.sh
   - .travis/oracle/install.sh
   # Install Oci8 extension for PHP.
-  #- find /u01
-  - echo /u01/app/oracle/product/11.2.0/xe | pecl install oci8
+  - echo $ORACLE_HOME | pecl install oci8
   - echo "extension = oci8.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
   - php -i
 
   # Get Drupal core and dependencies
-  #- git clone http://git.drupal.org/project/drupal.git $DRUPAL_PATH
-  #- cd $DRUPAL_PATH
-  #- composer install --no-progress
+  - git clone http://git.drupal.org/project/drupal.git $DRUPAL_PATH
+  - cd $DRUPAL_PATH
+  - composer install --no-progress
 
   # Apply Drupal core patches
   # [#2605284] Testing framework does not work with contributed database drivers
@@ -86,7 +86,7 @@ before_install:
   #- composer require "drupal/console:~1.0" --prefer-dist --optimize-autoloader
 
   # Get Doctrine DBAL
-  #- composer require "doctrine/dbal:^2.5.12" --no-progress
+  - composer require "doctrine/dbal:^2.5.12" --no-progress
 
 install:
   # Copy the repo to the modules/contrib directory.
@@ -95,13 +95,13 @@ install:
 
   # Create a directory for the driver, and symlink it to the module's one.
   - mkdir -p $DRUPAL_PATH/drivers/lib/Drupal/Driver/Database/
-  #- cd $DRUPAL_PATH/drivers/lib/Drupal/Driver/Database/
-  #- ln -s $DRUPAL_PATH/modules/contrib/drudbal/drivers/lib/Drupal/Driver/Database/dbal dbal
+  - cd $DRUPAL_PATH/drivers/lib/Drupal/Driver/Database/
+  - ln -s $DRUPAL_PATH/modules/contrib/drudbal/drivers/lib/Drupal/Driver/Database/dbal dbal
 
   # Install Drupal
-  #- cd $DRUPAL_PATH/core
-  #- cp $DRUPAL_PATH/modules/contrib/drudbal/misc/install_cli.php install_cli.php
-  #- php install_cli.php
+  - cd $DRUPAL_PATH/core
+  - cp $DRUPAL_PATH/modules/contrib/drudbal/misc/install_cli.php install_cli.php
+  - php install_cli.php
 
   # Get a webserver running.
   #- drupal --quiet server "$DRUPAL_SERVER_ADDRESS:$DRUPAL_SERVER_HTTP_PORT" &
