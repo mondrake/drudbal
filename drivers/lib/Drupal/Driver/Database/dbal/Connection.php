@@ -198,10 +198,10 @@ elseif (strlen($table) > 24) {  // @todo max lenght Oracle 30, but should be low
         case Database::RETURN_INSERT_ID:
           try {
             $sequence_name = isset($options['sequence_name']) ? $options['sequence_name'] : NULL;
-            return (string) $this->connection->lastInsertId($sequence_name);
+            return (string) $this->getDbalConnection()->lastInsertId($sequence_name);
           }
           catch (\Exception $e) {
-            return 0;
+            return '0';
           }
 
         case Database::RETURN_NULL:
@@ -209,6 +209,7 @@ elseif (strlen($table) > 24) {  // @todo max lenght Oracle 30, but should be low
 
         default:
           throw new DBALException('Invalid return directive: ' . $options['return']);
+
       }
     }
     catch (\InvalidArgumentException $e) {

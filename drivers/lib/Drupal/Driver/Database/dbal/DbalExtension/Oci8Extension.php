@@ -303,6 +303,17 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException') {
   }
 
   /**
+   * Insert delegated methods.
+   */
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getSequenceNameForInsert($drupal_table_name) {
+    return $this->tableName($drupal_table_name) . '_SEQ';
+  }
+
+  /**
    * Install\Tasks delegated methods.
    */
 

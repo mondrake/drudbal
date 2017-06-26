@@ -228,6 +228,13 @@ class AbstractExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
+  public function getSequenceNameForInsert($drupal_table_name) {
+    return NULL;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function getAddDefaultsExplicitlyOnInsert() {
     return TRUE;
   }
