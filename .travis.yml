@@ -44,9 +44,9 @@ matrix:
 
 before_install:
   # Remove XDebug
-  - phpenv config-rm xdebug.ini
+  #- phpenv config-rm xdebug.ini
   # Add APCu extension.
-  - echo "extension = apcu.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
+  #- echo "extension = apcu.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
   # Get Oracle XE.
   - wget 'https://github.com/cbandy/travis-oracle/archive/v2.0.2.tar.gz'
   - mkdir -p .travis/oracle
@@ -54,7 +54,9 @@ before_install:
   - .travis/oracle/download.sh
   - .travis/oracle/install.sh
   # Install Oci8 extension for PHP.
-  - echo instantclient,/usr/local/lib | pecl install oci8
+  - ls /u01/app/oracle/product/11.2.0/xe
+  - ls /u01/app/oracle/product/11.2.0/xe/bin
+  - echo instantclient,/u01/app/oracle/product/11.2.0/xe | pecl install oci8
 
   # Get Drupal core and dependencies
   #- git clone http://git.drupal.org/project/drupal.git $DRUPAL_PATH
