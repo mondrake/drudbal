@@ -26,6 +26,7 @@ env:
     # Drupal PHPUnit test variables.
     - SIMPLETEST_BASE_URL="http://$HOST_ADDR:$HTTP_PORT"
     - ORACLE_COOKIE=sqldev
+    - ORACLE_DOWNLOAD_DIR="$HOME/oracle_download"
     - ORACLE_FILE=oracle11g/xe/oracle-xe-11.2.0-1.0.x86_64.rpm.zip
     - ORACLE_HOME=/u01/app/oracle/product/11.2.0/xe
     - ORACLE_SID=XE
@@ -43,6 +44,10 @@ matrix:
   allow_failures:
     - php: nightly
 
+cache:
+  directories:
+    - $HOME/oracle_download
+
 before_install:
   # Remove XDebug
   - phpenv config-rm xdebug.ini
@@ -53,7 +58,6 @@ before_install:
   - mkdir -p .travis/oracle
   - tar x -C .travis/oracle --strip-components=1 -f v2.0.2.tar.gz
   - .travis/oracle/download.sh
-  - echo $ORACLE_DOWNLOAD_FILE
   - .travis/oracle/install.sh
   - $HOME/build/mondrake/drudbal/oracle_user.sh
   # Install Oci8 extension for PHP.

@@ -119,6 +119,25 @@ class Connection extends DatabaseConnection {
   }
 
   /**
+   * {@inheritdoc}
+   */
+  public function prefixTables($sql) {
+    $matches = [];
+    preg_match_all('/{(\S*)}/', $sql, $matches, PREG_SET_ORDER, 0);
+    foreach ($matches as $match) {
+      $table = $match[1];
+      $table = $this->prefixes['default'] . $table;
+if (strlen($table) > 24) {  // @todo max lenght Oracle 30, but should be lower to allow triggers/sequences prefixes
+  error_log('***** Found table lenght failure: ' . $table);
+  $identifier_crc = hash('crc32b', $table);
+  $table = substr($table, 0, 16) . $identifier_crc;
+}
+      $sql = str_replace($match[0], $table, $sql);
+    }
+    return $sql;
+  }
+
+  /**
    * Returns a prefixed table name.
    *
    * @param string $table_name
@@ -128,14 +147,7 @@ class Connection extends DatabaseConnection {
    *   A fully prefixed table name, suitable for direct usage in db queries.
    */
   public function getPrefixedTableName($table_name) {
-    $prefixed_table = $this->prefixTables('{' . $table_name . '}');
-//error_log('Table: ' . $table_name . ' -> ' . $prefixed_table . ' -> ' . strlen($prefixed_table));
-if (strlen($prefixed_table) > 24) {  // @todo max lenght Oracle 30, but shoul be lower to allow triggers/sequences prefixes
-  error_log('***** Found table lenght failure: ' . $prefixed_table);
-  $identifier_crc = hash('crc32b', $prefixed_table);
-  $prefixed_table = substr($prefixed_table, 0, 16) . $identifier_crc;
-}
-    return $prefixed_table;
+    return $this->prefixTables('{' . $table_name . '}');
   }
 
   /**
