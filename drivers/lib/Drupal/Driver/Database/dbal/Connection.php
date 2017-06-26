@@ -14,6 +14,7 @@ use Drupal\Core\Database\TransactionNoActiveException;
 use Drupal\Core\Database\TransactionOutOfOrderException;
 
 use Drupal\Driver\Database\dbal\DbalExtension\MysqliExtension;
+use Drupal\Driver\Database\dbal\DbalExtension\Oci8Extension;
 use Drupal\Driver\Database\dbal\DbalExtension\PDOMySqlExtension;
 use Drupal\Driver\Database\dbal\DbalExtension\PDOSqliteExtension;
 
@@ -43,6 +44,7 @@ class Connection extends DatabaseConnection {
    */
   protected static $dbalClassMap = [
     'mysqli' => MysqliExtension::class,
+    'oci8' => Oci8Extension::class,
     'pdo_mysql' => PDOMySqlExtension::class,
     'pdo_sqlite' => PDOSqliteExtension::class,
   ];
@@ -126,7 +128,14 @@ class Connection extends DatabaseConnection {
    *   A fully prefixed table name, suitable for direct usage in db queries.
    */
   public function getPrefixedTableName($table_name) {
-    return $this->prefixTables('{' . $table_name . '}');
+    $prefixed_table = $this->prefixTables('{' . $table_name . '}');
+//error_log('Table: ' . $table_name . ' -> ' . $prefixed_table . ' -> ' . strlen($prefixed_table));
+if (strlen($prefixed_table) > 24) {  // @todo max lenght Oracle 30, but shoul be lower to allow triggers/sequences prefixes
+  error_log('***** Found table lenght failure: ' . $prefixed_table);
+  $identifier_crc = hash('crc32b', $prefixed_table);
+  $prefixed_table = substr($prefixed_table, 0, 16) . $identifier_crc;
+}
+    return $prefixed_table;
   }
 
   /**
@@ -172,8 +181,13 @@ class Connection extends DatabaseConnection {
           return $stmt->rowCount();
 
         case Database::RETURN_INSERT_ID:
-          $sequence_name = isset($options['sequence_name']) ? $options['sequence_name'] : NULL;
-          return (string) $this->connection->lastInsertId($sequence_name);
+          try {
+            $sequence_name = isset($options['sequence_name']) ? $options['sequence_name'] : NULL;
+            return (string) $this->connection->lastInsertId($sequence_name);
+          }
+          catch (\Exception $e) {
+            return 0;
+          }
 
         case Database::RETURN_NULL:
           return NULL;

@@ -32,6 +32,7 @@ class Insert extends QueryInsert {
       $trn = $this->connection->startTransaction();
     }
 
+$this->queryOptions['sequence_name'] = $this->connection->getPrefixedTableName($this->table) . '_SEQ';
     $last_insert_id = NULL;
     if (empty($this->fromQuery)) {
       // Deal with a single INSERT or a bulk INSERT.
