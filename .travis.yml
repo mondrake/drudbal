@@ -56,7 +56,8 @@ before_install:
   # Install Oci8 extension for PHP.
   - ls /u01/app/oracle/product/11.2.0/xe
   - ls /u01/app/oracle/product/11.2.0/xe/bin
-  - echo instantclient,/u01/app/oracle/product/11.2.0/xe | pecl install oci8
+  - ls /u01/app/oracle/product/11.2.0/xe/lib
+  - echo instantclient,/u01/app/oracle/product/11.2.0/xe/lib | pecl install oci8
 
   # Get Drupal core and dependencies
   #- git clone http://git.drupal.org/project/drupal.git $DRUPAL_PATH
