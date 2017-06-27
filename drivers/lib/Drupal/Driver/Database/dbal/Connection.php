@@ -75,6 +75,8 @@ class Connection extends DatabaseConnection {
    */
   protected $dbalPlatform;
 
+  protected $resolvedTables = [];
+
   /**
    * Constructs a Connection object.
    */
@@ -126,6 +128,22 @@ class Connection extends DatabaseConnection {
     preg_match_all('/{(\S*)}/', $sql, $matches, PREG_SET_ORDER, 0);
     foreach ($matches as $match) {
       $table = $match[1];
+      if (isset($this->resolvedTables['{' . $table . '}']) {
+        continue;
+      }
+      $table_x = $this->prefixes['default'] . $table;
+      if ($table_x === 'comment') {
+        $table_x = 'comment_x';
+      }
+      elseif (strlen($table_x) > 24) {  // @todo max lenght Oracle 30, but should be lower to allow triggers/sequences prefixes
+        $identifier_crc = hash('crc32b', $table_x);
+        $table_x = substr($table_x, 0, 16) . $identifier_crc;
+      }
+      $this->resolvedTables['{' . $table . '}'] = $table_x;
+    }
+    $sql = str_replace(array_keys($this->resolvedTables), array_values($this->resolvedTables), $sql);
+/*    foreach ($matches as $match) {
+      $table = $match[1];
       $table = $this->prefixes['default'] . $table;
 if ($table === 'comment') {
   $table = 'comment_x';
@@ -136,7 +154,7 @@ elseif (strlen($table) > 24) {  // @todo max lenght Oracle 30, but should be low
   $table = substr($table, 0, 16) . $identifier_crc;
 }
       $sql = str_replace($match[0], $table, $sql);
-    }
+    }*/
     return $sql;
   }
 
