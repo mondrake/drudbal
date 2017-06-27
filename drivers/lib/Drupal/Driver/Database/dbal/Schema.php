@@ -131,6 +131,15 @@ class Schema extends DatabaseSchema {
         $this->addIndex($name, $index, $fields, $table);
       }
     }
+
+    // Add check constraints for unsigned.
+    foreach ($table['fields'] as $field_name => $field) {
+      if (!empty($field['unsigned']) && (bool) $field['unsigned'] === TRUE) {
+        $sql = "ALTER TABLE " . $this->tableName($name) . " ADD CONSTRAINT " . $field_name . '_CHECK (' . $field_name . ' >= 0)';
+        $this->connection->getDbalConnection()->exec($sql);
+      }
+    }
+
   }
 
   /**
@@ -331,7 +340,7 @@ class Schema extends DatabaseSchema {
     }
     catch (DbalSchemaException $e) {
       if ($e->getCode() === DbalSchemaException::TABLE_DOESNT_EXIST) {
-        // If he table is not in the DBAL schema, then we are good anyway.
+        // If the table is not in the DBAL schema, then we are good anyway.
         return TRUE;
       }
       else {

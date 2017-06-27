@@ -6,7 +6,6 @@ use Drupal\Core\Database\Database;
 use Drupal\Core\Database\DatabaseExceptionWrapper;
 use Drupal\Core\Database\DatabaseNotFoundException;
 use Drupal\Core\Database\IntegrityConstraintViolationException;
-use Drupal\Core\Database\Driver\sqlite\Connection as SqliteConnectionBase;
 
 use Drupal\Driver\Database\dbal\Connection as DruDbalConnection;
 
@@ -14,6 +13,7 @@ use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
 use Doctrine\DBAL\Schema\Schema as DbalSchema;
 use Doctrine\DBAL\Statement as DbalStatement;
+use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 
 /**
  * Driver specific methods for oci8 (Oracle).
@@ -167,7 +167,7 @@ class Oci8Extension extends AbstractExtension {
     if ($e instanceof DatabaseExceptionWrapper) {
       $e = $e->getPrevious();
     }
-    if ($e instanceof \Doctrine\DBAL\Exception\UniqueConstraintViolationException) {
+    if ($e instanceof UniqueConstraintViolationException) {
       throw new IntegrityConstraintViolationException($message, $e->getCode(), $e);
     }
     else {
@@ -255,7 +255,7 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException') {
         $temp_pl = ltrim($placeholder, ':');
         if (in_array($temp_pl, static::$oracleKeywords, TRUE)) {
           $key = $placeholder . '____oracle';
-          $query = str_replace($placeholder , $placeholder . '____oracle', $query);
+          $query = str_replace($placeholder, $placeholder . '____oracle', $query);
         }
         else {
           $key = $placeholder;
@@ -362,6 +362,40 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException') {
   /**
    * Schema delegated methods.
    */
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateTableExists(&$result, $drupal_table_name) {
+    // The DBAL Schema manager is quite slow here.
+    // Instead, we try to select from the table in question.  If it fails,
+    // the most likely reason is that it does not exist.
+    try {
+      $this->getDbalConnection()->query("SELECT 1 FROM " . $this->tableName($drupal_table_name) . " WHERE ROWNUM <= 1");
+      $result = TRUE;
+    }
+    catch (\Exception $e) {
+      $result = FALSE;
+    }
+    return TRUE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateFieldExists(&$result, $drupal_table_name, $field_name) {
+    // The DBAL Schema manager is quite slow here.
+    // Instead, we try to select from the table and field in question. If it
+    // fails, the most likely reason is that it does not exist.
+    try {
+      $this->getDbalConnection()->query("SELECT $field_name FROM " . $this->tableName($drupal_table_name) . " WHERE ROWNUM <= 1");
+      $result = TRUE;
+    }
+    catch (\Exception $e) {
+      $result = FALSE;
+    }
+    return TRUE;
+  }
 
   /**
    * {@inheritdoc}
