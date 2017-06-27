@@ -17,6 +17,7 @@ branches:
 
 env:
   global:
+    - DRUPAL_STAGING_DIR="$HOME/drupal_staging"
     - DRUPAL_PATH="$HOME/drupal8"
     - PATH="$PATH:$DRUPAL_PATH/vendor/bin:$HOME/.composer/vendor/bin"
     # Installation variables.
@@ -38,18 +39,33 @@ matrix:
   allow_failures:
     - php: nightly
 
+cache:
+  directories:
+    - $DRUPAL_STAGING_DIR
+
 before_install:
-  # Remove XDebug
+  # Remove XDebug.
   - phpenv config-rm xdebug.ini
   # Add APCu extension.
   - echo "extension = apcu.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
 
-  # Get Drupal core and dependencies
+  # Stage Drupal core to get dependencies.
+  - |
+      if [[ ! -f $DRUPAL_STAGING_DIR/index.php ]]; then
+        git clone http://git.drupal.org/project/drupal.git $DRUPAL_STAGING_DIR
+        cd $DRUPAL_STAGING_DIR
+        composer install --no-progress
+        # Get Drupal Console
+        # composer require "drupal/console:~1.0" --prefer-dist --optimize-autoloader
+        # Get Doctrine DBAL
+        composer require "doctrine/dbal:^2.5.12" --no-progress
+      fi
+
+  # Always get latest Drupal core.
   - git clone http://git.drupal.org/project/drupal.git $DRUPAL_PATH
   - cd $DRUPAL_PATH
-  - composer install --no-progress
 
-  # Apply Drupal core patches
+  # Apply Drupal core patches.
   # [#2605284] Testing framework does not work with contributed database drivers
   - curl https://www.drupal.org/files/issues/simpletest_is_broken_on-2605284-89.patch | git apply
   # [#2867788] Log::findCaller fails to report the correct caller function with non-core drivers.
@@ -67,13 +83,12 @@ before_install:
   # [#2881522] Add a Schema::getPrimaryKeyColumns method to remove database specific logic from test
   - curl https://www.drupal.org/files/issues/2881522-2.patch | git apply
 
-  # Get Drupal Console
-  #- composer require "drupal/console:~1.0" --prefer-dist --optimize-autoloader
-
-  # Get Doctrine DBAL
-  - composer require "doctrine/dbal:^2.5.12" --no-progress
-
 install:
+  # Copy the vendor dependencies.
+  - mkdir -p $DRUPAL_PATH/vendor
+  - cp -r $DRUPAL_STAGING_DIR/vendor/. $DRUPAL_PATH/vendor
+  - cp -r $DRUPAL_STAGING_DIR/composer.* $DRUPAL_PATH
+
   # Copy the repo to the modules/contrib directory.
   - mkdir -p $DRUPAL_PATH/modules/contrib/drudbal
   - cp -r $HOME/build/mondrake/drudbal $DRUPAL_PATH/modules/contrib
@@ -83,7 +98,7 @@ install:
   - cd $DRUPAL_PATH/drivers/lib/Drupal/Driver/Database/
   - ln -s $DRUPAL_PATH/modules/contrib/drudbal/drivers/lib/Drupal/Driver/Database/dbal dbal
 
-  # Install Drupal
+  # Install Drupal.
   - cd $DRUPAL_PATH/core
   - cp $DRUPAL_PATH/modules/contrib/drudbal/misc/install_cli.php install_cli.php
   - php install_cli.php
