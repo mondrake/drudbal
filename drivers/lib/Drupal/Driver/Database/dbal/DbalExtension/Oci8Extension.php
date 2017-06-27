@@ -30,6 +30,7 @@ class Oci8Extension extends AbstractExtension {
    * single quotes inside.
    */
   const SINGLE_QUOTE_IDENTIFIER_REPLACEMENT = ']]]]SINGLEQUOTEIDENTIFIERDRUDBAL[[[[';
+  const DOUBLE_QUOTE_IDENTIFIER_REPLACEMENT = ']]]]DOUBLEQUOTEIDENTIFIERDRUDBAL[[[[';
 
   /**
    * A map of condition operators to SQLite operators.
@@ -389,10 +390,10 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException') {
    * {@inheritdoc}
    */
   public function getStringForDefault($string) {
-fwrite(STDERR, "\n" . $string);
     // Encode single quotes.
     $replace = str_replace('\'', self::SINGLE_QUOTE_IDENTIFIER_REPLACEMENT, $string);
-fwrite(STDERR, "\n" . $replace);
+    // Encode double quotes.
+    $replace = str_replace('"', self::DOUBLE_QUOTE_IDENTIFIER_REPLACEMENT, $replace);
     return $replace;
   }
 
