@@ -128,7 +128,7 @@ class Connection extends DatabaseConnection {
     preg_match_all('/{(\S*)}/', $sql, $matches, PREG_SET_ORDER, 0);
     foreach ($matches as $match) {
       $table = $match[1];
-      if (isset($this->resolvedTables['{' . $table . '}']) {
+      if (isset($this->resolvedTables['{' . $table . '}'])) {
         continue;
       }
       $table_x = $this->prefixes['default'] . $table;
