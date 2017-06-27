@@ -61,7 +61,7 @@ before_install:
   - mkdir -p .travis/oracle
   - tar x -C .travis/oracle --strip-components=1 -f v2.0.2.tar.gz
   - |
-      if [[ ! -d $ORACLE_DOWNLOAD_DIR ]]; then
+      if [[ ! -f $ORACLE_DOWNLOAD_DIR/oracle-xe-11.2.0-1.0.x86_64.rpm.zip ]]; then
         .travis/oracle/download.sh
         cp .travis/oracle/oracle-xe-11.2.0-1.0.x86_64.rpm.zip $ORACLE_DOWNLOAD_DIR
       fi
@@ -76,7 +76,7 @@ before_install:
 
   # Get Drupal core and dependencies
   - |
-      if [[ ! -d $DRUPAL_STAGING_DIR ]]; then
+      if [[ ! -f $DRUPAL_STAGING_DIR/index.php ]]; then
         git clone http://git.drupal.org/project/drupal.git $DRUPAL_STAGING_DIR
         cd $DRUPAL_STAGING_DIR
         composer install --no-progress
