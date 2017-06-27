@@ -312,6 +312,17 @@ interface DbalExtensionInterface {
    */
 
   /**
+   * Returns the name of the sequence to be checked for last insert id.
+   *
+   * @param string $drupal_table_name
+   *   The Drupal name of the table.
+   *
+   * @return string|null
+   *   The name of the sequence, or NULL if it is not needed.
+   */
+  public function getSequenceNameForInsert($drupal_table_name);
+
+  /**
    * Determines if an INSERT query should explicity add default fields.
    *
    * Some DBMS accept using the 'default' keyword when entering default values
