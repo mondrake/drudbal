@@ -883,6 +883,7 @@ class Schema extends DatabaseSchema {
    */
   protected function dbalExecuteSchemaChange(DbalSchema $to_schema) {
     foreach ($this->dbalSchema()->getMigrateToSql($to_schema, $this->dbalPlatform) as $sql) {
+error_log($sql);
       $this->connection->getDbalConnection()->exec($sql);
     }
     $this->dbalSetCurrentSchema($to_schema);
