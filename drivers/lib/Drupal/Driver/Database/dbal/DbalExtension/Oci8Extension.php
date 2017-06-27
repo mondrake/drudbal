@@ -389,8 +389,11 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException') {
    * {@inheritdoc}
    */
   public function getStringForDefault($string) {
+fwrite(STDERR, "\n" . $string);
     // Encode single quotes.
-    return str_replace('\'', self::SINGLE_QUOTE_IDENTIFIER_REPLACEMENT, $string);
+    $replace = str_replace('\'', self::SINGLE_QUOTE_IDENTIFIER_REPLACEMENT, $string);
+fwrite(STDERR, "\n" . $replace);
+    return $replace;
   }
 
   /**
