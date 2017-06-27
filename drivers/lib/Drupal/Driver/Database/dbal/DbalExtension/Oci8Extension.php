@@ -76,6 +76,23 @@ class Oci8Extension extends AbstractExtension {
     'range',
   ];
 
+  protected $oracleKeywordTokens;
+
+  /**
+   * Constructs an Oci8Extension object.
+   *
+   * @param \Drupal\Driver\Database\dbal\Connection $drudbal_connection
+   *   The Drupal database connection object for this extension.
+   * @param \Doctrine\DBAL\Connection $dbal_connection
+   *   The DBAL connection.
+   * @param string $statement_class
+   *   The StatementInterface class to be used.
+   */
+  public function __construct(DruDbalConnection $drudbal_connection, DbalConnection $dbal_connection, $statement_class) {
+    parent::__construct($drudbal_connection, $dbal_connection, $statement_class);
+    $this->oracleKeywordTokens = implode('|', static::$oracleKeywords);
+  }
+
   /**
    * Connection delegated methods.
    */
@@ -245,10 +262,13 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException') {
       $args = $temp_args;
     }
 
+    // Enclose any identifier that is a reserved keyword for Oracle in double
+    // quotes.
+    $query = preg_replace('/([\s\.(])(' . $this->oracleKeywordTokens . ')([\s,)])/', '$1"$2"$3', $query);
 
-    foreach (static::$oracleKeywords as $keyword) {
-      $query = preg_replace('/([\s\.(])(' . $keyword . ')([\s,)])/', '$1"$2"$3', $query);
-    }
+//    foreach (static::$oracleKeywords as $keyword) {
+//      $query = preg_replace('/([\s\.(])(' . $keyword . ')([\s,)])/', '$1"$2"$3', $query);
+//    }
 
 //error_log($query);
     return $this;
