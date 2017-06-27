@@ -18,16 +18,19 @@ called ```DBALExtension```, unique for the DBAL Driver in use, to which some ope
 delegated.
 
 ## Status
-(Updated: June 1, 2017)
+(Updated: June 22, 2017)
 
-The code in the ```master``` branch is meant to be working on a __MySql database, using either the 'mysql' or the 'mysqli' DBAL driver, and on a SQlite database, using the 'sqlite' DBAL driver__.
+The code in the ```master``` branch is working on a __MySql database__, using either the 'mysql' or the 'mysqli' DBAL driver, and on a __SQlite database__, using the 'sqlite' DBAL driver.
 
 'Working' means:
 1. it is possible to install a Drupal site via the installer, selecting 'Doctrine DBAL' as the database of choice;
 2. it is passing a selection of core PHPUnit tests for the Database, Cache, Entity and views groups of tests, executed on Travis CI. The latest patches for the issues listed in 'Related Drupal issues' below need to be applied to get a clean test run.
 
-The status of the driver classes implementation is as follows:
+The code in the ```dev-oracle``` branch installs with the 'minimal' profile on Oracle 12.1.0.2.0, using DBAL 'oci8' driver. Big problems with Oracle:
+1. there's a hard limit of 30 chars on database asset identifiers (tables, triggers, indexes, etc.). This is currently preventing installation with the 'standard' profile, as some tables names exceed that lenght. Apparently Oracle 12.2 overcomes that limit, raising lenght to 128 chars.
+2. Oracle treats NULL and '' (empty string) in the same way. Drupal practice is to use these as different items - it builds CREATE TABLE statements with column definitions like "cid VARCHAR(255) DEFAULT '' NOT NULL" which is self-contradicting in Oracle terms.
 
+## Driver classes
 Class                         | Status        |
 ------------------------------|---------------|
 Connection                    | Implemented as a wrapper around ```DBAL\Connection```. |
