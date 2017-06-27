@@ -17,6 +17,7 @@ branches:
 
 env:
   global:
+    - DRUPAL_STAGING_DIR="$HOME/drupal_staging"
     - DRUPAL_PATH="$HOME/drupal8"
     - PATH="$PATH:$DRUPAL_PATH/vendor/bin:$HOME/.composer/vendor/bin"
     # Installation variables.
@@ -46,6 +47,7 @@ matrix:
 
 cache:
   directories:
+    - $DRUPAL_STAGING_DIR
     - $ORACLE_DOWNLOAD_DIR
 
 before_install:
@@ -53,23 +55,22 @@ before_install:
   - phpenv config-rm xdebug.ini
   # Add APCu extension.
   - echo "extension = apcu.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
+
   # Get Oracle XE.
   - wget 'https://github.com/cbandy/travis-oracle/archive/v2.0.2.tar.gz'
   - mkdir -p .travis/oracle
   - tar x -C .travis/oracle --strip-components=1 -f v2.0.2.tar.gz
   #- .travis/oracle/download.sh
   #- cp .travis/oracle/oracle-xe-11.2.0-1.0.x86_64.rpm.zip $ORACLE_DOWNLOAD_DIR
-  - ls -al $ORACLE_DOWNLOAD_DIR
   - cp $ORACLE_DOWNLOAD_DIR/oracle-xe-11.2.0-1.0.x86_64.rpm.zip .travis/oracle/
   - .travis/oracle/install.sh
   - $HOME/build/mondrake/drudbal/oracle_user.sh
-  - ls -al .travis/oracle
   # Install Oci8 extension for PHP.
   - echo $ORACLE_HOME | pecl install oci8
 
   # Get Drupal core and dependencies
-  - git clone http://git.drupal.org/project/drupal.git $DRUPAL_PATH
-  - cd $DRUPAL_PATH
+  - git clone http://git.drupal.org/project/drupal.git $DRUPAL_STAGING_DIR
+  - cd $DRUPAL_STAGING_DIR
   - composer install --no-progress
 
   # Apply Drupal core patches
@@ -97,6 +98,10 @@ before_install:
   - composer require "doctrine/dbal:^2.5.12" --no-progress
 
 install:
+  # Copy the staging directory to the testing directory.
+  - mkdir -p $DRUPAL_PATH
+  - cp -r $DRUPAL_STAGING_DIR $DRUPAL_PATH
+
   # Copy the repo to the modules/contrib directory.
   - mkdir -p $DRUPAL_PATH/modules/contrib/drudbal
   - cp -r $HOME/build/mondrake/drudbal $DRUPAL_PATH/modules/contrib
@@ -120,7 +125,7 @@ script:
   - cd $DRUPAL_PATH/core
   # Only run selected tests to avoid Travis timeout.
   #- ../vendor/bin/phpunit --testsuite kernel --group Database,Cache,Entity,views
-  - ../vendor/bin/phpunit --testsuite kernel --group Database
+  #- ../vendor/bin/phpunit --testsuite kernel --group Database
   #- ../vendor/bin/phpunit --testsuite kernel tests/Drupal/KernelTests/Core/Database/SchemaTest.php
 
 after_script:
