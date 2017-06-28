@@ -269,6 +269,7 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException') {
     // quotes.
     $query = preg_replace('/([\s\.(])(' . $this->oracleKeywordTokens . ')([\s,)])/', '$1"$2"$3', $query);
 
+//error_log($query);
     return $this;
   }
 
