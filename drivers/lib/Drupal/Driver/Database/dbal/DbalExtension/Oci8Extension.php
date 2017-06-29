@@ -103,6 +103,23 @@ class Oci8Extension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
+  public function getDbTableName($prefixed_table_name) {
+    // Need to avoid trying to create a table with name equal to a reserved
+    // keyword.
+    if (in_array($prefixed_table_name, static::$oracleKeywords, TRUE)) {
+      $prefixed_table_name = $prefixed_table_name . '_x';
+    }
+    // Max lenght for Oracle is 30 chars, but should be even lower to allow
+    // DBAL creating triggers/sequences with table name + suffix.
+    if (strlen($prefixed_table_name) > 24) {
+      $identifier_crc = hash('crc32b', $prefixed_table_name);
+      $prefixed_table_name = substr($prefixed_table_name, 0, 16) . $identifier_crc;
+    }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public static function preConnectionOpen(array &$connection_options, array &$dbal_connection_options) {
   }
 

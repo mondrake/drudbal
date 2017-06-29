@@ -50,6 +50,17 @@ class Connection extends DatabaseConnection {
   ];
 
   /**
+   * Map of database tables.
+   *
+   * Drupal SQL statements wrap table names in curly brackets. This array
+   * maps this syntax to actual database tables, adding prefix and/or
+   * resolving platform specific constraints.
+   *
+   * @var string[]
+   */
+  protected $dbTables = [];
+
+  /**
    * List of URL schemes from a database URL and their mappings to driver.
    *
    * @var string[]
@@ -74,8 +85,6 @@ class Connection extends DatabaseConnection {
    * @var \Doctrine\DBAL\Platforms\AbstractPlatform
    */
   protected $dbalPlatform;
-
-  protected $resolvedTables = [];
 
   /**
    * Constructs a Connection object.
@@ -128,21 +137,16 @@ class Connection extends DatabaseConnection {
     preg_match_all('/{(\S*)}/', $sql, $matches, PREG_SET_ORDER, 0);
     foreach ($matches as $match) {
       $table = $match[1];
-      if (isset($this->resolvedTables['{' . $table . '}'])) {
+      if (isset($this->dbTables['{' . $table . '}'])) {
         continue;
       }
-      $table_x = $this->prefixes['default'] . $table;
-      if ($table_x === 'comment') {
-        $table_x = 'comment_x';
-      }
-      elseif (strlen($table_x) > 24) {  // @todo max lenght Oracle 30, but should be lower to allow triggers/sequences prefixes
-        $identifier_crc = hash('crc32b', $table_x);
-        $table_x = substr($table_x, 0, 16) . $identifier_crc;
-      }
-      $this->resolvedTables['{' . $table . '}'] = $table_x;
+      // Per-table prefixes are deprecated as of Drupal 8.2 so let's not get
+      // in the complexity of trying to manage that. Assume a single default
+      // prefix.
+      $prefixed_table = $this->prefixes['default'] . $table;
+      $this->dbTables['{' . $table . '}'] = $this->dbalExtension->getDbTableName($prefixed_table);
     }
-    $sql = str_replace(array_keys($this->resolvedTables), array_values($this->resolvedTables), $sql);
-    return $sql;
+    return str_replace(array_keys($this->dbTables), array_values($this->dbTables), $sql);
   }
 
   /**
