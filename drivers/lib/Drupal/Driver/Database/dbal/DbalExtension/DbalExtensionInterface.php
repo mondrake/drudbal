@@ -40,6 +40,17 @@ interface DbalExtensionInterface {
   public function delegateFullQualifiedTableName($drupal_table_name);
 
   /**
+   * Get the database table name, resolving platform specific constraints.
+   *
+   * @param string $prefixed_table_name
+   *   The name of the table in question, already prefixed.
+   *
+   * @return string
+   *   The database table name.
+   */
+  public function getDbTableName($prefixed_table_name);
+
+  /**
    * Connection delegated methods.
    */
 
