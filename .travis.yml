@@ -80,7 +80,6 @@ before_install:
         git clone http://git.drupal.org/project/drupal.git $DRUPAL_STAGING_DIR
         cd $DRUPAL_STAGING_DIR
         composer install --no-progress
-
         # Apply Drupal core patches
         # [#2605284] Testing framework does not work with contributed database drivers
         curl https://www.drupal.org/files/issues/simpletest_is_broken_on-2605284-89.patch | git apply
@@ -98,14 +97,11 @@ before_install:
         curl https://www.drupal.org/files/issues/2879677-3.patch | git apply
         # [#2881522] Add a Schema::getPrimaryKeyColumns method to remove database specific logic from test
         curl https://www.drupal.org/files/issues/2881522-2.patch | git apply
-
         # Get Drupal Console
         # composer require "drupal/console:~1.0" --prefer-dist --optimize-autoloader
-
         # Get Doctrine DBAL
         composer require "doctrine/dbal:^2.5.12" --no-progress
       fi
-
 install:
   # Copy the staging directory to the testing directory.
   - mkdir -p $DRUPAL_PATH
