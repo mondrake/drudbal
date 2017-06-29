@@ -331,7 +331,7 @@ class Schema extends DatabaseSchema {
     }
     catch (DbalSchemaException $e) {
       if ($e->getCode() === DbalSchemaException::TABLE_DOESNT_EXIST) {
-        // If he table is not in the DBAL schema, then we are good anyway.
+        // If the table is not in the DBAL schema, then we are good anyway.
         return TRUE;
       }
       else {

@@ -82,6 +82,13 @@ class AbstractExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
+  public function getDbTableName($prefixed_table_name) {
+    return $prefixed_table_name;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function delegateFullQualifiedTableName($drupal_table_name) {
     $options = $this->connection->getConnectionOptions();
     $prefix = $this->connection->tablePrefix($drupal_table_name);
