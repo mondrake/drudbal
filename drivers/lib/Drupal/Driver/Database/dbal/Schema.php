@@ -118,6 +118,11 @@ class Schema extends DatabaseSchema {
     // Execute the table creation.
     $this->dbalExecuteSchemaChange($to_schema);
 
+    // Add primary key index (Oracle).
+    if (!empty($table['primary key'])) {
+      $this->addUniqueKey($name, $name . '_oracle_pk', $this->dbalGetFieldList($table['primary key']));
+    }
+
     // Add unique keys.
     if (!empty($table['unique keys'])) {
       foreach ($table['unique keys'] as $key => $fields) {
@@ -883,7 +888,7 @@ class Schema extends DatabaseSchema {
    */
   protected function dbalExecuteSchemaChange(DbalSchema $to_schema) {
     foreach ($this->dbalSchema()->getMigrateToSql($to_schema, $this->dbalPlatform) as $sql) {
-//error_log($sql);
+error_log($sql);
       $this->connection->getDbalConnection()->exec($sql);
     }
     $this->dbalSetCurrentSchema($to_schema);
