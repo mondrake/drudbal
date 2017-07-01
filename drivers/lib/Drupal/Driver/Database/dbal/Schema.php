@@ -2,6 +2,7 @@
 
 namespace Drupal\Driver\Database\dbal;
 
+use Drupal\Component\Utility\Timer;
 use Drupal\Core\Database\SchemaObjectExistsException;
 use Drupal\Core\Database\SchemaObjectDoesNotExistException;
 use Drupal\Core\Database\Schema as DatabaseSchema;
@@ -117,11 +118,6 @@ class Schema extends DatabaseSchema {
 
     // Execute the table creation.
     $this->dbalExecuteSchemaChange($to_schema);
-
-    // Add primary key index (Oracle).
-    if (!empty($table['primary key'])) {
-      $this->addUniqueKey($name, $name . '_oracle_pk', $this->dbalGetFieldList($table['primary key']));
-    }
 
     // Add unique keys.
     if (!empty($table['unique keys'])) {
@@ -888,8 +884,10 @@ class Schema extends DatabaseSchema {
    */
   protected function dbalExecuteSchemaChange(DbalSchema $to_schema) {
     foreach ($this->dbalSchema()->getMigrateToSql($to_schema, $this->dbalPlatform) as $sql) {
-error_log($sql);
+Timer::start('drudbal:ddl');
       $this->connection->getDbalConnection()->exec($sql);
+$execution_time = Timer::stop('drudbal:ddl')['time'];
+error_log($execution_time . ' - ' . $sql);
     }
     $this->dbalSetCurrentSchema($to_schema);
     return TRUE;
