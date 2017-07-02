@@ -887,7 +887,7 @@ class Schema extends DatabaseSchema {
 Timer::start('drudbal:ddl');
       $this->connection->getDbalConnection()->exec($sql);
 $execution_time = Timer::stop('drudbal:ddl')['time'];
-$elapsed_time = Timer::read('drudbal:install_cli')['time'];
+$elapsed_time = Timer::read('drudbal:install_cli');
 error_log($elapsed_time . ' - ' . $execution_time . ' - ' . $sql);
     }
     $this->dbalSetCurrentSchema($to_schema);
