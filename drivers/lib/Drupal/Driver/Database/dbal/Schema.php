@@ -884,11 +884,12 @@ class Schema extends DatabaseSchema {
    */
   protected function dbalExecuteSchemaChange(DbalSchema $to_schema) {
     foreach ($this->dbalSchema()->getMigrateToSql($to_schema, $this->dbalPlatform) as $sql) {
-Timer::start('drudbal:ddl');
+$timer_start = microtime(TRUE);
       $this->connection->getDbalConnection()->exec($sql);
-$execution_time = Timer::stop('drudbal:ddl')['time'];
+$timer_stop = microtime(TRUE);
+$execution_time = round(($timer_stop - $timer_start) * 1000, 2);
 $elapsed_time = Timer::read('drudbal:install_cli');
-error_log($elapsed_time . ' - ' . $execution_time . ' - ' . $sql);
+error_log($elapsed_time . '|' . $execution_time . '|' . $sql);
     }
     $this->dbalSetCurrentSchema($to_schema);
     return TRUE;

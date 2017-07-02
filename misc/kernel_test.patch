@@ -1,0 +1,38 @@
+diff --git a/core/tests/Drupal/KernelTests/KernelTestBase.php b/core/tests/Drupal/KernelTests/KernelTestBase.php
+index 6a35f15..f63b6db 100644
+--- a/core/tests/Drupal/KernelTests/KernelTestBase.php
++++ b/core/tests/Drupal/KernelTests/KernelTestBase.php
+@@ -2,6 +2,7 @@
+ 
+ namespace Drupal\KernelTests;
+ 
++use Drupal\Component\Utility\Timer;
+ use Drupal\Component\FileCache\ApcuFileCacheBackend;
+ use Drupal\Component\FileCache\FileCache;
+ use Drupal\Component\FileCache\FileCacheFactory;
+@@ -225,6 +226,7 @@ protected static function getDrupalRoot() {
+    * {@inheritdoc}
+    */
+   protected function setUp() {
++Timer::start('drudbal:install_cli');
+     parent::setUp();
+ 
+     $this->root = static::getDrupalRoot();
+@@ -615,6 +617,8 @@ protected function tearDown() {
+       $this->kernel->shutdown();
+     }
+ 
++$elapsed_time = Timer::read('drudbal:install_cli');
++error_log($elapsed_time . '||Before removing tables');
+     // Remove all prefixed tables.
+     $original_connection_info = Database::getConnectionInfo('simpletest_original_default');
+     $original_prefix = $original_connection_info['default']['prefix']['default'];
+@@ -660,6 +664,8 @@ protected function tearDown() {
+     new Settings([]);
+ 
+     parent::tearDown();
++$elapsed_time = Timer::read('drudbal:install_cli');
++error_log($elapsed_time . '||Final');
+   }
+ 
+   /**
