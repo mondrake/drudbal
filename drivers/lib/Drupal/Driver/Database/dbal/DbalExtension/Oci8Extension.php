@@ -2,6 +2,8 @@
 
 namespace Drupal\Driver\Database\dbal\DbalExtension;
 
+use Drupal\Component\Utility\Timer;
+
 use Drupal\Core\Database\Database;
 use Drupal\Core\Database\DatabaseExceptionWrapper;
 use Drupal\Core\Database\DatabaseNotFoundException;
@@ -374,6 +376,10 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException') {
       'fail' => [],
       'pass' => [],
     ];
+
+error_log(Timer::read('drudbal:install_cli') . '||Oci8Extension::runInstallTasks start');
+    $this->getDbalConnection()->query("CREATE TABLE {drudbal_oracle_install} (id int, PRIMARY KEY(id))");
+error_log(Timer::read('drudbal:install_cli') . '||Oci8Extension::runInstallTasks end');
 
     return $results;
   }
