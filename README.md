@@ -94,6 +94,7 @@ https://github.com/doctrine/dbal/issues/2380     | Unsigned numeric columns not 
 https://github.com/doctrine/migrations/issues/17 | Data loss on table renaming. | |
 https://github.com/doctrine/dbal/pull/2720       | SQLParserUtils::getPlaceholderPositions fails if there are quoted strings containing only backslashes | Fixed in 2.5.13 |
 https://github.com/doctrine/dbal/pull/2730       | Duplicate 'COMMENT' part in SQL statement | Fixed in 2.5.13 |
+https://github.com/doctrine/dbal/issues/2676     | Optimize Oracle SchemaManager  | |
 
 ## Related Drupal issues
 Issue | Description   |
