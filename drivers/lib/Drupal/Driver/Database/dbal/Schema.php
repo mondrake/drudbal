@@ -132,14 +132,6 @@ class Schema extends DatabaseSchema {
       }
     }
 
-    // Add check constraints for unsigned.
-//    foreach ($table['fields'] as $field_name => $field) {
-//      if (!empty($field['unsigned']) && (bool) $field['unsigned'] === TRUE) {
-//        $sql = "ALTER TABLE " . $this->tableName($name) . " ADD CONSTRAINT " . $field_name . '_CHECK (' . $field_name . ' >= 0)';
-//        $this->connection->getDbalConnection()->exec($sql);
-//      }
-//    }
-
   }
 
   /**
