@@ -913,7 +913,7 @@ class Schema extends DatabaseSchema {
     $individually_prefixed_tables = $this->connection->getUnprefixedTablesMap();
     $default_prefix = $this->connection->tablePrefix();
     $default_prefix_length = strlen($default_prefix);
-error_log(var_export($default_prefix . ' ' . $default_prefix_length));
+error_log($default_prefix . ' ' . $default_prefix_length);
 
     $tables = [];
 error_log(var_export($this->dbalExtension->delegateListTableNames(), TRUE));

@@ -422,6 +422,18 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException') {
   /**
    * {@inheritdoc}
    */
+  public function delegateListTableNames() {
+    $db_table_names = $this->getDbalConnection()->getSchemaManager()->listTableNames();
+    $table_names = [];
+    foreach ($db_table_names as $db_table_name) {
+      $table_names[] = rtrim(ltrim($db_table_name, '"'), '"');
+    }
+    return $table_names;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function delegateGetDbalColumnType(&$dbal_type, array $drupal_field_specs) {
     if (isset($drupal_field_specs['type']) && $drupal_field_specs['type'] === 'blob') {
       $dbal_type = 'text';
