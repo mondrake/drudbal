@@ -947,9 +947,7 @@ error_log('Table: ' . $table_name);
     // Convert the table expression from its SQL LIKE syntax to a regular
     // expression and escape the delimiter that will be used for matching.
     $table_expression = str_replace(['%', '_'], ['.*?', '.'], preg_quote($table_expression, '/'));
-error_log(var_export($tables, TRUE));
     $tables = preg_grep('/^' . $table_expression . '$/i', $tables);
-error_log(var_export($tables, TRUE));
 
     return $tables;
   }
