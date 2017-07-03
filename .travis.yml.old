@@ -71,49 +71,41 @@ before_install:
       fi
   - .travis/oracle/install.sh
   - $HOME/build/mondrake/drudbal/oracle_user.sh
-
   # Install Oci8 extension for PHP.
   - echo $ORACLE_HOME | pecl install oci8
 
-  # Stage Drupal core to get dependencies.
+  # Get Drupal core and dependencies
   - |
       if [[ ! -f $DRUPAL_STAGING_DIR/index.php ]]; then
         git clone http://git.drupal.org/project/drupal.git $DRUPAL_STAGING_DIR
         cd $DRUPAL_STAGING_DIR
         composer install --no-progress
+        # Apply Drupal core patches
+        # [#2605284] Testing framework does not work with contributed database drivers
+        curl https://www.drupal.org/files/issues/simpletest_is_broken_on-2605284-89.patch | git apply
+        # [#2867788] Log::findCaller fails to report the correct caller function with non-core drivers.
+        curl https://www.drupal.org/files/issues/2867788-22_0.patch | git apply
+        # [#2871374] SelectTest::testVulnerableComment fails when driver overrides Select::__toString
+        curl https://www.drupal.org/files/issues/2871374-2.patch | git apply
+        # [#2868273] Missing a test for table TRUNCATE while in transaction
+        curl https://www.drupal.org/files/issues/2868273-9.patch | git apply
+        # [#2874499] Test failures when db driver is set to not support transactions
+        curl https://www.drupal.org/files/issues/2874499-7-transaction-enabled.patch | git apply
+        # [#2875679] BasicSyntaxTest::testConcatFields fails with contrib driver
+        curl https://www.drupal.org/files/issues/2875679-2.patch | git apply
+        # [#2879677] Decouple getting table vs column comments in Schema
+        curl https://www.drupal.org/files/issues/2879677-3.patch | git apply
+        # [#2881522] Add a Schema::getPrimaryKeyColumns method to remove database specific logic from test
+        curl https://www.drupal.org/files/issues/2881522-2.patch | git apply
         # Get Drupal Console
         # composer require "drupal/console:~1.0" --prefer-dist --optimize-autoloader
         # Get Doctrine DBAL
         composer require "doctrine/dbal:^2.5.12" --no-progress
       fi
-
-  # Always get latest Drupal core.
-  - git clone http://git.drupal.org/project/drupal.git $DRUPAL_PATH
-  - cd $DRUPAL_PATH
-
-  # Apply Drupal core patches.
-  # [#2605284] Testing framework does not work with contributed database drivers
-  - curl https://www.drupal.org/files/issues/simpletest_is_broken_on-2605284-89.patch | git apply
-  # [#2867788] Log::findCaller fails to report the correct caller function with non-core drivers.
-  - curl https://www.drupal.org/files/issues/2867788-22_0.patch | git apply
-  # [#2871374] SelectTest::testVulnerableComment fails when driver overrides Select::__toString
-  - curl https://www.drupal.org/files/issues/2871374-2.patch | git apply
-  # [#2868273] Missing a test for table TRUNCATE while in transaction
-  - curl https://www.drupal.org/files/issues/2868273-9.patch | git apply
-  # [#2874499] Test failures when db driver is set to not support transactions
-  - curl https://www.drupal.org/files/issues/2874499-7-transaction-enabled.patch | git apply
-  # [#2875679] BasicSyntaxTest::testConcatFields fails with contrib driver
-  - curl https://www.drupal.org/files/issues/2875679-2.patch | git apply
-  # [#2879677] Decouple getting table vs column comments in Schema
-  - curl https://www.drupal.org/files/issues/2879677-3.patch | git apply
-  # [#2881522] Add a Schema::getPrimaryKeyColumns method to remove database specific logic from test
-  - curl https://www.drupal.org/files/issues/2881522-2.patch | git apply
-
 install:
-  # Copy the vendor dependencies.
-  - mkdir -p $DRUPAL_PATH/vendor
-  - cp -r $DRUPAL_STAGING_DIR/vendor/. $DRUPAL_PATH/vendor
-  - cp -r $DRUPAL_STAGING_DIR/composer.* $DRUPAL_PATH
+  # Copy the staging directory to the testing directory.
+  - mkdir -p $DRUPAL_PATH
+  - cp -r $DRUPAL_STAGING_DIR/. $DRUPAL_PATH
 
   # Copy the repo to the modules/contrib directory.
   - mkdir -p $DRUPAL_PATH/modules/contrib/drudbal
