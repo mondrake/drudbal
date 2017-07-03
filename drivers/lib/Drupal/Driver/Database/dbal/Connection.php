@@ -181,7 +181,7 @@ $timer_start = microtime(TRUE);
 $timer_stop = microtime(TRUE);
 $execution_time = round(($timer_stop - $timer_start) * 1000, 2);
 $elapsed_time = Timer::read('drudbal:install_cli');
-error_log($elapsed_time . '|' . $execution_time . '|' . $stmt->getQueryString());
+//error_log($elapsed_time . '|' . $execution_time . '|' . $stmt->getQueryString());
       }
       else {
         $this->expandArguments($query, $args);

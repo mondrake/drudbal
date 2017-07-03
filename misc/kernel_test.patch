@@ -1,5 +1,5 @@
 diff --git a/core/tests/Drupal/KernelTests/KernelTestBase.php b/core/tests/Drupal/KernelTests/KernelTestBase.php
-index 6a35f15..1e54c9e 100644
+index 6a35f15..1d14f62 100644
 --- a/core/tests/Drupal/KernelTests/KernelTestBase.php
 +++ b/core/tests/Drupal/KernelTests/KernelTestBase.php
 @@ -2,6 +2,7 @@
@@ -10,78 +10,28 @@ index 6a35f15..1e54c9e 100644
  use Drupal\Component\FileCache\ApcuFileCacheBackend;
  use Drupal\Component\FileCache\FileCache;
  use Drupal\Component\FileCache\FileCacheFactory;
-@@ -225,12 +226,16 @@ protected static function getDrupalRoot() {
+@@ -225,6 +226,7 @@ protected static function getDrupalRoot() {
     * {@inheritdoc}
     */
    protected function setUp() {
 +Timer::start('drudbal:install_cli');
      parent::setUp();
-+error_log(Timer::read('drudbal:install_cli') . '||TestCase::setup done');
  
      $this->root = static::getDrupalRoot();
-     $this->initFileCache();
-     $this->bootEnvironment();
-+error_log(Timer::read('drudbal:install_cli') . '||bootEnvironment() done');
-     $this->bootKernel();
-+error_log(Timer::read('drudbal:install_cli') . '||bootKernel() done');
-   }
- 
-   /**
-@@ -361,6 +366,7 @@ private function bootKernel() {
-     // Ensure database tasks have been run.
-     require_once __DIR__ . '/../../../includes/install.inc';
-     $connection = Database::getConnection();
-+error_log(Timer::read('drudbal:install_cli') . '||Database::getConnection() done');
-     $errors = db_installer_object($connection->driver())->runTasks();
-     if (!empty($errors)) {
-       $this->fail('Failed to run installer database tasks: ' . implode(', ', $errors));
-@@ -382,12 +388,14 @@ private function bootKernel() {
-       'theme' => [],
-       'profile' => '',
-     ]);
-+error_log(Timer::read('drudbal:install_cli') . '||get(config.storage)->write(core.extension) done');
- 
-     $settings = Settings::getAll();
-     $settings['php_storage']['default'] = [
-       'class' => '\Drupal\Component\PhpStorage\FileStorage',
-     ];
-     new Settings($settings);
-+error_log(Timer::read('drudbal:install_cli') . '||new Settings done');
- 
-     // Manually configure the test mail collector implementation to prevent
-     // tests from sending out emails and collect them in state instead.
-@@ -615,17 +623,23 @@ protected function tearDown() {
-       $this->kernel->shutdown();
-     }
- 
-+error_log(Timer::read('drudbal:install_cli') . '||Before removing tables');
-     // Remove all prefixed tables.
-     $original_connection_info = Database::getConnectionInfo('simpletest_original_default');
-     $original_prefix = $original_connection_info['default']['prefix']['default'];
+@@ -621,11 +623,13 @@ protected function tearDown() {
      $test_connection_info = Database::getConnectionInfo('default');
      $test_prefix = $test_connection_info['default']['prefix']['default'];
-+error_log(Timer::read('drudbal:install_cli') . '||Original prefix ' . $original_prefix . ' Test prefix ' . $test_prefix);
      if ($original_prefix != $test_prefix) {
 -      $tables = Database::getConnection()->schema()->findTables('%');
 +      //$tables = Database::getConnection()->schema()->findTables('%');
 +      $tables = Database::getConnection()->getDbalConnection()->getSchemaManager()->listTableNames();
-+error_log(Timer::read('drudbal:install_cli') . '||Tables: ' . var_export($tables, TRUE));
        foreach ($tables as $table) {
 -        if (Database::getConnection()->schema()->dropTable($table)) {
 +        //if (Database::getConnection()->schema()->dropTable($table)) {
 +          Database::getConnection()->getDbalConnection()->getSchemaManager()->dropTable($table);
-+error_log(Timer::read('drudbal:install_cli') . '||Removed ' . $table);
            unset($tables[$table]);
 -        }
 +        //}
        }
      }
  
-@@ -660,6 +674,7 @@ protected function tearDown() {
-     new Settings([]);
- 
-     parent::tearDown();
-+error_log(Timer::read('drudbal:install_cli') . '||Final');
-   }
- 
-   /**
