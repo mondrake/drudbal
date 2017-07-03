@@ -1,5 +1,35 @@
+diff --git a/core/lib/Drupal/Core/Config/CachedStorage.php b/core/lib/Drupal/Core/Config/CachedStorage.php
+index 7286fbc..53399c5 100644
+--- a/core/lib/Drupal/Core/Config/CachedStorage.php
++++ b/core/lib/Drupal/Core/Config/CachedStorage.php
+@@ -2,6 +2,7 @@
+ 
+ namespace Drupal\Core\Config;
+ 
++use Drupal\Component\Utility\Timer;
+ use Drupal\Core\Cache\CacheBackendInterface;
+ use Drupal\Core\DependencyInjection\DependencySerializationTrait;
+ 
+@@ -121,13 +122,17 @@ public function readMultiple(array $names) {
+    * {@inheritdoc}
+    */
+   public function write($name, array $data) {
++error_log(Timer::read('drudbal:install_cli') . '||CachedStorage::write start');
+     if ($this->storage->write($name, $data)) {
+       // While not all written data is read back, setting the cache instead of
+       // just deleting it avoids cache rebuild stampedes.
+       $this->cache->set($this->getCacheKey($name), $data);
++error_log(Timer::read('drudbal:install_cli') . '||cache set done');
+       $this->findByPrefixCache = [];
++error_log(Timer::read('drudbal:install_cli') . '||find by prefix done');
+       return TRUE;
+     }
++error_log(Timer::read('drudbal:install_cli') . '||CachedStorage::write end FALSE');
+     return FALSE;
+   }
+ 
 diff --git a/core/tests/Drupal/KernelTests/KernelTestBase.php b/core/tests/Drupal/KernelTests/KernelTestBase.php
-index 6a35f15..4ee4aa8 100644
+index 6a35f15..3d565e7 100644
 --- a/core/tests/Drupal/KernelTests/KernelTestBase.php
 +++ b/core/tests/Drupal/KernelTests/KernelTestBase.php
 @@ -2,6 +2,7 @@
@@ -29,27 +59,7 @@ index 6a35f15..4ee4aa8 100644
    }
  
    /**
-@@ -330,6 +337,7 @@ private function bootKernel() {
-     $GLOBALS['conf']['container_service_providers']['test'] = $this;
- 
-     $modules = self::getModulesToEnable(get_class($this));
-+error_log(Timer::read('drudbal:install_cli') . '||getModulesToEnable done');
- 
-     // Prepare a precompiled container for all tests of this class.
-     // Substantially improves performance, since ContainerBuilder::compile()
-@@ -341,9 +349,11 @@ private function bootKernel() {
-       // PHPUnit's @test annotations are intentionally ignored/not supported.
-       return strpos($method->getName(), 'test') === 0;
-     }));
-+error_log(Timer::read('drudbal:install_cli') . '||$test_method_count done');
- 
-     // Bootstrap the kernel. Do not use createFromRequest() to retain Settings.
-     $kernel = new DrupalKernel('testing', $this->classLoader, FALSE);
-+error_log(Timer::read('drudbal:install_cli') . '||new DrupalKernel done');
-     $kernel->setSitePath($this->siteDirectory);
-     // Boot a new one-time container from scratch. Ensure to set the module list
-     // upfront to avoid a subsequent rebuild.
-@@ -361,16 +371,20 @@ private function bootKernel() {
+@@ -361,6 +368,7 @@ private function bootKernel() {
      // Ensure database tasks have been run.
      require_once __DIR__ . '/../../../includes/install.inc';
      $connection = Database::getConnection();
@@ -57,20 +67,19 @@ index 6a35f15..4ee4aa8 100644
      $errors = db_installer_object($connection->driver())->runTasks();
      if (!empty($errors)) {
        $this->fail('Failed to run installer database tasks: ' . implode(', ', $errors));
+@@ -371,9 +379,11 @@ private function bootKernel() {
      }
-+error_log(Timer::read('drudbal:install_cli') . '||db_installer_object done');
- 
-     if ($modules) {
-       $this->container->get('module_handler')->loadAll();
-     }
-+error_log(Timer::read('drudbal:install_cli') . '||get(module_handler)->loadAll() done');
  
      $this->container->get('request_stack')->push($request);
 +error_log(Timer::read('drudbal:install_cli') . '||get(request_stack)->push($request) done');
  
      // Setup the destion to the be frontpage by default.
      \Drupal::destination()->set('/');
-@@ -382,12 +396,14 @@ private function bootKernel() {
++error_log(Timer::read('drudbal:install_cli') . '||destination()->set done');
+ 
+     // Write the core.extension configuration.
+     // Required for ConfigInstaller::installDefaultConfig() to work.
+@@ -382,12 +392,14 @@ private function bootKernel() {
        'theme' => [],
        'profile' => '',
      ]);
@@ -85,7 +94,7 @@ index 6a35f15..4ee4aa8 100644
  
      // Manually configure the test mail collector implementation to prevent
      // tests from sending out emails and collect them in state instead.
-@@ -615,6 +631,7 @@ protected function tearDown() {
+@@ -615,6 +627,7 @@ protected function tearDown() {
        $this->kernel->shutdown();
      }
  
@@ -93,7 +102,7 @@ index 6a35f15..4ee4aa8 100644
      // Remove all prefixed tables.
      $original_connection_info = Database::getConnectionInfo('simpletest_original_default');
      $original_prefix = $original_connection_info['default']['prefix']['default'];
-@@ -660,6 +677,7 @@ protected function tearDown() {
+@@ -660,6 +673,7 @@ protected function tearDown() {
      new Settings([]);
  
      parent::tearDown();
