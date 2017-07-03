@@ -1,5 +1,5 @@
 diff --git a/core/tests/Drupal/KernelTests/KernelTestBase.php b/core/tests/Drupal/KernelTests/KernelTestBase.php
-index 6a35f15..e9599a6 100644
+index 6a35f15..3fdb330 100644
 --- a/core/tests/Drupal/KernelTests/KernelTestBase.php
 +++ b/core/tests/Drupal/KernelTests/KernelTestBase.php
 @@ -2,6 +2,7 @@
@@ -29,7 +29,43 @@ index 6a35f15..e9599a6 100644
    }
  
    /**
-@@ -615,6 +622,7 @@ protected function tearDown() {
+@@ -330,6 +337,7 @@ private function bootKernel() {
+     $GLOBALS['conf']['container_service_providers']['test'] = $this;
+ 
+     $modules = self::getModulesToEnable(get_class($this));
++error_log(Timer::read('drudbal:install_cli') . '||getModulesToEnable done');
+ 
+     // Prepare a precompiled container for all tests of this class.
+     // Substantially improves performance, since ContainerBuilder::compile()
+@@ -341,9 +349,11 @@ private function bootKernel() {
+       // PHPUnit's @test annotations are intentionally ignored/not supported.
+       return strpos($method->getName(), 'test') === 0;
+     }));
++error_log(Timer::read('drudbal:install_cli') . '||$test_method_count done');
+ 
+     // Bootstrap the kernel. Do not use createFromRequest() to retain Settings.
+     $kernel = new DrupalKernel('testing', $this->classLoader, FALSE);
++error_log(Timer::read('drudbal:install_cli') . '||new DrupalKernel done');
+     $kernel->setSitePath($this->siteDirectory);
+     // Boot a new one-time container from scratch. Ensure to set the module list
+     // upfront to avoid a subsequent rebuild.
+@@ -361,6 +371,7 @@ private function bootKernel() {
+     // Ensure database tasks have been run.
+     require_once __DIR__ . '/../../../includes/install.inc';
+     $connection = Database::getConnection();
++error_log(Timer::read('drudbal:install_cli') . '||Database::getConnection() done');
+     $errors = db_installer_object($connection->driver())->runTasks();
+     if (!empty($errors)) {
+       $this->fail('Failed to run installer database tasks: ' . implode(', ', $errors));
+@@ -388,6 +399,7 @@ private function bootKernel() {
+       'class' => '\Drupal\Component\PhpStorage\FileStorage',
+     ];
+     new Settings($settings);
++error_log(Timer::read('drudbal:install_cli') . '||new Settings done');
+ 
+     // Manually configure the test mail collector implementation to prevent
+     // tests from sending out emails and collect them in state instead.
+@@ -615,6 +627,7 @@ protected function tearDown() {
        $this->kernel->shutdown();
      }
  
@@ -37,7 +73,7 @@ index 6a35f15..e9599a6 100644
      // Remove all prefixed tables.
      $original_connection_info = Database::getConnectionInfo('simpletest_original_default');
      $original_prefix = $original_connection_info['default']['prefix']['default'];
-@@ -660,6 +668,7 @@ protected function tearDown() {
+@@ -660,6 +673,7 @@ protected function tearDown() {
      new Settings([]);
  
      parent::tearDown();
