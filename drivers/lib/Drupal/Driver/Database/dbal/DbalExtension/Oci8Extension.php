@@ -377,10 +377,6 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException') {
       'pass' => [],
     ];
 
-error_log(Timer::read('drudbal:install_cli') . '||Oci8Extension::runInstallTasks start');
-    $this->connection->query("CREATE TABLE {drudbal_oracle_install} (id int, PRIMARY KEY(id))");
-error_log(Timer::read('drudbal:install_cli') . '||Oci8Extension::runInstallTasks end');
-
     return $results;
   }
 

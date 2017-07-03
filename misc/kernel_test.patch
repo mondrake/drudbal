@@ -1,5 +1,5 @@
 diff --git a/core/tests/Drupal/KernelTests/KernelTestBase.php b/core/tests/Drupal/KernelTests/KernelTestBase.php
-index 6a35f15..95a9f03 100644
+index 6a35f15..1e54c9e 100644
 --- a/core/tests/Drupal/KernelTests/KernelTestBase.php
 +++ b/core/tests/Drupal/KernelTests/KernelTestBase.php
 @@ -2,6 +2,7 @@
@@ -50,7 +50,7 @@ index 6a35f15..95a9f03 100644
  
      // Manually configure the test mail collector implementation to prevent
      // tests from sending out emails and collect them in state instead.
-@@ -615,15 +623,19 @@ protected function tearDown() {
+@@ -615,17 +623,23 @@ protected function tearDown() {
        $this->kernel->shutdown();
      }
  
@@ -62,15 +62,22 @@ index 6a35f15..95a9f03 100644
      $test_prefix = $test_connection_info['default']['prefix']['default'];
 +error_log(Timer::read('drudbal:install_cli') . '||Original prefix ' . $original_prefix . ' Test prefix ' . $test_prefix);
      if ($original_prefix != $test_prefix) {
-       $tables = Database::getConnection()->schema()->findTables('%');
+-      $tables = Database::getConnection()->schema()->findTables('%');
++      //$tables = Database::getConnection()->schema()->findTables('%');
++      $tables = Database::getConnection()->getDbalConnection()->getSchemaManager()->listTableNames();
 +error_log(Timer::read('drudbal:install_cli') . '||Tables: ' . var_export($tables, TRUE));
        foreach ($tables as $table) {
-         if (Database::getConnection()->schema()->dropTable($table)) {
+-        if (Database::getConnection()->schema()->dropTable($table)) {
++        //if (Database::getConnection()->schema()->dropTable($table)) {
++          Database::getConnection()->getDbalConnection()->getSchemaManager()->dropTable($table);
 +error_log(Timer::read('drudbal:install_cli') . '||Removed ' . $table);
            unset($tables[$table]);
-         }
+-        }
++        //}
        }
-@@ -660,6 +672,7 @@ protected function tearDown() {
+     }
+ 
+@@ -660,6 +674,7 @@ protected function tearDown() {
      new Settings([]);
  
      parent::tearDown();
