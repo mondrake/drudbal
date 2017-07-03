@@ -1,5 +1,5 @@
 diff --git a/core/tests/Drupal/KernelTests/KernelTestBase.php b/core/tests/Drupal/KernelTests/KernelTestBase.php
-index 6a35f15..f8ee0f9 100644
+index 6a35f15..95a9f03 100644
 --- a/core/tests/Drupal/KernelTests/KernelTestBase.php
 +++ b/core/tests/Drupal/KernelTests/KernelTestBase.php
 @@ -2,6 +2,7 @@
@@ -60,7 +60,7 @@ index 6a35f15..f8ee0f9 100644
      $original_prefix = $original_connection_info['default']['prefix']['default'];
      $test_connection_info = Database::getConnectionInfo('default');
      $test_prefix = $test_connection_info['default']['prefix']['default'];
-+error_log(Timer::read('drudbal:install_cli') . '||Original prefix ' . $original_prefix . ' Test prefix ' . $test_prefix . );
++error_log(Timer::read('drudbal:install_cli') . '||Original prefix ' . $original_prefix . ' Test prefix ' . $test_prefix);
      if ($original_prefix != $test_prefix) {
        $tables = Database::getConnection()->schema()->findTables('%');
 +error_log(Timer::read('drudbal:install_cli') . '||Tables: ' . var_export($tables, TRUE));
