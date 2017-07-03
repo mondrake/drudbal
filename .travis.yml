@@ -37,7 +37,7 @@ env:
     #- DBAL_URL="mysqli://$DB_AUTH@$HOST_ADDR/drudbal" SIMPLETEST_DB="dbal://$DB_AUTH@$HOST_ADDR/drudbal?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=mysqli#drudbal_"
     #- DBAL_URL="sqlite:///sites/default/files/.ht.sqlite" SIMPLETEST_DB="sqlite://test_user:test_pass@test_host:3306/sites/default/files/.ht.sqlite"
     #- DBAL_URL="sqlite:///sites/default/files/.ht.sqlite" SIMPLETEST_DB="dbal://fake/sites/default/files/.ht.sqlite?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=pdo_sqlite"
-    - DBAL_URL="sqlite:///:memory:" SIMPLETEST_DB="dbal://fake/:memory:?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=pdo_sqlite"
+    #- DBAL_URL="sqlite:///:memory:" SIMPLETEST_DB="dbal://fake/:memory:?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=pdo_sqlite"
     - DBAL_URL="oci8://ORAROOT:DRUDBAL@$HOST_ADDR:1521/XE" SIMPLETEST_DB="dbal://ORAROOT:DRUDBAL@$HOST_ADDR:1521/XE?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=oci8"
 
 matrix:
@@ -51,7 +51,7 @@ cache:
     - $ORACLE_DOWNLOAD_DIR
 
 before_install:
-  # Remove XDebug
+  # Remove XDebug.
   - phpenv config-rm xdebug.ini
   # Add APCu extension.
   - echo "extension = apcu.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
@@ -124,11 +124,11 @@ install:
   - cd $DRUPAL_PATH/drivers/lib/Drupal/Driver/Database/
   - ln -s $DRUPAL_PATH/modules/contrib/drudbal/drivers/lib/Drupal/Driver/Database/dbal dbal
 
-  # Patch Kernel test
+  # Patch Kernel test.
   - cd $DRUPAL_PATH
   - git apply -v $DRUPAL_PATH/modules/contrib/drudbal/misc/kernel_test.patch
 
-  # Install Drupal
+  # Install Drupal.
   - cd $DRUPAL_PATH/core
   - cp $DRUPAL_PATH/modules/contrib/drudbal/misc/install_cli.php install_cli.php
   - php install_cli.php
