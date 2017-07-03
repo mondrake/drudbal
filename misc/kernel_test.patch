@@ -1,5 +1,5 @@
 diff --git a/core/lib/Drupal/Core/Config/DatabaseStorage.php b/core/lib/Drupal/Core/Config/DatabaseStorage.php
-index 1368dff..b8285a2 100644
+index 1368dff..287018f 100644
 --- a/core/lib/Drupal/Core/Config/DatabaseStorage.php
 +++ b/core/lib/Drupal/Core/Config/DatabaseStorage.php
 @@ -2,6 +2,7 @@
@@ -40,6 +40,31 @@ index 1368dff..b8285a2 100644
      $options = ['return' => Database::RETURN_AFFECTED] + $this->options;
      return (bool) $this->connection->merge($this->table, $options)
        ->keys(['collection', 'name'], [$this->collection, $name])
+@@ -160,9 +167,12 @@ protected function doWrite($name, $data) {
+    *   If a database error occurs.
+    */
+   protected function ensureTableExists()  {
++error_log(Timer::read('drudbal:install_cli') . '||DatabaseStorage::ensureTableExists start');
+     try {
+       if (!$this->connection->schema()->tableExists($this->table)) {
++error_log(Timer::read('drudbal:install_cli') . '||->tableExists done');
+         $this->connection->schema()->createTable($this->table, static::schemaDefinition());
++error_log(Timer::read('drudbal:install_cli') . '||->createTable done');
+         return TRUE;
+       }
+     }
+@@ -170,9 +180,11 @@ protected function ensureTableExists()  {
+     // recreate it will throw an exception. In this case just catch the
+     // exception and do nothing.
+     catch (SchemaObjectExistsException $e) {
++error_log(Timer::read('drudbal:install_cli') . '||SchemaObjectExistsException');
+       return TRUE;
+     }
+     catch (\Exception $e) {
++error_log(Timer::read('drudbal:install_cli') . '||Exception');
+       throw new StorageException($e->getMessage(), NULL, $e);
+     }
+     return FALSE;
 diff --git a/core/tests/Drupal/KernelTests/KernelTestBase.php b/core/tests/Drupal/KernelTests/KernelTestBase.php
 index 6a35f15..c8c8634 100644
 --- a/core/tests/Drupal/KernelTests/KernelTestBase.php
