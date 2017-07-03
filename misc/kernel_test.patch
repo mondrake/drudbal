@@ -1,5 +1,5 @@
 diff --git a/core/tests/Drupal/KernelTests/KernelTestBase.php b/core/tests/Drupal/KernelTests/KernelTestBase.php
-index 6a35f15..3fdb330 100644
+index 6a35f15..4ee4aa8 100644
 --- a/core/tests/Drupal/KernelTests/KernelTestBase.php
 +++ b/core/tests/Drupal/KernelTests/KernelTestBase.php
 @@ -2,6 +2,7 @@
@@ -49,7 +49,7 @@ index 6a35f15..3fdb330 100644
      $kernel->setSitePath($this->siteDirectory);
      // Boot a new one-time container from scratch. Ensure to set the module list
      // upfront to avoid a subsequent rebuild.
-@@ -361,6 +371,7 @@ private function bootKernel() {
+@@ -361,16 +371,20 @@ private function bootKernel() {
      // Ensure database tasks have been run.
      require_once __DIR__ . '/../../../includes/install.inc';
      $connection = Database::getConnection();
@@ -57,7 +57,27 @@ index 6a35f15..3fdb330 100644
      $errors = db_installer_object($connection->driver())->runTasks();
      if (!empty($errors)) {
        $this->fail('Failed to run installer database tasks: ' . implode(', ', $errors));
-@@ -388,6 +399,7 @@ private function bootKernel() {
+     }
++error_log(Timer::read('drudbal:install_cli') . '||db_installer_object done');
+ 
+     if ($modules) {
+       $this->container->get('module_handler')->loadAll();
+     }
++error_log(Timer::read('drudbal:install_cli') . '||get(module_handler)->loadAll() done');
+ 
+     $this->container->get('request_stack')->push($request);
++error_log(Timer::read('drudbal:install_cli') . '||get(request_stack)->push($request) done');
+ 
+     // Setup the destion to the be frontpage by default.
+     \Drupal::destination()->set('/');
+@@ -382,12 +396,14 @@ private function bootKernel() {
+       'theme' => [],
+       'profile' => '',
+     ]);
++error_log(Timer::read('drudbal:install_cli') . '||get(config.storage)->write(core.extension) done');
+ 
+     $settings = Settings::getAll();
+     $settings['php_storage']['default'] = [
        'class' => '\Drupal\Component\PhpStorage\FileStorage',
      ];
      new Settings($settings);
@@ -65,7 +85,7 @@ index 6a35f15..3fdb330 100644
  
      // Manually configure the test mail collector implementation to prevent
      // tests from sending out emails and collect them in state instead.
-@@ -615,6 +627,7 @@ protected function tearDown() {
+@@ -615,6 +631,7 @@ protected function tearDown() {
        $this->kernel->shutdown();
      }
  
@@ -73,7 +93,7 @@ index 6a35f15..3fdb330 100644
      // Remove all prefixed tables.
      $original_connection_info = Database::getConnectionInfo('simpletest_original_default');
      $original_prefix = $original_connection_info['default']['prefix']['default'];
-@@ -660,6 +673,7 @@ protected function tearDown() {
+@@ -660,6 +677,7 @@ protected function tearDown() {
      new Settings([]);
  
      parent::tearDown();
