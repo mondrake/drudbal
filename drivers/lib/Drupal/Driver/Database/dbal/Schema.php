@@ -82,14 +82,17 @@ class Schema extends DatabaseSchema {
    * {@inheritdoc}
    */
   public function createTable($name, $table) {
+error_log(Timer::read('drudbal:install_cli') . '||Schema::createTable start');
     if ($this->tableExists($name)) {
       throw new SchemaObjectExistsException(t('Table @name already exists.', ['@name' => $name]));
     }
-
+error_log(Timer::read('drudbal:install_cli') . '||->tableExists done');
     // Create table via DBAL.
     $current_schema = $this->dbalSchema();
+error_log(Timer::read('drudbal:install_cli') . '||->dbalSchema done');
     $to_schema = clone $current_schema;
     $new_table = $to_schema->createTable($this->tableName($name));
+error_log(Timer::read('drudbal:install_cli') . '||->createTable done');
 
     // Add table comment.
     if (!empty($table['description'])) {
@@ -102,12 +105,14 @@ class Schema extends DatabaseSchema {
     $this->dbalExtension->alterCreateTableOptions($new_table, $to_schema, $table, $name);
 
     // Add columns.
+error_log(Timer::read('drudbal:install_cli') . '||addColumns start');
     foreach ($table['fields'] as $field_name => $field) {
       $dbal_type = $this->getDbalColumnType($field);
       $new_table->addColumn($field_name, $dbal_type, $this->getDbalColumnOptions('createTable', $field_name, $dbal_type, $field));
     }
 
     // Add primary key.
+error_log(Timer::read('drudbal:install_cli') . '||addPrimaryKey start');
     if (!empty($table['primary key'])) {
       // @todo in MySql, this could still be a list of columns with length.
       // However we have to add here instead of separate calls to
@@ -120,6 +125,7 @@ class Schema extends DatabaseSchema {
     $this->dbalExecuteSchemaChange($to_schema);
 
     // Add unique keys.
+error_log(Timer::read('drudbal:install_cli') . '||addUniqueKey start');
     if (!empty($table['unique keys'])) {
       foreach ($table['unique keys'] as $key => $fields) {
         $this->addUniqueKey($name, $key, $fields);
@@ -127,11 +133,13 @@ class Schema extends DatabaseSchema {
     }
 
     // Add indexes.
+error_log(Timer::read('drudbal:install_cli') . '||addIndex start');
     if (!empty($table['indexes'])) {
       foreach ($table['indexes'] as $index => $fields) {
         $this->addIndex($name, $index, $fields, $table);
       }
     }
+error_log(Timer::read('drudbal:install_cli') . '||Schema::createTable end');
 
     // Add check constraints for unsigned.
 //    foreach ($table['fields'] as $field_name => $field) {
