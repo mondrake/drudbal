@@ -131,7 +131,7 @@ install:
   # Install Drupal.
   - cd $DRUPAL_PATH/core
   - cp $DRUPAL_PATH/modules/contrib/drudbal/misc/install_cli.php install_cli.php
-  - php install_cli.php
+  #- php install_cli.php
 
   # Get a webserver running.
   #- drupal --quiet server "$DRUPAL_SERVER_ADDRESS:$DRUPAL_SERVER_HTTP_PORT" &
