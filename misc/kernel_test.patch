@@ -1,34 +1,45 @@
-diff --git a/core/lib/Drupal/Core/Config/CachedStorage.php b/core/lib/Drupal/Core/Config/CachedStorage.php
-index 7286fbc..54da853 100644
---- a/core/lib/Drupal/Core/Config/CachedStorage.php
-+++ b/core/lib/Drupal/Core/Config/CachedStorage.php
+diff --git a/core/lib/Drupal/Core/Config/DatabaseStorage.php b/core/lib/Drupal/Core/Config/DatabaseStorage.php
+index 1368dff..b8285a2 100644
+--- a/core/lib/Drupal/Core/Config/DatabaseStorage.php
++++ b/core/lib/Drupal/Core/Config/DatabaseStorage.php
 @@ -2,6 +2,7 @@
  
  namespace Drupal\Core\Config;
  
 +use Drupal\Component\Utility\Timer;
- use Drupal\Core\Cache\CacheBackendInterface;
- use Drupal\Core\DependencyInjection\DependencySerializationTrait;
- 
-@@ -121,13 +122,18 @@ public function readMultiple(array $names) {
+ use Drupal\Core\Database\Database;
+ use Drupal\Core\Database\Connection;
+ use Drupal\Core\Database\SchemaObjectExistsException;
+@@ -118,16 +119,21 @@ public function readMultiple(array $names) {
     * {@inheritdoc}
     */
    public function write($name, array $data) {
-+error_log(Timer::read('drudbal:install_cli') . '||CachedStorage::write start');
-     if ($this->storage->write($name, $data)) {
-       // While not all written data is read back, setting the cache instead of
-       // just deleting it avoids cache rebuild stampedes.
-+error_log(Timer::read('drudbal:install_cli') . '||storage->write done');
-       $this->cache->set($this->getCacheKey($name), $data);
-+error_log(Timer::read('drudbal:install_cli') . '||cache->set done');
-       $this->findByPrefixCache = [];
-+error_log(Timer::read('drudbal:install_cli') . '||CachedStorage::write end TRUE');
-       return TRUE;
++error_log(Timer::read('drudbal:install_cli') . '||DatabaseStorage::write start');
+     $data = $this->encode($data);
++error_log(Timer::read('drudbal:install_cli') . '||->encode done');
+     try {
+       return $this->doWrite($name, $data);
      }
-+error_log(Timer::read('drudbal:install_cli') . '||CachedStorage::write end FALSE');
-     return FALSE;
+     catch (\Exception $e) {
++error_log(Timer::read('drudbal:install_cli') . '||exception start');
+       // If there was an exception, try to create the table.
+       if ($this->ensureTableExists()) {
++error_log(Timer::read('drudbal:install_cli') . '||->ensureTableExists() done');
+         return $this->doWrite($name, $data);
+       }
+       // Some other failure that we can not recover from.
++error_log(Timer::read('drudbal:install_cli') . '||other failure');
+       throw $e;
+     }
    }
- 
+@@ -143,6 +149,7 @@ public function write($name, array $data) {
+    * @return bool
+    */
+   protected function doWrite($name, $data) {
++error_log(Timer::read('drudbal:install_cli') . '||doWrite start');
+     $options = ['return' => Database::RETURN_AFFECTED] + $this->options;
+     return (bool) $this->connection->merge($this->table, $options)
+       ->keys(['collection', 'name'], [$this->collection, $name])
 diff --git a/core/tests/Drupal/KernelTests/KernelTestBase.php b/core/tests/Drupal/KernelTests/KernelTestBase.php
 index 6a35f15..c8c8634 100644
 --- a/core/tests/Drupal/KernelTests/KernelTestBase.php
