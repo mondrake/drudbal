@@ -2,7 +2,6 @@
 
 namespace Drupal\Driver\Database\dbal;
 
-use Drupal\Component\Utility\Timer;
 use Drupal\Core\Database\SchemaObjectExistsException;
 use Drupal\Core\Database\SchemaObjectDoesNotExistException;
 use Drupal\Core\Database\Schema as DatabaseSchema;
@@ -85,6 +84,7 @@ class Schema extends DatabaseSchema {
     if ($this->tableExists($name)) {
       throw new SchemaObjectExistsException(t('Table @name already exists.', ['@name' => $name]));
     }
+
     // Create table via DBAL.
     $current_schema = $this->dbalSchema();
     $to_schema = clone $current_schema;
@@ -883,12 +883,7 @@ class Schema extends DatabaseSchema {
    */
   protected function dbalExecuteSchemaChange(DbalSchema $to_schema) {
     foreach ($this->dbalSchema()->getMigrateToSql($to_schema, $this->dbalPlatform) as $sql) {
-$timer_start = microtime(TRUE);
       $this->connection->getDbalConnection()->exec($sql);
-$timer_stop = microtime(TRUE);
-$execution_time = round(($timer_stop - $timer_start) * 1000, 2);
-$elapsed_time = Timer::read('drudbal:install_cli');
-//error_log($elapsed_time . '|' . $execution_time . '|' . $sql);
     }
     $this->dbalSetCurrentSchema($to_schema);
     return TRUE;

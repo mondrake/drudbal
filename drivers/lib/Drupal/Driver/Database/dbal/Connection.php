@@ -2,7 +2,6 @@
 
 namespace Drupal\Driver\Database\dbal;
 
-use Drupal\Component\Utility\Timer;
 use Drupal\Core\Database\Connection as DatabaseConnection;
 use Drupal\Core\Database\ConnectionNotDefinedException;
 use Drupal\Core\Database\Database;
@@ -176,12 +175,7 @@ class Connection extends DatabaseConnection {
       // which we pass to Statement::execute.
       if ($query instanceof StatementInterface) {
         $stmt = $query;
-$timer_start = microtime(TRUE);
         $stmt->execute(NULL, $options);
-$timer_stop = microtime(TRUE);
-$execution_time = round(($timer_stop - $timer_start) * 1000, 2);
-$elapsed_time = Timer::read('drudbal:install_cli');
-//error_log($elapsed_time . '|' . $execution_time . '|' . $stmt->getQueryString());
       }
       else {
         $this->expandArguments($query, $args);
@@ -196,12 +190,7 @@ $elapsed_time = Timer::read('drudbal:install_cli');
           throw new \InvalidArgumentException('; is not supported in SQL strings. Use only one statement at a time.');
         }
         $stmt = $this->prepareQueryWithParams($query, $args);
-$timer_start = microtime(TRUE);
         $stmt->execute($args, $options);
-$timer_stop = microtime(TRUE);
-$execution_time = round(($timer_stop - $timer_start) * 1000, 2);
-$elapsed_time = Timer::read('drudbal:install_cli');
-//error_log($elapsed_time . '|' . $execution_time . '|' . $query);
       }
 
       // Depending on the type of query we may need to return a different value.
