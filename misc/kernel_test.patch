@@ -1,5 +1,5 @@
 diff --git a/core/tests/Drupal/KernelTests/KernelTestBase.php b/core/tests/Drupal/KernelTests/KernelTestBase.php
-index 6a35f15..f63b6db 100644
+index 6a35f15..e9599a6 100644
 --- a/core/tests/Drupal/KernelTests/KernelTestBase.php
 +++ b/core/tests/Drupal/KernelTests/KernelTestBase.php
 @@ -2,6 +2,7 @@
@@ -10,29 +10,38 @@ index 6a35f15..f63b6db 100644
  use Drupal\Component\FileCache\ApcuFileCacheBackend;
  use Drupal\Component\FileCache\FileCache;
  use Drupal\Component\FileCache\FileCacheFactory;
-@@ -225,6 +226,7 @@ protected static function getDrupalRoot() {
+@@ -225,12 +226,18 @@ protected static function getDrupalRoot() {
     * {@inheritdoc}
     */
    protected function setUp() {
 +Timer::start('drudbal:install_cli');
      parent::setUp();
++error_log(Timer::read('drudbal:install_cli') . '||TestCase::setup done');
  
      $this->root = static::getDrupalRoot();
-@@ -615,6 +617,8 @@ protected function tearDown() {
++error_log(Timer::read('drudbal:install_cli') . '||getDrupalRoot() done');
+     $this->initFileCache();
++error_log(Timer::read('drudbal:install_cli') . '||initFileCache() done');
+     $this->bootEnvironment();
++error_log(Timer::read('drudbal:install_cli') . '||bootEnvironment() done');
+     $this->bootKernel();
++error_log(Timer::read('drudbal:install_cli') . '||bootKernel() done');
+   }
+ 
+   /**
+@@ -615,6 +622,7 @@ protected function tearDown() {
        $this->kernel->shutdown();
      }
  
-+$elapsed_time = Timer::read('drudbal:install_cli');
-+error_log($elapsed_time . '||Before removing tables');
++error_log(Timer::read('drudbal:install_cli') . '||Before removing tables');
      // Remove all prefixed tables.
      $original_connection_info = Database::getConnectionInfo('simpletest_original_default');
      $original_prefix = $original_connection_info['default']['prefix']['default'];
-@@ -660,6 +664,8 @@ protected function tearDown() {
+@@ -660,6 +668,7 @@ protected function tearDown() {
      new Settings([]);
  
      parent::tearDown();
-+$elapsed_time = Timer::read('drudbal:install_cli');
-+error_log($elapsed_time . '||Final');
++error_log(Timer::read('drudbal:install_cli') . '||Final');
    }
  
    /**
