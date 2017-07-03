@@ -1,72 +1,5 @@
-diff --git a/core/lib/Drupal/Core/Config/DatabaseStorage.php b/core/lib/Drupal/Core/Config/DatabaseStorage.php
-index 1368dff..287018f 100644
---- a/core/lib/Drupal/Core/Config/DatabaseStorage.php
-+++ b/core/lib/Drupal/Core/Config/DatabaseStorage.php
-@@ -2,6 +2,7 @@
- 
- namespace Drupal\Core\Config;
- 
-+use Drupal\Component\Utility\Timer;
- use Drupal\Core\Database\Database;
- use Drupal\Core\Database\Connection;
- use Drupal\Core\Database\SchemaObjectExistsException;
-@@ -118,16 +119,21 @@ public function readMultiple(array $names) {
-    * {@inheritdoc}
-    */
-   public function write($name, array $data) {
-+error_log(Timer::read('drudbal:install_cli') . '||DatabaseStorage::write start');
-     $data = $this->encode($data);
-+error_log(Timer::read('drudbal:install_cli') . '||->encode done');
-     try {
-       return $this->doWrite($name, $data);
-     }
-     catch (\Exception $e) {
-+error_log(Timer::read('drudbal:install_cli') . '||exception start');
-       // If there was an exception, try to create the table.
-       if ($this->ensureTableExists()) {
-+error_log(Timer::read('drudbal:install_cli') . '||->ensureTableExists() done');
-         return $this->doWrite($name, $data);
-       }
-       // Some other failure that we can not recover from.
-+error_log(Timer::read('drudbal:install_cli') . '||other failure');
-       throw $e;
-     }
-   }
-@@ -143,6 +149,7 @@ public function write($name, array $data) {
-    * @return bool
-    */
-   protected function doWrite($name, $data) {
-+error_log(Timer::read('drudbal:install_cli') . '||doWrite start');
-     $options = ['return' => Database::RETURN_AFFECTED] + $this->options;
-     return (bool) $this->connection->merge($this->table, $options)
-       ->keys(['collection', 'name'], [$this->collection, $name])
-@@ -160,9 +167,12 @@ protected function doWrite($name, $data) {
-    *   If a database error occurs.
-    */
-   protected function ensureTableExists()  {
-+error_log(Timer::read('drudbal:install_cli') . '||DatabaseStorage::ensureTableExists start');
-     try {
-       if (!$this->connection->schema()->tableExists($this->table)) {
-+error_log(Timer::read('drudbal:install_cli') . '||->tableExists done');
-         $this->connection->schema()->createTable($this->table, static::schemaDefinition());
-+error_log(Timer::read('drudbal:install_cli') . '||->createTable done');
-         return TRUE;
-       }
-     }
-@@ -170,9 +180,11 @@ protected function ensureTableExists()  {
-     // recreate it will throw an exception. In this case just catch the
-     // exception and do nothing.
-     catch (SchemaObjectExistsException $e) {
-+error_log(Timer::read('drudbal:install_cli') . '||SchemaObjectExistsException');
-       return TRUE;
-     }
-     catch (\Exception $e) {
-+error_log(Timer::read('drudbal:install_cli') . '||Exception');
-       throw new StorageException($e->getMessage(), NULL, $e);
-     }
-     return FALSE;
 diff --git a/core/tests/Drupal/KernelTests/KernelTestBase.php b/core/tests/Drupal/KernelTests/KernelTestBase.php
-index 6a35f15..c8c8634 100644
+index 6a35f15..f8ee0f9 100644
 --- a/core/tests/Drupal/KernelTests/KernelTestBase.php
 +++ b/core/tests/Drupal/KernelTests/KernelTestBase.php
 @@ -2,6 +2,7 @@
@@ -117,7 +50,7 @@ index 6a35f15..c8c8634 100644
  
      // Manually configure the test mail collector implementation to prevent
      // tests from sending out emails and collect them in state instead.
-@@ -615,6 +623,7 @@ protected function tearDown() {
+@@ -615,15 +623,19 @@ protected function tearDown() {
        $this->kernel->shutdown();
      }
  
@@ -125,15 +58,19 @@ index 6a35f15..c8c8634 100644
      // Remove all prefixed tables.
      $original_connection_info = Database::getConnectionInfo('simpletest_original_default');
      $original_prefix = $original_connection_info['default']['prefix']['default'];
-@@ -624,6 +633,7 @@ protected function tearDown() {
+     $test_connection_info = Database::getConnectionInfo('default');
+     $test_prefix = $test_connection_info['default']['prefix']['default'];
++error_log(Timer::read('drudbal:install_cli') . '||Original prefix ' . $original_prefix . ' Test prefix ' . $test_prefix . );
+     if ($original_prefix != $test_prefix) {
        $tables = Database::getConnection()->schema()->findTables('%');
++error_log(Timer::read('drudbal:install_cli') . '||Tables: ' . var_export($tables, TRUE));
        foreach ($tables as $table) {
          if (Database::getConnection()->schema()->dropTable($table)) {
 +error_log(Timer::read('drudbal:install_cli') . '||Removed ' . $table);
            unset($tables[$table]);
          }
        }
-@@ -660,6 +670,7 @@ protected function tearDown() {
+@@ -660,6 +672,7 @@ protected function tearDown() {
      new Settings([]);
  
      parent::tearDown();
