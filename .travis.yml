@@ -99,9 +99,10 @@ install:
   - ln -s $DRUPAL_PATH/modules/contrib/drudbal/drivers/lib/Drupal/Driver/Database/dbal dbal
 
   # Install Drupal.
+  - cp $DRUPAL_PATH/modules/contrib/drudbal/misc/*.php $DRUPAL_PATH/core
   - cd $DRUPAL_PATH/core
-  - cp $DRUPAL_PATH/modules/contrib/drudbal/misc/install_cli.php install_cli.php
   - php install_cli.php
+  - php post_install.php
 
   # Get a webserver running.
   #- drupal --quiet server "$DRUPAL_SERVER_ADDRESS:$DRUPAL_SERVER_HTTP_PORT" &
