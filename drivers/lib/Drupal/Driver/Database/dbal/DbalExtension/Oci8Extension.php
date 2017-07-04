@@ -319,6 +319,9 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException') {
         $adj_row = [];
         foreach ($row as $column => $value) {
           $column = strtolower($column);
+          if ($column === 'doctrine_rownum') {
+            continue;
+          }
           if (isset($this->connection->dbFields[$column])) {
             $column = $this->connection->dbFields[$column];
           }
@@ -338,6 +341,9 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException') {
           $ret = new \stdClass();
           foreach ($row as $column => $value) {
             $column = strtolower($column);
+            if ($column === 'doctrine_rownum') {
+              continue;
+            }
             if (isset($this->connection->dbFields[$column])) {
               $column = $this->connection->dbFields[$column];
             }
@@ -349,6 +355,9 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException') {
           $ret = new $fetch_class();
           foreach ($row as $column => $value) {
             $column = strtolower($column);
+            if ($column === 'doctrine_rownum') {
+              continue;
+            }
             if (isset($this->connection->dbFields[$column])) {
               $column = $this->connection->dbFields[$column];
             }
