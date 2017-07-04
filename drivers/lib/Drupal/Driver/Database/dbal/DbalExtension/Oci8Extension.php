@@ -301,6 +301,11 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException') {
     // quotes.
     $query = preg_replace('/([\s\.(])(' . $this->oracleKeywordTokens . ')([\s,)])/', '$1"$2"$3', $query);
 
+    // In case of missing from, Oracle requires FROM DUAL.
+    if (strpos($query, 'SELECT ') === 0 && strpos($query, ' FROM ') === FALSE) {
+      $query .= ' FROM DUAL';
+    }
+
 //error_log($query);
     return $this;
   }
