@@ -103,7 +103,7 @@ class Schema extends DatabaseSchema {
     // Add columns.
     foreach ($table['fields'] as $field_name => $field) {
       $dbal_type = $this->getDbalColumnType($field);
-      $new_table->addColumn($field_name, $dbal_type, $this->getDbalColumnOptions('createTable', $field_name, $dbal_type, $field));
+      $new_table->addColumn($this->dbalExtension->getDbFieldName($field_name), $dbal_type, $this->getDbalColumnOptions('createTable', $field_name, $dbal_type, $field));
     }
 
     // Add primary key.
