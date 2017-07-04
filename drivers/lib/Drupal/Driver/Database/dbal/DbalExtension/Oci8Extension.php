@@ -123,9 +123,13 @@ class Oci8Extension extends AbstractExtension {
     // Max lenght for Oracle is 30 chars.
     if (strlen($field_name) > 30) {
       $identifier_crc = hash('crc32b', $field_name);
-      $field_name = substr($field_name, 0, 22) . $identifier_crc;
+      $db_field_name = substr($field_name, 0, 22) . $identifier_crc;
+      $this->connection->dbFields[$db_field_name] = $field_name;
+      return $db_field_name;
     }
-    return $field_name;
+    else {
+      return $field_name;
+    }
   }
 
   /**
@@ -315,6 +319,9 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException') {
         $adj_row = [];
         foreach ($row as $column => $value) {
           $column = strtolower($column);
+          if (isset($this->connection->dbFields[$column])) {
+            $column = $this->connection->dbFields[$column];
+          }
           $adj_row[$column] = $value === self::ORACLE_EMPTY_STRING_REPLACEMENT ? '' : (string) $value;
         }
         $row = $adj_row;
@@ -331,6 +338,9 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException') {
           $ret = new \stdClass();
           foreach ($row as $column => $value) {
             $column = strtolower($column);
+            if (isset($this->connection->dbFields[$column])) {
+              $column = $this->connection->dbFields[$column];
+            }
             $ret->$column = $value === self::ORACLE_EMPTY_STRING_REPLACEMENT ? '' : (string) $value;
           }
           return $ret;
@@ -339,6 +349,9 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException') {
           $ret = new $fetch_class();
           foreach ($row as $column => $value) {
             $column = strtolower($column);
+            if (isset($this->connection->dbFields[$column])) {
+              $column = $this->connection->dbFields[$column];
+            }
             $ret->$column = $value === self::ORACLE_EMPTY_STRING_REPLACEMENT ? '' : (string) $value;
           }
           return $ret;

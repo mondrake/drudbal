@@ -19,6 +19,8 @@ class Select extends QuerySelect {
    * {@inheritdoc}
    */
   public function __toString() {
+    $dbal_extension = $this->connection->getDbalConnection()->getDbalExtension();
+
     // For convenience, we compile the query ourselves if the caller forgot
     // to do it. This allows constructs like "(string) $query" to work. When
     // the query will be executed, it will be recompiled using the proper
@@ -43,7 +45,9 @@ class Select extends QuerySelect {
     }
     foreach ($this->fields as $field) {
       $field_prefix = isset($field['table']) ? $this->connection->escapeTable($field['table']) . '.' : '';
-      $dbal_query->addSelect($field_prefix . $this->connection->escapeField($field['field']) . ' AS ' . $this->connection->escapeAlias($field['alias']));
+      $escaped_field_field = $this->connection->escapeField($dbal_extension->getDbFieldName($field['field']));
+      $escaped_field_alias = $this->connection->escapeAlias($dbal_extension->getDbFieldName($field['alias']));
+      $dbal_query->addSelect($field_prefix . $escaped_field_field . ' AS ' . $escaped_field_alias);
     }
     foreach ($this->expressions as $expression) {
       $dbal_query->addSelect($expression['expression'] . ' AS ' . $this->connection->escapeAlias($expression['alias']));

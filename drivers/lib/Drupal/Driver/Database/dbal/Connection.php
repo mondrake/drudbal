@@ -61,6 +61,16 @@ class Connection extends DatabaseConnection {
   protected $dbTables = [];
 
   /**
+   * Map of database column names.
+   *
+   * This array maps long field names to actual database columns, to allow
+   * resolving platform specific constraints.
+   *
+   * @var string[]
+   */
+  public $dbFields = [];
+
+  /**
    * List of URL schemes from a database URL and their mappings to driver.
    *
    * @var string[]
