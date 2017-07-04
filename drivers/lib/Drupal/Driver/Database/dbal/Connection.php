@@ -510,14 +510,12 @@ class Connection extends DatabaseConnection {
       return;
     }
     if (!$this->inTransaction()) {
-      return;
-//      throw new TransactionNoActiveException(); // @todo
+      throw new TransactionNoActiveException();
     }
     // A previous rollback to an earlier savepoint may mean that the savepoint
     // in question has already been accidentally committed.
     if (!isset($this->transactionLayers[$savepoint_name])) {
-      return;
-//      throw new TransactionNoActiveException(); // @todo
+      throw new TransactionNoActiveException();
     }
 
     // We need to find the point we're rolling back to, all other savepoints
