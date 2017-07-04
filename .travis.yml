@@ -144,8 +144,9 @@ script:
   # Only run selected tests to avoid Travis timeout.
   #- ../vendor/bin/phpunit --testsuite kernel --group Database,Cache,Entity,views
   - ../vendor/bin/phpunit --testsuite kernel --group Database
-  - ../vendor/bin/phpunit --testsuite kernel --group Cache
-  - ../vendor/bin/phpunit --testsuite kernel tests/Drupal/KernelTests/Core/Entity/EntityDefinitionUpdateTest.php
+  # this is OK ! - ../vendor/bin/phpunit --testsuite kernel --group Cache
+  - ../vendor/bin/phpunit --testsuite kernel --group Entity
+  #- ../vendor/bin/phpunit --testsuite kernel tests/Drupal/KernelTests/Core/Entity/EntityDefinitionUpdateTest.php
 
 #after_script:
   #- cd $DRUPAL_PATH/modules/contrib/drudbal

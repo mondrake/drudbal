@@ -381,7 +381,7 @@ class Schema extends DatabaseSchema {
     }
     else {
       // DBAL extension did not pick up, proceed with DBAL.
-      $dbal_table->addColumn($field, $dbal_type, $dbal_column_options);
+      $dbal_table->addColumn($this->dbalExtension->getDbFieldName($field), $dbal_type, $dbal_column_options);
       // Manage change to primary key.
       if (!empty($keys_new['primary key'])) {
         // @todo in MySql, this could still be a list of columns with length.
@@ -440,7 +440,7 @@ class Schema extends DatabaseSchema {
     // DBAL extension did not pick up, proceed with DBAL.
     $current_schema = $this->dbalSchema();
     $to_schema = clone $current_schema;
-    $to_schema->getTable($this->tableName($table))->dropColumn($field);
+    $to_schema->getTable($this->tableName($table))->dropColumn($this->dbalExtension->getDbFieldName($field));
     $this->dbalExecuteSchemaChange($to_schema);
     return TRUE;
   }
@@ -464,7 +464,7 @@ class Schema extends DatabaseSchema {
     $to_schema = clone $current_schema;
     // @todo this may not work - need to see if ::escapeDefaultValue
     // provides a sensible output.
-    $to_schema->getTable($this->tableName($table))->getColumn($field)->setDefault($this->escapeDefaultValue($default));
+    $to_schema->getTable($this->tableName($table))->getColumn($this->dbalExtension->getDbFieldName($field))->setDefault($this->escapeDefaultValue($default));
     $this->dbalExecuteSchemaChange($to_schema);
   }
 
@@ -487,7 +487,7 @@ class Schema extends DatabaseSchema {
     $to_schema = clone $current_schema;
     // @todo this may not work - we need to 'DROP' the default, not set it
     // to null.
-    $to_schema->getTable($this->tableName($table))->getColumn($field)->setDefault(NULL);
+    $to_schema->getTable($this->tableName($table))->getColumn($this->dbalExtension->getDbFieldName($field))->setDefault(NULL);
     $this->dbalExecuteSchemaChange($to_schema);
   }
 
@@ -826,7 +826,7 @@ class Schema extends DatabaseSchema {
     if (!$this->tableExists($table)) {
       return FALSE;
     }
-    return in_array($column, array_keys($this->dbalSchemaManager->listTableColumns($this->tableName($table))));
+    return in_array($this->dbalExtension->getDbFieldName($column), array_keys($this->dbalSchemaManager->listTableColumns($this->tableName($table))));
   }
 
   /**

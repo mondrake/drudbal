@@ -509,9 +509,10 @@ class Connection extends DatabaseConnection {
     if (!$this->supportsTransactions()) {
       return;
     }
-    if (!$this->inTransaction()) {
-      throw new TransactionNoActiveException();
-    }
+// @todo
+//    if (!$this->inTransaction()) {
+//      throw new TransactionNoActiveException();
+//    }
     // A previous rollback to an earlier savepoint may mean that the savepoint
     // in question has already been accidentally committed.
     if (!isset($this->transactionLayers[$savepoint_name])) {
