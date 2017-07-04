@@ -120,7 +120,7 @@ class Oci8Extension extends AbstractExtension {
    * {@inheritdoc}
    */
   public function getDbFieldName($field_name) {
-    // Max lenght for Oracle is 30 chars.
+/*    // Max lenght for Oracle is 30 chars.
     if (strlen($field_name) > 30) {
       $identifier_crc = hash('crc32b', $field_name);
       $db_field_name = substr($field_name, 0, 22) . $identifier_crc;
@@ -129,7 +129,8 @@ class Oci8Extension extends AbstractExtension {
     }
     else {
       return $field_name;
-    }
+    }*/
+    return $field_name;
   }
 
   /**
