@@ -19,7 +19,7 @@ class Select extends QuerySelect {
    * {@inheritdoc}
    */
   public function __toString() {
-    $dbal_extension = $this->connection->getDbalConnection()->getDbalExtension();
+    $dbal_extension = $this->connection->getDbalExtension();
 
     // For convenience, we compile the query ourselves if the caller forgot
     // to do it. This allows constructs like "(string) $query" to work. When
