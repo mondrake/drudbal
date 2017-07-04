@@ -897,10 +897,10 @@ class Schema extends DatabaseSchema {
     $return = [];
     foreach ($fields as $field) {
       if (is_array($field)) {
-        $return[] = $field[0];
+        $return[] = $this->dbalExtension->getDbFieldName($field[0]);
       }
       else {
-        $return[] = $field;
+        $return[] = $this->dbalExtension->getDbFieldName($field);
       }
     }
     return $return;
