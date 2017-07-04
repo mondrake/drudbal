@@ -65,7 +65,7 @@ class Select extends QuerySelect {
         // Run preparation steps on this sub-query before converting to string.
         $subquery = $table['table'];
         $subquery->preExecute();
-        $escaped_table = '(' . (string) $subquery . ');
+        $escaped_table = '(' . (string) $subquery . ')';
       }
       else {
         $escaped_table = $this->connection->escapeTable($table['table']);
