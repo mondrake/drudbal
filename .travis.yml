@@ -91,7 +91,7 @@ before_install:
   - git clone http://git.drupal.org/project/drupal.git $DRUPAL_PATH
   - cd $DRUPAL_PATH
   - git status
-  - git checkout 4a629e3
+  - git checkout bae3b3d
   - git status
 
   # Apply Drupal core patches.
