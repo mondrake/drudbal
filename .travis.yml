@@ -89,10 +89,10 @@ before_install:
 
   # Always get latest Drupal core.
   - git clone http://git.drupal.org/project/drupal.git $DRUPAL_PATH
+  - cd $DRUPAL_PATH
   - git status
   - git checkout 4a629e3
   - git status
-  - cd $DRUPAL_PATH
 
   # Apply Drupal core patches.
   # [#2605284] Testing framework does not work with contributed database drivers
