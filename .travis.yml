@@ -90,9 +90,9 @@ before_install:
   # Always get latest Drupal core.
   - git clone http://git.drupal.org/project/drupal.git $DRUPAL_PATH
   - cd $DRUPAL_PATH
-  - git status
-  - git checkout bae3b3d
-  - git status
+  #- git status
+  #- git checkout bae3b3d
+  #- git status
 
   # Apply Drupal core patches.
   # [#2605284] Testing framework does not work with contributed database drivers
@@ -128,8 +128,8 @@ install:
   - ln -s $DRUPAL_PATH/modules/contrib/drudbal/drivers/lib/Drupal/Driver/Database/dbal dbal
 
   # Patch Kernel test.
-  - cd $DRUPAL_PATH
-  - git apply -v $DRUPAL_PATH/modules/contrib/drudbal/misc/kernel_test.patch
+  #- cd $DRUPAL_PATH
+  #- git apply -v $DRUPAL_PATH/modules/contrib/drudbal/misc/kernel_test.patch
 
   # Install Drupal.
   - cp $DRUPAL_PATH/modules/contrib/drudbal/misc/*.php $DRUPAL_PATH/core
