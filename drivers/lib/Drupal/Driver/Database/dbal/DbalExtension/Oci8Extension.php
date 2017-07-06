@@ -128,7 +128,7 @@ class Oci8Extension extends AbstractExtension {
       $this->connection->dbFields[$db_field_name] = $field_name;
       return $db_field_name;
     }
-    elseif (in_array($field_name, static::$oracleKeywords) {
+    elseif (in_array($field_name, static::$oracleKeywords)) {
       return '"' . $field_name . "'";
     }
     else {
