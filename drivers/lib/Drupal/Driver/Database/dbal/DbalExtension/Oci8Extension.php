@@ -473,10 +473,10 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException') {
    * {@inheritdoc}
    */
   public function delegateGetDbalColumnType(&$dbal_type, array $drupal_field_specs) {
-    if (isset($drupal_field_specs['type']) && $drupal_field_specs['type'] === 'blob') {
+/*    if (isset($drupal_field_specs['type']) && $drupal_field_specs['type'] === 'blob') {
       $dbal_type = 'text';
       return TRUE;
-    }
+    }*/
     return FALSE;
   }
 
