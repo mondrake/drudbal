@@ -129,7 +129,7 @@ class Oci8Extension extends AbstractExtension {
       return $db_field_name;
     }
     elseif (in_array($field_name, static::$oracleKeywords)) {
-      return '"' . $field_name . "'";
+      return '"' . $field_name . '"';
     }
     else {
       return $field_name;
