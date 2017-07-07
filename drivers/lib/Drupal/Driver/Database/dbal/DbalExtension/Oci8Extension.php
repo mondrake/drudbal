@@ -22,6 +22,8 @@ use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
  */
 class Oci8Extension extends AbstractExtension {
 
+  protected $isDebugging = FALSE;
+
   const ORACLE_EMPTY_STRING_REPLACEMENT = "\010";
 
   /**
@@ -109,6 +111,13 @@ class Oci8Extension extends AbstractExtension {
     $this->oracleKeywordTokens = implode('|', static::$oracleKeywords);
   }
 
+  public function setDebugging($value) {
+    $this->isDebugging = $value;
+  }
+  public function getDebugging() {
+    return $this->isDebugging;
+  }
+
   /**
    * Connection delegated methods.
    */
@@ -144,15 +153,6 @@ class Oci8Extension extends AbstractExtension {
     else {
       return $field_name;
     }
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function delegateFullQualifiedTableName($drupal_table_name) {
-    $options = $this->connection->getConnectionOptions();
-    $prefix = $this->connection->tablePrefix($drupal_table_name);
-    return $options['database'] . '.' . $this->getDbTableName($prefix . $drupal_table_name);
   }
 
   /**
@@ -339,7 +339,7 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException') {
       $query .= ' FROM DUAL';
     }
 
-//error_log($query);
+if ($this->getDebugging()) error_log($query);
     return $this;
   }
 

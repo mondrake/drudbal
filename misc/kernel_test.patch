@@ -1,5 +1,5 @@
 diff --git a/core/tests/Drupal/KernelTests/Core/Database/BasicSyntaxTest.php b/core/tests/Drupal/KernelTests/Core/Database/BasicSyntaxTest.php
-index 53a87b7..6d71693 100644
+index 53a87b7..f166af4 100644
 --- a/core/tests/Drupal/KernelTests/Core/Database/BasicSyntaxTest.php
 +++ b/core/tests/Drupal/KernelTests/Core/Database/BasicSyntaxTest.php
 @@ -43,6 +43,8 @@ public function testConcatFields() {
@@ -20,6 +20,14 @@ index 53a87b7..6d71693 100644
      $result = db_query("SELECT CONCAT_WS('-', :a1, name, :a2, age) FROM {test} WHERE age = :age", [
        ':a1' => 'name',
        ':a2' => 'age',
+@@ -125,6 +129,7 @@ public function testLikeBackslash() {
+    * Tests \Drupal\Core\Database\Connection::getFullQualifiedTableName().
+    */
+   public function testGetFullQualifiedTableName() {
++\Drupal::database()->getDbalConnection()->setDebugging(TRUE);
+     $database = \Drupal::database();
+     $num_matches = $database->select($database->getFullQualifiedTableName('test'), 't')
+       ->countQuery()
 diff --git a/core/tests/Drupal/KernelTests/Core/Database/InsertTest.php b/core/tests/Drupal/KernelTests/Core/Database/InsertTest.php
 index 1c2c21d..2d0e520 100644
 --- a/core/tests/Drupal/KernelTests/Core/Database/InsertTest.php
@@ -47,10 +55,26 @@ index 04ba8ad..7c49ebb 100644
      $this->assertEqual((bool) $count, TRUE);
  
 diff --git a/core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php b/core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php
-index e239098..255aa44 100644
+index e239098..e239a25 100644
 --- a/core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php
 +++ b/core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php
-@@ -811,7 +811,8 @@ public function testFindTables() {
+@@ -493,6 +493,7 @@ public function tryUnsignedInsert($table_name, $column_name) {
+    * Tests adding columns to an existing table.
+    */
+   public function testSchemaAddField() {
++\Drupal::database()->getDbalConnection()->setDebugging(TRUE);
+     // Test varchar types.
+     foreach ([1, 32, 128, 256, 512] as $length) {
+       $base_field_spec = [
+@@ -676,6 +677,7 @@ protected function assertFieldCharacteristics($table_name, $field_name, $field_s
+    * Tests changing columns between types.
+    */
+   public function testSchemaChangeField() {
++\Drupal::database()->getDbalConnection()->setDebugging(TRUE);
+     $field_specs = [
+       ['type' => 'int', 'size' => 'normal', 'not null' => FALSE],
+       ['type' => 'int', 'size' => 'normal', 'not null' => TRUE, 'initial' => 1, 'default' => 17],
+@@ -811,7 +813,8 @@ public function testFindTables() {
        'test_2_table',
        'the_third_table',
      ];
@@ -60,6 +84,46 @@ index e239098..255aa44 100644
  
      // Check the restrictive syntax.
      $tables = Database::getConnection()->schema()->findTables('test_%');
+diff --git a/core/tests/Drupal/KernelTests/Core/Database/SelectTest.php b/core/tests/Drupal/KernelTests/Core/Database/SelectTest.php
+index 0d332d0..76c3c79 100644
+--- a/core/tests/Drupal/KernelTests/Core/Database/SelectTest.php
++++ b/core/tests/Drupal/KernelTests/Core/Database/SelectTest.php
+@@ -222,6 +222,7 @@ public function testNullCondition() {
+    * Tests that we can find a record with a NULL value.
+    */
+   public function testIsNullCondition() {
++\Drupal::database()->getDbalConnection()->setDebugging(TRUE);
+     $this->ensureSampleDataNull();
+ 
+     $names = db_select('test_null', 'tn')
+@@ -237,6 +238,7 @@ public function testIsNullCondition() {
+    * Tests that we can find a record without a NULL value.
+    */
+   public function testIsNotNullCondition() {
++\Drupal::database()->getDbalConnection()->setDebugging(TRUE);
+     $this->ensureSampleDataNull();
+ 
+     $names = db_select('test_null', 'tn')
+diff --git a/core/tests/Drupal/KernelTests/Core/Database/UpdateLobTest.php b/core/tests/Drupal/KernelTests/Core/Database/UpdateLobTest.php
+index 501f918..4b4c362 100644
+--- a/core/tests/Drupal/KernelTests/Core/Database/UpdateLobTest.php
++++ b/core/tests/Drupal/KernelTests/Core/Database/UpdateLobTest.php
+@@ -13,6 +13,7 @@ class UpdateLobTest extends DatabaseTestBase {
+    * Confirms that we can update a blob column.
+    */
+   public function testUpdateOneBlob() {
++\Drupal::database()->getDbalConnection()->setDebugging(TRUE);
+     $data = "This is\000a test.";
+     $this->assertTrue(strlen($data) === 15, 'Test data contains a NULL.');
+     $id = db_insert('test_one_blob')
+@@ -33,6 +34,7 @@ public function testUpdateOneBlob() {
+    * Confirms that we can update two blob columns in the same table.
+    */
+   public function testUpdateMultipleBlob() {
++\Drupal::database()->getDbalConnection()->setDebugging(TRUE);
+     $id = db_insert('test_two_blobs')
+       ->fields([
+         'blob1' => 'This is',
 diff --git a/core/tests/Drupal/KernelTests/KernelTestBase.php b/core/tests/Drupal/KernelTests/KernelTestBase.php
 index 6a35f15..a6f2c7c 100644
 --- a/core/tests/Drupal/KernelTests/KernelTestBase.php
