@@ -1,5 +1,5 @@
 diff --git a/core/tests/Drupal/KernelTests/Core/Database/BasicSyntaxTest.php b/core/tests/Drupal/KernelTests/Core/Database/BasicSyntaxTest.php
-index 53a87b7..f166af4 100644
+index 53a87b7..1bc8636 100644
 --- a/core/tests/Drupal/KernelTests/Core/Database/BasicSyntaxTest.php
 +++ b/core/tests/Drupal/KernelTests/Core/Database/BasicSyntaxTest.php
 @@ -43,6 +43,8 @@ public function testConcatFields() {
@@ -24,7 +24,7 @@ index 53a87b7..f166af4 100644
     * Tests \Drupal\Core\Database\Connection::getFullQualifiedTableName().
     */
    public function testGetFullQualifiedTableName() {
-+\Drupal::database()->getDbalConnection()->setDebugging(TRUE);
++\Drupal::database()->getDbalExtension()->setDebugging(TRUE);
      $database = \Drupal::database();
      $num_matches = $database->select($database->getFullQualifiedTableName('test'), 't')
        ->countQuery()
@@ -55,14 +55,14 @@ index 04ba8ad..7c49ebb 100644
      $this->assertEqual((bool) $count, TRUE);
  
 diff --git a/core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php b/core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php
-index e239098..e239a25 100644
+index e239098..d76f221 100644
 --- a/core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php
 +++ b/core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php
 @@ -493,6 +493,7 @@ public function tryUnsignedInsert($table_name, $column_name) {
     * Tests adding columns to an existing table.
     */
    public function testSchemaAddField() {
-+\Drupal::database()->getDbalConnection()->setDebugging(TRUE);
++\Drupal::database()->getDbalExtension()->setDebugging(TRUE);
      // Test varchar types.
      foreach ([1, 32, 128, 256, 512] as $length) {
        $base_field_spec = [
@@ -70,7 +70,7 @@ index e239098..e239a25 100644
     * Tests changing columns between types.
     */
    public function testSchemaChangeField() {
-+\Drupal::database()->getDbalConnection()->setDebugging(TRUE);
++\Drupal::database()->getDbalExtension()->setDebugging(TRUE);
      $field_specs = [
        ['type' => 'int', 'size' => 'normal', 'not null' => FALSE],
        ['type' => 'int', 'size' => 'normal', 'not null' => TRUE, 'initial' => 1, 'default' => 17],
@@ -85,14 +85,14 @@ index e239098..e239a25 100644
      // Check the restrictive syntax.
      $tables = Database::getConnection()->schema()->findTables('test_%');
 diff --git a/core/tests/Drupal/KernelTests/Core/Database/SelectTest.php b/core/tests/Drupal/KernelTests/Core/Database/SelectTest.php
-index 0d332d0..76c3c79 100644
+index 0d332d0..385462c 100644
 --- a/core/tests/Drupal/KernelTests/Core/Database/SelectTest.php
 +++ b/core/tests/Drupal/KernelTests/Core/Database/SelectTest.php
 @@ -222,6 +222,7 @@ public function testNullCondition() {
     * Tests that we can find a record with a NULL value.
     */
    public function testIsNullCondition() {
-+\Drupal::database()->getDbalConnection()->setDebugging(TRUE);
++\Drupal::database()->getDbalExtension()->setDebugging(TRUE);
      $this->ensureSampleDataNull();
  
      $names = db_select('test_null', 'tn')
@@ -100,19 +100,19 @@ index 0d332d0..76c3c79 100644
     * Tests that we can find a record without a NULL value.
     */
    public function testIsNotNullCondition() {
-+\Drupal::database()->getDbalConnection()->setDebugging(TRUE);
++\Drupal::database()->getDbalExtension()->setDebugging(TRUE);
      $this->ensureSampleDataNull();
  
      $names = db_select('test_null', 'tn')
 diff --git a/core/tests/Drupal/KernelTests/Core/Database/UpdateLobTest.php b/core/tests/Drupal/KernelTests/Core/Database/UpdateLobTest.php
-index 501f918..4b4c362 100644
+index 501f918..1b60778 100644
 --- a/core/tests/Drupal/KernelTests/Core/Database/UpdateLobTest.php
 +++ b/core/tests/Drupal/KernelTests/Core/Database/UpdateLobTest.php
 @@ -13,6 +13,7 @@ class UpdateLobTest extends DatabaseTestBase {
     * Confirms that we can update a blob column.
     */
    public function testUpdateOneBlob() {
-+\Drupal::database()->getDbalConnection()->setDebugging(TRUE);
++\Drupal::database()->getDbalExtension()->setDebugging(TRUE);
      $data = "This is\000a test.";
      $this->assertTrue(strlen($data) === 15, 'Test data contains a NULL.');
      $id = db_insert('test_one_blob')
@@ -120,7 +120,7 @@ index 501f918..4b4c362 100644
     * Confirms that we can update two blob columns in the same table.
     */
    public function testUpdateMultipleBlob() {
-+\Drupal::database()->getDbalConnection()->setDebugging(TRUE);
++\Drupal::database()->getDbalExtension()->setDebugging(TRUE);
      $id = db_insert('test_two_blobs')
        ->fields([
          'blob1' => 'This is',
