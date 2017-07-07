@@ -103,7 +103,7 @@ class Schema extends DatabaseSchema {
     // Add columns.
     foreach ($table['fields'] as $field_name => $field) {
       $dbal_type = $this->getDbalColumnType($field);
-      $new_table->addColumn($field_name, $dbal_type, $this->getDbalColumnOptions('createTable', $field_name, $dbal_type, $field));
+      $new_table->addColumn($this->dbalExtension->getDbFieldName($field_name), $dbal_type, $this->getDbalColumnOptions('createTable', $field_name, $dbal_type, $field));
     }
 
     // Add primary key.
@@ -380,7 +380,7 @@ class Schema extends DatabaseSchema {
     }
     else {
       // DBAL extension did not pick up, proceed with DBAL.
-      $dbal_table->addColumn($field, $dbal_type, $dbal_column_options);
+      $dbal_table->addColumn($this->dbalExtension->getDbFieldName($field), $dbal_type, $dbal_column_options);
       // Manage change to primary key.
       if (!empty($keys_new['primary key'])) {
         // @todo in MySql, this could still be a list of columns with length.
@@ -439,7 +439,7 @@ class Schema extends DatabaseSchema {
     // DBAL extension did not pick up, proceed with DBAL.
     $current_schema = $this->dbalSchema();
     $to_schema = clone $current_schema;
-    $to_schema->getTable($this->tableName($table))->dropColumn($field);
+    $to_schema->getTable($this->tableName($table))->dropColumn($this->dbalExtension->getDbFieldName($field));
     $this->dbalExecuteSchemaChange($to_schema);
     return TRUE;
   }
@@ -463,7 +463,7 @@ class Schema extends DatabaseSchema {
     $to_schema = clone $current_schema;
     // @todo this may not work - need to see if ::escapeDefaultValue
     // provides a sensible output.
-    $to_schema->getTable($this->tableName($table))->getColumn($field)->setDefault($this->escapeDefaultValue($default));
+    $to_schema->getTable($this->tableName($table))->getColumn($this->dbalExtension->getDbFieldName($field))->setDefault($this->escapeDefaultValue($default));
     $this->dbalExecuteSchemaChange($to_schema);
   }
 
@@ -486,7 +486,7 @@ class Schema extends DatabaseSchema {
     $to_schema = clone $current_schema;
     // @todo this may not work - we need to 'DROP' the default, not set it
     // to null.
-    $to_schema->getTable($this->tableName($table))->getColumn($field)->setDefault(NULL);
+    $to_schema->getTable($this->tableName($table))->getColumn($this->dbalExtension->getDbFieldName($field))->setDefault(NULL);
     $this->dbalExecuteSchemaChange($to_schema);
   }
 
@@ -825,7 +825,7 @@ class Schema extends DatabaseSchema {
     if (!$this->tableExists($table)) {
       return FALSE;
     }
-    return in_array($column, array_keys($this->dbalSchemaManager->listTableColumns($this->tableName($table))));
+    return in_array($this->dbalExtension->getDbFieldName($column), array_keys($this->dbalSchemaManager->listTableColumns($this->tableName($table))));
   }
 
   /**
@@ -896,10 +896,10 @@ class Schema extends DatabaseSchema {
     $return = [];
     foreach ($fields as $field) {
       if (is_array($field)) {
-        $return[] = $field[0];
+        $return[] = $this->dbalExtension->getDbFieldName($field[0]);
       }
       else {
-        $return[] = $field;
+        $return[] = $this->dbalExtension->getDbFieldName($field);
       }
     }
     return $return;
