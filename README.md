@@ -95,6 +95,7 @@ https://github.com/doctrine/migrations/issues/17 | Data loss on table renaming. 
 https://github.com/doctrine/dbal/pull/2720       | SQLParserUtils::getPlaceholderPositions fails if there are quoted strings containing only backslashes | Fixed in 2.5.13 |
 https://github.com/doctrine/dbal/pull/2730       | Duplicate 'COMMENT' part in SQL statement | Fixed in 2.5.13 |
 https://github.com/doctrine/dbal/issues/2676     | Optimize Oracle SchemaManager  | |
+https://github.com/doctrine/dbal/pull/2673       | [Oracle] getListTableColumnsSQL returns columns ordered by position instead of by name. | Fixed in 2.5.13 |
 
 ## Related Drupal issues
 Issue | Description   |
