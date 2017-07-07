@@ -101,7 +101,9 @@ class AbstractExtension implements DbalExtensionInterface {
     $prefix = $this->connection->tablePrefix($drupal_table_name);
 if ($this->getDebugging()) error_log($prefix . $drupal_table_name);
 if ($this->getDebugging()) error_log($this->getDbTableName($prefix . $drupal_table_name));
-    return $options['database'] . '.' . $this->getDbTableName($prefix . $drupal_table_name);
+    $xx = $options['database'] . '.' . $this->getDbTableName($prefix . $drupal_table_name);
+if ($this->getDebugging()) error_log($xx);
+    return $xx;
   }
 
   /**

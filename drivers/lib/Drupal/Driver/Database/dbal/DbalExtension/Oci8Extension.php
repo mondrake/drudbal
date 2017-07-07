@@ -178,7 +178,8 @@ class Oci8Extension extends AbstractExtension {
    * {@inheritdoc}
    */
   public function delegateTransactionalDdlSupport(array &$connection_options = []) {
-    return !isset($connection_options['transactions']) || ($connection_options['transactions'] !== FALSE);
+    // Transactional DDL is not available in Oracle.
+    return FALSE;
   }
 
   /**
@@ -334,12 +335,15 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException') {
     // RAND() is not available in Oracle.
     $query = str_replace('RAND()', 'DBMS_RANDOM.VALUE', $query);
 
+    // REGEXP is not available in Oracle. @todo refine
+    $query = preg_replace('/(.*\s+)(.*)(\s+REGEXP\s+)(.*)/', '$1 REGEXP_LIKE($2, $4)', $query);
+
     // In case of missing from, Oracle requires FROM DUAL.
     if (strpos($query, 'SELECT ') === 0 && strpos($query, ' FROM ') === FALSE) {
       $query .= ' FROM DUAL';
     }
 
-if ($this->getDebugging()) error_log($query);
+if ($this->getDebugging()) error_log($query . ' : ' . var_export($args, TRUE));
     return $this;
   }
 
