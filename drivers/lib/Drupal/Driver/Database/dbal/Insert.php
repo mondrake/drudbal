@@ -102,11 +102,12 @@ class Insert extends QueryInsert {
   public function __toString() {
     $comments = $this->connection->makeComment($this->comments);
     $dbal_connection = $this->connection->getDbalConnection();
+    $dbal_extension = $this->connection->getDbalExtension();
 
     $sql = '';
 
     // Use special syntax, if available, for an insert of only default values.
-    if (count($this->insertFields) === 0 && empty($this->fromQuery) && $this->connection->getDbalExtension()->delegateDefaultsOnlyInsertSql($sql, $this->table)) {
+    if (count($this->insertFields) === 0 && empty($this->fromQuery) && $dbal_extension->delegateDefaultsOnlyInsertSql($sql, $this->table)) {
       return $comments . $sql;
     }
 
@@ -124,7 +125,7 @@ class Insert extends QueryInsert {
     else {
       if ($this->connection->getDbalExtension()->getAddDefaultsExplicitlyOnInsert()) {
         foreach ($this->defaultFields as $field) {
-          $dbal_query->setValue($field, 'default');
+          $dbal_query->setValue($dbal_extension->getDbFieldName($field), 'default');
         }
       }
       $insert_fields = $this->insertFields;
@@ -132,7 +133,7 @@ class Insert extends QueryInsert {
     $max_placeholder = 0;
 
     foreach ($insert_fields as $field) {
-      $dbal_query->setValue($field, ':db_insert_placeholder_' . $max_placeholder++);
+      $dbal_query->setValue($dbal_extension->getDbFieldName($field), ':db_insert_placeholder_' . $max_placeholder++);
     }
 
     return $comments . $dbal_query->getSQL();

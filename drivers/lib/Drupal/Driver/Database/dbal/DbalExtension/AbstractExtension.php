@@ -89,6 +89,13 @@ class AbstractExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
+  public function getDbFieldName($field_name) {
+    return $field_name;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function delegateFullQualifiedTableName($drupal_table_name) {
     $options = $this->connection->getConnectionOptions();
     $prefix = $this->connection->tablePrefix($drupal_table_name);
