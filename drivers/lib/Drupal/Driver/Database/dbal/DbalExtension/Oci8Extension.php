@@ -523,6 +523,71 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException') {
   /**
    * {@inheritdoc}
    */
+  public function postCreateTable($drupal_table_name, array $drupal_table_specs, DbalSchema $dbal_schema) {
+    $this->rebuildDefaultsTrigger($drupal_table_name, $drupal_table_specs, $dbal_schema);
+    return $this;
+  }
+
+  /**
+   * Emulates mysql default column behaviour (eg.
+   * insert into table (col1) values (null)
+   * if col1 has default in mysql you have the default insterted instead of null.
+   * On oracle you have null inserted.
+   * So we need a trigger to intercept this condition and substitute null with default...
+   * This condition happens on MySQL only inserting not updating.
+   */
+  protected function rebuildDefaultsTrigger($drupal_table_name, $drupal_table_specs, $dbal_schema) {
+    $table_name = $this->tableName($drupal_table_name);
+    $dbal_table = $dbal_schema->getTable($table_name);
+    $trigger_name = rtrim(ltrim($table_name, '"'), '"') . '_TRG_DEFS';
+    // Max lenght for Oracle is 30 chars, but should be even lower to allow
+    // DBAL creating triggers/sequences with table name + suffix.
+    if (strlen($trigger_name) > 30) {
+      $identifier_crc = hash('crc32b', $trigger_name);
+      $trigger_name = substr($trigger_name, 0, 22) . $identifier_crc;
+    }
+
+    $trigger_sql = 'CREATE OR REPLACE TRIGGER ' . $trigger_name .
+      ' BEFORE INSERT ON ' . $table_name .
+      ' FOR EACH ROW BEGIN /* defs trigger */ IF INSERTING THEN ';
+
+    $def = FALSE;
+    foreach ($dbal_table->getColumns() as $column) {
+      if ($column->getDefault() !== NULL && $column->getDefault() !== "\010") {
+        $def = TRUE;
+        $column_name = $column->getName();
+        if (in_array($column_name, static::$oracleKeywords)) {
+          $column_name = '"' . $column_name . '"';
+        }
+        $type_name = $column->getType()->getName();
+        if (in_array($type_name, ['smallint', 'integer', 'bigint', 'decimal', 'float'])) {
+          $trigger_sql .=
+            'IF :NEW.' . $column_name . ' IS NULL OR TO_CHAR(:NEW.' . $column_name . ') = \'\010\'
+              THEN :NEW.' . $column_name . ':= ' . $column->getDefault() . ';
+             END IF;
+            ';
+        }
+        else {
+          $trigger_sql .=
+            'IF :NEW.' . $column_name . ' IS NULL OR TO_CHAR(:NEW.' . $column_name . ') = \'\010\'
+              THEN :NEW.' . $column_name . ':= \'' . $column->getDefault() . '\';
+             END IF;
+            ';
+        }
+      }
+    }
+
+    if (!$def) {
+      $trigger_sql .= ' NULL; ';
+    }
+
+    $trigger_sql .= 'END IF; END;';
+    $this->getDbalConnection()->exec($trigger_sql);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function delegateChangeField(&$primary_key_processed_by_extension, DbalSchema $dbal_schema, $drupal_table_name, $field_name, $field_new_name, array $drupal_field_new_specs, array $keys_new_specs, array $dbal_column_options) {
     $sql = 'ALTER TABLE {' . $drupal_table_name . '} MODIFY (' . $field_name . ' ' . $dbal_column_options['columnDefinition'] . ')';
     $this->connection->query($sql);

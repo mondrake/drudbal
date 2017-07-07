@@ -132,63 +132,8 @@ class Schema extends DatabaseSchema {
       }
     }
 
-    $this->rebuildDefaultsTrigger($name, $table);
+    $this->dbalExtension->postCreateTable($name, $table, $this->dbalSchema());
   }
-
-  /**
-   * Emulates mysql default column behaviour (eg.
-   * insert into table (col1) values (null)
-   * if col1 has default in mysql you have the default insterted instead of null.
-   * On oracle you have null inserted.
-   * So we need a trigger to intercept this condition and substitute null with default...
-   * This condition happens on MySQL only inserting not updating.
-   */
-  public function rebuildDefaultsTrigger($name, $table_specs) {
-    $table_name = $this->tableName($name);
-    $dbal_table = $this->dbalSchema()->getTable($table_name);
-    $trigger_name = rtrim(ltrim($table_name, '"'), '"') . '_TRG_DEFS';
-    // Max lenght for Oracle is 30 chars, but should be even lower to allow
-    // DBAL creating triggers/sequences with table name + suffix.
-    if (strlen($trigger_name) > 30) {
-      $identifier_crc = hash('crc32b', $trigger_name);
-      $trigger_name = substr($trigger_name, 0, 22) . $identifier_crc;
-    }
-
-    $trigger_sql = 'CREATE OR REPLACE TRIGGER ' . $trigger_name .
-      ' BEFORE INSERT ON ' . $table_name .
-      ' FOR EACH ROW BEGIN /* defs trigger */ IF INSERTING THEN ';
-
-    $def = FALSE;
-    foreach ($dbal_table->getColumns() as $column) {
-      if ($column->getDefault() !== NULL && $column->getDefault() !== "\010") {
-        $def = TRUE;
-        $type_name = $column->getType()->getName();
-        if (in_array($type_name, ['smallint', 'integer', 'bigint', 'decimal', 'float'])) {
-          $trigger_sql .=
-            'IF :NEW.' . $column->getName() . ' IS NULL OR TO_CHAR(:NEW.' . $column->getName() . ') = \'\010\'
-              THEN :NEW.' . $column->getName() . ':= ' . $column->getDefault() . ';
-             END IF;
-            ';
-        }
-        else {
-          $trigger_sql .=
-            'IF :NEW.' . $column->getName() . ' IS NULL OR TO_CHAR(:NEW.' . $column->getName() . ') = \'\010\'
-              THEN :NEW.' . $column->getName() . ':= \'' . $column->getDefault() . '\';
-             END IF;
-            ';
-        }
-      }
-    }
-
-    if (!$def) {
-      $trigger_sql .= ' NULL; ';
-    }
-
-    $trigger_sql .= 'END IF; END;';
-    $this->connection->getDbalConnection()->exec($trigger_sql);
-//    $this->connection->getDbalConnection()->exec('SHOW ERRORS');
-  }
-
 
   /**
    * Gets DBAL column type, given Drupal's field specs.
