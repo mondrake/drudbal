@@ -146,7 +146,7 @@ class Schema extends DatabaseSchema {
   public function rebuildDefaultsTrigger($name, $table_specs) {
     $table_name = $this->tableName($name);
     $dbal_table = $this->dbalSchema()->getTable($table_name);
-    $trigger_name = $name . '_TRG_DEFS';
+    $trigger_name = rtrim(ltrim($table_name, '"'), '"') . '_TRG_DEFS';
     // Max lenght for Oracle is 30 chars, but should be even lower to allow
     // DBAL creating triggers/sequences with table name + suffix.
     if (strlen($trigger_name) > 30) {
@@ -176,7 +176,7 @@ class Schema extends DatabaseSchema {
 
     $trigger_sql .= 'END IF; END;';
     $this->connection->getDbalConnection()->exec($trigger_sql);
-    $this->connection->getDbalConnection()->exec('SHOW ERRORS');
+//    $this->connection->getDbalConnection()->exec('SHOW ERRORS');
   }
 
 
