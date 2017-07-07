@@ -162,11 +162,21 @@ class Schema extends DatabaseSchema {
     foreach ($dbal_table->getColumns() as $column) {
       if ($column->getDefault() !== NULL && $column->getDefault() !== "\010") {
         $def = TRUE;
-        $trigger_sql .=
-          'IF :NEW.' . $column->getName() . ' IS NULL OR TO_CHAR(:NEW.' . $column->getName() . ') = \'\010\'
-            THEN :NEW.' . $column->getName() . ':= ' . $column->getDefault() . ';
-           END IF;
-          ';
+        $type_name = $column->getType()->getName();
+        if (in_array($type_name, ['smallint', 'integer', 'bigint', 'decimal', 'float'])) {
+          $trigger_sql .=
+            'IF :NEW.' . $column->getName() . ' IS NULL OR TO_CHAR(:NEW.' . $column->getName() . ') = \'\010\'
+              THEN :NEW.' . $column->getName() . ':= ' . $column->getDefault() . ';
+             END IF;
+            ';
+        }
+        else {
+          $trigger_sql .=
+            'IF :NEW.' . $column->getName() . ' IS NULL OR TO_CHAR(:NEW.' . $column->getName() . ') = \'\010\'
+              THEN :NEW.' . $column->getName() . ':= \'' . $column->getDefault() . '\';
+             END IF;
+            ';
+        }
       }
     }
 
