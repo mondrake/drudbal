@@ -422,6 +422,8 @@ class Schema extends DatabaseSchema {
       $spec['not null'] = TRUE;
       $this->changeField($table, $field, $field, $spec);
     }
+
+    $this->dbalExtension->rebuildDefaultsTrigger($table, $this->dbalSchema());
   }
 
   /**
@@ -443,6 +445,7 @@ class Schema extends DatabaseSchema {
     $to_schema = clone $current_schema;
     $to_schema->getTable($this->tableName($table))->dropColumn($this->dbalExtension->getDbFieldName($field));
     $this->dbalExecuteSchemaChange($to_schema);
+    $this->dbalExtension->rebuildDefaultsTrigger($table, $this->dbalSchema());
     return TRUE;
   }
 

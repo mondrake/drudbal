@@ -149,6 +149,15 @@ class Oci8Extension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
+  public function delegateFullQualifiedTableName($drupal_table_name) {
+    $options = $this->connection->getConnectionOptions();
+    $prefix = $this->connection->tablePrefix($drupal_table_name);
+    return $options['database'] . '.' . $this->getDbTableName($prefix . $drupal_table_name);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public static function preConnectionOpen(array &$connection_options, array &$dbal_connection_options) {
   }
 
@@ -527,7 +536,7 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException') {
    * {@inheritdoc}
    */
   public function postCreateTable($drupal_table_name, array $drupal_table_specs, DbalSchema $dbal_schema) {
-    $this->rebuildDefaultsTrigger($drupal_table_name, $drupal_table_specs, $dbal_schema);
+    $this->rebuildDefaultsTrigger($drupal_table_name, $dbal_schema);
     return $this;
   }
 
@@ -539,7 +548,7 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException') {
    * So we need a trigger to intercept this condition and substitute null with default...
    * This condition happens on MySQL only inserting not updating.
    */
-  protected function rebuildDefaultsTrigger($drupal_table_name, $drupal_table_specs, $dbal_schema) {
+  public function rebuildDefaultsTrigger($drupal_table_name, $dbal_schema) {
     $table_name = $this->tableName($drupal_table_name);
     $dbal_table = $dbal_schema->getTable($table_name);
     $trigger_name = rtrim(ltrim($table_name, '"'), '"') . '_TRG_DEFS';
