@@ -160,11 +160,11 @@ class Schema extends DatabaseSchema {
 
     $def = FALSE;
     foreach ($dbal_table->getColumns() as $column) {
-      if ($column->getDefault() !== NULL) {
+      if ($column->getDefault() !== NULL && $column->getDefault() !== "\010") {
         $def = TRUE;
         $trigger_sql .=
-          'IF :NEW."' . $column->getName() . '" IS NULL OR TO_CHAR(:NEW."' . $column->getName() . '") = \'\010\'
-            THEN :NEW."' . $column->getName() . '":= ' . $column->getDefault() . ';
+          'IF :NEW.' . $column->getName() . ' IS NULL OR TO_CHAR(:NEW.' . $column->getName() . ') = \'\010\'
+            THEN :NEW.' . $column->getName() . ':= ' . $column->getDefault() . ';
            END IF;
           ';
       }
@@ -176,6 +176,7 @@ class Schema extends DatabaseSchema {
 
     $trigger_sql .= 'END IF; END;';
     $this->connection->getDbalConnection()->exec($trigger_sql);
+    $this->connection->getDbalConnection()->exec('SHOW ERRORS');
   }
 
 
