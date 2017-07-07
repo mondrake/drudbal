@@ -51,6 +51,17 @@ interface DbalExtensionInterface {
   public function getDbTableName($prefixed_table_name);
 
   /**
+   * Get the database field name, resolving platform specific constraints.
+   *
+   * @param string $field_name
+   *   The name of the field in question.
+   *
+   * @return string
+   *   The database field name.
+   */
+  public function getDbFieldName($field_name);
+
+  /**
    * Connection delegated methods.
    */
 

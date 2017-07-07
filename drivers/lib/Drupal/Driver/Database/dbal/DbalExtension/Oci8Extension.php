@@ -85,6 +85,16 @@ class Oci8Extension extends AbstractExtension {
   protected $oracleKeywordTokens;
 
   /**
+   * Map of database identifiers.
+   *
+   * This array maps actual database identifiers to identifiers longer than 30
+   * characters, to allow dealing with Oracle constraint.
+   *
+   * @var string[]
+   */
+  protected $dbIdentifiersMap = [];
+
+  /**
    * Constructs an Oci8Extension object.
    *
    * @param \Drupal\Driver\Database\dbal\Connection $drudbal_connection
@@ -125,7 +135,7 @@ class Oci8Extension extends AbstractExtension {
     if (strlen($field_name) > 30) {
       $identifier_crc = hash('crc32b', $field_name);
       $db_field_name = substr($field_name, 0, 22) . $identifier_crc;
-      $this->connection->dbFields[$db_field_name] = $field_name;
+      $this->dbIdentifiersMap[$db_field_name] = $field_name;
       return $db_field_name;
     }
     elseif (in_array($field_name, static::$oracleKeywords)) {
@@ -331,8 +341,8 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException') {
           if ($column === 'doctrine_rownum') {
             continue;
           }
-          if (isset($this->connection->dbFields[$column])) {
-            $column = $this->connection->dbFields[$column];
+          if (isset($this->dbIdentifiersMap[$column])) {
+            $column = $this->dbIdentifiersMap[$column];
           }
           $adj_row[$column] = $value === self::ORACLE_EMPTY_STRING_REPLACEMENT ? '' : (string) $value;
         }
@@ -353,8 +363,8 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException') {
             if ($column === 'doctrine_rownum') {
               continue;
             }
-            if (isset($this->connection->dbFields[$column])) {
-              $column = $this->connection->dbFields[$column];
+            if (isset($this->dbIdentifiersMap[$column])) {
+              $column = $this->dbIdentifiersMap[$column];
             }
             $ret->$column = $value === self::ORACLE_EMPTY_STRING_REPLACEMENT ? '' : (string) $value;
           }
@@ -367,8 +377,8 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException') {
             if ($column === 'doctrine_rownum') {
               continue;
             }
-            if (isset($this->connection->dbFields[$column])) {
-              $column = $this->connection->dbFields[$column];
+            if (isset($this->dbIdentifiersMap[$column])) {
+              $column = $this->dbIdentifiersMap[$column];
             }
             $ret->$column = $value === self::ORACLE_EMPTY_STRING_REPLACEMENT ? '' : (string) $value;
           }
