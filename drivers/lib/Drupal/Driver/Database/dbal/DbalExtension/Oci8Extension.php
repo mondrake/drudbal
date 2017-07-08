@@ -224,13 +224,15 @@ class Oci8Extension extends AbstractExtension {
       $e = $e->getPrevious();
     }
     if ($e instanceof UniqueConstraintViolationException) {
-/*  $exc_class = get_class($e);
+if ($this->getDebugging()) {      
+  $exc_class = get_class($e);
   $backtrace = debug_backtrace();
   error_log('***** Exception : ' . $exc_class);
   error_log('***** Message   : ' . $message);
   error_log('***** Query     : ' . $query);
   error_log('***** Query args: ' . var_export($args, TRUE));
-  error_log("***** Backtrace : \n" . $this->formatBacktrace($backtrace));*/
+  error_log("***** Backtrace : \n" . $this->formatBacktrace($backtrace));
+}
       throw new IntegrityConstraintViolationException($message, $e->getCode(), $e);
     }
     else {
