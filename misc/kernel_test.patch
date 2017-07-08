@@ -1,5 +1,5 @@
 diff --git a/core/tests/Drupal/KernelTests/Core/Database/BasicSyntaxTest.php b/core/tests/Drupal/KernelTests/Core/Database/BasicSyntaxTest.php
-index 53a87b7..1bc8636 100644
+index 53a87b7..6d71693 100644
 --- a/core/tests/Drupal/KernelTests/Core/Database/BasicSyntaxTest.php
 +++ b/core/tests/Drupal/KernelTests/Core/Database/BasicSyntaxTest.php
 @@ -43,6 +43,8 @@ public function testConcatFields() {
@@ -20,14 +20,6 @@ index 53a87b7..1bc8636 100644
      $result = db_query("SELECT CONCAT_WS('-', :a1, name, :a2, age) FROM {test} WHERE age = :age", [
        ':a1' => 'name',
        ':a2' => 'age',
-@@ -125,6 +129,7 @@ public function testLikeBackslash() {
-    * Tests \Drupal\Core\Database\Connection::getFullQualifiedTableName().
-    */
-   public function testGetFullQualifiedTableName() {
-+\Drupal::database()->getDbalExtension()->setDebugging(TRUE);
-     $database = \Drupal::database();
-     $num_matches = $database->select($database->getFullQualifiedTableName('test'), 't')
-       ->countQuery()
 diff --git a/core/tests/Drupal/KernelTests/Core/Database/InsertTest.php b/core/tests/Drupal/KernelTests/Core/Database/InsertTest.php
 index 1c2c21d..2d0e520 100644
 --- a/core/tests/Drupal/KernelTests/Core/Database/InsertTest.php
@@ -85,30 +77,44 @@ index e239098..d76f221 100644
      // Check the restrictive syntax.
      $tables = Database::getConnection()->schema()->findTables('test_%');
 diff --git a/core/tests/Drupal/KernelTests/Core/Database/SelectTest.php b/core/tests/Drupal/KernelTests/Core/Database/SelectTest.php
-index 0d332d0..385462c 100644
+index 0d332d0..29e2366 100644
 --- a/core/tests/Drupal/KernelTests/Core/Database/SelectTest.php
 +++ b/core/tests/Drupal/KernelTests/Core/Database/SelectTest.php
-@@ -222,6 +222,7 @@ public function testNullCondition() {
+@@ -208,7 +208,9 @@ public function testSimpleSelectAllFields() {
+    * Tests that a comparison with NULL is always FALSE.
+    */
+   public function testNullCondition() {
++\Drupal::database()->getDbalExtension()->setDebugging(TRUE);
+     $this->ensureSampleDataNull();
++error_log(var_export(db_select('test_null')->execute()->fetchAll(), TRUE));
+ 
+     $names = db_select('test_null', 'tn')
+       ->fields('tn', ['name'])
+@@ -222,7 +224,9 @@ public function testNullCondition() {
     * Tests that we can find a record with a NULL value.
     */
    public function testIsNullCondition() {
 +\Drupal::database()->getDbalExtension()->setDebugging(TRUE);
      $this->ensureSampleDataNull();
++error_log(var_export(db_select('test_null')->execute()->fetchAll(), TRUE));
  
      $names = db_select('test_null', 'tn')
-@@ -237,6 +238,7 @@ public function testIsNullCondition() {
+       ->fields('tn', ['name'])
+@@ -237,7 +241,9 @@ public function testIsNullCondition() {
     * Tests that we can find a record without a NULL value.
     */
    public function testIsNotNullCondition() {
 +\Drupal::database()->getDbalExtension()->setDebugging(TRUE);
      $this->ensureSampleDataNull();
++error_log(var_export(db_select('test_null')->execute()->fetchAll(), TRUE));
  
      $names = db_select('test_null', 'tn')
+       ->fields('tn', ['name'])
 diff --git a/core/tests/Drupal/KernelTests/Core/Database/UpdateLobTest.php b/core/tests/Drupal/KernelTests/Core/Database/UpdateLobTest.php
-index 501f918..1b60778 100644
+index 501f918..f1d7dfb 100644
 --- a/core/tests/Drupal/KernelTests/Core/Database/UpdateLobTest.php
 +++ b/core/tests/Drupal/KernelTests/Core/Database/UpdateLobTest.php
-@@ -13,6 +13,7 @@ class UpdateLobTest extends DatabaseTestBase {
+@@ -13,17 +13,20 @@ class UpdateLobTest extends DatabaseTestBase {
     * Confirms that we can update a blob column.
     */
    public function testUpdateOneBlob() {
@@ -116,7 +122,20 @@ index 501f918..1b60778 100644
      $data = "This is\000a test.";
      $this->assertTrue(strlen($data) === 15, 'Test data contains a NULL.');
      $id = db_insert('test_one_blob')
-@@ -33,6 +34,7 @@ public function testUpdateOneBlob() {
+       ->fields(['blob1' => $data])
+       ->execute();
++error_log(var_export(db_select('test_one_blob')->execute()->fetchAll(), TRUE));
+ 
+     $data .= $data;
+     db_update('test_one_blob')
+       ->condition('id', $id)
+       ->fields(['blob1' => $data])
+       ->execute();
++error_log(var_export(db_select('test_one_blob')->execute()->fetchAll(), TRUE));
+ 
+     $r = db_query('SELECT * FROM {test_one_blob} WHERE id = :id', [':id' => $id])->fetchAssoc();
+     $this->assertTrue($r['blob1'] === $data, format_string('Can update a blob: id @id, @data.', ['@id' => $id, '@data' => serialize($r)]));
+@@ -33,17 +36,20 @@ public function testUpdateOneBlob() {
     * Confirms that we can update two blob columns in the same table.
     */
    public function testUpdateMultipleBlob() {
@@ -124,6 +143,19 @@ index 501f918..1b60778 100644
      $id = db_insert('test_two_blobs')
        ->fields([
          'blob1' => 'This is',
+         'blob2' => 'a test',
+       ])
+       ->execute();
++error_log(var_export(db_select('test_one_blob')->execute()->fetchAll(), TRUE));
+ 
+     db_update('test_two_blobs')
+       ->condition('id', $id)
+       ->fields(['blob1' => 'and so', 'blob2' => 'is this'])
+       ->execute();
++error_log(var_export(db_select('test_one_blob')->execute()->fetchAll(), TRUE));
+ 
+     $r = db_query('SELECT * FROM {test_two_blobs} WHERE id = :id', [':id' => $id])->fetchAssoc();
+     $this->assertTrue($r['blob1'] === 'and so' && $r['blob2'] === 'is this', 'Can update multiple blobs per row.');
 diff --git a/core/tests/Drupal/KernelTests/KernelTestBase.php b/core/tests/Drupal/KernelTests/KernelTestBase.php
 index 6a35f15..a6f2c7c 100644
 --- a/core/tests/Drupal/KernelTests/KernelTestBase.php
