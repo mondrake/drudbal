@@ -423,7 +423,7 @@ if ($this->getDebugging()) error_log($query . ' : ' . var_export($args, TRUE));
    * {@inheritdoc}
    */
   public function getSequenceNameForInsert($drupal_table_name) {
-    return $this->tableName($drupal_table_name) . '_SEQ';
+    return rtrim(ltrim($this->tableName($drupal_table_name), '"'), '"') . '_SEQ';
   }
 
   /**
