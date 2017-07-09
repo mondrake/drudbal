@@ -237,7 +237,7 @@ if ($this->getDebugging()) {
     }
     else {
 $exc_class = get_class($e);
-if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException') {
+if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException' || $this->getDebugging()) {
   $backtrace = debug_backtrace();
   error_log('***** Exception : ' . $exc_class);
   error_log('***** Message   : ' . $message);

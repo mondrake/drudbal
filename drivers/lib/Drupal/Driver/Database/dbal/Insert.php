@@ -34,6 +34,7 @@ class Insert extends QueryInsert {
 
     // Get from extension if a sequence name should be attached to the insert
     // query.
+error_log('sequence name: ' . $this->connection->getDbalExtension()->getSequenceNameForInsert($this->table));
     $this->queryOptions['sequence_name'] = $this->connection->getDbalExtension()->getSequenceNameForInsert($this->table);
 
     $last_insert_id = NULL;

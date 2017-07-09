@@ -47,26 +47,10 @@ index 04ba8ad..7c49ebb 100644
      $this->assertEqual((bool) $count, TRUE);
  
 diff --git a/core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php b/core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php
-index e239098..d76f221 100644
+index e239098..255aa44 100644
 --- a/core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php
 +++ b/core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php
-@@ -493,6 +493,7 @@ public function tryUnsignedInsert($table_name, $column_name) {
-    * Tests adding columns to an existing table.
-    */
-   public function testSchemaAddField() {
-+\Drupal::database()->getDbalExtension()->setDebugging(TRUE);
-     // Test varchar types.
-     foreach ([1, 32, 128, 256, 512] as $length) {
-       $base_field_spec = [
-@@ -676,6 +677,7 @@ protected function assertFieldCharacteristics($table_name, $field_name, $field_s
-    * Tests changing columns between types.
-    */
-   public function testSchemaChangeField() {
-+\Drupal::database()->getDbalExtension()->setDebugging(TRUE);
-     $field_specs = [
-       ['type' => 'int', 'size' => 'normal', 'not null' => FALSE],
-       ['type' => 'int', 'size' => 'normal', 'not null' => TRUE, 'initial' => 1, 'default' => 17],
-@@ -811,7 +813,8 @@ public function testFindTables() {
+@@ -811,7 +811,8 @@ public function testFindTables() {
        'test_2_table',
        'the_third_table',
      ];
@@ -111,16 +95,22 @@ index 0d332d0..3b0b919 100644
      $names = db_select('test_null', 'tn')
        ->fields('tn', ['name'])
 diff --git a/core/tests/Drupal/KernelTests/Core/Database/UpdateLobTest.php b/core/tests/Drupal/KernelTests/Core/Database/UpdateLobTest.php
-index 501f918..60a9682 100644
+index 501f918..1f5be9d 100644
 --- a/core/tests/Drupal/KernelTests/Core/Database/UpdateLobTest.php
 +++ b/core/tests/Drupal/KernelTests/Core/Database/UpdateLobTest.php
-@@ -13,17 +13,20 @@ class UpdateLobTest extends DatabaseTestBase {
+@@ -9,6 +9,11 @@
+  */
+ class UpdateLobTest extends DatabaseTestBase {
+ 
++  protected function setUp() {
++\Drupal::database()->getDbalExtension()->setDebugging(TRUE);
++    parent::setUp();
++  }
++
+   /**
     * Confirms that we can update a blob column.
     */
-   public function testUpdateOneBlob() {
-+\Drupal::database()->getDbalExtension()->setDebugging(TRUE);
-     $data = "This is\000a test.";
-     $this->assertTrue(strlen($data) === 15, 'Test data contains a NULL.');
+@@ -18,12 +23,14 @@ public function testUpdateOneBlob() {
      $id = db_insert('test_one_blob')
        ->fields(['blob1' => $data])
        ->execute();
@@ -135,14 +125,7 @@ index 501f918..60a9682 100644
  
      $r = db_query('SELECT * FROM {test_one_blob} WHERE id = :id', [':id' => $id])->fetchAssoc();
      $this->assertTrue($r['blob1'] === $data, format_string('Can update a blob: id @id, @data.', ['@id' => $id, '@data' => serialize($r)]));
-@@ -33,17 +36,20 @@ public function testUpdateOneBlob() {
-    * Confirms that we can update two blob columns in the same table.
-    */
-   public function testUpdateMultipleBlob() {
-+\Drupal::database()->getDbalExtension()->setDebugging(TRUE);
-     $id = db_insert('test_two_blobs')
-       ->fields([
-         'blob1' => 'This is',
+@@ -39,11 +46,13 @@ public function testUpdateMultipleBlob() {
          'blob2' => 'a test',
        ])
        ->execute();
