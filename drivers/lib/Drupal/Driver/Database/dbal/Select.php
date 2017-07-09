@@ -44,16 +44,7 @@ class Select extends QuerySelect {
       }
     }
     foreach ($this->fields as $field) {
-      $field_prefix = '';
-      if (isset($field['table'])) {
-        // Do not attempt prefixing cross database / schema queries.
-        if (strpos($field['table'], '.') === FALSE) {
-          $field_prefix = $this->connection->getDbalExtension()->getDbTableName($this->connection->escapeTable($field['table'])) . '.';
-        }
-        else {
-          $field_prefix = $field['table'] . '.';
-        }
-      }
+      $field_prefix = isset($field['table']) ? $this->connection->escapeTable($field['table']) . '.' : '';
       $escaped_field_field = $this->connection->escapeField($dbal_extension->getDbFieldName($field['field']));
       $escaped_field_alias = $this->connection->escapeAlias($dbal_extension->getDbFieldName($field['alias']));
       $dbal_query->addSelect($field_prefix . $escaped_field_field . ' AS ' . $escaped_field_alias);
@@ -79,7 +70,7 @@ class Select extends QuerySelect {
       else {
         // Do not attempt prefixing cross database / schema queries.
         if (strpos($table['table'], '.') === FALSE) {
-          $escaped_table = $this->connection->getDbalExtension()->getDbTableName($this->connection->escapeTable($table['table']));
+          $escaped_table = $this->connection->getPrefixedTableName($this->connection->escapeTable($table['table']));
         }
         else {
           $escaped_table = $table['table'];
