@@ -38,7 +38,7 @@ env:
     #- DBAL_URL="sqlite:///sites/default/files/.ht.sqlite" SIMPLETEST_DB="sqlite://test_user:test_pass@test_host:3306/sites/default/files/.ht.sqlite"
     #- DBAL_URL="sqlite:///sites/default/files/.ht.sqlite" SIMPLETEST_DB="dbal://fake/sites/default/files/.ht.sqlite?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=pdo_sqlite"
     #- DBAL_URL="sqlite:///:memory:" SIMPLETEST_DB="dbal://fake/:memory:?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=pdo_sqlite"
-    - DBAL_URL="oci8://ORAROOT:DRUDBAL@$HOST_ADDR:1521/ORAROOT" SIMPLETEST_DB="dbal://ORAROOT:DRUDBAL@$HOST_ADDR:1521/ORAROOT?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=oci8"
+    - DBAL_URL="oci8://ORAROOT:DRUDBAL@$HOST_ADDR:1521/XE" SIMPLETEST_DB="dbal://ORAROOT:DRUDBAL@$HOST_ADDR:1521/XE?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=oci8"
 
 matrix:
   fast_finish: true

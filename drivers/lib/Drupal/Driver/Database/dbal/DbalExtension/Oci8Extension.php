@@ -177,6 +177,15 @@ class Oci8Extension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
+  public function delegateFullQualifiedTableName($drupal_table_name) {
+    $options = $this->connection->getConnectionOptions();
+    $prefix = $this->connection->tablePrefix($drupal_table_name);
+    return $options['username'] . '.' . $this->getDbTableName($prefix . $drupal_table_name);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public static function preConnectionOpen(array &$connection_options, array &$dbal_connection_options) {
   }
 
