@@ -48,10 +48,10 @@ class Select extends QuerySelect {
       if (isset($field['table'])) {
         // Do not attempt prefixing cross database / schema queries.
         if (strpos($field['table'], '.') === FALSE) {
-          $field_prefix = $this->connection->getDbalExtension()->getDbTableName($this->connection->escapeTable($field['table']));
+          $field_prefix = $this->connection->getDbalExtension()->getDbTableName($this->connection->escapeTable($field['table'])) . '.';
         }
         else {
-          $field_prefix = $field['table'];
+          $field_prefix = $field['table'] . '.';
         }
       }
       $escaped_field_field = $this->connection->escapeField($dbal_extension->getDbFieldName($field['field']));
