@@ -40,11 +40,11 @@ class Select extends QuerySelect {
     $fields = [];
     foreach ($this->tables as $alias => $table) {
       if (!empty($table['all_fields'])) {
-        $dbal_query->addSelect($this->connection->escapeTable($alias) . '.*');
+        $dbal_query->addSelect($dbal_extension->getDbAlias($this->connection->escapeTable($alias)) . '.*');
       }
     }
     foreach ($this->fields as $field) {
-      $field_prefix = isset($field['table']) ? $this->connection->escapeTable($field['table']) . '.' : '';
+      $field_prefix = isset($field['table']) ? $dbal_extension->getDbAlias($this->connection->escapeTable($field['table'])) . '.' : '';
       $escaped_field_field = $this->connection->escapeField($dbal_extension->getDbFieldName($field['field']));
       $escaped_field_alias = $this->connection->escapeAlias($dbal_extension->getDbFieldName($field['alias']));
       $dbal_query->addSelect($field_prefix . $escaped_field_field . ' AS ' . $escaped_field_alias);
@@ -57,7 +57,7 @@ class Select extends QuerySelect {
     // won't need the query builder anyway.
     $root_alias = NULL;
     foreach ($this->tables as $table) {
-      $escaped_alias = $this->connection->escapeTable($table['alias']);
+      $escaped_alias = $dbal_extension->getDbAlias($this->connection->escapeTable($table['alias']));
 
       // If the table is a subquery, compile it and integrate it into this
       // query.

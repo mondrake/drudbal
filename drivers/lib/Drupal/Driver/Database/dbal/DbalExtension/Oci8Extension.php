@@ -158,6 +158,25 @@ class Oci8Extension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
+  public function getDbAlias($alias) {
+    // Max lenght for Oracle is 30 chars.
+    if (strlen($alias) > 30) {
+      $identifier_crc = hash('crc32b', $alias);
+      $db_alias = substr($alias, 0, 22) . $identifier_crc;
+      $this->dbIdentifiersMap[$db_alias] = $alias;
+      return $db_alias;
+    }
+    elseif (in_array($alias, static::$oracleKeywords)) {
+      return '"' . $alias . '"';
+    }
+    else {
+      return $alias;
+    }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public static function preConnectionOpen(array &$connection_options, array &$dbal_connection_options) {
   }
 
