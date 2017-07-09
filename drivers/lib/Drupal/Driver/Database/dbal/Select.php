@@ -40,11 +40,20 @@ class Select extends QuerySelect {
     $fields = [];
     foreach ($this->tables as $alias => $table) {
       if (!empty($table['all_fields'])) {
-        $dbal_query->addSelect($this->connection->getDbalExtension()->getDbTableName($alias) . '.*');
+        $dbal_query->addSelect($this->connection->escapeTable($alias) . '.*');
       }
     }
     foreach ($this->fields as $field) {
-      $field_prefix = isset($field['table']) ? $this->connection->getDbalExtension()->getDbTableName($field['table']) . '.' : '';
+      $field_prefix = '';
+      if (isset($field['table'])) {
+        // Do not attempt prefixing cross database / schema queries.
+        if (strpos($field['table'], '.') === FALSE) {
+          $field_prefix = $this->connection->getDbalExtension()->getDbTableName($this->connection->escapeTable($field['table']));
+        }
+        else {
+          $field_prefix = $field['table'];
+        }
+      }
       $escaped_field_field = $this->connection->escapeField($dbal_extension->getDbFieldName($field['field']));
       $escaped_field_alias = $this->connection->escapeAlias($dbal_extension->getDbFieldName($field['alias']));
       $dbal_query->addSelect($field_prefix . $escaped_field_field . ' AS ' . $escaped_field_alias);
@@ -57,7 +66,7 @@ class Select extends QuerySelect {
     // won't need the query builder anyway.
     $root_alias = NULL;
     foreach ($this->tables as $table) {
-      $escaped_alias = $this->connection->getDbalExtension()->getDbTableName($table['alias']);
+      $escaped_alias = $this->connection->escapeTable($table['alias']);
 
       // If the table is a subquery, compile it and integrate it into this
       // query.
