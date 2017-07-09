@@ -82,6 +82,7 @@ class Oci8Extension extends AbstractExtension {
     'rows',
     'range',
     'offset',
+    'pid_alias',
   ];
 
   protected $oracleKeywordTokens;
