@@ -77,7 +77,7 @@ index e239098..d76f221 100644
      // Check the restrictive syntax.
      $tables = Database::getConnection()->schema()->findTables('test_%');
 diff --git a/core/tests/Drupal/KernelTests/Core/Database/SelectTest.php b/core/tests/Drupal/KernelTests/Core/Database/SelectTest.php
-index 0d332d0..29e2366 100644
+index 0d332d0..3b0b919 100644
 --- a/core/tests/Drupal/KernelTests/Core/Database/SelectTest.php
 +++ b/core/tests/Drupal/KernelTests/Core/Database/SelectTest.php
 @@ -208,7 +208,9 @@ public function testSimpleSelectAllFields() {
@@ -86,7 +86,7 @@ index 0d332d0..29e2366 100644
    public function testNullCondition() {
 +\Drupal::database()->getDbalExtension()->setDebugging(TRUE);
      $this->ensureSampleDataNull();
-+error_log(var_export(db_select('test_null')->execute()->fetchAll(), TRUE));
++error_log(var_export(db_select('test_null', 't')->fields('t')->execute()->fetchAll(), TRUE));
  
      $names = db_select('test_null', 'tn')
        ->fields('tn', ['name'])
@@ -96,7 +96,7 @@ index 0d332d0..29e2366 100644
    public function testIsNullCondition() {
 +\Drupal::database()->getDbalExtension()->setDebugging(TRUE);
      $this->ensureSampleDataNull();
-+error_log(var_export(db_select('test_null')->execute()->fetchAll(), TRUE));
++error_log(var_export(db_select('test_null', 't')->fields('t')->execute()->fetchAll(), TRUE));
  
      $names = db_select('test_null', 'tn')
        ->fields('tn', ['name'])
@@ -106,12 +106,12 @@ index 0d332d0..29e2366 100644
    public function testIsNotNullCondition() {
 +\Drupal::database()->getDbalExtension()->setDebugging(TRUE);
      $this->ensureSampleDataNull();
-+error_log(var_export(db_select('test_null')->execute()->fetchAll(), TRUE));
++error_log(var_export(db_select('test_null', 't')->fields('t')->execute()->fetchAll(), TRUE));
  
      $names = db_select('test_null', 'tn')
        ->fields('tn', ['name'])
 diff --git a/core/tests/Drupal/KernelTests/Core/Database/UpdateLobTest.php b/core/tests/Drupal/KernelTests/Core/Database/UpdateLobTest.php
-index 501f918..f1d7dfb 100644
+index 501f918..60a9682 100644
 --- a/core/tests/Drupal/KernelTests/Core/Database/UpdateLobTest.php
 +++ b/core/tests/Drupal/KernelTests/Core/Database/UpdateLobTest.php
 @@ -13,17 +13,20 @@ class UpdateLobTest extends DatabaseTestBase {
@@ -124,14 +124,14 @@ index 501f918..f1d7dfb 100644
      $id = db_insert('test_one_blob')
        ->fields(['blob1' => $data])
        ->execute();
-+error_log(var_export(db_select('test_one_blob')->execute()->fetchAll(), TRUE));
++error_log(var_export(db_select('test_one_blob', 't')->fields('t')->execute()->fetchAll(), TRUE));
  
      $data .= $data;
      db_update('test_one_blob')
        ->condition('id', $id)
        ->fields(['blob1' => $data])
        ->execute();
-+error_log(var_export(db_select('test_one_blob')->execute()->fetchAll(), TRUE));
++error_log(var_export(db_select('test_one_blob', 't')->fields('t')->execute()->fetchAll(), TRUE));
  
      $r = db_query('SELECT * FROM {test_one_blob} WHERE id = :id', [':id' => $id])->fetchAssoc();
      $this->assertTrue($r['blob1'] === $data, format_string('Can update a blob: id @id, @data.', ['@id' => $id, '@data' => serialize($r)]));
@@ -146,13 +146,13 @@ index 501f918..f1d7dfb 100644
          'blob2' => 'a test',
        ])
        ->execute();
-+error_log(var_export(db_select('test_one_blob')->execute()->fetchAll(), TRUE));
++error_log(var_export(db_select('test_two_blobs', 't')->fields('t')->execute()->fetchAll(), TRUE));
  
      db_update('test_two_blobs')
        ->condition('id', $id)
        ->fields(['blob1' => 'and so', 'blob2' => 'is this'])
        ->execute();
-+error_log(var_export(db_select('test_one_blob')->execute()->fetchAll(), TRUE));
++error_log(var_export(db_select('test_two_blobs', 't')->fields('t')->execute()->fetchAll(), TRUE));
  
      $r = db_query('SELECT * FROM {test_two_blobs} WHERE id = :id', [':id' => $id])->fetchAssoc();
      $this->assertTrue($r['blob1'] === 'and so' && $r['blob2'] === 'is this', 'Can update multiple blobs per row.');
