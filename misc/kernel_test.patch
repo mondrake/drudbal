@@ -20,18 +20,6 @@ index 53a87b7..6d71693 100644
      $result = db_query("SELECT CONCAT_WS('-', :a1, name, :a2, age) FROM {test} WHERE age = :age", [
        ':a1' => 'name',
        ':a2' => 'age',
-diff --git a/core/tests/Drupal/KernelTests/Core/Database/DatabaseTestBase.php b/core/tests/Drupal/KernelTests/Core/Database/DatabaseTestBase.php
-index 6fcfaa4..0a57d05 100644
---- a/core/tests/Drupal/KernelTests/Core/Database/DatabaseTestBase.php
-+++ b/core/tests/Drupal/KernelTests/Core/Database/DatabaseTestBase.php
-@@ -16,6 +16,7 @@
- 
-   protected function setUp() {
-     parent::setUp();
-+\Drupal::database()->getDbalExtension()->setDebugging(TRUE);
-     $this->installSchema('database_test', [
-       'test',
-       'test_people',
 diff --git a/core/tests/Drupal/KernelTests/Core/Database/InsertTest.php b/core/tests/Drupal/KernelTests/Core/Database/InsertTest.php
 index 1c2c21d..2d0e520 100644
 --- a/core/tests/Drupal/KernelTests/Core/Database/InsertTest.php
@@ -106,39 +94,6 @@ index 0d332d0..3b0b919 100644
  
      $names = db_select('test_null', 'tn')
        ->fields('tn', ['name'])
-diff --git a/core/tests/Drupal/KernelTests/Core/Database/UpdateLobTest.php b/core/tests/Drupal/KernelTests/Core/Database/UpdateLobTest.php
-index 501f918..28ab3f2 100644
---- a/core/tests/Drupal/KernelTests/Core/Database/UpdateLobTest.php
-+++ b/core/tests/Drupal/KernelTests/Core/Database/UpdateLobTest.php
-@@ -18,12 +18,14 @@ public function testUpdateOneBlob() {
-     $id = db_insert('test_one_blob')
-       ->fields(['blob1' => $data])
-       ->execute();
-+error_log(var_export(db_select('test_one_blob', 't')->fields('t')->execute()->fetchAll(), TRUE));
- 
-     $data .= $data;
-     db_update('test_one_blob')
-       ->condition('id', $id)
-       ->fields(['blob1' => $data])
-       ->execute();
-+error_log(var_export(db_select('test_one_blob', 't')->fields('t')->execute()->fetchAll(), TRUE));
- 
-     $r = db_query('SELECT * FROM {test_one_blob} WHERE id = :id', [':id' => $id])->fetchAssoc();
-     $this->assertTrue($r['blob1'] === $data, format_string('Can update a blob: id @id, @data.', ['@id' => $id, '@data' => serialize($r)]));
-@@ -39,11 +41,13 @@ public function testUpdateMultipleBlob() {
-         'blob2' => 'a test',
-       ])
-       ->execute();
-+error_log(var_export(db_select('test_two_blobs', 't')->fields('t')->execute()->fetchAll(), TRUE));
- 
-     db_update('test_two_blobs')
-       ->condition('id', $id)
-       ->fields(['blob1' => 'and so', 'blob2' => 'is this'])
-       ->execute();
-+error_log(var_export(db_select('test_two_blobs', 't')->fields('t')->execute()->fetchAll(), TRUE));
- 
-     $r = db_query('SELECT * FROM {test_two_blobs} WHERE id = :id', [':id' => $id])->fetchAssoc();
-     $this->assertTrue($r['blob1'] === 'and so' && $r['blob2'] === 'is this', 'Can update multiple blobs per row.');
 diff --git a/core/tests/Drupal/KernelTests/KernelTestBase.php b/core/tests/Drupal/KernelTests/KernelTestBase.php
 index 6a35f15..a6f2c7c 100644
 --- a/core/tests/Drupal/KernelTests/KernelTestBase.php
