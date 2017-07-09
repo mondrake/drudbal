@@ -148,7 +148,8 @@ script:
   #- ../vendor/bin/phpunit --testsuite kernel --group Database,Cache,Entity,views
   - ../vendor/bin/phpunit --testsuite kernel --group Database
   - ../vendor/bin/phpunit --testsuite kernel --group Cache
-  #- ../vendor/bin/phpunit --testsuite kernel --group Entity
+  - ../vendor/bin/phpunit --testsuite kernel --group Entity
+  - ../vendor/bin/phpunit --testsuite kernel --group views
   #- ../vendor/bin/phpunit --testsuite kernel tests/Drupal/KernelTests/Core/Database/UpdateLobTest.php
 
 #after_script:
