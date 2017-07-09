@@ -224,7 +224,7 @@ class Oci8Extension extends AbstractExtension {
       $e = $e->getPrevious();
     }
     if ($e instanceof UniqueConstraintViolationException) {
-if ($this->getDebugging()) {      
+if ($this->getDebugging()) {
   $exc_class = get_class($e);
   $backtrace = debug_backtrace();
   error_log('***** Exception : ' . $exc_class);
@@ -423,7 +423,13 @@ if ($this->getDebugging()) error_log($query . ' : ' . var_export($args, TRUE));
    * {@inheritdoc}
    */
   public function getSequenceNameForInsert($drupal_table_name) {
-    return rtrim(ltrim($this->tableName($drupal_table_name), '"'), '"') . '_SEQ';
+    $table_name = $this->tableName($drupal_table_name);
+    if (substr($table_name, 0, 1) === '"') {
+      return '"' . rtrim(ltrim($table_name, '"'), '"') . '_SEQ"';
+    }
+    else {
+      return $table_name . '_SEQ';
+    }
   }
 
   /**
