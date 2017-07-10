@@ -82,7 +82,6 @@ class Oci8Extension extends AbstractExtension {
     'rows',
     'range',
     'offset',
-    'pid_alias',
   ];
 
   protected $oracleKeywordTokens;
@@ -590,6 +589,7 @@ if ($this->getDebugging()) error_log($query . ' : ' . var_export($args, TRUE));
    * This condition happens on MySQL only inserting not updating.
    */
   public function rebuildDefaultsTrigger($drupal_table_name, $dbal_schema) {
+return $this;
     $table_name = $this->tableName($drupal_table_name);
     $dbal_table = $dbal_schema->getTable($table_name);
     $trigger_name = rtrim(ltrim($table_name, '"'), '"') . '_TRG_DEFS';
