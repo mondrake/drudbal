@@ -351,6 +351,7 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException' || $this-
           $query = str_replace($placeholder, $placeholder . '____oracle', $query);
         }
         elseif (strpos($placeholder, ':db_insert_placeholder_') === 0 && ($value === null || $value === ''))  {
+          $key = $placeholder;
           $value = ']]]]EXPLICITNULLINSERTDRUDBAL[[[[';
         }
         else {
