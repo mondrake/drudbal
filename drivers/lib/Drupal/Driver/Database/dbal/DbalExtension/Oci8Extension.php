@@ -498,7 +498,7 @@ if ($this->getDebugging()) error_log($query . ' : ' . var_export($args, TRUE));
       'pass' => [],
     ];
 
-    $sql .= 'CREATE OR REPLACE FUNCTION check_enforced_null( p_str IN VARCHAR2 )
+/*    $sql = 'CREATE OR REPLACE FUNCTION check_enforced_null( p_str IN VARCHAR2 )
   RETURN NUMBER DETERMINISTIC PARALLEL_ENABLE
 BEGIN
   IF  p_str = \']]]]EXPLICIT_NULL_INSERT_DRUDBAL[[[[\'
@@ -508,7 +508,18 @@ BEGIN
 EXCEPTION
   WHEN value_error THEN
     RETURN NULL;
-END check_enforced_null;';
+END check_enforced_null;';*/
+    $sql = 'CREATE OR REPLACE FUNCTION is_number( p_str IN VARCHAR2 )
+  RETURN VARCHAR2 DETERMINISTIC PARALLEL_ENABLE
+IS
+  l_num NUMBER;
+BEGIN
+  l_num := to_number( p_str );
+  RETURN \'Y\';
+EXCEPTION
+  WHEN value_error THEN
+    RETURN \'N\';
+END is_number;';
 
     $this->getDbalConnection()->exec($sql);
 
