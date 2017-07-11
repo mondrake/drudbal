@@ -498,6 +498,20 @@ if ($this->getDebugging()) error_log($query . ' : ' . var_export($args, TRUE));
       'pass' => [],
     ];
 
+    $sql .= 'CREATE OR REPLACE FUNCTION check_enforced_null( p_str IN VARCHAR2 )
+  RETURN NUMBER DETERMINISTIC PARALLEL_ENABLE
+BEGIN
+  IF  p_str = \']]]]EXPLICIT_NULL_INSERT_DRUDBAL[[[[\'
+    THEN RETURN NULL;
+  END IF;
+  RETURN to_number( p_str );
+EXCEPTION
+  WHEN value_error THEN
+    RETURN NULL;
+END check_enforced_null;';
+
+    $this->getDbalConnection()->exec($sql);
+
     return $results;
   }
 
@@ -648,7 +662,7 @@ if ($this->getDebugging()) error_log($query . ' : ' . var_export($args, TRUE));
       if ($column->getNotNull()) {
         $trigger_sql .=
           'IF :NEW.' . $column_name . ' = \'' . self::NULL_INSERT_PLACEHOLDER . '\'
-            THEN :NEW.' . $column_name . ' := \'' . $column->getDefault() . '\';
+            THEN :NEW.' . $column_name . ' := ' . ($column->getDefault() ? '\'' . $column->getDefault() . '\'': 'CHR(8)') . ';
            END IF;
           ';
       }
