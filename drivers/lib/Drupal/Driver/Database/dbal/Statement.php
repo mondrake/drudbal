@@ -102,6 +102,14 @@ class Statement implements \IteratorAggregate, StatementInterface {
     try {
       $this->dbh->getDbalExtension()->alterStatement($statement, $params);
       $this->dbalStatement = $dbh->getDbalConnection()->prepare($statement);
+if ($this->dbh->getDbalExtension()->getDebugging()) {
+  $xx = $dbalStatement->getWrappedStatement();
+  oci_execute($xx, OCI_DESCRIBE_ONLY); // Use OCI_DESCRIBE_ONLY if not fetching rows
+  $ncols = oci_num_fields($xx);
+  for ($i = 1; $i <= $ncols; $i++) {
+    error_log(oci_field_name($xx, $i) . ' - ' . oci_field_type($xx, $i) . ' - ' . oci_field_size($xx, $i));
+  }
+}
     }
     catch (DBALException $e) {
       throw new DatabaseExceptionWrapper($e->getMessage(), $e->getCode(), $e);

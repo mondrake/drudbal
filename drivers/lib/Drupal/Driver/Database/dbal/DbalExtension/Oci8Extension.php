@@ -357,6 +357,7 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException' || $this-
         if (strpos($placeholder, ':db_insert_placeholder_') === 0)  {
           switch ($value) {
             case NULL:
+$this->setDebugging(TRUE);
               $value = self::NULL_INSERT_PLACEHOLDER;
               break;
 
