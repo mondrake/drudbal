@@ -346,16 +346,21 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException' || $this-
       $temp_args = [];
       foreach ($args as $placeholder => $value) {
         $temp_pl = ltrim($placeholder, ':');
+        $key = $placeholder;
         if (in_array($temp_pl, static::$oracleKeywords, TRUE)) {
           $key = $placeholder . '____oracle';
           $query = str_replace($placeholder, $placeholder . '____oracle', $query);
         }
-        elseif (strpos($placeholder, ':db_insert_placeholder_') === 0 && ($value === null || $value === ''))  {
-          $key = $placeholder;
-          $value = ']]]]EXPLICITNULLINSERTDRUDBAL[[[[';
-        }
-        else {
-          $key = $placeholder;
+        if (strpos($placeholder, ':db_insert_placeholder_') === 0)  {
+          switch ($value):
+            case NULL:
+              $value = ']]]]EXPLICIT_NULL_INSERT_DRUDBAL[[[[';
+              break;
+
+            case '':
+              $value = ']]]]EXPLICIT_EMPTY_STRING_INSERT_DRUDBAL[[[[';
+              break;
+
         }
         $temp_args[$key] = $value === '' ? self::ORACLE_EMPTY_STRING_REPLACEMENT : $value;  // @todo here check
       }
