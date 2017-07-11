@@ -498,6 +498,7 @@ if ($this->getDebugging()) error_log($query . ' : ' . var_export($args, TRUE));
       'pass' => [],
     ];
 
+/*
     $sql = 'CREATE OR REPLACE FUNCTION check_enforced_null( p_str IN VARCHAR2 )
   RETURN NUMBER DETERMINISTIC PARALLEL_ENABLE
 IS
@@ -511,20 +512,17 @@ EXCEPTION
   WHEN value_error THEN
     RETURN NULL;
 END check_enforced_null;';
-
-/*
-    $sql = 'CREATE OR REPLACE FUNCTION is_number( p_str IN VARCHAR2 )
-  RETURN VARCHAR2 DETERMINISTIC PARALLEL_ENABLE
-IS
-  l_num NUMBER;
-BEGIN
-  l_num := to_number( p_str );
-  RETURN \'Y\';
-EXCEPTION
-  WHEN value_error THEN
-    RETURN \'N\';
-END is_number;';
 */
+
+    $sql = 'CREATE OR REPLACE FUNCTION check_enforced_null( p_str IN ANYDATA )
+  RETURN NUMBER DETERMINISTIC PARALLEL_ENABLE
+IS
+BEGIN
+  IF  p_str.AccessVarchar2() = \']]]]EXPLICIT_NULL_INSERT_DRUDBAL[[[[\'
+    THEN RETURN 1;
+  END IF;
+  RETURN 0;
+END check_enforced_null;';
 
 
     $this->getDbalConnection()->exec($sql);
@@ -675,22 +673,27 @@ END is_number;';
       $type_name = $column->getType()->getName();
       $def = TRUE;
       if (in_array($type_name, ['smallint', 'integer', 'bigint', 'decimal', 'float'])) {
-        $trigger_sql .= ':NEW.' . $column_name . ' := check_enforced_null(:NEW.' . $column_name . ');
-        ';
-      }
-      if ($column->getNotNull()) {
         $trigger_sql .=
-          'IF :NEW.' . $column_name . ' = \'' . self::NULL_INSERT_PLACEHOLDER . '\'
-            THEN :NEW.' . $column_name . ' := ' . ($column->getDefault() ? '\'' . $column->getDefault() . '\'': 'CHR(8)') . ';
+          'IF check_enforced_null(ANYDATA.ConvertVarchar2(:NEW.' . $column_name . ')) = 1
+            THEN :NEW.' . $column_name . ' := NULL;
            END IF;
           ';
       }
       else {
-        $trigger_sql .=
-          'IF :NEW.' . $column_name . ' = \'' . self::NULL_INSERT_PLACEHOLDER . '\'
-            THEN :NEW.' . $column_name . ' := NULL;
-           END IF;
-          ';
+        if ($column->getNotNull()) {
+          $trigger_sql .=
+            'IF :NEW.' . $column_name . ' = \'' . self::NULL_INSERT_PLACEHOLDER . '\'
+              THEN :NEW.' . $column_name . ' := ' . ($column->getDefault() ? '\'' . $column->getDefault() . '\'': 'CHR(8)') . ';
+             END IF;
+            ';
+        }
+        else {
+          $trigger_sql .=
+            'IF :NEW.' . $column_name . ' = \'' . self::NULL_INSERT_PLACEHOLDER . '\'
+              THEN :NEW.' . $column_name . ' := NULL;
+             END IF;
+            ';
+        }
       }
     }
 
