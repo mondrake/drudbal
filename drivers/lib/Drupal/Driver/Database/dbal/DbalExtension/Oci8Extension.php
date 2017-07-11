@@ -618,9 +618,9 @@ if ($this->getDebugging()) error_log($query . ' : ' . var_export($args, TRUE));
 
     $def = FALSE;
     foreach ($dbal_table->getColumns() as $column) {
-      if ($column->getDefault() !== NULL && $column->getDefault() !== "\010") {
+      $column_name = $column->getName();
+/*      if ($column->getDefault() !== NULL && $column->getDefault() !== "\010") {
         $def = TRUE;
-        $column_name = $column->getName();
         if (in_array($column_name, static::$oracleKeywords)) {
           $column_name = '"' . $column_name . '"';
         }
@@ -641,10 +641,10 @@ if ($this->getDebugging()) error_log($query . ' : ' . var_export($args, TRUE));
         }
       }*/
       $trigger_sql .=
-        "IF :NEW.$column_name .  = '" . self::NULL_INSERT_PLACEHOLDER . "'
-          THEN :NEW.$column_name := NULL;
+        'IF :NEW.' . $column_name . ' = \'' . self::NULL_INSERT_PLACEHOLDER . '\'
+          THEN :NEW.' . $column_name . ' := NULL;
          END IF;
-        ";
+        ';
     }
 
     if (!$def) {
