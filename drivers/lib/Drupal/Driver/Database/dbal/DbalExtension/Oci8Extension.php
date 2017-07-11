@@ -619,11 +619,11 @@ if ($this->getDebugging()) error_log($query . ' : ' . var_export($args, TRUE));
     $def = FALSE;
     foreach ($dbal_table->getColumns() as $column) {
       $column_name = $column->getName();
+      if (in_array($column_name, static::$oracleKeywords)) {
+        $column_name = '"' . $column_name . '"';  // @todo quoting
+      }
 /*      if ($column->getDefault() !== NULL && $column->getDefault() !== "\010") {
         $def = TRUE;
-        if (in_array($column_name, static::$oracleKeywords)) {
-          $column_name = '"' . $column_name . '"';
-        }
         $type_name = $column->getType()->getName();
 /*        if (in_array($type_name, ['smallint', 'integer', 'bigint', 'decimal', 'float'])) {
           $trigger_sql .=
@@ -640,11 +640,20 @@ if ($this->getDebugging()) error_log($query . ' : ' . var_export($args, TRUE));
             ';
         }
       }*/
-      $trigger_sql .=
-        'IF :NEW.' . $column_name . ' = \'' . self::NULL_INSERT_PLACEHOLDER . '\'
-          THEN :NEW.' . $column_name . ' := NULL;
-         END IF;
-        ';
+      if ($column->getNotNull()) {
+        $trigger_sql .=
+          'IF :NEW.' . $column_name . ' = \'' . self::NULL_INSERT_PLACEHOLDER . '\'
+            THEN :NEW.' . $column_name . ' := \'' . $column->getDefault() . '\';
+           END IF;
+          ';
+      }
+      else {
+        $trigger_sql .=
+          'IF :NEW.' . $column_name . ' = \'' . self::NULL_INSERT_PLACEHOLDER . '\'
+            THEN :NEW.' . $column_name . ' := NULL;
+           END IF;
+          ';
+      }
     }
 
     if (!$def) {
