@@ -109,6 +109,7 @@ if ($this->dbh->getDbalExtension()->getDebugging()) {
   for ($i = 1; $i <= $ncols; $i++) {
     error_log(oci_field_name($xx, $i) . ' - ' . oci_field_type($xx, $i) . ' - ' . oci_field_size($xx, $i));
   }
+  $this->dbh->getDbalExtension()->setDebugging(FALSE);
 }
     }
     catch (DBALException $e) {
