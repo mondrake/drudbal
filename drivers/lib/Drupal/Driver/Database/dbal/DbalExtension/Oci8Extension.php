@@ -645,7 +645,8 @@ END is_number;';
 
     $trigger_sql = 'CREATE OR REPLACE TRIGGER ' . $trigger_name .
       ' BEFORE INSERT ON ' . $table_name .
-      ' FOR EACH ROW BEGIN /* defs trigger */ IF INSERTING THEN ';
+      ' FOR EACH ROW BEGIN /* defs trigger */ IF INSERTING THEN
+      ';
 
     $def = FALSE;
     foreach ($dbal_table->getColumns() as $column) {
@@ -674,7 +675,8 @@ END is_number;';
       $type_name = $column->getType()->getName();
       $def = TRUE;
       if (in_array($type_name, ['smallint', 'integer', 'bigint', 'decimal', 'float'])) {
-        $trigger_sql .= ' :NEW.' . $column_name . ' := check_enforced_null(:NEW. ' . $column_name . ');';
+        $trigger_sql .= ':NEW.' . $column_name . ' := check_enforced_null(:NEW.' . $column_name . ');
+        ';
       }
       if ($column->getNotNull()) {
         $trigger_sql .=
