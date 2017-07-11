@@ -640,6 +640,11 @@ if ($this->getDebugging()) error_log($query . ' : ' . var_export($args, TRUE));
             ';
         }
       }*/
+      $type_name = $column->getType()->getName();
+      if (in_array($type_name, ['smallint', 'integer', 'bigint', 'decimal', 'float'])) {
+        continue;
+      }
+      $def = TRUE;
       if ($column->getNotNull()) {
         $trigger_sql .=
           'IF :NEW.' . $column_name . ' = \'' . self::NULL_INSERT_PLACEHOLDER . '\'
