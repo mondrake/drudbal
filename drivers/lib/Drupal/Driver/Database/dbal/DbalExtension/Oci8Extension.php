@@ -36,6 +36,9 @@ class Oci8Extension extends AbstractExtension {
   const SINGLE_QUOTE_IDENTIFIER_REPLACEMENT = ']]]]SINGLEQUOTEIDENTIFIERDRUDBAL[[[[';
   const DOUBLE_QUOTE_IDENTIFIER_REPLACEMENT = ']]]]DOUBLEQUOTEIDENTIFIERDRUDBAL[[[[';
 
+  const NULL_INSERT_PLACEHOLDER = ']]]]EXPLICIT_NULL_INSERT_DRUDBAL[[[[';
+  const EMPTY_STRING_INSERT_PLACEHOLDER = ']]]]EXPLICIT_EMPTY_STRING_INSERT_DRUDBAL[[[[';
+
   /**
    * A map of condition operators to SQLite operators.
    *
@@ -354,11 +357,11 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException' || $this-
         if (strpos($placeholder, ':db_insert_placeholder_') === 0)  {
           switch ($value) {
             case NULL:
-              $value = ']]]]EXPLICIT_NULL_INSERT_DRUDBAL[[[[';
+              $value = self::NULL_INSERT_PLACEHOLDER;
               break;
 
             case '':
-              $value = ']]]]EXPLICIT_EMPTY_STRING_INSERT_DRUDBAL[[[[';
+              $value = self::EMPTY_STRING_INSERT_PLACEHOLDER;
               break;
 
           }
@@ -599,7 +602,6 @@ if ($this->getDebugging()) error_log($query . ' : ' . var_export($args, TRUE));
    * This condition happens on MySQL only inserting not updating.
    */
   public function rebuildDefaultsTrigger($drupal_table_name, $dbal_schema) {
-return $this;
     $table_name = $this->tableName($drupal_table_name);
     $dbal_table = $dbal_schema->getTable($table_name);
     $trigger_name = rtrim(ltrim($table_name, '"'), '"') . '_TRG_DEFS';
@@ -623,7 +625,7 @@ return $this;
           $column_name = '"' . $column_name . '"';
         }
         $type_name = $column->getType()->getName();
-        if (in_array($type_name, ['smallint', 'integer', 'bigint', 'decimal', 'float'])) {
+/*        if (in_array($type_name, ['smallint', 'integer', 'bigint', 'decimal', 'float'])) {
           $trigger_sql .=
             'IF :NEW.' . $column_name . ' IS NULL OR TO_CHAR(:NEW.' . $column_name . ') = \'\010\'
               THEN :NEW.' . $column_name . ':= ' . $column->getDefault() . ';
@@ -637,7 +639,12 @@ return $this;
              END IF;
             ';
         }
-      }
+      }*/
+      $trigger_sql .=
+        "IF :NEW.$column_name .  = '" . self::NULL_INSERT_PLACEHOLDER . "'
+          THEN :NEW.$column_name := NULL;
+         END IF;
+        ";
     }
 
     if (!$def) {
