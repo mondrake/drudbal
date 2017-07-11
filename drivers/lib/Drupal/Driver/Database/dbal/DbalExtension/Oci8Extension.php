@@ -672,10 +672,10 @@ END is_number;';
         }
       }*/
       $type_name = $column->getType()->getName();
-      if (in_array($type_name, ['smallint', 'integer', 'bigint', 'decimal', 'float'])) {
-        continue;
-      }
       $def = TRUE;
+      if (in_array($type_name, ['smallint', 'integer', 'bigint', 'decimal', 'float'])) {
+        $trigger_sql .= ' :NEW.' . $column_name . ' := check_enforced_null(:NEW. ' . $column_name . ');';
+      }
       if ($column->getNotNull()) {
         $trigger_sql .=
           'IF :NEW.' . $column_name . ' = \'' . self::NULL_INSERT_PLACEHOLDER . '\'
