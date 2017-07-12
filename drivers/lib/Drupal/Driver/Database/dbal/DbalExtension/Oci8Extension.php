@@ -114,6 +114,16 @@ class Oci8Extension extends AbstractExtension {
   public function __construct(DruDbalConnection $drudbal_connection, DbalConnection $dbal_connection, $statement_class) {
     parent::__construct($drudbal_connection, $dbal_connection, $statement_class);
     $this->oracleKeywordTokens = implode('|', static::$oracleKeywords);
+
+    // @todo see if we can get a getter in DBAL.
+    $reflection = new \ReflectionObject($dbal_connection->getWrappedConnection());
+    $reflection_dbh = $reflection->getProperty('dbh');
+    $reflection_dbh->setAccessible(TRUE);
+    $this->ociConnection = $reflection_dbh->getValue(clone $dbal_connection);
+  }
+
+  public function getOciConnection() {
+    return $this->ociConnection;
   }
 
   public function setDebugging($value) {
@@ -198,15 +208,6 @@ class Oci8Extension extends AbstractExtension {
    * {@inheritdoc}
    */
   public static function postConnectionOpen(DbalConnection $dbal_connection, array &$connection_options, array &$dbal_connection_options) {
-    // @todo see if we can get a getter in DBAL.
-    $reflection = new \ReflectionObject($dbal_connection->getWrappedConnection());
-    $reflection_dbh = $reflection->getProperty('dbh');
-    $reflection_dbh->setAccessible(TRUE);
-    $this->ociConnection = $reflection_dbh->getValue(clone $dbal_connection);
-  }
-
-  public function getOciConnection() {
-    return $this->ociConnection;
   }
 
   /**
