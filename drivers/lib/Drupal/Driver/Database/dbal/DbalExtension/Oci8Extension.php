@@ -36,8 +36,10 @@ class Oci8Extension extends AbstractExtension {
   const SINGLE_QUOTE_IDENTIFIER_REPLACEMENT = ']]]]SINGLEQUOTEIDENTIFIERDRUDBAL[[[[';
   const DOUBLE_QUOTE_IDENTIFIER_REPLACEMENT = ']]]]DOUBLEQUOTEIDENTIFIERDRUDBAL[[[[';
 
-  const NULL_INSERT_PLACEHOLDER = ']]]]EXPLICIT_NULL_INSERT_DRUDBAL[[[[';
-  const EMPTY_STRING_INSERT_PLACEHOLDER = ']]]]EXPLICIT_EMPTY_STRING_INSERT_DRUDBAL[[[[';
+//  const NULL_INSERT_PLACEHOLDER = ']]]]EXPLICIT_NULL_INSERT_DRUDBAL[[[[';
+//  const EMPTY_STRING_INSERT_PLACEHOLDER = ']]]]EXPLICIT_EMPTY_STRING_INSERT_DRUDBAL[[[[';
+  const NULL_INSERT_PLACEHOLDER = '88330101824993923986.3885674841';
+  const EMPTY_STRING_INSERT_PLACEHOLDER = '88330101824993923986.3885674842';
 
   /**
    * A map of condition operators to SQLite operators.
@@ -116,11 +118,11 @@ class Oci8Extension extends AbstractExtension {
     $this->oracleKeywordTokens = implode('|', static::$oracleKeywords);
 
     // @todo see if we can get a getter in DBAL.
-    $wrapped_connection = $dbal_connection->getWrappedConnection();
-    $reflection = new \ReflectionObject($wrapped_connection);
-    $reflection_dbh = $reflection->getProperty('dbh');
-    $reflection_dbh->setAccessible(TRUE);
-    $this->ociConnection = $reflection_dbh->getValue(clone $wrapped_connection);
+//    $wrapped_connection = $dbal_connection->getWrappedConnection();
+//    $reflection = new \ReflectionObject($wrapped_connection);
+//    $reflection_dbh = $reflection->getProperty('dbh');
+//    $reflection_dbh->setAccessible(TRUE);
+//    $this->ociConnection = $reflection_dbh->getValue(clone $wrapped_connection);
   }
 
   public function getOciConnection() {
@@ -370,7 +372,6 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException' || $this-
         if (strpos($placeholder, ':db_insert_placeholder_') === 0)  {
           switch ($value) {
             case NULL:
-$this->setDebugging(TRUE);
               $value = self::NULL_INSERT_PLACEHOLDER;
               break;
 
@@ -678,7 +679,7 @@ END RAND;';
       $def = TRUE;
       if (in_array($type_name, ['smallint', 'integer', 'bigint', 'decimal', 'float'])) {
         $trigger_sql .=
-          'IF check_enforced_null(ANYDATA.ConvertVarchar2(:NEW.' . $column_name . ')) = 1
+          'IF :NEW.' . $column_name . ' = ' . self::NULL_INSERT_PLACEHOLDER . '
             THEN :NEW.' . $column_name . ' := NULL;
            END IF;
           ';
@@ -686,14 +687,14 @@ END RAND;';
       else {
         if ($column->getNotNull()) {
           $trigger_sql .=
-            'IF :NEW.' . $column_name . ' = \'' . self::NULL_INSERT_PLACEHOLDER . '\'
+            'IF :NEW.' . $column_name . ' = ' . self::NULL_INSERT_PLACEHOLDER . '
               THEN :NEW.' . $column_name . ' := ' . ($column->getDefault() ? '\'' . $column->getDefault() . '\'': 'CHR(8)') . ';
              END IF;
             ';
         }
         else {
           $trigger_sql .=
-            'IF :NEW.' . $column_name . ' = \'' . self::NULL_INSERT_PLACEHOLDER . '\'
+            'IF :NEW.' . $column_name . ' = ' . self::NULL_INSERT_PLACEHOLDER . '
               THEN :NEW.' . $column_name . ' := NULL;
              END IF;
             ';
