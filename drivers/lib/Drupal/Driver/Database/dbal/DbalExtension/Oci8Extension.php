@@ -199,7 +199,7 @@ class Oci8Extension extends AbstractExtension {
    */
   public static function postConnectionOpen(DbalConnection $dbal_connection, array &$connection_options, array &$dbal_connection_options) {
     // @todo see if we can get a getter in DBAL.
-    $reflection = new \ReflectionObject($dbal_connection);
+    $reflection = new \ReflectionObject($dbal_connection->getWrappedConnection());
     $reflection_dbh = $reflection->getProperty('dbh');
     $reflection_dbh->setAccessible(TRUE);
     $this->ociConnection = $reflection_dbh->getValue(clone $dbal_connection);
