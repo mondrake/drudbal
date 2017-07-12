@@ -679,7 +679,7 @@ END RAND;';
       $def = TRUE;
       if (in_array($type_name, ['smallint', 'integer', 'bigint', 'decimal', 'float'])) {
         $trigger_sql .=
-          'IF :NEW.' . $column_name . ' = ' . self::NULL_INSERT_PLACEHOLDER . '
+          'IF TO_CHAR(:NEW.' . $column_name . ') = \'' . self::NULL_INSERT_PLACEHOLDER . '\'
             THEN :NEW.' . $column_name . ' := NULL;
            END IF;
           ';
@@ -687,14 +687,14 @@ END RAND;';
       else {
         if ($column->getNotNull()) {
           $trigger_sql .=
-            'IF :NEW.' . $column_name . ' = ' . self::NULL_INSERT_PLACEHOLDER . '
+            'IF TO_CHAR(:NEW.' . $column_name . ') = \'' . self::NULL_INSERT_PLACEHOLDER . '\'
               THEN :NEW.' . $column_name . ' := ' . ($column->getDefault() ? '\'' . $column->getDefault() . '\'': 'CHR(8)') . ';
              END IF;
             ';
         }
         else {
           $trigger_sql .=
-            'IF :NEW.' . $column_name . ' = ' . self::NULL_INSERT_PLACEHOLDER . '
+            'IF TO_CHAR(:NEW.' . $column_name . ') = \'' . self::NULL_INSERT_PLACEHOLDER . '\'
               THEN :NEW.' . $column_name . ' := NULL;
              END IF;
             ';
