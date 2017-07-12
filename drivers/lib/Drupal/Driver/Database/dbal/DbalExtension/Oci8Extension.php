@@ -116,10 +116,11 @@ class Oci8Extension extends AbstractExtension {
     $this->oracleKeywordTokens = implode('|', static::$oracleKeywords);
 
     // @todo see if we can get a getter in DBAL.
-    $reflection = new \ReflectionObject($dbal_connection->getWrappedConnection());
+    $wrapped_connection = $dbal_connection->getWrappedConnection();
+    $reflection = new \ReflectionObject($wrapped_connection);
     $reflection_dbh = $reflection->getProperty('dbh');
     $reflection_dbh->setAccessible(TRUE);
-    $this->ociConnection = $reflection_dbh->getValue(clone $dbal_connection);
+    $this->ociConnection = $reflection_dbh->getValue(clone $wrapped_connection);
   }
 
   public function getOciConnection() {
@@ -511,22 +512,6 @@ $this->setDebugging(TRUE);
       'pass' => [],
     ];
 
-/*
-    $sql = 'CREATE OR REPLACE FUNCTION check_enforced_null( p_str IN VARCHAR2 )
-  RETURN NUMBER DETERMINISTIC PARALLEL_ENABLE
-IS
-  l_num NUMBER;
-BEGIN
-  IF  p_str = \']]]]EXPLICIT_NULL_INSERT_DRUDBAL[[[[\'
-    THEN RETURN NULL;
-  END IF;
-  RETURN to_number( p_str );
-EXCEPTION
-  WHEN value_error THEN
-    RETURN NULL;
-END check_enforced_null;';
-*/
-
     $sql = 'CREATE OR REPLACE FUNCTION check_enforced_null( p_str IN ANYDATA )
   RETURN NUMBER DETERMINISTIC PARALLEL_ENABLE
 IS
@@ -538,13 +523,13 @@ BEGIN
 END check_enforced_null;';
     $this->getDbalConnection()->exec($sql);
 
-    $sql = 'CREATE OR REPLACE FUNCTION RAND()
+/*    $sql = 'CREATE OR REPLACE FUNCTION RAND()
   RETURN NUMBER DETERMINISTIC PARALLEL_ENABLE
 IS
 BEGIN
   RETURN DBMS_RANDOM.VALUE;
 END RAND;';
-    $this->getDbalConnection()->exec($sql);
+    $this->getDbalConnection()->exec($sql);*/
 
     return $results;
   }
