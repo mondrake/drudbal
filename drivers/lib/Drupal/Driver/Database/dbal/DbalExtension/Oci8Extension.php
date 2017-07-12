@@ -99,6 +99,8 @@ class Oci8Extension extends AbstractExtension {
    */
   protected $dbIdentifiersMap = [];
 
+  protected $ociConnection;
+
   /**
    * Constructs an Oci8Extension object.
    *
@@ -196,6 +198,15 @@ class Oci8Extension extends AbstractExtension {
    * {@inheritdoc}
    */
   public static function postConnectionOpen(DbalConnection $dbal_connection, array &$connection_options, array &$dbal_connection_options) {
+    // @todo see if we can get a getter in DBAL.
+    $reflection = new \ReflectionObject($dbal_connection);
+    $reflection_dbh = $reflection->getProperty('dbh');
+    $reflection_dbh->setAccessible(TRUE);
+    $this->ociConnection = $reflection_dbh->getValue(clone $dbal_connection);
+  }
+
+  public function getOciConnection() {
+    return $this->ociConnection;
   }
 
   /**
@@ -377,7 +388,7 @@ $this->setDebugging(TRUE);
     $query = preg_replace('/([\s\.(])(' . $this->oracleKeywordTokens . ')([\s,)])/', '$1"$2"$3', $query);
 
     // RAND() is not available in Oracle.
-    $query = str_replace('RAND()', 'DBMS_RANDOM.VALUE', $query);
+    //$query = str_replace('RAND()', 'DBMS_RANDOM.VALUE', $query);
 
     // REGEXP is not available in Oracle. @todo refine
     $query = preg_replace('/(.*\s+)(.*)(\s+REGEXP\s+)(.*)/', '$1 REGEXP_LIKE($2, $4)', $query);
@@ -524,8 +535,14 @@ BEGIN
   END IF;
   RETURN 0;
 END check_enforced_null;';
+    $this->getDbalConnection()->exec($sql);
 
-
+    $sql = 'CREATE OR REPLACE FUNCTION RAND()
+  RETURN NUMBER DETERMINISTIC PARALLEL_ENABLE
+IS
+BEGIN
+  RETURN DBMS_RANDOM.VALUE;
+END RAND;';
     $this->getDbalConnection()->exec($sql);
 
     return $results;

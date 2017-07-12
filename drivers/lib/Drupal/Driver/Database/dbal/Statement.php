@@ -103,12 +103,13 @@ class Statement implements \IteratorAggregate, StatementInterface {
       $this->dbh->getDbalExtension()->alterStatement($statement, $params);
       $this->dbalStatement = $dbh->getDbalConnection()->prepare($statement);
 if ($this->dbh->getDbalExtension()->getDebugging()) {
-  $xx = $this->dbalStatement->getWrappedStatement();
+  $xx = oci_parse($this->dbh->getDbalExtension()->getOciConnection(), $statement);
   oci_execute($xx, OCI_DESCRIBE_ONLY); // Use OCI_DESCRIBE_ONLY if not fetching rows
   $ncols = oci_num_fields($xx);
   for ($i = 1; $i <= $ncols; $i++) {
     error_log(oci_field_name($xx, $i) . ' - ' . oci_field_type($xx, $i) . ' - ' . oci_field_size($xx, $i));
   }
+  oci_free_statement($xx);
   $this->dbh->getDbalExtension()->setDebugging(FALSE);
 }
     }
