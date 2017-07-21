@@ -60,30 +60,6 @@ index e239098..255aa44 100644
  
      // Check the restrictive syntax.
      $tables = Database::getConnection()->schema()->findTables('test_%');
-diff --git a/core/tests/Drupal/KernelTests/Core/Database/SelectTest.php b/core/tests/Drupal/KernelTests/Core/Database/SelectTest.php
-index 0d332d0..c74685c 100644
---- a/core/tests/Drupal/KernelTests/Core/Database/SelectTest.php
-+++ b/core/tests/Drupal/KernelTests/Core/Database/SelectTest.php
-@@ -222,7 +222,9 @@ public function testNullCondition() {
-    * Tests that we can find a record with a NULL value.
-    */
-   public function testIsNullCondition() {
-+\Drupal::database()->getDbalExtension()->setDebugging(TRUE);
-     $this->ensureSampleDataNull();
-+error_log(var_export(db_select('test_null', 't')->fields('t')->execute()->fetchAll(), TRUE));
- 
-     $names = db_select('test_null', 'tn')
-       ->fields('tn', ['name'])
-@@ -237,7 +239,9 @@ public function testIsNullCondition() {
-    * Tests that we can find a record without a NULL value.
-    */
-   public function testIsNotNullCondition() {
-+\Drupal::database()->getDbalExtension()->setDebugging(TRUE);
-     $this->ensureSampleDataNull();
-+error_log(var_export(db_select('test_null', 't')->fields('t')->execute()->fetchAll(), TRUE));
- 
-     $names = db_select('test_null', 'tn')
-       ->fields('tn', ['name'])
 diff --git a/core/tests/Drupal/KernelTests/KernelTestBase.php b/core/tests/Drupal/KernelTests/KernelTestBase.php
 index 6a35f15..a6f2c7c 100644
 --- a/core/tests/Drupal/KernelTests/KernelTestBase.php
