@@ -197,13 +197,6 @@ class AbstractExtension implements DbalExtensionInterface {
   }
 
   /**
-   * {@inheritdoc}
-   */
-  public function delegateQuoteIdentifier($identifier) {
-    return $identifier;
-  }
-
-  /**
    * Statement delegated methods.
    */
 

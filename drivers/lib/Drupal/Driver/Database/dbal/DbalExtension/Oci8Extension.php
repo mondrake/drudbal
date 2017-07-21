@@ -36,11 +36,6 @@ class Oci8Extension extends AbstractExtension {
   const SINGLE_QUOTE_IDENTIFIER_REPLACEMENT = ']]]]SINGLEQUOTEIDENTIFIERDRUDBAL[[[[';
   const DOUBLE_QUOTE_IDENTIFIER_REPLACEMENT = ']]]]DOUBLEQUOTEIDENTIFIERDRUDBAL[[[[';
 
-//  const NULL_INSERT_PLACEHOLDER = ']]]]EXPLICIT_NULL_INSERT_DRUDBAL[[[[';
-//  const EMPTY_STRING_INSERT_PLACEHOLDER = ']]]]EXPLICIT_EMPTY_STRING_INSERT_DRUDBAL[[[[';
-  const NULL_INSERT_PLACEHOLDER = '88330101824993923986.3885674841';
-  const EMPTY_STRING_INSERT_PLACEHOLDER = '88330101824993923986.3885674842';
-
   /**
    * A map of condition operators to SQLite operators.
    *
@@ -101,8 +96,6 @@ class Oci8Extension extends AbstractExtension {
    */
   protected $dbIdentifiersMap = [];
 
-  protected $ociConnection;
-
   /**
    * Constructs an Oci8Extension object.
    *
@@ -116,17 +109,6 @@ class Oci8Extension extends AbstractExtension {
   public function __construct(DruDbalConnection $drudbal_connection, DbalConnection $dbal_connection, $statement_class) {
     parent::__construct($drudbal_connection, $dbal_connection, $statement_class);
     $this->oracleKeywordTokens = implode('|', static::$oracleKeywords);
-
-    // @todo see if we can get a getter in DBAL.
-//    $wrapped_connection = $dbal_connection->getWrappedConnection();
-//    $reflection = new \ReflectionObject($wrapped_connection);
-//    $reflection_dbh = $reflection->getProperty('dbh');
-//    $reflection_dbh->setAccessible(TRUE);
-//    $this->ociConnection = $reflection_dbh->getValue(clone $wrapped_connection);
-  }
-
-  public function getOciConnection() {
-    return $this->ociConnection;
   }
 
   public function setDebugging($value) {
@@ -345,14 +327,6 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException' || $this-
   }
 
   /**
-   * {@inheritdoc}
-   */
-  public function delegateQuoteIdentifier($identifier) {
-    $keywords = $this->getDbalConnection()->getDatabasePlatform()->getReservedKeywordsList();
-    return $keywords->isKeyword($identifier) ? '"' . $identifier . '"' : $identifier;
-  }
-
-  /**
    * Statement delegated methods.
    */
 
@@ -369,18 +343,6 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException' || $this-
           $key = $placeholder . '____oracle';
           $query = str_replace($placeholder, $placeholder . '____oracle', $query);
         }
-        if (strpos($placeholder, ':db_insert_placeholder_') === 0)  {
-          switch ($value) {
-            case NULL:
-              $value = self::NULL_INSERT_PLACEHOLDER;
-              break;
-
-            case '':
-              $value = self::EMPTY_STRING_INSERT_PLACEHOLDER;
-              break;
-
-          }
-        }
         $temp_args[$key] = $value === '' ? self::ORACLE_EMPTY_STRING_REPLACEMENT : $value;  // @todo here check
       }
       $args = $temp_args;
@@ -391,7 +353,7 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException' || $this-
     $query = preg_replace('/([\s\.(])(' . $this->oracleKeywordTokens . ')([\s,)])/', '$1"$2"$3', $query);
 
     // RAND() is not available in Oracle.
-    //$query = str_replace('RAND()', 'DBMS_RANDOM.VALUE', $query);
+    $query = str_replace('RAND()', 'DBMS_RANDOM.VALUE', $query);
 
     // REGEXP is not available in Oracle. @todo refine
     $query = preg_replace('/(.*\s+)(.*)(\s+REGEXP\s+)(.*)/', '$1 REGEXP_LIKE($2, $4)', $query);
@@ -524,7 +486,7 @@ BEGIN
 END check_enforced_null;';
     $this->getDbalConnection()->exec($sql);
 
-/*    $sql = 'CREATE OR REPLACE FUNCTION RAND()
+/*    $sql = 'CREATE OR REPLACE FUNCTION RAND()    @todo
   RETURN NUMBER DETERMINISTIC PARALLEL_ENABLE
 IS
 BEGIN
@@ -623,91 +585,8 @@ END RAND;';
    * {@inheritdoc}
    */
   public function postCreateTable($drupal_table_name, array $drupal_table_specs, DbalSchema $dbal_schema) {
-    $this->rebuildDefaultsTrigger($drupal_table_name, $dbal_schema);
+    // @todo
     return $this;
-  }
-
-  /**
-   * Emulates mysql default column behaviour (eg.
-   * insert into table (col1) values (null)
-   * if col1 has default in mysql you have the default insterted instead of null.
-   * On oracle you have null inserted.
-   * So we need a trigger to intercept this condition and substitute null with default...
-   * This condition happens on MySQL only inserting not updating.
-   */
-  public function rebuildDefaultsTrigger($drupal_table_name, $dbal_schema) {
-    $table_name = $this->tableName($drupal_table_name);
-    $dbal_table = $dbal_schema->getTable($table_name);
-    $trigger_name = rtrim(ltrim($table_name, '"'), '"') . '_TRG_DEFS';
-    // Max lenght for Oracle is 30 chars, but should be even lower to allow
-    // DBAL creating triggers/sequences with table name + suffix.
-    if (strlen($trigger_name) > 30) {
-      $identifier_crc = hash('crc32b', $trigger_name);
-      $trigger_name = substr($trigger_name, 0, 22) . $identifier_crc;
-    }
-
-    $trigger_sql = 'CREATE OR REPLACE TRIGGER ' . $trigger_name .
-      ' BEFORE INSERT ON ' . $table_name .
-      ' FOR EACH ROW BEGIN /* defs trigger */ IF INSERTING THEN
-      ';
-
-    $def = FALSE;
-    foreach ($dbal_table->getColumns() as $column) {
-      $column_name = $column->getName();
-      if (in_array($column_name, static::$oracleKeywords)) {
-        $column_name = '"' . $column_name . '"';  // @todo quoting
-      }
-/*      if ($column->getDefault() !== NULL && $column->getDefault() !== "\010") {
-        $def = TRUE;
-        $type_name = $column->getType()->getName();
-/*        if (in_array($type_name, ['smallint', 'integer', 'bigint', 'decimal', 'float'])) {
-          $trigger_sql .=
-            'IF :NEW.' . $column_name . ' IS NULL OR TO_CHAR(:NEW.' . $column_name . ') = \'\010\'
-              THEN :NEW.' . $column_name . ':= ' . $column->getDefault() . ';
-             END IF;
-            ';
-        }
-        else {
-          $trigger_sql .=
-            'IF :NEW.' . $column_name . ' IS NULL OR TO_CHAR(:NEW.' . $column_name . ') = \'\010\'
-              THEN :NEW.' . $column_name . ':= \'' . $column->getDefault() . '\';
-             END IF;
-            ';
-        }
-      }*/
-      $type_name = $column->getType()->getName();
-      $def = TRUE;
-      if (in_array($type_name, ['smallint', 'integer', 'bigint', 'decimal', 'float'])) {
-        $trigger_sql .=
-          'IF TO_CHAR(:NEW.' . $column_name . ') = \'' . self::NULL_INSERT_PLACEHOLDER . '\'
-            THEN :NEW.' . $column_name . ' := NULL;
-           END IF;
-          ';
-      }
-      else {
-        if ($column->getNotNull()) {
-          $trigger_sql .=
-            'IF TO_CHAR(:NEW.' . $column_name . ') = \'' . self::NULL_INSERT_PLACEHOLDER . '\'
-              THEN :NEW.' . $column_name . ' := ' . ($column->getDefault() ? '\'' . $column->getDefault() . '\'': 'CHR(8)') . ';
-             END IF;
-            ';
-        }
-        else {
-          $trigger_sql .=
-            'IF TO_CHAR(:NEW.' . $column_name . ') = \'' . self::NULL_INSERT_PLACEHOLDER . '\'
-              THEN :NEW.' . $column_name . ' := NULL;
-             END IF;
-            ';
-        }
-      }
-    }
-
-    if (!$def) {
-      $trigger_sql .= ' NULL; ';
-    }
-
-    $trigger_sql .= 'END IF; END;';
-    $this->getDbalConnection()->exec($trigger_sql);
   }
 
   /**
