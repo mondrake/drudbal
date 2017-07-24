@@ -8,7 +8,7 @@ sudo: required
 dist: precise
 
 php:
-  - 7
+  - 7.1
   #- nightly
 
 branches:
@@ -58,7 +58,7 @@ before_install:
         # Get Drupal Console
         # composer require "drupal/console:~1.0" --prefer-dist --optimize-autoloader
         # Get Doctrine DBAL
-        composer require "doctrine/dbal:^2.5.12" --no-progress
+        composer require "doctrine/dbal:^2.6.0" --no-progress
       fi
 
   # Always get latest Drupal core.

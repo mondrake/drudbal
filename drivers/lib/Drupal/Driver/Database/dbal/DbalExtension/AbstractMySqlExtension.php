@@ -561,17 +561,6 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
    * {@inheritdoc}
    */
   public function alterDbalColumnDefinition($context, &$dbal_column_definition, array &$dbal_column_options, $dbal_type, array $drupal_field_specs, $field_name) {
-    // DBAL does not support unsigned float/numeric columns.
-    // @see https://github.com/doctrine/dbal/issues/2380
-    // @todo remove the version check once DBAL 2.6.0 is out.
-    if (version_compare(DbalVersion::VERSION, '2.6.0', '<')) {
-      if (isset($drupal_field_specs['type']) && $drupal_field_specs['type'] == 'float' && !empty($drupal_field_specs['unsigned']) && (bool) $drupal_field_specs['unsigned'] === TRUE) {
-        $dbal_column_definition = str_replace('DOUBLE PRECISION', 'DOUBLE PRECISION UNSIGNED', $dbal_column_definition);
-      }
-      if (isset($drupal_field_specs['type']) && $drupal_field_specs['type'] == 'numeric' && !empty($drupal_field_specs['unsigned']) && (bool) $drupal_field_specs['unsigned'] === TRUE) {
-        $dbal_column_definition = preg_replace('/NUMERIC\((.+)\)/', '$0 UNSIGNED', $dbal_column_definition);
-      }
-    }
     // DBAL does not support per-column charset.
     // @see https://github.com/doctrine/dbal/pull/881
     if (isset($drupal_field_specs['type']) && $drupal_field_specs['type'] == 'varchar_ascii') {
@@ -583,13 +572,7 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
     }
     // Decode single quotes.
     $dbal_column_definition = str_replace(self::SINGLE_QUOTE_IDENTIFIER_REPLACEMENT, '\\\'', $dbal_column_definition);
-    // DBAL duplicates the COMMENT part when creating a table, or adding a
-    // field, if comment is already in the 'customDefinition' option. Here,
-    // just drop comment from the column definition string.
-    // @see https://github.com/doctrine/dbal/pull/2725
-    if (in_array($context, ['createTable', 'addField'])) {
-      $dbal_column_definition = preg_replace("/ COMMENT (?:(?:'(?:\\\\\\\\)+'|'(?:[^'\\\\]|\\\\'?|'')*'))?/s", '', $dbal_column_definition);
-    }
+
     return $this;
   }
 
