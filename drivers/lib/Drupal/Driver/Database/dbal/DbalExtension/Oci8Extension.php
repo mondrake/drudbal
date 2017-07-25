@@ -177,6 +177,13 @@ class Oci8Extension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
+  public function streamline(string $condition) {
+    return strtr($condition, array_flip($this->dbIdentifiersMap));
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function delegateFullQualifiedTableName($drupal_table_name) {
     $options = $this->connection->getConnectionOptions();
     $prefix = $this->connection->tablePrefix($drupal_table_name);
