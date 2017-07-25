@@ -20,19 +20,6 @@ index 53a87b7..6d71693 100644
      $result = db_query("SELECT CONCAT_WS('-', :a1, name, :a2, age) FROM {test} WHERE age = :age", [
        ':a1' => 'name',
        ':a2' => 'age',
-diff --git a/core/tests/Drupal/KernelTests/Core/Database/InsertTest.php b/core/tests/Drupal/KernelTests/Core/Database/InsertTest.php
-index 1c2c21d..2d0e520 100644
---- a/core/tests/Drupal/KernelTests/Core/Database/InsertTest.php
-+++ b/core/tests/Drupal/KernelTests/Core/Database/InsertTest.php
-@@ -176,6 +176,8 @@ public function testInsertSelectFields() {
-    * Tests that the INSERT INTO ... SELECT * ... syntax works.
-    */
-   public function testInsertSelectAll() {
-+    // @todo this requires DBAL 2.5.13 for fix [Oracle] getListTableColumnsSQL returns columns ordered by position instead of by name. #2673
-+    $this->markTestSkipped('this requires DBAL 2.5.13.');
-     $query = db_select('test_people', 'tp')
-       ->fields('tp')
-       ->condition('tp.name', 'Meredith');
 diff --git a/core/tests/Drupal/KernelTests/Core/Database/QueryTest.php b/core/tests/Drupal/KernelTests/Core/Database/QueryTest.php
 index 04ba8ad..7c49ebb 100644
 --- a/core/tests/Drupal/KernelTests/Core/Database/QueryTest.php
@@ -60,23 +47,3 @@ index e239098..255aa44 100644
  
      // Check the restrictive syntax.
      $tables = Database::getConnection()->schema()->findTables('test_%');
-diff --git a/core/tests/Drupal/KernelTests/KernelTestBase.php b/core/tests/Drupal/KernelTests/KernelTestBase.php
-index 6a35f15..a6f2c7c 100644
---- a/core/tests/Drupal/KernelTests/KernelTestBase.php
-+++ b/core/tests/Drupal/KernelTests/KernelTestBase.php
-@@ -2,6 +2,7 @@
- 
- namespace Drupal\KernelTests;
- 
-+use Drupal\Component\Utility\Timer;
- use Drupal\Component\FileCache\ApcuFileCacheBackend;
- use Drupal\Component\FileCache\FileCache;
- use Drupal\Component\FileCache\FileCacheFactory;
-@@ -225,6 +226,7 @@ protected static function getDrupalRoot() {
-    * {@inheritdoc}
-    */
-   protected function setUp() {
-+Timer::start('drudbal:install_cli');
-     parent::setUp();
- 
-     $this->root = static::getDrupalRoot();
