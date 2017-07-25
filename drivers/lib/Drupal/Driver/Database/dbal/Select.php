@@ -84,17 +84,17 @@ class Select extends QuerySelect {
       else {
         switch (trim($table['join type'])) {
           case 'INNER':
-            $dbal_query->innerJoin($root_alias, $escaped_table, $escaped_alias, $dbal_extension->resolveConditionAliases((string) $table['condition']));
+            $dbal_query->innerJoin($root_alias, $escaped_table, $escaped_alias, $dbal_extension->resolveAliases((string) $table['condition']));
             break;
 
           case 'LEFT OUTER':
           case 'LEFT':
-            $dbal_query->leftJoin($root_alias, $escaped_table, $escaped_alias, $dbal_extension->resolveConditionAliases((string) $table['condition']));
+            $dbal_query->leftJoin($root_alias, $escaped_table, $escaped_alias, $dbal_extension->resolveAliases((string) $table['condition']));
             break;
 
           case 'RIGHT OUTER':
           case 'RIGHT':
-            $dbal_query->rightJoin($root_alias, $escaped_table, $escaped_alias, $dbal_extension->resolveConditionAliases((string) $table['condition']));
+            $dbal_query->rightJoin($root_alias, $escaped_table, $escaped_alias, $dbal_extension->resolveAliases((string) $table['condition']));
             break;
 
         }
@@ -104,20 +104,20 @@ class Select extends QuerySelect {
     // WHERE
     // @todo this uses Drupal Condition API. Use DBAL expressions instead?
     if (count($this->condition)) {
-      $dbal_query->where($dbal_extension->resolveConditionAliases((string) $this->condition));
+      $dbal_query->where($dbal_extension->resolveAliases((string) $this->condition));
     }
 
     // GROUP BY
     if ($this->group) {
       foreach ($this->group as $expression) {
-        $dbal_query->addGroupBy($expression);
+        $dbal_query->addGroupBy($dbal_extension->resolveAliases($expression));
       }
     }
 
     // HAVING
     // @todo this uses Drupal Condition API. Use DBAL expressions instead?
     if (count($this->having)) {
-      $dbal_query->having((string) $this->having);
+      $dbal_query->having($dbal_extension->resolveAliases((string) $this->having));
     }
 
     // UNION is not supported by DBAL. Need to delegate to the DBAL extension.
@@ -125,7 +125,7 @@ class Select extends QuerySelect {
     // ORDER BY
     if ($this->order) {
       foreach ($this->order as $field => $direction) {
-        $dbal_query->addOrderBy($this->connection->escapeField($field), $direction);
+        $dbal_query->addOrderBy($dbal_extension->resolveAliases($this->connection->escapeField($field)), $direction);
       }
     }
 

@@ -177,8 +177,8 @@ class Oci8Extension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function resolveConditionAliases(?string $condition): string {
-    return $condition ? strtr($condition, array_flip($this->dbIdentifiersMap)) : '';
+  public function resolveAliases(?string $unaliased): string {
+    return $unaliased ? strtr($unaliased, array_flip($this->dbIdentifiersMap)) : '';
   }
 
   /**
