@@ -465,6 +465,11 @@ class PDOSqliteExtension extends AbstractExtension {
     }
     $dbal_column_definition = str_replace(self::SINGLE_QUOTE_IDENTIFIER_REPLACEMENT, '\'\'', $dbal_column_definition);
 
+    // Column comments do not work when adding/changing a field in SQLite.
+    if (in_array($context, ['addField', 'changeField'])) {
+      $dbal_column_definition = preg_replace('/(.+)(( --)(.+))/', "$1", $dbal_column_definition);
+    }
+
     return $this;
   }
 
