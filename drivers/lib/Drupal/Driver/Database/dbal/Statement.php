@@ -106,7 +106,7 @@ class Statement implements \IteratorAggregate, StatementInterface {
   public function execute($args = [], $options = []) {
     // Replace named placeholders with positional ones if needed.
     if (!$this->dbh->getDbalExtension()->delegateNamedPlaceholdersSupport()) {
-      list($statement, $args) = SQLParserUtils::expandListParameters($statement, $args, []);
+      list(, $args) = SQLParserUtils::expandListParameters($this->queryString, $args, []);
     }
 
     if (isset($options['fetch'])) {
