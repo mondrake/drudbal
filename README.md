@@ -50,11 +50,11 @@ Install/Tasks	                | Implemented. |
 
 Very rough instructions to install Drupal from scratch with this db driver under the hood:
 
-1. Requirements: build a Drupal code base via Composer, using latest Drupal development branch code and PHP 7.0+.
+1. Requirements: build a Drupal code base via Composer, using latest Drupal development branch code and PHP 7.1+.
 
 2. Get Doctrine DBAL, use latest version:
 ```
-$ composer require doctrine/dbal:^2.5.12
+$ composer require doctrine/dbal:^2.6.0
 ```
 
 3. Clone this repository to your contrib modules path:
@@ -90,12 +90,8 @@ https://github.com/doctrine/dbal/pull/2717       | Introspect table comments in 
 https://github.com/doctrine/dbal/issues/1033     | DBAL-1096: schema-tool:update does not understand columnDefinition correctly | |
 https://github.com/doctrine/dbal/pull/881        | Add Mysql per-column charset support | |
 https://github.com/doctrine/dbal/pull/2412       | Add mysql specific indexes with lengths | |
-https://github.com/doctrine/dbal/issues/2380     | Unsigned numeric columns not generated correctly | Fixed in 2.6.0 |
 https://github.com/doctrine/migrations/issues/17 | Data loss on table renaming. | |
-https://github.com/doctrine/dbal/pull/2720       | SQLParserUtils::getPlaceholderPositions fails if there are quoted strings containing only backslashes | Fixed in 2.5.13 |
-https://github.com/doctrine/dbal/pull/2730       | Duplicate 'COMMENT' part in SQL statement | Fixed in 2.5.13 |
 https://github.com/doctrine/dbal/issues/2676     | Optimize Oracle SchemaManager  | |
-https://github.com/doctrine/dbal/pull/2673       | [Oracle] getListTableColumnsSQL returns columns ordered by position instead of by name. | Fixed in 2.5.13 |
 
 ## Related Drupal issues
 Issue | Description   |
