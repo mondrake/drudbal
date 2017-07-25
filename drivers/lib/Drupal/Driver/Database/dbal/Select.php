@@ -84,17 +84,17 @@ class Select extends QuerySelect {
       else {
         switch (trim($table['join type'])) {
           case 'INNER':
-            $dbal_query->innerJoin($root_alias, $escaped_table, $escaped_alias, $dbal_extension->streamline((string) $table['condition']));
+            $dbal_query->innerJoin($root_alias, $escaped_table, $escaped_alias, $dbal_extension->resolveConditionAliases((string) $table['condition']));
             break;
 
           case 'LEFT OUTER':
           case 'LEFT':
-            $dbal_query->leftJoin($root_alias, $escaped_table, $escaped_alias, $dbal_extension->streamline((string) $table['condition']));
+            $dbal_query->leftJoin($root_alias, $escaped_table, $escaped_alias, $dbal_extension->resolveConditionAliases((string) $table['condition']));
             break;
 
           case 'RIGHT OUTER':
           case 'RIGHT':
-            $dbal_query->rightJoin($root_alias, $escaped_table, $escaped_alias, $dbal_extension->streamline((string) $table['condition']));
+            $dbal_query->rightJoin($root_alias, $escaped_table, $escaped_alias, $dbal_extension->resolveConditionAliases((string) $table['condition']));
             break;
 
         }
@@ -104,7 +104,7 @@ class Select extends QuerySelect {
     // WHERE
     // @todo this uses Drupal Condition API. Use DBAL expressions instead?
     if (count($this->condition)) {
-      $dbal_query->where($dbal_extension->streamline((string) $this->condition));
+      $dbal_query->where($dbal_extension->resolveConditionAliases((string) $this->condition));
     }
 
     // GROUP BY
