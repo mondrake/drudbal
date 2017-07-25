@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 namespace Drupal\Driver\Database\dbal\DbalExtension;
 
@@ -202,7 +202,7 @@ class Oci8Extension extends AbstractExtension {
    * {@inheritdoc}
    */
   public static function postConnectionOpen(DbalConnection $dbal_connection, array &$connection_options, array &$dbal_connection_options) {
-    $dbal_connection->exec('alter session set nls_length_semantics=CHAR');
+    $dbal_connection->exec('ALTER SESSION SET NLS_LENGTH_SEMANTICS=CHAR');
   }
 
   /**
