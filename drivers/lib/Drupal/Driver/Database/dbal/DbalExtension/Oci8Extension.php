@@ -202,6 +202,7 @@ class Oci8Extension extends AbstractExtension {
    * {@inheritdoc}
    */
   public static function postConnectionOpen(DbalConnection $dbal_connection, array &$connection_options, array &$dbal_connection_options) {
+    $dbal_connection->exec('alter session set nls_length_semantics=CHAR;');
   }
 
   /**
@@ -484,7 +485,7 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException' || $this-
       'pass' => [],
     ];
 
-    $sql = 'create or replace type vargs as table of varchar2(32767);';
+/*    $sql = 'create or replace type vargs as table of varchar2(32767);';
     $this->getDbalConnection()->exec($sql);
 
     $sql = <<<SQL
@@ -504,7 +505,7 @@ begin
 end CONCAT_WS;
 SQL;
     $this->getDbalConnection()->exec($sql);
-
+*/
     return $results;
   }
 
