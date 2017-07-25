@@ -194,6 +194,8 @@ class Oci8Extension extends AbstractExtension {
    * {@inheritdoc}
    */
   public static function preConnectionOpen(array &$connection_options, array &$dbal_connection_options) {
+    // @todo check if not passed yet
+    $dbal_connection_options['charset'] = 'AL32UTF8';
   }
 
   /**
@@ -482,24 +484,26 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException' || $this-
       'pass' => [],
     ];
 
-    $sql = 'CREATE OR REPLACE FUNCTION check_enforced_null( p_str IN ANYDATA )
-  RETURN NUMBER DETERMINISTIC PARALLEL_ENABLE
-IS
-BEGIN
-  IF  p_str.AccessVarchar2() = \']]]]EXPLICIT_NULL_INSERT_DRUDBAL[[[[\'
-    THEN RETURN 1;
-  END IF;
-  RETURN 0;
-END check_enforced_null;';
+    $sql = 'create or replace type vargs as table of varchar2(32767);';
     $this->getDbalConnection()->exec($sql);
 
-/*    $sql = 'CREATE OR REPLACE FUNCTION RAND()    @todo
-  RETURN NUMBER DETERMINISTIC PARALLEL_ENABLE
-IS
-BEGIN
-  RETURN DBMS_RANDOM.VALUE;
-END RAND;';
-    $this->getDbalConnection()->exec($sql);*/
+    $sql = <<<SQL
+create or replace function CONCAT_WS(separator varchar2,args vargs) return varchar2
+
+is
+    str         varchar2(32767);            -- output string
+    arg         pls_integer := 1;           -- argument counter
+
+begin
+    while arg <= args.count loop
+        str := str || args(arg) || separator;
+        arg := arg + 1;
+    end loop;
+    return str;
+
+end CONCAT_WS;
+SQL;
+    $this->getDbalConnection()->exec($sql);
 
     return $results;
   }

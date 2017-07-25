@@ -1,25 +1,3 @@
-diff --git a/core/tests/Drupal/KernelTests/Core/Database/BasicSyntaxTest.php b/core/tests/Drupal/KernelTests/Core/Database/BasicSyntaxTest.php
-index 53a87b7..6d71693 100644
---- a/core/tests/Drupal/KernelTests/Core/Database/BasicSyntaxTest.php
-+++ b/core/tests/Drupal/KernelTests/Core/Database/BasicSyntaxTest.php
-@@ -43,6 +43,8 @@ public function testConcatFields() {
-    * Tests string concatenation with separator.
-    */
-   public function testConcatWsLiterals() {
-+    // @todo this requires altering the statement, Oracle does not support CONCAT_WS
-+    $this->markTestSkipped('Oracle does not support CONCAT_WS.');
-     $result = db_query("SELECT CONCAT_WS(', ', :a1, NULL, :a2, :a3, :a4)", [
-       ':a1' => 'Hello',
-       ':a2' => NULL,
-@@ -56,6 +58,8 @@ public function testConcatWsLiterals() {
-    * Tests string concatenation with separator, with field values.
-    */
-   public function testConcatWsFields() {
-+    // @todo this requires altering the statement, Oracle does not support CONCAT_WS
-+    $this->markTestSkipped('Oracle does not support CONCAT_WS.');
-     $result = db_query("SELECT CONCAT_WS('-', :a1, name, :a2, age) FROM {test} WHERE age = :age", [
-       ':a1' => 'name',
-       ':a2' => 'age',
 diff --git a/core/tests/Drupal/KernelTests/Core/Database/QueryTest.php b/core/tests/Drupal/KernelTests/Core/Database/QueryTest.php
 index 04ba8ad..7c49ebb 100644
 --- a/core/tests/Drupal/KernelTests/Core/Database/QueryTest.php
