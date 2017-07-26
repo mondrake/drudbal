@@ -16,6 +16,7 @@ use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
 use Doctrine\DBAL\Schema\Schema as DbalSchema;
 use Doctrine\DBAL\Statement as DbalStatement;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
+use Doctrine\DBAL\Exception\NotNullConstraintViolationException;
 
 /**
  * Driver specific methods for oci8 (Oracle).
@@ -252,6 +253,18 @@ class Oci8Extension extends AbstractExtension {
       $e = $e->getPrevious();
     }
     if ($e instanceof UniqueConstraintViolationException) {
+if ($this->getDebugging()) {
+  $exc_class = get_class($e);
+  $backtrace = debug_backtrace();
+  error_log('***** Exception : ' . $exc_class);
+  error_log('***** Message   : ' . $message);
+  error_log('***** Query     : ' . $query);
+  error_log('***** Query args: ' . var_export($args, TRUE));
+  error_log("***** Backtrace : \n" . $this->formatBacktrace($backtrace));
+}
+      throw new IntegrityConstraintViolationException($message, $e->getCode(), $e);
+    }
+    elseif ($e instanceof NotNullConstraintViolationException) {
 if ($this->getDebugging()) {
   $exc_class = get_class($e);
   $backtrace = debug_backtrace();
@@ -583,17 +596,12 @@ SQL;
    * {@inheritdoc}
    */
   public function alterDbalColumnDefinition($context, &$dbal_column_definition, array &$dbal_column_options, $dbal_type, array $drupal_field_specs, $field_name) {
-error_log($dbal_column_definition);
     // Explicitly escape single quotes in default value.
     $matches = [];
     preg_match_all('/(.+ DEFAULT \')(.+)(\'.*)/', $dbal_column_definition, $matches, PREG_SET_ORDER, 0);
-error_log(var_export($matches, TRUE));
     if (!empty($matches)) {
       $parts = $matches[0];
-error_log($parts[1] . $parts[2] . $parts[3]);
-error_log($parts[1] . str_replace("'", "''", $parts[2]) . $parts[3]);
       $dbal_column_definition = $parts[1] . str_replace("'", "''", $parts[2]) . $parts[3];
-error_log($dbal_column_definition);
     }
 
     return $this;
