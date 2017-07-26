@@ -689,7 +689,7 @@ SQL;
     else {
       // To keep things... short, use a CRC32 hash of prefixed table name and
       // of Drupal index name as the db name of the index.
-      return hash('crc32b', $table_prefix_info['table']) . '____' . hash('crc32b', $index_name);
+      return 'IDX_' . hash('crc32b', $table_prefix_info['table']) . '____' . hash('crc32b', $index_name);
     }
   }
 

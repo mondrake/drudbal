@@ -1,25 +1,3 @@
-diff --git a/core/modules/views/src/Plugin/views/filter/Combine.php b/core/modules/views/src/Plugin/views/filter/Combine.php
-index f8ea624..de36540 100644
---- a/core/modules/views/src/Plugin/views/filter/Combine.php
-+++ b/core/modules/views/src/Plugin/views/filter/Combine.php
-@@ -85,8 +85,15 @@ public function query() {
-           $separated_fields[] = "' '";
-         }
-       }
--      $expression = implode(', ', $separated_fields);
--      $expression = "CONCAT_WS(' ', $expression)";
-+//      $expression = implode(', ', $separated_fields);
-+//      $expression = "CONCAT_WS(' ', $expression)";
-+      $xx = [];
-+      foreach ($separated_fields as $f) {
-+        $xx[] = $f;
-+        $xx[] = "' '";
-+      }
-+      array_pop($xx);
-+      $expression = implode(' || ', $xx);
- 
-       $info = $this->operators();
-       if (!empty($info[$this->operator]['method'])) {
 diff --git a/core/tests/Drupal/KernelTests/Core/Database/QueryTest.php b/core/tests/Drupal/KernelTests/Core/Database/QueryTest.php
 index 04ba8ad..7c49ebb 100644
 --- a/core/tests/Drupal/KernelTests/Core/Database/QueryTest.php
