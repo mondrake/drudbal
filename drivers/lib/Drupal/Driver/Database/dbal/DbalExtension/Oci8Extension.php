@@ -616,7 +616,7 @@ SQL;
     if (isset($drupal_field_specs['type']) && in_array($drupal_field_specs['type'], [
       'float', 'numeric', 'serial', 'int',
     ]) && !empty($drupal_field_specs['unsigned']) && (bool) $drupal_field_specs['unsigned'] === TRUE) {
-      $dbal_column_definition .= ' CHECK (' . $field_name . '>= 0)';
+      $dbal_column_definition .= ' CHECK (' . $this->getDbFieldName($field_name) . '>= 0)';
     }
 
     return $this;
@@ -634,8 +634,6 @@ SQL;
    * {@inheritdoc}
    */
   public function delegateChangeField(&$primary_key_processed_by_extension, DbalSchema $dbal_schema, $drupal_table_name, $field_name, $field_new_name, array $drupal_field_new_specs, array $keys_new_specs, array $dbal_column_options) {
-    $sql = 'ALTER TABLE {' . $drupal_table_name . '} MODIFY (' . $field_name . ' ' . $dbal_column_options['columnDefinition'] . ')';
-    $this->connection->query($sql);
     return TRUE;
   }
 
@@ -649,7 +647,6 @@ SQL;
     else {
       $default = is_string($default) ? "'$default'" : $default;   // @todo proper quoting
     }
-
     $this->connection->query('ALTER TABLE {' . $drupal_table_name . '} MODIFY (' . $this->getDbFieldName($field_name) . ' DEFAULT ' . $default . ')');
     return TRUE;
   }
@@ -658,7 +655,8 @@ SQL;
    * {@inheritdoc}
    */
   public function delegateFieldSetNoDefault(DbalSchema $dbal_schema, $drupal_table_name, $field_name) {
-    return FALSE;
+    $this->connection->query('ALTER TABLE {' . $drupal_table_name . '} MODIFY (' . $this->getDbFieldName($field_name) . ' DEFAULT NULL)');
+    return TRUE;
   }
 
   /**
