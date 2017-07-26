@@ -576,7 +576,17 @@ SQL;
    * {@inheritdoc}
    */
   public function getStringForDefault($string) {
-    return str_replace("'", "''", $string);
+    return $string;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function alterDbalColumnDefinition($context, &$dbal_column_definition, array &$dbal_column_options, $dbal_type, array $drupal_field_specs, $field_name) {
+    // Explicitly escape single quotes in default value.
+    $dbal_column_definition = preg_replace('/(.+ DEFAULT ')(.+)('.*)/', '$1' . str_replace("'", "''", '$2') . '$3', $dbal_column_definition);
+
+    return $this;
   }
 
   /**
