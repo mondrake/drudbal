@@ -674,7 +674,7 @@ SQL;
     // with the Drupal name, regardless of prefix. It may be a table was
     // renamed so the prefix is no longer relevant.
     if (in_array($context, ['indexExists', 'dropIndex'])) {
-      $dbal_table = $dbal_schema->getTable($this->getDbTableName($this->tableName($drupal_table_name)));
+      $dbal_table = $dbal_schema->getTable($this->tableName($drupal_table_name));
       foreach ($dbal_table->getIndexes() as $index) {
         $index_full_name = $index->getName();
         $matches = [];

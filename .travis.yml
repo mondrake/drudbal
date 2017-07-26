@@ -93,9 +93,6 @@ before_install:
   # Always get latest Drupal core.
   - git clone http://git.drupal.org/project/drupal.git $DRUPAL_PATH
   - cd $DRUPAL_PATH
-  #- git status.
-  #- git checkout bae3b3d
-  #- git status
 
   # Apply Drupal core patches.
   # [#2887000] composer.json does not prevent upgrading Symfony components to minor versions that do not work with Drupal
