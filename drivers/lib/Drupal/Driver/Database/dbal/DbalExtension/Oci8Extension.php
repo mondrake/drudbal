@@ -51,6 +51,7 @@ class Oci8Extension extends AbstractExtension {
     'current',
     'date',
     'file',
+    'increment',
     'initial',
     'level',
     'lock',
@@ -73,8 +74,6 @@ class Oci8Extension extends AbstractExtension {
     'table',
     'uid',
     'user',
-
-    'increment',
   ];
 
   protected $oracleKeywordTokens;
@@ -671,12 +670,27 @@ SQL;
    * {@inheritdoc}
    */
   public function getIndexFullName($context, DbalSchema $dbal_schema, $drupal_table_name, $index_name, array $table_prefix_info) {
-    $full_name = $table_prefix_info['table'] . '____' . $index_name;
-    if (strlen($full_name) > 30) {
-      $identifier_crc = hash('crc32b', $full_name);
-      $full_name = substr($full_name, 0, 22) . $identifier_crc;
+    // If checking for index existence or dropping, see if an index exists
+    // with the Drupal name, regardless of prefix. It may be a table was
+    // renamed so the prefix is no longer relevant.
+    if (in_array($context, ['indexExists', 'dropIndex'])) {
+      $dbal_table = $dbal_schema->getTable($this->getDbTableName($this->tableName($drupal_table_name)));
+      foreach ($dbal_table->getIndexes() as $index) {
+        $index_full_name = $index->getName();
+        $matches = [];
+        if (preg_match('/.*____(.+)/', $index_full_name, $matches)) {
+          if ($matches[1] === hash('crc32b', $index_name)) {
+            return $index_full_name;
+          }
+        }
+      }
+      return FALSE;
     }
-    return $full_name;
+    else {
+      // To keep things... short, use a CRC32 hash of prefixed table name and
+      // of Drupal index name as the db name of the index.
+      return hash('crc32b', $table_prefix_info['table']) . '____' . hash('crc32b', $index_name);
+    }
   }
 
 }
