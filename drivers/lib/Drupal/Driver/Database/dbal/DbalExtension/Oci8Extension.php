@@ -27,16 +27,6 @@ class Oci8Extension extends AbstractExtension {
   const ORACLE_EMPTY_STRING_REPLACEMENT = "\010";
 
   /**
-   * Replacement for single quote identifiers.
-   *
-   * @todo DBAL uses single quotes instead of backticks to produce DDL
-   * statements. This causes problems if fields defaults or comments have
-   * single quotes inside.
-   */
-  const SINGLE_QUOTE_IDENTIFIER_REPLACEMENT = ']]]]SINGLEQUOTEIDENTIFIERDRUDBAL[[[[';
-  const DOUBLE_QUOTE_IDENTIFIER_REPLACEMENT = ']]]]DOUBLEQUOTEIDENTIFIERDRUDBAL[[[[';
-
-  /**
    * A map of condition operators to SQLite operators.
    *
    * @var array
@@ -586,11 +576,7 @@ SQL;
    * {@inheritdoc}
    */
   public function getStringForDefault($string) {
-    // Encode single quotes.
-    $replace = str_replace('\'', self::SINGLE_QUOTE_IDENTIFIER_REPLACEMENT, $string);
-    // Encode double quotes.
-    $replace = str_replace('"', self::DOUBLE_QUOTE_IDENTIFIER_REPLACEMENT, $replace);
-    return $replace;
+    return $string;
   }
 
   /**

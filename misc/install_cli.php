@@ -18,7 +18,6 @@ $class_loader = require_once $root_path . '/autoload.php';
 $settings = [
   'parameters' => [
     'profile' => 'standard',
-//    'profile' => 'minimal',
     'locale' => 'en',
   ],
   'forms' => [
@@ -49,5 +48,5 @@ $settings = [
 
 // Start the installer.
 require_once $root_path . '/core/includes/install.core.inc';
-Timer::start('drudbal:install_cli');
+Timer::start('drudbal:setup');
 install_drupal($class_loader, $settings);
