@@ -44,35 +44,37 @@ class Oci8Extension extends AbstractExtension {
    */
   protected static $oracleKeywords = [
     'access',
-    'start',
-    'session',
-    'file',
-    'size',
-    'successful',
-    'table',
-    'option',
     'check',
     'cluster',
-    'initial',
-    'pctfree',
-    'uid',
     'comment',
     'compress',
-    'public',
-    'raw',
-    'user',
     'current',
     'date',
+    'file',
+    'initial',
     'level',
-    'resource',
     'lock',
+    'mode',
+    'offset',
+    'option',
+    'pctfree',
+    'public',
+    'range',
+    'raw',
+    'resource',
     'row',
     'rowid',
     'rownum',
-    'mode',
     'rows',
-    'range',
-    'offset',
+    'session',
+    'size',
+    'start',
+    'successful',
+    'table',
+    'uid',
+    'user',
+
+    'increment',
   ];
 
   protected $oracleKeywordTokens;
@@ -253,38 +255,23 @@ class Oci8Extension extends AbstractExtension {
       $e = $e->getPrevious();
     }
     if ($e instanceof UniqueConstraintViolationException) {
-if ($this->getDebugging()) {
-  $exc_class = get_class($e);
-  $backtrace = debug_backtrace();
-  error_log('***** Exception : ' . $exc_class);
-  error_log('***** Message   : ' . $message);
-  error_log('***** Query     : ' . $query);
-  error_log('***** Query args: ' . var_export($args, TRUE));
-  error_log("***** Backtrace : \n" . $this->formatBacktrace($backtrace));
-}
       throw new IntegrityConstraintViolationException($message, $e->getCode(), $e);
     }
     elseif ($e instanceof NotNullConstraintViolationException) {
-if ($this->getDebugging()) {
-  $exc_class = get_class($e);
-  $backtrace = debug_backtrace();
-  error_log('***** Exception : ' . $exc_class);
-  error_log('***** Message   : ' . $message);
-  error_log('***** Query     : ' . $query);
-  error_log('***** Query args: ' . var_export($args, TRUE));
-  error_log("***** Backtrace : \n" . $this->formatBacktrace($backtrace));
-}
       throw new IntegrityConstraintViolationException($message, $e->getCode(), $e);
     }
     else {
 $exc_class = get_class($e);
 if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException' || $this->getDebugging()) {
   $backtrace = debug_backtrace();
-  error_log('***** Exception : ' . $exc_class);
-  error_log('***** Message   : ' . $message);
-  error_log('***** Query     : ' . $query);
-  error_log('***** Query args: ' . var_export($args, TRUE));
-  error_log("***** Backtrace : \n" . $this->formatBacktrace($backtrace));
+  error_log("\n***** Exception    : " . $exc_class);
+  error_log('***** Message      : ' . $message);
+  error_log('***** getCode      : ' . $e->getCode());
+  error_log('***** getErrorCode : ' . $e->getErrorCode());
+  error_log('***** getSQLState  : ' . $e->getSQLState());
+  error_log('***** Query        : ' . $query);
+  error_log('***** Query args   : ' . var_export($args, TRUE));
+  error_log("***** Backtrace    : \n" . $this->formatBacktrace($backtrace));
 }
       throw new DatabaseExceptionWrapper($message, 0, $e);
     }
@@ -628,7 +615,6 @@ SQL;
    * {@inheritdoc}
    */
   public function delegateFieldSetDefault(DbalSchema $dbal_schema, $drupal_table_name, $field_name, $default) {
-$this->setDebugging(TRUE);
     return FALSE;
   }
 
@@ -636,7 +622,6 @@ $this->setDebugging(TRUE);
    * {@inheritdoc}
    */
   public function delegateFieldSetNoDefault(DbalSchema $dbal_schema, $drupal_table_name, $field_name) {
-$this->setDebugging(TRUE);
     return FALSE;
   }
 
