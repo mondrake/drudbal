@@ -245,7 +245,6 @@ class Schema extends DatabaseSchema {
 
     // Add the SQL column definiton as the 'columnDefinition' option.
     $options['columnDefinition'] = $dbal_column_definition;
-error_log(var_export($options, TRUE));
 
     return $options;
   }
