@@ -576,7 +576,8 @@ SQL;
    * {@inheritdoc}
    */
   public function getStringForDefault($string) {
-if ($this->getDebugging()) error_log('ext.. -> ' . $string);
+//if ($this->getDebugging())
+  error_log('ext.. -> ' . $string);
     return str_replace("'", "''", $string);
   }
 
