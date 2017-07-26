@@ -576,7 +576,7 @@ SQL;
    * {@inheritdoc}
    */
   public function getStringForDefault($string) {
-    return $string;
+    return str_replace("'", "''", $string);
   }
 
   /**
