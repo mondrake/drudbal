@@ -20,6 +20,18 @@ index f8ea624..de36540 100644
  
        $info = $this->operators();
        if (!empty($info[$this->operator]['method'])) {
+diff --git a/core/tests/Drupal/KernelTests/Core/Database/DatabaseTestBase.php b/core/tests/Drupal/KernelTests/Core/Database/DatabaseTestBase.php
+index 6fcfaa4..cb28ce5 100644
+--- a/core/tests/Drupal/KernelTests/Core/Database/DatabaseTestBase.php
++++ b/core/tests/Drupal/KernelTests/Core/Database/DatabaseTestBase.php
+@@ -16,6 +16,7 @@
+ 
+   protected function setUp() {
+     parent::setUp();
++\Drupal::database()->getDbalConnection()->setDebugging(TRUE);
+     $this->installSchema('database_test', [
+       'test',
+       'test_people',
 diff --git a/core/tests/Drupal/KernelTests/Core/Database/QueryTest.php b/core/tests/Drupal/KernelTests/Core/Database/QueryTest.php
 index 04ba8ad..7c49ebb 100644
 --- a/core/tests/Drupal/KernelTests/Core/Database/QueryTest.php

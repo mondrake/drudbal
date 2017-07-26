@@ -233,6 +233,7 @@ class Schema extends DatabaseSchema {
       $this->dbalExtension->alterSetColumnComment($comment, $dbal_type, $field, $field_name);
       $options['comment'] = $this->prepareComment($comment);
     }
+if ($this->dbalExtension->getDebugging()) error_log(var_export($options, TRUE));
 
     // Let DBAL extension alter the column options if required.
     $this->dbalExtension->alterDbalColumnOptions($context, $options, $dbal_type, $field, $field_name);
