@@ -93,7 +93,7 @@ before_install:
   # Always get latest Drupal core.
   - git clone http://git.drupal.org/project/drupal.git $DRUPAL_PATH
   - cd $DRUPAL_PATH
-  #- git status
+  #- git status.
   #- git checkout bae3b3d
   #- git status
 
