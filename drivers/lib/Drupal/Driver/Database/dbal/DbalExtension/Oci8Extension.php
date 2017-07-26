@@ -591,6 +591,15 @@ SQL;
       $dbal_column_definition = $parts[1] . str_replace("'", "''", $parts[2]) . $parts[3];
     }
 
+    // @todo just setting 'unsigned' to true does not enforce values >=0 in the
+    // field in Oracle, so add a CHECK >= 0 constraint.
+    // @todo open a DBAL issue, this is also in SQLite
+    if (isset($drupal_field_specs['type']) && in_array($drupal_field_specs['type'], [
+      'float', 'numeric', 'serial', 'int',
+    ]) && !empty($drupal_field_specs['unsigned']) && (bool) $drupal_field_specs['unsigned'] === TRUE) {
+      $dbal_column_definition .= ' CHECK (' . $field_name . '>= 0)';
+    }
+
     return $this;
   }
 
@@ -615,7 +624,15 @@ SQL;
    * {@inheritdoc}
    */
   public function delegateFieldSetDefault(DbalSchema $dbal_schema, $drupal_table_name, $field_name, $default) {
-    return FALSE;
+    if (is_null($default)) {
+      $default = 'NULL';
+    }
+    else {
+      $default = is_string($default) ? "'$default'" : $default;   // @todo proper quoting
+    }
+
+    $this->connection->query('ALTER TABLE {' . $drupal_table_name . '} MODIFY (' . $this->getDbFieldName($field_name) . ' DEFAULT ' . $default . ')');
+    return TRUE;
   }
 
   /**
