@@ -584,11 +584,16 @@ SQL;
    */
   public function alterDbalColumnDefinition($context, &$dbal_column_definition, array &$dbal_column_options, $dbal_type, array $drupal_field_specs, $field_name) {
     // Explicitly escape single quotes in default value.
-error_log($dbal_column_definition);
     $matches = [];
     preg_match_all('/(.+ DEFAULT \')(.+)(\'.*)/', $dbal_column_definition, $matches, PREG_SET_ORDER, 0);
-    //$dbal_column_definition = preg_replace("/(.+ DEFAULT ')(.+)('.*)/", '$1' . str_replace("'", "zzz", '$2') . '$3', $dbal_column_definition);
+    if ($matches) {
+error_log($dbal_column_definition);
 error_log(var_export($matches, TRUE));
+      $dbal_column_definition = $matches[1];
+      $dbal_column_definition .= str_replace("'", "''", $matches[2]);
+      $dbal_column_definition .= $matches[3];
+error_log($dbal_column_definition);
+    }
 
     return $this;
   }
