@@ -627,6 +627,22 @@ SQL;
   /**
    * {@inheritdoc}
    */
+  public function delegateFieldSetDefault(DbalSchema $dbal_schema, $drupal_table_name, $field_name, $default) {
+$this->setDebugging(TRUE);
+    return FALSE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateFieldSetNoDefault(DbalSchema $dbal_schema, $drupal_table_name, $field_name) {
+$this->setDebugging(TRUE);
+    return FALSE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function getIndexFullName($context, DbalSchema $dbal_schema, $drupal_table_name, $index_name, array $table_prefix_info) {
     $full_name = $table_prefix_info['table'] . '____' . $index_name;
     if (strlen($full_name) > 30) {
