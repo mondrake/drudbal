@@ -233,8 +233,6 @@ class Schema extends DatabaseSchema {
       $this->dbalExtension->alterSetColumnComment($comment, $dbal_type, $field, $field_name);
       $options['comment'] = $this->prepareComment($comment);
     }
-//if ($this->dbalExtension->getDebugging()) 
-  error_log(var_export($options, TRUE));
 
     // Let DBAL extension alter the column options if required.
     $this->dbalExtension->alterDbalColumnOptions($context, $options, $dbal_type, $field, $field_name);
@@ -247,6 +245,7 @@ class Schema extends DatabaseSchema {
 
     // Add the SQL column definiton as the 'columnDefinition' option.
     $options['columnDefinition'] = $dbal_column_definition;
+error_log(var_export($options, TRUE));
 
     return $options;
   }
@@ -881,7 +880,7 @@ class Schema extends DatabaseSchema {
    */
   protected function dbalExecuteSchemaChange(DbalSchema $to_schema) {
     foreach ($this->dbalSchema()->getMigrateToSql($to_schema, $this->dbalPlatform) as $sql) {
-if ($this->dbalExtension->getDebugging()) error_log($sql);
+error_log($sql);
       $this->connection->getDbalConnection()->exec($sql);
     }
     $this->dbalSetCurrentSchema($to_schema);
