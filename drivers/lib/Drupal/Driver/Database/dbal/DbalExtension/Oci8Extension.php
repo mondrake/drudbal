@@ -589,9 +589,10 @@ error_log($dbal_column_definition);
     preg_match_all('/(.+ DEFAULT \')(.+)(\'.*)/', $dbal_column_definition, $matches, PREG_SET_ORDER, 0);
 error_log(var_export($matches, TRUE));
     if (!empty($matches)) {
-error_log($matches[1] . $matches[2] . $matches[3]);
-error_log($matches[1] . str_replace("'", "''", $matches[2]) . $matches[3]);
-      $dbal_column_definition = $matches[1] . str_replace("'", "''", $matches[2]) . $matches[3];
+      $parts = $matches[0];
+error_log($parts[1] . $parts[2] . $parts[3]);
+error_log($parts[1] . str_replace("'", "''", $parts[2]) . $parts[3]);
+      $dbal_column_definition = $parts[1] . str_replace("'", "''", $parts[2]) . $parts[3];
 error_log($dbal_column_definition);
     }
 
