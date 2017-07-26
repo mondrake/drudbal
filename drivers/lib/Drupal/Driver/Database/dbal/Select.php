@@ -53,7 +53,7 @@ class Select extends QuerySelect {
       $dbal_query->addSelect($field_prefix . $escaped_field_field . ' AS ' . $escaped_field_alias);
     }
     foreach ($this->expressions as $expression) {
-      $dbal_query->addSelect($expression['expression'] . ' AS ' . $this->connection->escapeAlias($expression['alias']));
+      $dbal_query->addSelect($expression['expression'] . ' AS ' . $dbal_extension->getDbAlias($this->connection->escapeAlias($expression['alias'])));
     }
 
     // FROM - We presume all queries have a FROM, as any query that doesn't
