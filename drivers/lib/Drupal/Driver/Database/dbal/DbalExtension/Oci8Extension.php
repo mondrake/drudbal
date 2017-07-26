@@ -260,6 +260,25 @@ class Oci8Extension extends AbstractExtension {
     elseif ($e instanceof NotNullConstraintViolationException) {
       throw new IntegrityConstraintViolationException($message, $e->getCode(), $e);
     }
+    elseif ($e instanceof DbalDriverException) {
+      // ORA-01407 cannot update (string) to NULL.
+      if ($e->getErrorCode() === 1407) {
+        throw new IntegrityConstraintViolationException($message, $e->getCode(), $e);
+      }
+$exc_class = get_class($e);
+if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException' || $this->getDebugging()) {
+  $backtrace = debug_backtrace();
+  error_log("\n***** Exception    : " . $exc_class);
+  error_log('***** Message      : ' . $message);
+  error_log('***** getCode      : ' . $e->getCode());
+  error_log('***** getErrorCode : ' . $e->getErrorCode());
+  error_log('***** getSQLState  : ' . $e->getSQLState());
+  error_log('***** Query        : ' . $query);
+  error_log('***** Query args   : ' . var_export($args, TRUE));
+  error_log("***** Backtrace    : \n" . $this->formatBacktrace($backtrace));
+}
+      throw new DatabaseExceptionWrapper($message, 0, $e);
+    }
     else {
 $exc_class = get_class($e);
 if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException' || $this->getDebugging()) {
