@@ -12,7 +12,7 @@ index 04ba8ad..7c49ebb 100644
      $this->assertEqual((bool) $count, TRUE);
  
 diff --git a/core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php b/core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php
-index e239098..550feeb 100644
+index e239098..87e2bca 100644
 --- a/core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php
 +++ b/core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php
 @@ -25,6 +25,7 @@ class SchemaTest extends KernelTestBase {
@@ -23,7 +23,31 @@ index e239098..550feeb 100644
      // Try creating a table.
      $table_specification = [
        'description' => 'Schema table description may contain "quotes" and could be long—very long indeed.',
-@@ -811,7 +812,8 @@ public function testFindTables() {
+@@ -439,6 +440,7 @@ public function checkSchemaComment($description, $table, $column = NULL) {
+    * Tests creating unsigned columns and data integrity thereof.
+    */
+   public function testUnsignedColumns() {
++\Drupal::database()->getDbalExtension()->setDebugging(TRUE);
+     // First create the table with just a serial column.
+     $table_name = 'unsigned_table';
+     $table_spec = [
+@@ -493,6 +495,7 @@ public function tryUnsignedInsert($table_name, $column_name) {
+    * Tests adding columns to an existing table.
+    */
+   public function testSchemaAddField() {
++\Drupal::database()->getDbalExtension()->setDebugging(TRUE);
+     // Test varchar types.
+     foreach ([1, 32, 128, 256, 512] as $length) {
+       $base_field_spec = [
+@@ -676,6 +679,7 @@ protected function assertFieldCharacteristics($table_name, $field_name, $field_s
+    * Tests changing columns between types.
+    */
+   public function testSchemaChangeField() {
++\Drupal::database()->getDbalExtension()->setDebugging(TRUE);
+     $field_specs = [
+       ['type' => 'int', 'size' => 'normal', 'not null' => FALSE],
+       ['type' => 'int', 'size' => 'normal', 'not null' => TRUE, 'initial' => 1, 'default' => 17],
+@@ -811,7 +815,8 @@ public function testFindTables() {
        'test_2_table',
        'the_third_table',
      ];
