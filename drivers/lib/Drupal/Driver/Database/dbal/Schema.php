@@ -680,7 +680,7 @@ class Schema extends DatabaseSchema {
     $to_schema = clone $current_schema;
     $dbal_table = $to_schema->getTable($this->tableName($table));
     $dbal_column = $dbal_table->getColumn($field);
-error_log('pre : ' . var_export($dbal_column->getNotull(), TRUE));
+error_log('pre : ' . var_export($dbal_column->getNotnull(), TRUE));
 if (array_key_exists('not null', $spec) && $spec['not null'] == $dbal_column->getNotnull()) {
   unset($spec['not null']);
 }
