@@ -12,14 +12,14 @@ index 04ba8ad..7c49ebb 100644
      $this->assertEqual((bool) $count, TRUE);
  
 diff --git a/core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php b/core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php
-index e239098..d8d1356 100644
+index e239098..7346e6c 100644
 --- a/core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php
 +++ b/core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php
 @@ -117,6 +117,7 @@ public function testSchema() {
      $this->assertEqual($count, 2, 'Two fields were successfully inserted.');
  
      // Try to drop the table.
-+\Drupal::database()->getDbalExtension()->setDebugging(TRUE);
++//\Drupal::database()->getDbalExtension()->setDebugging(TRUE);
      db_drop_table('test_table2');
      $this->assertFalse(db_table_exists('test_table2'), 'The dropped table does not exist.');
  
