@@ -389,7 +389,7 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException' || $this-
       $query .= ' FROM DUAL';
     }
 
-//if ($this->getDebugging()) error_log($query . ' : ' . var_export($args, TRUE));
+if ($this->getDebugging()) error_log($query . ' : ' . var_export($args, TRUE));
     return $this;
   }
 
@@ -675,11 +675,14 @@ SQL;
     // renamed so the prefix is no longer relevant.
     if (in_array($context, ['indexExists', 'dropIndex'])) {
       $dbal_table = $dbal_schema->getTable($this->tableName($drupal_table_name));
+if ($this->getDebugging()) error_log('table-> ' . $dbal_table->getName());
       foreach ($dbal_table->getIndexes() as $index) {
         $index_full_name = $index->getName();
+if ($this->getDebugging()) error_log('index-> ' . $index_full_name);
         $matches = [];
         if (preg_match('/.*____(.+)/', $index_full_name, $matches)) {
           if ($matches[1] === hash('crc32b', $index_name)) {
+if ($this->getDebugging()) error_log('*** match');
             return $index_full_name;
           }
         }

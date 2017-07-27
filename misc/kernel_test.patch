@@ -12,10 +12,18 @@ index 04ba8ad..7c49ebb 100644
      $this->assertEqual((bool) $count, TRUE);
  
 diff --git a/core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php b/core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php
-index e239098..255aa44 100644
+index e239098..550feeb 100644
 --- a/core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php
 +++ b/core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php
-@@ -811,7 +811,8 @@ public function testFindTables() {
+@@ -25,6 +25,7 @@ class SchemaTest extends KernelTestBase {
+    * Tests database interactions.
+    */
+   public function testSchema() {
++\Drupal::database()->getDbalExtension()->setDebugging(TRUE);
+     // Try creating a table.
+     $table_specification = [
+       'description' => 'Schema table description may contain "quotes" and could be long—very long indeed.',
+@@ -811,7 +812,8 @@ public function testFindTables() {
        'test_2_table',
        'the_third_table',
      ];
