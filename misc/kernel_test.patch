@@ -12,7 +12,7 @@ index 04ba8ad..7c49ebb 100644
      $this->assertEqual((bool) $count, TRUE);
  
 diff --git a/core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php b/core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php
-index e239098..1da077d 100644
+index e239098..ef720dd 100644
 --- a/core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php
 +++ b/core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php
 @@ -25,6 +25,7 @@ class SchemaTest extends KernelTestBase {
@@ -45,11 +45,16 @@ index e239098..1da077d 100644
      $this->assertTrue($max2 > $max1, 'The serial is monotone.');
  
      $count = db_query('SELECT COUNT(*) FROM {test_table}')->fetchField();
-@@ -459,8 +472,11 @@ public function testUnsignedColumns() {
-       db_add_field($table_name, $column_name, $column_spec);
-     }
- 
+@@ -439,6 +452,7 @@ public function checkSchemaComment($description, $table, $column = NULL) {
+    * Tests creating unsigned columns and data integrity thereof.
+    */
+   public function testUnsignedColumns() {
 +\Drupal::database()->getDbalExtension()->setDebugging(TRUE);
+     // First create the table with just a serial column.
+     $table_name = 'unsigned_table';
+     $table_spec = [
+@@ -461,6 +475,8 @@ public function testUnsignedColumns() {
+ 
      // Finally, check each column and try to insert invalid values into them.
      foreach ($table_spec['fields'] as $column_name => $column_spec) {
 +error_log('column-> ' . $column_name);
