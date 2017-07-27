@@ -253,6 +253,18 @@ class Oci8Extension extends AbstractExtension {
     if ($e instanceof DatabaseExceptionWrapper) {
       $e = $e->getPrevious();
     }
+$exc_class = get_class($e);
+if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException' && $this->getDebugging()) {
+  $backtrace = debug_backtrace();
+  error_log("\n***** Exception    : " . $exc_class);
+  error_log('***** Message      : ' . $message);
+  error_log('***** getCode      : ' . $e->getCode());
+  error_log('***** getErrorCode : ' . $e->getErrorCode());
+  error_log('***** getSQLState  : ' . $e->getSQLState());
+  error_log('***** Query        : ' . $query);
+  error_log('***** Query args   : ' . var_export($args, TRUE));
+  error_log("***** Backtrace    : \n" . $this->formatBacktrace($backtrace));
+}
     if ($e instanceof UniqueConstraintViolationException) {
       throw new IntegrityConstraintViolationException($message, $e->getCode(), $e);
     }
@@ -270,35 +282,11 @@ class Oci8Extension extends AbstractExtension {
           throw new DatabaseExceptionWrapper($message, 0, $e);
 
         default:
-$exc_class = get_class($e);
-if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException' || $this->getDebugging()) {
-  $backtrace = debug_backtrace();
-  error_log("\n***** Exception    : " . $exc_class);
-  error_log('***** Message      : ' . $message);
-  error_log('***** getCode      : ' . $e->getCode());
-  error_log('***** getErrorCode : ' . $e->getErrorCode());
-  error_log('***** getSQLState  : ' . $e->getSQLState());
-  error_log('***** Query        : ' . $query);
-  error_log('***** Query args   : ' . var_export($args, TRUE));
-  error_log("***** Backtrace    : \n" . $this->formatBacktrace($backtrace));
-}
           throw new DatabaseExceptionWrapper($message, 0, $e);
 
       }
     }
     else {
-$exc_class = get_class($e);
-if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException' || $this->getDebugging()) {
-  $backtrace = debug_backtrace();
-  error_log("\n***** Exception    : " . $exc_class);
-  error_log('***** Message      : ' . $message);
-  error_log('***** getCode      : ' . $e->getCode());
-  error_log('***** getErrorCode : ' . $e->getErrorCode());
-  error_log('***** getSQLState  : ' . $e->getSQLState());
-  error_log('***** Query        : ' . $query);
-  error_log('***** Query args   : ' . var_export($args, TRUE));
-  error_log("***** Backtrace    : \n" . $this->formatBacktrace($backtrace));
-}
       throw new DatabaseExceptionWrapper($message, 0, $e);
     }
   }
@@ -673,19 +661,13 @@ SQL;
     // If checking for index existence or dropping, see if an index exists
     // with the Drupal name, regardless of prefix. It may be a table was
     // renamed so the prefix is no longer relevant.
-if ($this->getDebugging()) error_log('context-> ' . $context);
-if ($this->getDebugging()) error_log('drupal table-> ' . $drupal_table_name . ' drupal index-> ' . $index_name);
     if (in_array($context, ['indexExists', 'dropIndex'])) {
       $dbal_table = $dbal_schema->getTable($this->tableName($drupal_table_name));
-if ($this->getDebugging()) error_log('table-> ' . $dbal_table->getName());
-if ($this->getDebugging()) error_log('index crc-> ' . hash('crc32b', $index_name));
       foreach ($dbal_table->getIndexes() as $index) {
         $index_full_name = $index->getName();
-if ($this->getDebugging()) error_log('index-> ' . $index_full_name);
         $matches = [];
         if (preg_match('/.*____(.+)/', $index_full_name, $matches)) {
           if ($matches[1] === hash('crc32b', $index_name)) {
-if ($this->getDebugging()) error_log('*** match');
             return strtolower($index_full_name);
           }
         }

@@ -512,7 +512,6 @@ class Schema extends DatabaseSchema {
 
     // DBAL extension did not pick up, proceed with DBAL.
     $index_full_name = $this->dbalExtension->getIndexFullName('indexExists', $this->dbalSchema(), $table, $name, $this->getPrefixInfo($table));
-if ($this->dbalExtension->getDebugging()) error_log(var_export(array_keys($this->dbalSchemaManager->listTableIndexes($table_full_name)), TRUE));
     return in_array($index_full_name, array_keys($this->dbalSchemaManager->listTableIndexes($table_full_name)));
     // @todo it would be preferred to do
     // return $this->dbalSchema()->getTable($this->tableName($table))->hasIndex($index_full_name);
