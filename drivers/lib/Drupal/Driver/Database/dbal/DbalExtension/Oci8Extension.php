@@ -686,7 +686,7 @@ if ($this->getDebugging()) error_log('index-> ' . $index_full_name);
         if (preg_match('/.*____(.+)/', $index_full_name, $matches)) {
           if ($matches[1] === hash('crc32b', $index_name)) {
 if ($this->getDebugging()) error_log('*** match');
-            return $index_full_name;
+            return strtolower($index_full_name);
           }
         }
       }
