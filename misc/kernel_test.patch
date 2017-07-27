@@ -12,14 +12,14 @@ index 04ba8ad..7c49ebb 100644
      $this->assertEqual((bool) $count, TRUE);
  
 diff --git a/core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php b/core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php
-index e239098..b0be6e5 100644
+index e239098..bac9515 100644
 --- a/core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php
 +++ b/core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php
 @@ -121,6 +121,7 @@ public function testSchema() {
      $this->assertFalse(db_table_exists('test_table2'), 'The dropped table does not exist.');
  
      // Recreate the table.
-+\Drupal::database()->getDbalExtension()->setDebugging(TRUE);
++//\Drupal::database()->getDbalExtension()->setDebugging(TRUE);
      db_create_table('test_table', $table_specification);
      db_field_set_default('test_table', 'test_field', 0);
      db_add_field('test_table', 'test_serial', ['type' => 'int', 'not null' => TRUE, 'default' => 0, 'description' => 'Added column description.']);
