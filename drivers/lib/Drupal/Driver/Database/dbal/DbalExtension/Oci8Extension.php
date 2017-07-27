@@ -629,6 +629,24 @@ SQL;
    * {@inheritdoc}
    */
   public function delegateChangeField(&$primary_key_processed_by_extension, DbalSchema $dbal_schema, $drupal_table_name, $field_name, $field_new_name, array $drupal_field_new_specs, array $keys_new_specs, array $dbal_column_options) {
+    $current_schema = $dbal_schema;
+    $to_schema = clone $current_schema;
+    $dbal_table = $to_schema->getTable($this->tableName($drupal_table_name));
+    $dbal_column = $dbal_table->getColumn($field_name); // @todo getdbfieldname
+error_log('pre : ' . var_export($dbal_column->getNotnull(), TRUE));
+$change_nullability = TRUE;
+if (array_key_exists('not null', $drupal_field_new_specs) && $drupal_field_new_specs['not null'] == $dbal_column->getNotnull()) {
+  $change_nullability = FALSE;
+}
+
+$sql = "ALTER TABLE " . $this->tableName($drupal_table_name) . " MODIFY ($field NUMBER(10) ";
+if ($change_nullability) {
+  $sql .= $drupal_field_new_specs['not null'] ? 'NOT NULL' : 'NULL';
+}
+$sql .= ")";
+    $this->connection->query($sql);
+
+
 //    $info = $this->getTableSerialInfo($table);
 
 //    if (!empty($info->sequence_name) && $this->oid($field, FALSE, FALSE) == $info->field_name) {

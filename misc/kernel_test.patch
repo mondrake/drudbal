@@ -12,10 +12,18 @@ index 04ba8ad..7c49ebb 100644
      $this->assertEqual((bool) $count, TRUE);
  
 diff --git a/core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php b/core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php
-index e239098..8384c00 100644
+index e239098..d8d1356 100644
 --- a/core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php
 +++ b/core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php
-@@ -136,8 +136,15 @@ public function testSchema() {
+@@ -117,6 +117,7 @@ public function testSchema() {
+     $this->assertEqual($count, 2, 'Two fields were successfully inserted.');
+ 
+     // Try to drop the table.
++\Drupal::database()->getDbalExtension()->setDebugging(TRUE);
+     db_drop_table('test_table2');
+     $this->assertFalse(db_table_exists('test_table2'), 'The dropped table does not exist.');
+ 
+@@ -136,8 +137,15 @@ public function testSchema() {
  
      $this->assertTrue($this->tryInsert(), 'Insert with a serial succeeded.');
      $max1 = db_query('SELECT MAX(test_serial) FROM {test_table}')->fetchField();
@@ -31,7 +39,7 @@ index e239098..8384c00 100644
      $this->assertTrue($max2 > $max1, 'The serial is monotone.');
  
      $count = db_query('SELECT COUNT(*) FROM {test_table}')->fetchField();
-@@ -439,6 +446,7 @@ public function checkSchemaComment($description, $table, $column = NULL) {
+@@ -439,6 +447,7 @@ public function checkSchemaComment($description, $table, $column = NULL) {
     * Tests creating unsigned columns and data integrity thereof.
     */
    public function testUnsignedColumns() {
@@ -39,7 +47,7 @@ index e239098..8384c00 100644
      // First create the table with just a serial column.
      $table_name = 'unsigned_table';
      $table_spec = [
-@@ -461,6 +469,8 @@ public function testUnsignedColumns() {
+@@ -461,6 +470,8 @@ public function testUnsignedColumns() {
  
      // Finally, check each column and try to insert invalid values into them.
      foreach ($table_spec['fields'] as $column_name => $column_spec) {
@@ -48,7 +56,7 @@ index e239098..8384c00 100644
        $this->assertTrue(db_field_exists($table_name, $column_name), format_string('Unsigned @type column was created.', ['@type' => $column_spec['type']]));
        $this->assertFalse($this->tryUnsignedInsert($table_name, $column_name), format_string('Unsigned @type column rejected a negative value.', ['@type' => $column_spec['type']]));
      }
-@@ -482,9 +492,21 @@ public function tryUnsignedInsert($table_name, $column_name) {
+@@ -482,9 +493,21 @@ public function tryUnsignedInsert($table_name, $column_name) {
        db_insert($table_name)
          ->fields([$column_name => -1])
          ->execute();
@@ -70,7 +78,7 @@ index e239098..8384c00 100644
        return FALSE;
      }
    }
-@@ -811,7 +833,8 @@ public function testFindTables() {
+@@ -811,7 +834,8 @@ public function testFindTables() {
        'test_2_table',
        'the_third_table',
      ];

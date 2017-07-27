@@ -676,15 +676,6 @@ class Schema extends DatabaseSchema {
       ]));
     }
 
-    $current_schema = $this->dbalSchema();
-    $to_schema = clone $current_schema;
-    $dbal_table = $to_schema->getTable($this->tableName($table));
-    $dbal_column = $dbal_table->getColumn($field);
-error_log('pre : ' . var_export($dbal_column->getNotnull(), TRUE));
-if (array_key_exists('not null', $spec) && $spec['not null'] == $dbal_column->getNotnull()) {
-  unset($spec['not null']);
-}
-
     $dbal_type = $this->getDbalColumnType($spec);
     $dbal_column_options = $this->getDbalColumnOptions('changeField', $field_new, $dbal_type, $spec);
     // DBAL is limited here, if we pass only 'columnDefinition' to
@@ -692,17 +683,11 @@ if (array_key_exists('not null', $spec) && $spec['not null'] == $dbal_column->ge
     // fallback to platform specific syntax.
     // @see https://github.com/doctrine/dbal/issues/1033
     $primary_key_processed_by_extension = FALSE;
-/*    if (!$this->dbalExtension->delegateChangeField($primary_key_processed_by_extension, $this->dbalSchema(), $table, $field, $field_new, $spec, $keys_new, $dbal_column_options)) {
+    if (!$this->dbalExtension->delegateChangeField($primary_key_processed_by_extension, $this->dbalSchema(), $table, $field, $field_new, $spec, $keys_new, $dbal_column_options)) {
       return;
     }
     // We need to reload the schema at next get.
-    $this->dbalSchemaForceReload();  // @todo can we just change the column??
-    */
-
-error_log('post: ' . var_export($dbal_column_options, TRUE));
-    $dbal_table->changeColumn($field, $dbal_column_options);
-    $this->dbalExecuteSchemaChange($to_schema);
-    $this->dbalSchemaForceReload();
+    $this->dbalSchemaForceReload();  // @todo can we just replace the column object in the dbal schema??
 
     // New primary key.
     if (!empty($keys_new['primary key']) && !$primary_key_processed_by_extension) {
