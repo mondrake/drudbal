@@ -12,26 +12,44 @@ index 04ba8ad..7c49ebb 100644
      $this->assertEqual((bool) $count, TRUE);
  
 diff --git a/core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php b/core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php
-index e239098..4f2dafa 100644
+index e239098..846987a 100644
 --- a/core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php
 +++ b/core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php
-@@ -439,6 +439,7 @@ public function checkSchemaComment($description, $table, $column = NULL) {
-    * Tests creating unsigned columns and data integrity thereof.
-    */
-   public function testUnsignedColumns() {
+@@ -132,6 +132,7 @@ public function testSchema() {
+     db_change_field('test_table', 'test_serial', 'test_serial', ['type' => 'serial', 'not null' => TRUE, 'description' => 'Changed column description.'], ['primary key' => ['test_serial']]);
+ 
+     // Assert that the column comment has been set.
 +\Drupal::database()->getDbalExtension()->setDebugging(TRUE);
-     // First create the table with just a serial column.
-     $table_name = 'unsigned_table';
-     $table_spec = [
-@@ -493,6 +494,7 @@ public function tryUnsignedInsert($table_name, $column_name) {
-    * Tests adding columns to an existing table.
-    */
-   public function testSchemaAddField() {
+     $this->checkSchemaComment('Changed column description.', 'test_table', 'test_serial');
+ 
+     $this->assertTrue($this->tryInsert(), 'Insert with a serial succeeded.');
+@@ -459,8 +460,11 @@ public function testUnsignedColumns() {
+       db_add_field($table_name, $column_name, $column_spec);
+     }
+ 
 +\Drupal::database()->getDbalExtension()->setDebugging(TRUE);
-     // Test varchar types.
-     foreach ([1, 32, 128, 256, 512] as $length) {
-       $base_field_spec = [
-@@ -676,6 +678,7 @@ protected function assertFieldCharacteristics($table_name, $field_name, $field_s
+     // Finally, check each column and try to insert invalid values into them.
+     foreach ($table_spec['fields'] as $column_name => $column_spec) {
++error_log('column-> ' . $column_name);
++error_log(var_export($column_spec, TRUE));
+       $this->assertTrue(db_field_exists($table_name, $column_name), format_string('Unsigned @type column was created.', ['@type' => $column_spec['type']]));
+       $this->assertFalse($this->tryUnsignedInsert($table_name, $column_name), format_string('Unsigned @type column rejected a negative value.', ['@type' => $column_spec['type']]));
+     }
+@@ -482,9 +486,13 @@ public function tryUnsignedInsert($table_name, $column_name) {
+       db_insert($table_name)
+         ->fields([$column_name => -1])
+         ->execute();
++error_log(var_export(db_query("SELECT * FROM {$table_name}"), TRUE));
++
+       return TRUE;
+     }
+     catch (\Exception $e) {
++error_log('*** exc');
++error_log(var_export(db_query("SELECT * FROM {$table_name}"), TRUE));
+       return FALSE;
+     }
+   }
+@@ -676,6 +684,7 @@ protected function assertFieldCharacteristics($table_name, $field_name, $field_s
     * Tests changing columns between types.
     */
    public function testSchemaChangeField() {
@@ -39,7 +57,7 @@ index e239098..4f2dafa 100644
      $field_specs = [
        ['type' => 'int', 'size' => 'normal', 'not null' => FALSE],
        ['type' => 'int', 'size' => 'normal', 'not null' => TRUE, 'initial' => 1, 'default' => 17],
-@@ -811,7 +814,8 @@ public function testFindTables() {
+@@ -811,7 +820,8 @@ public function testFindTables() {
        'test_2_table',
        'the_third_table',
      ];
