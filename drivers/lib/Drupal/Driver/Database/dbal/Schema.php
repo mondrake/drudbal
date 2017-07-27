@@ -676,6 +676,15 @@ class Schema extends DatabaseSchema {
       ]));
     }
 
+    $current_schema = $this->dbalSchema();
+    $to_schema = clone $current_schema;
+    $dbal_table = $to_schema->getTable($this->tableName($table));
+    $dbal_column = $dbal_table->getColumn($field);
+error_log('pre : ' . var_export($dbal_column->getNotull(), TRUE));
+if (array_key_exists('not null', $spec) && $spec['not null'] == $dbal_column->getNotull()) {
+  unset($spec['not null']);
+}
+
     $dbal_type = $this->getDbalColumnType($spec);
     $dbal_column_options = $this->getDbalColumnOptions('changeField', $field_new, $dbal_type, $spec);
     // DBAL is limited here, if we pass only 'columnDefinition' to
@@ -689,9 +698,8 @@ class Schema extends DatabaseSchema {
     // We need to reload the schema at next get.
     $this->dbalSchemaForceReload();  // @todo can we just change the column??
     */
-    $current_schema = $this->dbalSchema();
-    $to_schema = clone $current_schema;
-    $dbal_table = $to_schema->getTable($this->tableName($table));
+
+error_log('post: ' . var_export($dbal_column_options, TRUE));
     $dbal_table->changeColumn($field, $dbal_column_options);
     $this->dbalExecuteSchemaChange($to_schema);
     $this->dbalSchemaForceReload();
