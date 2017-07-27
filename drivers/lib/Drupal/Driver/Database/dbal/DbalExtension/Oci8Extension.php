@@ -639,7 +639,7 @@ SQL;
       $change_nullability = FALSE;
     }
 
-    $sql = "ALTER TABLE " . $this->tableName($drupal_table_name) . " MODIFY ($field NUMBER(10) ";
+    $sql = "ALTER TABLE " . $this->tableName($drupal_table_name) . " MODIFY ($field_name NUMBER(10) ";
     if ($change_nullability) {
       $sql .= $drupal_field_new_specs['not null'] ? 'NOT NULL' : 'NULL';
     }
