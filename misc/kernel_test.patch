@@ -12,21 +12,25 @@ index 04ba8ad..7c49ebb 100644
      $this->assertEqual((bool) $count, TRUE);
  
 diff --git a/core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php b/core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php
-index e239098..2771e2c 100644
+index e239098..1da077d 100644
 --- a/core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php
 +++ b/core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php
-@@ -132,12 +132,25 @@ public function testSchema() {
-     db_change_field('test_table', 'test_serial', 'test_serial', ['type' => 'serial', 'not null' => TRUE, 'description' => 'Changed column description.'], ['primary key' => ['test_serial']]);
- 
-     // Assert that the column comment has been set.
+@@ -25,6 +25,7 @@ class SchemaTest extends KernelTestBase {
+    * Tests database interactions.
+    */
+   public function testSchema() {
 +\Drupal::database()->getDbalExtension()->setDebugging(TRUE);
+     // Try creating a table.
+     $table_specification = [
+       'description' => 'Schema table description may contain "quotes" and could be long—very long indeed.',
+@@ -135,9 +136,21 @@ public function testSchema() {
      $this->checkSchemaComment('Changed column description.', 'test_table', 'test_serial');
  
      $this->assertTrue($this->tryInsert(), 'Insert with a serial succeeded.');
 +$xx = db_select('test_table', 'c')
 +    ->fields('c')
 +    ->execute()
-+    ->fetchAssoc();
++    ->fetchAll();
 +error_log(var_export($xx, TRUE));
      $max1 = db_query('SELECT MAX(test_serial) FROM {test_table}')->fetchField();
 +error_log('max1: ' . $max1);
@@ -34,7 +38,7 @@ index e239098..2771e2c 100644
 +$xx = db_select('test_table', 'c')
 +    ->fields('c')
 +    ->execute()
-+    ->fetchAssoc();
++    ->fetchAll();
 +error_log(var_export($xx, TRUE));
      $max2 = db_query('SELECT MAX(test_serial) FROM {test_table}')->fetchField();
 +error_log('max2: ' . $max1);
@@ -60,7 +64,7 @@ index e239098..2771e2c 100644
 +$xx = db_select($table_name, 'c')
 +    ->fields('c')
 +    ->execute()
-+    ->fetchAssoc();
++    ->fetchAll();
 +error_log(var_export($xx, TRUE));
 +
        return TRUE;
@@ -70,7 +74,7 @@ index e239098..2771e2c 100644
 +$xx = db_select($table_name, 'c')
 +    ->fields('c')
 +    ->execute()
-+    ->fetchAssoc();
++    ->fetchAll();
 +error_log(var_export($xx, TRUE));
        return FALSE;
      }
