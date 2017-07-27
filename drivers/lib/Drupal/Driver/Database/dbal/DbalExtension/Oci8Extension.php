@@ -629,6 +629,44 @@ SQL;
    * {@inheritdoc}
    */
   public function delegateChangeField(&$primary_key_processed_by_extension, DbalSchema $dbal_schema, $drupal_table_name, $field_name, $field_new_name, array $drupal_field_new_specs, array $keys_new_specs, array $dbal_column_options) {
+//    $info = $this->getTableSerialInfo($table);
+
+//    if (!empty($info->sequence_name) && $this->oid($field, FALSE, FALSE) == $info->field_name) {
+//      $this->failsafeDdl('DROP TRIGGER {' . $info->trigger_name . '}');
+//      $this->failsafeDdl('DROP SEQUENCE {' . $info->sequence_name . '}');
+//    }
+
+/*    $this->connection->query("ALTER TABLE " . $this->oid($table, TRUE) . " RENAME COLUMN ". $this->oid($field) . " TO " . $this->oid($field . '_old'));
+    $not_null = isset($spec['not null']) ? $spec['not null'] : FALSE;
+    unset($spec['not null']);
+
+    if (!array_key_exists('size', $spec)) {
+      $spec['size'] = 'normal';
+    }
+
+    $this->addField($table, (string) $field_new, $spec);
+
+    $map = $this->getFieldTypeMap();
+    $this->connection->query("UPDATE " . $this->oid($table, TRUE) . " SET ". $this->oid($field_new) . " = " . $this->oid($field . '_old'));
+
+    if ($not_null) {
+      $this->connection->query("ALTER TABLE " . $this->oid($table, TRUE) . " MODIFY (". $this->oid($field_new) . " NOT NULL)");
+    }
+
+    $this->dropField($table, $field . '_old');
+
+    if (isset($new_keys)) {
+      $this->createKeys($table, $new_keys);
+    }
+
+    if (!empty($info->sequence_name) && $this->oid($field, FALSE, FALSE) == $info->field_name) {
+      $statements = $this->createSerialSql($table, $this->oid($field_new, FALSE, FALSE), $info->sequence_restart);
+      foreach ($statements as $statement) {
+        $this->connection->query($statement);
+      }
+    }
+
+    $this->cleanUpSchema($table);*/
     return TRUE;
   }
 

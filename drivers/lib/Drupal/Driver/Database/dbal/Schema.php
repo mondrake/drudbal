@@ -683,11 +683,18 @@ class Schema extends DatabaseSchema {
     // fallback to platform specific syntax.
     // @see https://github.com/doctrine/dbal/issues/1033
     $primary_key_processed_by_extension = FALSE;
-    if (!$this->dbalExtension->delegateChangeField($primary_key_processed_by_extension, $this->dbalSchema(), $table, $field, $field_new, $spec, $keys_new, $dbal_column_options)) {
+/*    if (!$this->dbalExtension->delegateChangeField($primary_key_processed_by_extension, $this->dbalSchema(), $table, $field, $field_new, $spec, $keys_new, $dbal_column_options)) {
       return;
     }
     // We need to reload the schema at next get.
     $this->dbalSchemaForceReload();  // @todo can we just change the column??
+    */
+    $current_schema = $this->dbalSchema();
+    $to_schema = clone $current_schema;
+    $dbal_table = $to_schema->getTable($this->tableName($table));
+    $dbal_table->changeColumn($field, $dbal_column_options);
+    $this->dbalExecuteSchemaChange($to_schema);
+    $this->dbalSchemaForceReload();
 
     // New primary key.
     if (!empty($keys_new['primary key']) && !$primary_key_processed_by_extension) {
