@@ -673,11 +673,12 @@ SQL;
     // If checking for index existence or dropping, see if an index exists
     // with the Drupal name, regardless of prefix. It may be a table was
     // renamed so the prefix is no longer relevant.
+if ($this->getDebugging()) error_log('context-> ' . $context);
+if ($this->getDebugging()) error_log('drupal table-> ' . $drupal_table_name . ' drupal index-> ' . $index_name);
     if (in_array($context, ['indexExists', 'dropIndex'])) {
       $dbal_table = $dbal_schema->getTable($this->tableName($drupal_table_name));
-if ($this->getDebugging()) error_log('context-> ' . $context);
-if ($this->getDebugging()) error_log('drupal table-> ' . $drupal_table_name . ' table-> ' . $dbal_table->getName());
-if ($this->getDebugging()) error_log('drupal index-> ' . $index_name . ' crc-> ' . hash('crc32b', $index_name));
+if ($this->getDebugging()) error_log('table-> ' . $dbal_table->getName());
+if ($this->getDebugging()) error_log('index crc-> ' . hash('crc32b', $index_name));
       foreach ($dbal_table->getIndexes() as $index) {
         $index_full_name = $index->getName();
 if ($this->getDebugging()) error_log('index-> ' . $index_full_name);
