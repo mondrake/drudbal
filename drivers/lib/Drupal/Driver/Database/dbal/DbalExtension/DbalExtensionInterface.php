@@ -29,15 +29,8 @@ interface DbalExtensionInterface {
   public function getDbalConnection();
 
   /**
-   * Get a fully qualified table name.
-   *
-   * @param string $drupal_table_name
-   *   The name of the table in question.
-   *
-   * @return string
-   *   The fully qualified table name.
+   * Database asset name resolution methods.
    */
-  public function delegateFullQualifiedTableName($drupal_table_name);
 
   /**
    * Get the database table name, resolving platform specific constraints.
@@ -51,6 +44,17 @@ interface DbalExtensionInterface {
   public function getDbTableName($prefixed_table_name);
 
   /**
+   * Get the database table name, including the schema prefix.
+   *
+   * @param string $drupal_table_name
+   *   A string with the Drupal name of the table.
+   *
+   * @return string
+   *   The database table name, including the schema prefix.
+   */
+  public function getDbFullQualifiedTableName($drupal_table_name);
+
+  /**
    * Get the database field name, resolving platform specific constraints.
    *
    * @param string $field_name
@@ -60,6 +64,48 @@ interface DbalExtensionInterface {
    *   The database field name.
    */
   public function getDbFieldName($field_name);
+
+  /**
+   * Get a valid alias, resolving platform specific constraints.
+   *
+   * @param string $alias
+   *   An alias.
+   *
+   * @return string
+   *   The alias usable in the DBMS.
+   */
+  public function getDbAlias($alias);
+
+  /**
+   * Replaces unconstrained alias in a string.
+   *
+   * @param string $unaliased
+   *   A string containing unconstrained aliases.
+   *
+   * @return string
+   *   The string with aliases usable in the DBMS.
+   */
+  public function resolveAliases(?string $unaliased): string;
+
+  /**
+   * Calculates an index name.
+   *
+   * @param string $context
+   *   The context from where the method is called. Can be 'indexExists',
+   *   'addUniqueKey', 'addIndex', 'dropIndex'.
+   * @param \Doctrine\DBAL\Schema\Schema $dbal_schema
+   *   The DBAL schema object.
+   * @param string $drupal_table_name
+   *   A string with the Drupal name of the table.
+   * @param string $index_name
+   *   A string with the Drupal name of the index.
+   * @param array $table_prefix_info
+   *   A keyed array with information about the schema, table name and prefix.
+   *
+   * @return string
+   *   A string with the name of the index to be used in the DBMS.
+   */
+  public function getDbIndexName($context, DbalSchema $dbal_schema, $drupal_table_name, $index_name, array $table_prefix_info);
 
   /**
    * Connection delegated methods.
@@ -261,17 +307,6 @@ interface DbalExtensionInterface {
    * @todo convert return to int, and add a const for 'all'
    */
   public function delegateReleaseSavepointExceptionProcess(DbalDriverException $e);
-
-  /**
-   * Handles quoting reserved keywords used as identifiers.
-   *
-   * @param string $identifier
-   *   The identifier to be quoted.
-   *
-   * @return string
-   *   The quoted identifier.
-   */
-  public function delegateQuoteIdentifier($identifier);
 
   /**
    * Statement delegated methods.
@@ -665,26 +700,6 @@ interface DbalExtensionInterface {
    *   by DBAL.
    */
   public function delegateFieldSetNoDefault(DbalSchema $dbal_schema, $drupal_table_name, $field_name);
-
-  /**
-   * Calculates an index name.
-   *
-   * @param string $context
-   *   The context from where the method is called. Can be 'indexExists',
-   *   'addUniqueKey', 'addIndex', 'dropIndex'.
-   * @param \Doctrine\DBAL\Schema\Schema $dbal_schema
-   *   The DBAL schema object.
-   * @param string $drupal_table_name
-   *   A string with the Drupal name of the table.
-   * @param string $index_name
-   *   A string with the Drupal name of the index.
-   * @param array $table_prefix_info
-   *   A keyed array with information about the schema, table name and prefix.
-   *
-   * @return string
-   *   A string with the name of the index to be used in the DBMS.
-   */
-  public function getIndexFullName($context, DbalSchema $dbal_schema, $drupal_table_name, $index_name, array $table_prefix_info);
 
   /**
    * Checks if an index exists.

@@ -9,6 +9,11 @@ use Drupal\Driver\Database\dbal\Connection as DruDbalConnection;
 use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\SQLParserUtils;
 
+// @todo DBAL 2.6.0:
+// provides PDO::FETCH_OBJ emulation for mysqli and oci8 statements, check;
+// Normalize method signatures for `fetch()` and `fetchAll()`, ensuring compatibility with the `PDOStatement` signature
+// `ResultStatement#fetchAll()` must define 3 arguments in order to be compatible with `PDOStatement#fetchAll()`
+
 /**
  * DruDbal implementation of \Drupal\Core\Database\Statement.
  *
