@@ -21,7 +21,6 @@ env:
     - DRUPAL_PATH="$HOME/drupal8"
     - PATH="$PATH:$DRUPAL_PATH/vendor/bin:$HOME/.composer/vendor/bin"
     # Installation variables.
-    - DB_AUTH="root:"
     - HOST_ADDR="127.0.0.1"
     - HTTP_PORT="8080"
     # Drupal PHPUnit test variables.
@@ -47,16 +46,16 @@ before_install:
   # Set variables.
   - |
       if [[ "$DRUDBAL_ENV" == "mysql" ]]; then
-        export DBAL_URL="mysql://$DB_AUTH@$HOST_ADDR/drudbal"
-        export SIMPLETEST_DB="mysql://$DB_AUTH@$HOST_ADDR/drudbal#drudbal_"
+        export DBAL_URL="mysql://root:@$HOST_ADDR/drudbal"
+        export SIMPLETEST_DB="mysql://root:@$HOST_ADDR/drudbal#drudbal_"
 
       elif [[ "$DRUDBAL_ENV" == "dbal/mysql" ]]; then
-        export DBAL_URL="mysql://$DB_AUTH@$HOST_ADDR/drudbal"
-        export SIMPLETEST_DB="dbal://$DB_AUTH@$HOST_ADDR/drudbal?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=pdo_mysql#drudbal_"
+        export DBAL_URL="mysql://root:@$HOST_ADDR/drudbal"
+        export SIMPLETEST_DB="dbal://root:@$HOST_ADDR/drudbal?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=pdo_mysql#drudbal_"
 
       elif [[ "$DRUDBAL_ENV" == "dbal/mysqli" ]]; then
-        export DBAL_URL="mysqli://$DB_AUTH@$HOST_ADDR/drudbal"
-        export SIMPLETEST_DB="dbal://$DB_AUTH@$HOST_ADDR/drudbal?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=mysqli#drudbal_"
+        export DBAL_URL="mysqli://root:@$HOST_ADDR/drudbal"
+        export SIMPLETEST_DB="dbal://root:@$HOST_ADDR/drudbal?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=mysqli#drudbal_"
 
       elif [[ "$DRUDBAL_ENV" == "sqlite" ]]; then
         export DBAL_URL="sqlite:///sites/default/files/.ht.sqlite"
@@ -86,7 +85,7 @@ before_install:
         composer install --no-progress
         composer update --no-progress
         # Get Drupal Console
-        # composer require "drupal/console:~1.0" --prefer-dist --optimize-autoloader
+        # composer require "drupal/console:~1.0" --no-progress
         # Get Doctrine DBAL
         composer require "doctrine/dbal:^2.6.0" --no-progress
       fi
@@ -144,7 +143,7 @@ install:
 script:
   - cd $DRUPAL_PATH/core
   # Only run selected tests to avoid Travis timeout.
-  - ../vendor/bin/phpunit --testsuite kernel --group Database,Cache,Entity,views
+  - ../vendor/bin/phpunit --testsuite kernel --group Database,Cache,Entity,views,field,Field
 
 after_script:
   - cd $DRUPAL_PATH/modules/contrib/drudbal

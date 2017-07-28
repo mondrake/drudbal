@@ -445,6 +445,24 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
+  public function delegateTableExists(&$result, $drupal_table_name) {
+    try {
+      $result = $this->getDbalConnection()->getSchemaManager()->tablesExist([$this->tableName($drupal_table_name)]);
+    }
+    catch (DbalDriverException $e) {
+      if ($e->getErrorCode() === 17) {
+        $result = $this->getDbalConnection()->getSchemaManager()->tablesExist([$this->tableName($drupal_table_name)]);
+      }
+      else {
+        throw $e;
+      }
+    }
+    return TRUE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function delegateGetDbalColumnType(&$dbal_type, array $drupal_field_specs) {
     if (isset($drupal_field_specs['sqlite_type'])) {
       $dbal_type = $this->dbalConnection->getDatabasePlatform()->getDoctrineTypeMapping($drupal_field_specs['sqlite_type']);
