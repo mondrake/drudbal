@@ -593,6 +593,20 @@ interface DbalExtensionInterface {
   public function alterDbalColumnDefinition($context, &$dbal_column_definition, array &$dbal_column_options, $dbal_type, array $drupal_field_specs, $field_name);
 
   /**
+   * Post processes a table rename.
+   *
+   * Needed for example to rename a table's indexes.
+   *
+   * @param \Doctrine\DBAL\Schema\Schema $dbal_schema
+   *   The DBAL schema object.
+   * @param string $drupal_table_name
+   *   A string with the old Drupal name of the table.
+   * @param string $drupal_new_table_name
+   *   A string with the new Drupal name of the table.
+   */
+  public function postRenameTable(DbalSchema $dbal_schema, string $drupal_table_name, string $drupal_new_table_name): void;
+
+  /**
    * Adds a new field to a table.
    *
    * @param bool $primary_key_processed_by_extension

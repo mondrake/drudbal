@@ -311,7 +311,7 @@ class Schema extends DatabaseSchema {
       error_log('renameTable ' . $this->tableName($table) . ' to ' . $this->tableName($new_name));
     }
     $this->dbalSchemaManager->renameTable($this->tableName($table), $this->tableName($new_name));
-    $this->dbalSchemaForceReload();
+    $this->dbalSchemaForceReload(); // @todo is it possible to avoid double reload of schema? this is needed as postRenameTable may try to get info about the renamed table
     $this->dbalExtension->postRenameTable($this->dbalSchema(), $table, $new_name);
     $this->dbalSchemaForceReload();
   }
