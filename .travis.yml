@@ -32,13 +32,13 @@ env:
     - ORACLE_HOME=/u01/app/oracle/product/11.2.0/xe
     - ORACLE_SID=XE
   matrix:
-    #- DBAL_URL="mysql://$DB_AUTH@$HOST_ADDR/drudbal" SIMPLETEST_DB="mysql://$DB_AUTH@$HOST_ADDR/drudbal#drudbal_"
-    #- DBAL_URL="mysql://$DB_AUTH@$HOST_ADDR/drudbal" SIMPLETEST_DB="dbal://$DB_AUTH@$HOST_ADDR/drudbal?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=pdo_mysql#drudbal_"
-    #- DBAL_URL="mysqli://$DB_AUTH@$HOST_ADDR/drudbal" SIMPLETEST_DB="dbal://$DB_AUTH@$HOST_ADDR/drudbal?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=mysqli#drudbal_"
-    #- DBAL_URL="sqlite:///sites/default/files/.ht.sqlite" SIMPLETEST_DB="sqlite://test_user:test_pass@test_host:3306/sites/default/files/.ht.sqlite"
-    #- DBAL_URL="sqlite:///sites/default/files/.ht.sqlite" SIMPLETEST_DB="dbal://fake/sites/default/files/.ht.sqlite?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=pdo_sqlite"
-    #- DBAL_URL="sqlite:///:memory:" SIMPLETEST_DB="dbal://fake/:memory:?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=pdo_sqlite"
-    - DBAL_URL="oci8://ORAROOT:DRUDBAL@$HOST_ADDR:1521/XE" SIMPLETEST_DB="dbal://ORAROOT:DRUDBAL@$HOST_ADDR:1521/XE?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=oci8"
+    #- DRUDBAL_ENV="mysql"
+    #- DRUDBAL_ENV="dbal/mysql"
+    #- DRUDBAL_ENV="dbal/mysqli"
+    #- DRUDBAL_ENV="sqlite"
+    #- DRUDBAL_ENV="dbal/sqlite/file"
+    #- DRUDBAL_ENV="dbal/sqlite/memory"
+    - DRUDBAL_ENV="dbal/oci8"
 
 matrix:
   fast_finish: true
@@ -51,6 +51,37 @@ cache:
     - $ORACLE_DOWNLOAD_DIR
 
 before_install:
+  # Set variables.
+  - |
+      if [[ "$DRUDBAL_ENV" == "mysql" ]]; then
+        export DBAL_URL="mysql://$DB_AUTH@$HOST_ADDR/drudbal"
+        export SIMPLETEST_DB="mysql://$DB_AUTH@$HOST_ADDR/drudbal#drudbal_"
+
+      elif [[ "$DRUDBAL_ENV" == "dbal/mysql" ]]; then
+        export DBAL_URL="mysql://$DB_AUTH@$HOST_ADDR/drudbal"
+        export SIMPLETEST_DB="dbal://$DB_AUTH@$HOST_ADDR/drudbal?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=pdo_mysql#drudbal_"
+
+      elif [[ "$DRUDBAL_ENV" == "dbal/mysqli" ]]; then
+        export DBAL_URL="mysqli://$DB_AUTH@$HOST_ADDR/drudbal"
+        export SIMPLETEST_DB="dbal://$DB_AUTH@$HOST_ADDR/drudbal?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=mysqli#drudbal_"
+
+      elif [[ "$DRUDBAL_ENV" == "sqlite" ]]; then
+        export DBAL_URL="sqlite:///sites/default/files/.ht.sqlite"
+        export SIMPLETEST_DB="sqlite://test_user:test_pass@test_host:3306/sites/default/files/.ht.sqlite"
+
+      elif [[ "$DRUDBAL_ENV" == "dbal/sqlite/file" ]]; then
+        export DBAL_URL="sqlite:///sites/default/files/.ht.sqlite"
+        export SIMPLETEST_DB="dbal://fake/sites/default/files/.ht.sqlite?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=pdo_sqlite"
+
+      elif [[ "$DRUDBAL_ENV" == "dbal/sqlite/memory" ]]; then
+        export DBAL_URL="sqlite:///:memory:"
+        export SIMPLETEST_DB="dbal://fake/:memory:?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=pdo_sqlite"
+
+      elif [[ "$DRUDBAL_ENV" == "dbal/oci8" ]]; then
+        export DBAL_URL="oci8://ORAROOT:DRUDBAL@$HOST_ADDR:1521/XE"
+        export SIMPLETEST_DB="dbal://ORAROOT:DRUDBAL@$HOST_ADDR:1521/XE?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=oci8"
+      fi
+
   # Remove XDebug.
   - phpenv config-rm xdebug.ini
   # Add APCu extension.
