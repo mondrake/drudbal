@@ -23,8 +23,6 @@ use Doctrine\DBAL\Exception\NotNullConstraintViolationException;
  */
 class Oci8Extension extends AbstractExtension {
 
-  protected $isDebugging = FALSE;
-
   const ORACLE_EMPTY_STRING_REPLACEMENT = "\010";
 
   /**
@@ -101,13 +99,6 @@ class Oci8Extension extends AbstractExtension {
   public function __construct(DruDbalConnection $drudbal_connection, DbalConnection $dbal_connection, $statement_class) {
     parent::__construct($drudbal_connection, $dbal_connection, $statement_class);
     $this->oracleKeywordTokens = implode('|', static::$oracleKeywords);
-  }
-
-  public function setDebugging($value) {
-    $this->isDebugging = $value;
-  }
-  public function getDebugging() {
-    return $this->isDebugging;
   }
 
   /**

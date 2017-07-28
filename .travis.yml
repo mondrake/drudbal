@@ -21,16 +21,10 @@ env:
     - DRUPAL_PATH="$HOME/drupal8"
     - PATH="$PATH:$DRUPAL_PATH/vendor/bin:$HOME/.composer/vendor/bin"
     # Installation variables.
-    - DB_AUTH="root:"
     - HOST_ADDR="127.0.0.1"
     - HTTP_PORT="8080"
     # Drupal PHPUnit test variables.
     - SIMPLETEST_BASE_URL="http://$HOST_ADDR:$HTTP_PORT"
-    - ORACLE_COOKIE=sqldev
-    - ORACLE_DOWNLOAD_DIR="$HOME/oracle_download"
-    - ORACLE_FILE=oracle11g/xe/oracle-xe-11.2.0-1.0.x86_64.rpm.zip
-    - ORACLE_HOME=/u01/app/oracle/product/11.2.0/xe
-    - ORACLE_SID=XE
   matrix:
     #- DRUDBAL_ENV="mysql"
     #- DRUDBAL_ENV="dbal/mysql"
@@ -54,16 +48,16 @@ before_install:
   # Set variables.
   - |
       if [[ "$DRUDBAL_ENV" == "mysql" ]]; then
-        export DBAL_URL="mysql://$DB_AUTH@$HOST_ADDR/drudbal"
-        export SIMPLETEST_DB="mysql://$DB_AUTH@$HOST_ADDR/drudbal#drudbal_"
+        export DBAL_URL="mysql://root:@$HOST_ADDR/drudbal"
+        export SIMPLETEST_DB="mysql://root:@$HOST_ADDR/drudbal#drudbal_"
 
       elif [[ "$DRUDBAL_ENV" == "dbal/mysql" ]]; then
-        export DBAL_URL="mysql://$DB_AUTH@$HOST_ADDR/drudbal"
-        export SIMPLETEST_DB="dbal://$DB_AUTH@$HOST_ADDR/drudbal?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=pdo_mysql#drudbal_"
+        export DBAL_URL="mysql://root:@$HOST_ADDR/drudbal"
+        export SIMPLETEST_DB="dbal://root:@$HOST_ADDR/drudbal?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=pdo_mysql#drudbal_"
 
       elif [[ "$DRUDBAL_ENV" == "dbal/mysqli" ]]; then
-        export DBAL_URL="mysqli://$DB_AUTH@$HOST_ADDR/drudbal"
-        export SIMPLETEST_DB="dbal://$DB_AUTH@$HOST_ADDR/drudbal?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=mysqli#drudbal_"
+        export DBAL_URL="mysqli://root:@$HOST_ADDR/drudbal"
+        export SIMPLETEST_DB="dbal://root:@$HOST_ADDR/drudbal?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=mysqli#drudbal_"
 
       elif [[ "$DRUDBAL_ENV" == "sqlite" ]]; then
         export DBAL_URL="sqlite:///sites/default/files/.ht.sqlite"
@@ -80,6 +74,11 @@ before_install:
       elif [[ "$DRUDBAL_ENV" == "dbal/oci8" ]]; then
         export DBAL_URL="oci8://ORAROOT:DRUDBAL@$HOST_ADDR:1521/XE"
         export SIMPLETEST_DB="dbal://ORAROOT:DRUDBAL@$HOST_ADDR:1521/XE?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=oci8"
+        export ORACLE_COOKIE=sqldev
+        export ORACLE_DOWNLOAD_DIR="$HOME/oracle_download"
+        export ORACLE_FILE=oracle11g/xe/oracle-xe-11.2.0-1.0.x86_64.rpm.zip
+        export ORACLE_HOME=/u01/app/oracle/product/11.2.0/xe
+        export ORACLE_SID=XE
       fi
 
   # Remove XDebug.
@@ -116,7 +115,7 @@ before_install:
         composer install --no-progress
         composer update --no-progress
         # Get Drupal Console
-        # composer require "drupal/console:~1.0" --prefer-dist --optimize-autoloader
+        # composer require "drupal/console:~1.0" --no-progress
         # Get Doctrine DBAL
         composer require "doctrine/dbal:^2.6.0" --no-progress
       fi
@@ -160,29 +159,30 @@ install:
   - cd $DRUPAL_PATH/drivers/lib/Drupal/Driver/Database/
   - ln -s $DRUPAL_PATH/modules/contrib/drudbal/drivers/lib/Drupal/Driver/Database/dbal dbal
 
-  # Patch Kernel test.
-  - cd $DRUPAL_PATH
-  - git apply -v $DRUPAL_PATH/modules/contrib/drudbal/misc/kernel_test.patch
+  # Patch tests for debugging.
+  #- cd $DRUPAL_PATH
+  #- git apply -v $DRUPAL_PATH/modules/contrib/drudbal/misc/test_debug.patch
 
   # Install Drupal.
   - cp $DRUPAL_PATH/modules/contrib/drudbal/misc/*.php $DRUPAL_PATH/core
   - cd $DRUPAL_PATH/core
   - php install_cli.php
+  #- drupal site:status
   - php post_install.php
 
   # Get a webserver running.
   #- drupal --quiet server "$DRUPAL_SERVER_ADDRESS:$DRUPAL_SERVER_HTTP_PORT" &
   #- sleep 4s
-  #- drupal site:status
 
 script:
   - cd $DRUPAL_PATH/core
   # Only run selected tests to avoid Travis timeout.
-  #- ../vendor/bin/phpunit --testsuite kernel --group Database,Cache,Entity,views
+  #- ../vendor/bin/phpunit --testsuite kernel --group Database,Cache,Entity,views,field,Field
   #- ../vendor/bin/phpunit --testsuite kernel --group Database
   #- ../vendor/bin/phpunit --testsuite kernel --group Cache
   #- ../vendor/bin/phpunit --testsuite kernel --group Entity
   #- ../vendor/bin/phpunit --testsuite kernel --group views
+  - ../vendor/bin/phpunit --testsuite kernel --group field,Field
   - ../vendor/bin/phpunit --testsuite kernel tests/Drupal/KernelTests/Core/Database/SchemaTest.php
 
 #after_script:

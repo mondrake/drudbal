@@ -336,6 +336,9 @@ class PDOSqliteExtension extends AbstractExtension {
         }
       }
     }
+    if ($this->getDebugging()) {
+      error_log($query . ' : ' . var_export($args, TRUE));
+    }
     return $this;
   }
 
@@ -445,6 +448,24 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
+  public function delegateTableExists(&$result, $drupal_table_name) {
+    try {
+      $result = $this->getDbalConnection()->getSchemaManager()->tablesExist([$this->tableName($drupal_table_name)]);
+    }
+    catch (DbalDriverException $e) {
+      if ($e->getErrorCode() === 17) {
+        $result = $this->getDbalConnection()->getSchemaManager()->tablesExist([$this->tableName($drupal_table_name)]);
+      }
+      else {
+        throw $e;
+      }
+    }
+    return TRUE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function delegateGetDbalColumnType(&$dbal_type, array $drupal_field_specs) {
     if (isset($drupal_field_specs['sqlite_type'])) {
       $dbal_type = $this->dbalConnection->getDatabasePlatform()->getDoctrineTypeMapping($drupal_field_specs['sqlite_type']);
@@ -501,6 +522,37 @@ class PDOSqliteExtension extends AbstractExtension {
     }
 
     return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function postRenameTable(DbalSchema $dbal_schema, string $drupal_table_name, string $drupal_new_table_name): void {
+    // Need to rename the indexes on the old table after rename. Drop and
+    // recreate them. In the schema, the old table name is present, but not
+    // the new name yet.
+    $indexes = $dbal_schema->getTable($this->tableName($drupal_table_name))->getIndexes();
+    foreach ($indexes as $index) {
+      if ($index->getName() === 'primary') {
+        continue;
+      }
+      try {
+        $this->dbalConnection->exec('DROP INDEX ' . $index->getName());
+        $matches = [];
+        if (preg_match('/(.+)____(.+)/', $index->getName(), $matches)) {
+          $unique = $index->isUnique() ? 'UNIQUE ' : '';
+          $this->dbalConnection->exec('CREATE ' . $unique . 'INDEX ' . $this->tableName($drupal_new_table_name) . '____' . $matches[2] . ' ON ' . $this->tableName($drupal_new_table_name) . ' (' . implode(', ', $index->getColumns()) . ')');
+        }
+      }
+      catch (DbalDriverException $e) {
+        if ($e->getErrorCode() === 6) {
+          // The table is locked and the index cannot be dropped.
+          return;
+        }
+        throw new DatabaseExceptionWrapper($e->getMessage(), 0, $e);
+      }
+    }
+    return;
   }
 
   /**
