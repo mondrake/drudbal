@@ -532,7 +532,7 @@ class PDOSqliteExtension extends AbstractExtension {
     // recreate them.
     $indexes = $dbal_schema->getTable($this->tableName($drupal_table_name))->getIndexes();
     foreach ($indexes as $index) {
-      $this->connection->query('DROP INDEX ' . $index-getName());
+      $this->connection->query('DROP INDEX ' . $index->getName());
     }
   }
 
