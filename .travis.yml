@@ -27,11 +27,11 @@ env:
     - SIMPLETEST_BASE_URL="http://$HOST_ADDR:$HTTP_PORT"
   matrix:
     - DRUDBAL_ENV="mysql"
-    - DRUDBAL_ENV="dbal/mysql"
-    - DRUDBAL_ENV="dbal/mysqli"
-    - DRUDBAL_ENV="sqlite"
-    - DRUDBAL_ENV="dbal/sqlite/file"
-    - DRUDBAL_ENV="dbal/sqlite/memory"
+    #- DRUDBAL_ENV="dbal/mysql"
+    #- DRUDBAL_ENV="dbal/mysqli"
+    #- DRUDBAL_ENV="sqlite"
+    #- DRUDBAL_ENV="dbal/sqlite/file"
+    #- DRUDBAL_ENV="dbal/sqlite/memory"
 
 matrix:
   fast_finish: true
@@ -82,12 +82,12 @@ before_install:
         cd $DRUPAL_STAGING_DIR
         # [#2887000] composer.json does not prevent upgrading Symfony components to minor versions that do not work with Drupal
         curl https://www.drupal.org/files/issues/2887000_57.patch | git apply
-        composer install --no-progress
+        composer install --no-progress --no-suggest
         # Get Drupal Console
-        composer require "drupal/console:~1.0" --no-progress
+        composer require "drupal/console:~1.0" --no-progress --no-suggest
         # Get Doctrine DBAL
-        composer require "doctrine/dbal:^2.6.0" --no-progress
-        composer update --no-progress
+        #composer require "doctrine/dbal:^2.6.0" --no-progress --no-suggest
+        #composer update --no-progress --no-suggest
       fi
 
   # Always get latest Drupal core.
