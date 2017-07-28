@@ -530,8 +530,11 @@ class PDOSqliteExtension extends AbstractExtension {
   public function postRenameTable(DbalSchema $dbal_schema, string $drupal_table_name, string $drupal_new_table_name): void {
     // Need to rename the indexes on the old table after rename. Drop and
     // recreate them.
-    $indexes = $dbal_schema->getTable($this->tableName($drupal_table_name))->getIndexes();
+    $indexes = $dbal_schema->getTable($this->tableName($drupal_new_table_name))->getIndexes();
     foreach ($indexes as $index) {
+      if ($index->getName() === 'primary') {
+        continue;
+      }
       $this->connection->query('DROP INDEX ' . $index->getName());
     }
   }
