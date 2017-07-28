@@ -536,11 +536,20 @@ class PDOSqliteExtension extends AbstractExtension {
       if ($index->getName() === 'primary') {
         continue;
       }
-      $this->dbalConnection->exec('DROP INDEX ' . $index->getName());
-      $matches = [];
-      if (preg_match('/(.+)____(.+)/', $index->getName(), $matches)) {
-        $unique = $index->isUnique() ? 'UNIQUE ' : '';
-        $this->dbalConnection->exec('CREATE ' . $unique . 'INDEX ' . $this->tableName($drupal_new_table_name) . '____' . $matches[2] . ' ON ' . $this->tableName($drupal_new_table_name) . ' (' . implode(', ', $index->getColumns()) . ')');
+      try {
+        $this->dbalConnection->exec('DROP INDEX ' . $index->getName());
+        $matches = [];
+        if (preg_match('/(.+)____(.+)/', $index->getName(), $matches)) {
+          $unique = $index->isUnique() ? 'UNIQUE ' : '';
+          $this->dbalConnection->exec('CREATE ' . $unique . 'INDEX ' . $this->tableName($drupal_new_table_name) . '____' . $matches[2] . ' ON ' . $this->tableName($drupal_new_table_name) . ' (' . implode(', ', $index->getColumns()) . ')');
+        }
+      }
+      catch (DbalDriverException $e) {
+        if ($e->getErrorCode() === 6) {
+          // The table is locked and the index cannot be dropped.
+          return;
+        }
+        throw new DatabaseExceptionWrapper($e->getMessage(), 0, $e);
       }
     }
     return;
