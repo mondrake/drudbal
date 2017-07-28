@@ -132,7 +132,7 @@ install:
 
   # Patch tests for debugging.
   - cd $DRUPAL_PATH
-  - if [[ ! -f $DRUPAL_PATH/modules/contrib/drudbal/misc/test_debug.patch ]]; then git apply -v $DRUPAL_PATH/modules/contrib/drudbal/misc/test_debug.patch fi
+  - if [[ -f $DRUPAL_PATH/modules/contrib/drudbal/misc/test_debug.patch ]]; then git apply -v $DRUPAL_PATH/modules/contrib/drudbal/misc/test_debug.patch fi
 
   # Install Drupal.
   - cp $DRUPAL_PATH/modules/contrib/drudbal/misc/*.php $DRUPAL_PATH/core
