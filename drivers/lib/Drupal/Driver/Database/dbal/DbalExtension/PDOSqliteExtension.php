@@ -527,6 +527,18 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
+  public function postRenameTable(DbalSchema $dbal_schema, string $drupal_table_name, string $drupal_new_table_name): void {
+    // Need to rename the indexes on the old table after rename. Drop and
+    // recreate them.
+    $indexes = $dbal_schema->getTable($this->tableName($drupal_table_name))->getIndexes();
+    foreach ($indexes as $index) {
+      $this->connection->query('DROP INDEX ' . $index-getName());
+    }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function delegateAddField(&$primary_key_processed_by_extension, DbalSchema $dbal_schema, $drupal_table_name, $field_name, array $drupal_field_specs, array $keys_new_specs, array $dbal_column_options) {
     // SQLite doesn't have a full-featured ALTER TABLE statement. It only
     // supports adding new fields to a table, in some simple cases. In most
