@@ -82,12 +82,13 @@ before_install:
         cd $DRUPAL_STAGING_DIR
         # [#2887000] composer.json does not prevent upgrading Symfony components to minor versions that do not work with Drupal
         curl https://www.drupal.org/files/issues/2887000_57.patch | git apply
-        composer install --no-progress
-        composer update --no-progress
+        composer install --no-progress --no-suggest
         # Get Drupal Console
-        # composer require "drupal/console:~1.0" --no-progress
+        composer require "drupal/console:~1.0-rc26" --no-suggest
+        composer require "doctrine/common:^2.7.1" --no-suggest
         # Get Doctrine DBAL
-        composer require "doctrine/dbal:^2.6.0" --no-progress
+        composer require "doctrine/dbal:~2.6.1" --no-suggest
+        #composer update --no-progress --no-suggest
       fi
 
   # Always get latest Drupal core.
@@ -137,7 +138,7 @@ install:
   - cp $DRUPAL_PATH/modules/contrib/drudbal/misc/*.php $DRUPAL_PATH/core
   - cd $DRUPAL_PATH/core
   - php install_cli.php
-  #- drupal site:status
+  - drupal site:status
   - php post_install.php
 
   # Get a webserver running.
