@@ -523,7 +523,14 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
     $dbal_table->addOption('charset', $drupal_table_specs['mysql_character_set']);
     $dbal_table->addOption('engine', $drupal_table_specs['mysql_engine']);
     $info = $this->connection->getConnectionOptions();
-    $dbal_table->addOption('collate', empty($info['collation']) ? self::DEFAULT_COLLATION : $info['collation']);
+    $collation = empty($info['collation']) ? self::DEFAULT_COLLATION : $info['collation'];
+    // If tables are created with UTF8 charset, without specifying the
+    // collation, the DEFAULT_COLLATION is not valid. In this case and we
+    // need to define one that works.
+    if ($drupal_table_specs['mysql_character_set'] == 'utf8' && $collation === self::DEFAULT_COLLATION) {
+      $collation = 'utf8_general_ci';
+    }
+    $dbal_table->addOption('collate', $collation);
     return $this;
   }
 
