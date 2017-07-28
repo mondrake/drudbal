@@ -85,6 +85,7 @@ before_install:
         composer install --no-progress --no-suggest
         # Get Drupal Console
         composer require "drupal/console:~1.0-rc26" --no-progress --no-suggest
+        composer require "doctrine/common:^2.7.1" --no-progress --no-suggest
         # Get Doctrine DBAL
         composer require "doctrine/dbal:~2.6.1" --no-progress --no-suggest
         #composer update --no-progress --no-suggest
