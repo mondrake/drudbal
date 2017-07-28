@@ -85,7 +85,7 @@ before_install:
         composer install --no-progress
         composer update --no-progress
         # Get Drupal Console
-        # composer require "drupal/console:~1.0" --no-progress
+        composer require "drupal/console:~1.0" --no-progress
         # Get Doctrine DBAL
         composer require "doctrine/dbal:^2.6.0" --no-progress
       fi
@@ -142,7 +142,7 @@ install:
   # Get a webserver running.
   #- drupal --quiet server "$DRUPAL_SERVER_ADDRESS:$DRUPAL_SERVER_HTTP_PORT" &
   #- sleep 4s
-  #- drupal site:status
+  - drupal site:status
 
 script:
   - cd $DRUPAL_PATH/core
