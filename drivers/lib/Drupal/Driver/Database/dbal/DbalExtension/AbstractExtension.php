@@ -37,6 +37,13 @@ class AbstractExtension implements DbalExtensionInterface {
   protected $statementClass;
 
   /**
+   * Enables debugging.
+   *
+   * @var bool
+   */
+  protected $isDebugging = FALSE;
+
+  /**
    * Constructs a DBAL extension object.
    *
    * @param \Drupal\Driver\Database\dbal\Connection $drudbal_connection
@@ -50,6 +57,26 @@ class AbstractExtension implements DbalExtensionInterface {
     $this->connection = $drudbal_connection;
     $this->dbalConnection = $dbal_connection;
     $this->statementClass = $statement_class;
+  }
+
+  /**
+   * Sets debugging mode.
+   *
+   * @param bool $value
+   *   The debugging mode.
+   */
+  public function setDebugging(bool $value): void {
+    $this->isDebugging = $value;
+  }
+
+  /**
+   * Gets debugging mode.
+   *
+   * @return bool
+   *   The debugging mode.
+   */
+  public function getDebugging(): bool {
+    return $this->isDebugging;
   }
 
   /**

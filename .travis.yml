@@ -26,10 +26,10 @@ env:
     # Drupal PHPUnit test variables.
     - SIMPLETEST_BASE_URL="http://$HOST_ADDR:$HTTP_PORT"
   matrix:
-    - DRUDBAL_ENV="mysql"
-    - DRUDBAL_ENV="dbal/mysql"
-    - DRUDBAL_ENV="dbal/mysqli"
-    - DRUDBAL_ENV="sqlite"
+    #- DRUDBAL_ENV="mysql"
+    #- DRUDBAL_ENV="dbal/mysql"
+    #- DRUDBAL_ENV="dbal/mysqli"
+    #- DRUDBAL_ENV="sqlite"
     - DRUDBAL_ENV="dbal/sqlite/file"
     - DRUDBAL_ENV="dbal/sqlite/memory"
 
@@ -143,7 +143,8 @@ install:
 script:
   - cd $DRUPAL_PATH/core
   # Only run selected tests to avoid Travis timeout.
-  - ../vendor/bin/phpunit --testsuite kernel --group Database,Cache,Entity,views,field,Field
+  #- ../vendor/bin/phpunit --testsuite kernel --group Database,Cache,Entity,views,field,Field
+  - ../vendor/bin/phpunit --testsuite kernel --group field,Field
 
 after_script:
   - cd $DRUPAL_PATH/modules/contrib/drudbal
