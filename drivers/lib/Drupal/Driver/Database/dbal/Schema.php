@@ -311,6 +311,7 @@ class Schema extends DatabaseSchema {
       error_log('renameTable ' . $this->tableName($table) . ' to ' . $this->tableName($new_name));
     }
     $this->dbalSchemaManager->renameTable($this->tableName($table), $this->tableName($new_name));
+    $this->dbalSchemaForceReload();
     $this->dbalExtension->postRenameTable($this->dbalSchema(), $table, $new_name);
     $this->dbalSchemaForceReload();
   }
