@@ -80,10 +80,23 @@ class AbstractExtension implements DbalExtensionInterface {
   }
 
   /**
+   * Database asset name resolution methods.
+   */
+
+  /**
    * {@inheritdoc}
    */
   public function getDbTableName($prefixed_table_name) {
     return $prefixed_table_name;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getDbFullQualifiedTableName($drupal_table_name) {
+    $options = $this->connection->getConnectionOptions();
+    $prefix = $this->connection->tablePrefix($drupal_table_name);
+    return $options['database'] . '.' . $this->getDbTableName($prefix . $drupal_table_name);
   }
 
   /**
@@ -96,10 +109,22 @@ class AbstractExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function delegateFullQualifiedTableName($drupal_table_name) {
-    $options = $this->connection->getConnectionOptions();
-    $prefix = $this->connection->tablePrefix($drupal_table_name);
-    return $options['database'] . '.' . $this->getDbTableName($prefix . $drupal_table_name);
+  public function getDbAlias($alias) {
+    return $alias;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function resolveAliases(?string $unaliased): string {
+    return $unaliased;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getDbIndexName($context, DbalSchema $dbal_schema, $drupal_table_name, $index_name, array $table_prefix_info) {
+    return $index_name;
   }
 
   /**
@@ -389,13 +414,6 @@ class AbstractExtension implements DbalExtensionInterface {
    */
   public function delegateFieldSetNoDefault(DbalSchema $dbal_schema, $drupal_table_name, $field_name) {
     throw new \LogicException("Method " . __METHOD__ . " not implemented for '" . $this->dbalConnection->getDriver()->getName() . "'");
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function getIndexFullName($context, DbalSchema $dbal_schema, $drupal_table_name, $index_name, array $table_prefix_info) {
-    return $index_name;
   }
 
   /**

@@ -690,7 +690,7 @@ class Connection extends DatabaseConnection {
    * {@inheritdoc}
    */
   public function getFullQualifiedTableName($table) {
-    return $this->getDbalExtension()->delegateFullQualifiedTableName($table);
+    return $this->getDbalExtension()->getDbFullQualifiedTableName($table);
   }
 
   /**

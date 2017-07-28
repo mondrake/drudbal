@@ -111,7 +111,7 @@ class Oci8Extension extends AbstractExtension {
   }
 
   /**
-   * Connection delegated methods.
+   * Database asset name resolution methods.
    */
 
   /**
@@ -126,6 +126,15 @@ class Oci8Extension extends AbstractExtension {
     }
     $prefixed_table_name = '"' . $prefixed_table_name . '"';
     return $prefixed_table_name;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getDbFullQualifiedTableName($drupal_table_name) {
+    $options = $this->connection->getConnectionOptions();
+    $prefix = $this->connection->tablePrefix($drupal_table_name);
+    return $options['username'] . '.' . $this->getDbTableName($prefix . $drupal_table_name);
   }
 
   /**
@@ -176,11 +185,33 @@ class Oci8Extension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateFullQualifiedTableName($drupal_table_name) {
-    $options = $this->connection->getConnectionOptions();
-    $prefix = $this->connection->tablePrefix($drupal_table_name);
-    return $options['username'] . '.' . $this->getDbTableName($prefix . $drupal_table_name);
+  public function getDbIndexName($context, DbalSchema $dbal_schema, $drupal_table_name, $index_name, array $table_prefix_info) {
+    // If checking for index existence or dropping, see if an index exists
+    // with the Drupal name, regardless of prefix. It may be a table was
+    // renamed so the prefix is no longer relevant.
+    if (in_array($context, ['indexExists', 'dropIndex'])) {
+      $dbal_table = $dbal_schema->getTable($this->tableName($drupal_table_name));
+      foreach ($dbal_table->getIndexes() as $index) {
+        $index_full_name = $index->getName();
+        $matches = [];
+        if (preg_match('/.*____(.+)/', $index_full_name, $matches)) {
+          if ($matches[1] === hash('crc32b', $index_name)) {
+            return strtolower($index_full_name);
+          }
+        }
+      }
+      return FALSE;
+    }
+    else {
+      // To keep things... short, use a CRC32 hash of prefixed table name and
+      // of Drupal index name as the db name of the index.
+      return 'IDX_' . hash('crc32b', $table_prefix_info['table']) . '____' . hash('crc32b', $index_name);
+    }
   }
+
+  /**
+   * Connection delegated methods.
+   */
 
   /**
    * {@inheritdoc}
@@ -620,14 +651,6 @@ SQL;
   /**
    * {@inheritdoc}
    */
-  public function postCreateTable($drupal_table_name, array $drupal_table_specs, DbalSchema $dbal_schema) {
-    // @todo
-    return $this;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function delegateChangeField(&$primary_key_processed_by_extension, DbalSchema $dbal_schema, $drupal_table_name, $field_name, $field_new_name, array $drupal_field_new_specs, array $keys_new_specs, array $dbal_column_options) {
     $current_schema = $dbal_schema;
     $to_schema = clone $current_schema;
@@ -708,33 +731,6 @@ SQL;
   public function delegateFieldSetNoDefault(DbalSchema $dbal_schema, $drupal_table_name, $field_name) {
     $this->connection->query('ALTER TABLE {' . $drupal_table_name . '} MODIFY (' . $this->getDbFieldName($field_name) . ' DEFAULT NULL)');
     return TRUE;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function getIndexFullName($context, DbalSchema $dbal_schema, $drupal_table_name, $index_name, array $table_prefix_info) {
-    // If checking for index existence or dropping, see if an index exists
-    // with the Drupal name, regardless of prefix. It may be a table was
-    // renamed so the prefix is no longer relevant.
-    if (in_array($context, ['indexExists', 'dropIndex'])) {
-      $dbal_table = $dbal_schema->getTable($this->tableName($drupal_table_name));
-      foreach ($dbal_table->getIndexes() as $index) {
-        $index_full_name = $index->getName();
-        $matches = [];
-        if (preg_match('/.*____(.+)/', $index_full_name, $matches)) {
-          if ($matches[1] === hash('crc32b', $index_name)) {
-            return strtolower($index_full_name);
-          }
-        }
-      }
-      return FALSE;
-    }
-    else {
-      // To keep things... short, use a CRC32 hash of prefixed table name and
-      // of Drupal index name as the db name of the index.
-      return 'IDX_' . hash('crc32b', $table_prefix_info['table']) . '____' . hash('crc32b', $index_name);
-    }
   }
 
 }

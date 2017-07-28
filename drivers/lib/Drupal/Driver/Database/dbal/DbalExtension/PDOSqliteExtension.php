@@ -87,12 +87,41 @@ class PDOSqliteExtension extends AbstractExtension {
   }
 
   /**
+   * Database asset name resolution methods.
+   */
+
+  /**
    * {@inheritdoc}
    */
-  public function delegateFullQualifiedTableName($drupal_table_name) {
+  public function getDbFullQualifiedTableName($drupal_table_name) {
     // @todo needs cleanup!!! vs other similar methods and finding index name
     $table_prefix_info = $this->connection->schema()->getPrefixInfoPublic($drupal_table_name);
     return $table_prefix_info['schema'] . '.' . $table_prefix_info['table'];
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getDbIndexName($context, DbalSchema $dbal_schema, $drupal_table_name, $index_name, array $table_prefix_info) {
+    // If checking for index existence or dropping, see if an index exists
+    // with the Drupal name, regardless of prefix. It may be a table was
+    // renamed so the prefix is no longer relevant.
+    if (in_array($context, ['indexExists', 'dropIndex'])) {
+      $dbal_table = $dbal_schema->getTable($this->tableName($drupal_table_name));
+      foreach ($dbal_table->getIndexes() as $index) {
+        $index_full_name = $index->getName();
+        $matches = [];
+        if (preg_match('/.*____(.+)/', $index_full_name, $matches)) {
+          if ($matches[1] === $index_name) {
+            return $index_full_name;
+          }
+        }
+      }
+      return FALSE;
+    }
+    else {
+      return $table_prefix_info['table'] . '____' . $index_name;
+    }
   }
 
   /**
@@ -633,31 +662,6 @@ class PDOSqliteExtension extends AbstractExtension {
     unset($new_schema['fields'][$field_name]['default']);
     $this->alterTable($drupal_table_name, $old_schema, $new_schema);
     return TRUE;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function getIndexFullName($context, DbalSchema $dbal_schema, $drupal_table_name, $index_name, array $table_prefix_info) {
-    // If checking for index existence or dropping, see if an index exists
-    // with the Drupal name, regardless of prefix. It may be a table was
-    // renamed so the prefix is no longer relevant.
-    if (in_array($context, ['indexExists', 'dropIndex'])) {
-      $dbal_table = $dbal_schema->getTable($this->tableName($drupal_table_name));
-      foreach ($dbal_table->getIndexes() as $index) {
-        $index_full_name = $index->getName();
-        $matches = [];
-        if (preg_match('/.*____(.+)/', $index_full_name, $matches)) {
-          if ($matches[1] === $index_name) {
-            return $index_full_name;
-          }
-        }
-      }
-      return FALSE;
-    }
-    else {
-      return $table_prefix_info['table'] . '____' . $index_name;
-    }
   }
 
   /**
