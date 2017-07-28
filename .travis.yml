@@ -130,8 +130,8 @@ install:
   - ln -s $DRUPAL_PATH/modules/contrib/drudbal/drivers/lib/Drupal/Driver/Database/dbal dbal
 
   # Patch tests for debugging.
-  - cd $DRUPAL_PATH
-  - git apply -v $DRUPAL_PATH/modules/contrib/drudbal/misc/test_debug.patch
+  #- cd $DRUPAL_PATH
+  #- git apply -v $DRUPAL_PATH/modules/contrib/drudbal/misc/test_debug.patch
 
   # Install Drupal.
   - cp $DRUPAL_PATH/modules/contrib/drudbal/misc/*.php $DRUPAL_PATH/core
@@ -147,8 +147,8 @@ install:
 script:
   - cd $DRUPAL_PATH/core
   # Only run selected tests to avoid Travis timeout.
-  #- ../vendor/bin/phpunit --testsuite kernel --group Database,Cache,Entity,views,field,Field
-  - ../vendor/bin/phpunit --testsuite kernel --group field,Field
+  - ../vendor/bin/phpunit --testsuite kernel --group Database,Cache,Entity,views,field,Field
+  #- ../vendor/bin/phpunit --testsuite kernel --group field,Field
 
 after_script:
   - cd $DRUPAL_PATH/modules/contrib/drudbal

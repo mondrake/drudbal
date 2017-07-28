@@ -539,7 +539,7 @@ class PDOSqliteExtension extends AbstractExtension {
       $matches = [];
       if (preg_match('/(.+)____(.+)/', $index->getName(), $matches)) {
         $unique = $index->isUnique() ? 'UNIQUE ' : '';
-        $this->connection->query('CREATE ' . $unique . 'INDEX ' . $this->tableName($drupal_new_table_name) . '____' . $matches[2] . ' ON ' . $this->tableName($drupal_new_table_name) . '(' . implode(', ', $index->getColumns()) . ')');
+        $this->connection->query('CREATE ' . $unique . 'INDEX ' . $this->tableName($drupal_new_table_name) . '____' . $matches[2] . ' ON ' . $this->tableName($drupal_new_table_name) . ' (' . implode(', ', $index->getColumns()) . ')');
       }
     }
   }
