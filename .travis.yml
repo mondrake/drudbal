@@ -17,8 +17,6 @@ branches:
 
 env:
   global:
-    # Oracle download directory.
-    - ORACLE_DOWNLOAD_DIR="$HOME/oracle_download"
     # Drupal paths.
     - DRUPAL_STAGING_DIR="$HOME/drupal_staging"
     - DRUPAL_PATH="$HOME/drupal8"
@@ -28,6 +26,9 @@ env:
     - HTTP_PORT="8080"
     # Drupal PHPUnit test variables.
     - SIMPLETEST_BASE_URL="http://$HOST_ADDR:$HTTP_PORT"
+    # Oracle variables.
+    - ORACLE_DOWNLOAD_DIR="$HOME/oracle_download"
+    - ORACLE_BASEFILE=oracle-xe-11.2.0-1.0.x86_64.rpm.zip
   matrix:
     - DRUDBAL_ENV="mysql"
     - DRUDBAL_ENV="dbal/mysql"
@@ -78,20 +79,21 @@ before_install:
       elif [[ "$DRUDBAL_ENV" == "dbal/oci8" ]]; then
         export DBAL_URL="oci8://ORAROOT:DRUDBAL@$HOST_ADDR:1521/XE"
         export SIMPLETEST_DB="dbal://ORAROOT:DRUDBAL@$HOST_ADDR:1521/XE?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=oci8"
+        # Oracle variables.
         export ORACLE_COOKIE=sqldev
-        export ORACLE_FILE=oracle11g/xe/oracle-xe-11.2.0-1.0.x86_64.rpm.zip
+        export ORACLE_FILE=oracle11g/xe/$ORACLE_BASEFILE
         export ORACLE_HOME=/u01/app/oracle/product/11.2.0/xe
         export ORACLE_SID=XE
         # Get Oracle XE.
         wget 'https://github.com/cbandy/travis-oracle/archive/v2.0.2.tar.gz'
         mkdir -p .travis/oracle
         tar x -C .travis/oracle --strip-components=1 -f v2.0.2.tar.gz
-        if [[ ! -f $ORACLE_DOWNLOAD_DIR/oracle-xe-11.2.0-1.0.x86_64.rpm.zip ]]; then
+        if [[ ! -f $ORACLE_DOWNLOAD_DIR/$ORACLE_BASEFILE ]]; then
           .travis/oracle/download.sh
-          cp .travis/oracle/oracle-xe-11.2.0-1.0.x86_64.rpm.zip $ORACLE_DOWNLOAD_DIR
+          cp .travis/oracle/$ORACLE_BASEFILE $ORACLE_DOWNLOAD_DIR
         fi
-        if [[ ! -f .travis/oracle/oracle-xe-11.2.0-1.0.x86_64.rpm.zip ]]; then
-          cp $ORACLE_DOWNLOAD_DIR/oracle-xe-11.2.0-1.0.x86_64.rpm.zip .travis/oracle/
+        if [[ ! -f .travis/oracle/$ORACLE_BASEFILE ]]; then
+          cp $ORACLE_DOWNLOAD_DIR/$ORACLE_BASEFILE .travis/oracle/
         fi
         .travis/oracle/install.sh
         $HOME/build/mondrake/drudbal/oracle_user.sh
@@ -156,12 +158,12 @@ install:
   - cd $DRUPAL_PATH/drivers/lib/Drupal/Driver/Database/
   - ln -s $DRUPAL_PATH/modules/contrib/drudbal/drivers/lib/Drupal/Driver/Database/dbal dbal
 
-  # Patch tests for debugging.
+  # Patch tests for debugging if necessary.
   - cd $DRUPAL_PATH
-  - if [[ -f $DRUPAL_PATH/modules/contrib/drudbal/misc/test_debug.patch ]]; then git apply -v $DRUPAL_PATH/modules/contrib/drudbal/misc/test_debug.patch; fi
+  - if [[ -f $DRUPAL_PATH/modules/contrib/drudbal/tests/travis_ci/$DRUDBAL_ENV/test_debug.patch ]]; then git apply -v $DRUPAL_PATH/modules/contrib/drudbal/tests/travis_ci/$DRUDBAL_ENV/test_debug.patch; fi
 
   # Install Drupal.
-  - cp $DRUPAL_PATH/modules/contrib/drudbal/misc/*.php $DRUPAL_PATH/core
+  - cp $DRUPAL_PATH/modules/contrib/drudbal/tests/travis_ci/*.php $DRUPAL_PATH/core
   - cd $DRUPAL_PATH/core
   - php install_cli.php
 
