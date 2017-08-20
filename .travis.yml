@@ -112,25 +112,6 @@ before_install:
   # Add APCu extension.
   - echo "extension = apcu.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
 
-  # Get Oracle XE.
-  - wget 'https://github.com/cbandy/travis-oracle/archive/v2.0.2.tar.gz'
-  - mkdir -p .travis/oracle
-  - tar x -C .travis/oracle --strip-components=1 -f v2.0.2.tar.gz
-  - |
-      if [[ ! -f $ORACLE_DOWNLOAD_DIR/oracle-xe-11.2.0-1.0.x86_64.rpm.zip ]]; then
-        .travis/oracle/download.sh
-        cp .travis/oracle/oracle-xe-11.2.0-1.0.x86_64.rpm.zip $ORACLE_DOWNLOAD_DIR
-      fi
-  - |
-      if [[ ! -f .travis/oracle/oracle-xe-11.2.0-1.0.x86_64.rpm.zip ]]; then
-        cp $ORACLE_DOWNLOAD_DIR/oracle-xe-11.2.0-1.0.x86_64.rpm.zip .travis/oracle/
-      fi
-  - .travis/oracle/install.sh
-  - $HOME/build/mondrake/drudbal/oracle_user.sh
-
-  # Install Oci8 extension for PHP.
-  - echo $ORACLE_HOME | pecl install oci8
-
   # Stage Drupal core to get dependencies.
   - |
       if [[ ! -f $DRUPAL_STAGING_DIR/index.php ]]; then
