@@ -100,6 +100,7 @@ before_install:
           cp $ORACLE_DOWNLOAD_DIR/$ORACLE_BASEFILE .travis/oracle/
         fi
         .travis/oracle/install.sh
+        chmod 777 $HOME/build/mondrake/drudbal/tests/travis_ci/$DRUDBAL_ENV/oracle_user.sh
         $HOME/build/mondrake/drudbal/tests/travis_ci/$DRUDBAL_ENV/oracle_user.sh
         # Install Oci8 extension for PHP.
         echo $ORACLE_HOME | pecl install oci8
