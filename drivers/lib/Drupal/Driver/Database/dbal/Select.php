@@ -113,8 +113,6 @@ class Select extends QuerySelect {
     // GROUP BY
     if ($this->group) {
       $fields = $this->getFields();
-//error_log(var_export($this->getFields(), TRUE));
-//error_log(var_export($this->group, TRUE));
       foreach ($this->group as $expression) {
         if (strpos($expression, '.') === FALSE && isset($fields[$expression])) {
           $dbal_query->addGroupBy($fields[$expression]['table'] . '.' . $fields[$expression]['field']);
