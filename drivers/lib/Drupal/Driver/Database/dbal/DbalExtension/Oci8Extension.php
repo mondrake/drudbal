@@ -2,8 +2,8 @@
 
 namespace Drupal\Driver\Database\dbal\DbalExtension;
 
-use Drupal\Component\Uuid\Php as Uuid;
 use Drupal\Component\Utility\Timer;
+use Drupal\Component\Uuid\Php as Uuid;
 use Drupal\Core\Database\Database;
 use Drupal\Core\Database\DatabaseExceptionWrapper;
 use Drupal\Core\Database\DatabaseNotFoundException;
@@ -399,6 +399,8 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException' && $this-
     if (strpos($query, 'SELECT ') === 0 && strpos($query, ' FROM ') === FALSE) {
       $query .= ' FROM DUAL';
     }
+
+$query = str_replace('GROUP BY pid_alias', 'GROUP BY test_task.pid', $query);
 
 if ($this->getDebugging()) error_log($query . ' : ' . var_export($args, TRUE));
     return $this;
