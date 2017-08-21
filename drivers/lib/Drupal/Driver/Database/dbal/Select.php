@@ -112,10 +112,16 @@ class Select extends QuerySelect {
 
     // GROUP BY
     if ($this->group) {
-error_log(var_export($this->getFields(), TRUE));
-error_log(var_export($this->group, TRUE));
+      $fields = $this->getFields();
+//error_log(var_export($this->getFields(), TRUE));
+//error_log(var_export($this->group, TRUE));
       foreach ($this->group as $expression) {
-        $dbal_query->addGroupBy($dbal_extension->resolveAliases($expression));
+        if (strpos($expression, '.') === FALSE && isset($fields[$expression])) {
+          $dbal_query->addGroupBy($fields[$expression]['table'] . '.' . $fields[$expression]['field']);
+        }
+        else {
+          $dbal_query->addGroupBy($expression);
+        }
       }
     }
 

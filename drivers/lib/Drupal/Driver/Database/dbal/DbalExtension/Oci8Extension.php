@@ -400,8 +400,6 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException' && $this-
       $query .= ' FROM DUAL';
     }
 
-$query = str_replace('GROUP BY pid_alias', 'GROUP BY test_task.pid', $query);
-
 if ($this->getDebugging()) error_log($query . ' : ' . var_export($args, TRUE));
     return $this;
   }
