@@ -2,8 +2,8 @@
 
 namespace Drupal\Driver\Database\dbal\DbalExtension;
 
+use Drupal\Component\Uuid\Php as Uuid;
 use Drupal\Component\Utility\Timer;
-
 use Drupal\Core\Database\Database;
 use Drupal\Core\Database\DatabaseExceptionWrapper;
 use Drupal\Core\Database\DatabaseNotFoundException;
@@ -194,9 +194,10 @@ class Oci8Extension extends AbstractExtension {
       return FALSE;
     }
     else {
-      // To keep things... short, use a CRC32 hash of prefixed table name and
-      // of Drupal index name as the db name of the index.
-      return 'IDX_' . hash('crc32b', $table_prefix_info['table']) . '____' . hash('crc32b', $index_name);
+      // To keep things... short, use a CRC32 hash of a UUID and one of the
+      // Drupal index name as the db name of the index.
+      $uuid = new Uuid();
+      return 'IDX_' . hash('crc32b', $uuid->generate()) . '____' . hash('crc32b', $index_name);
     }
   }
 
