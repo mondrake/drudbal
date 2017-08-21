@@ -112,6 +112,8 @@ class Select extends QuerySelect {
 
     // GROUP BY
     if ($this->group) {
+error_log(var_export($this->getFields(), TRUE));
+error_log(var_export($this->group, TRUE));
       foreach ($this->group as $expression) {
         $dbal_query->addGroupBy($dbal_extension->resolveAliases($expression));
       }
