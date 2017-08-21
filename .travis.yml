@@ -37,7 +37,7 @@ env:
     #- DRUDBAL_ENV="sqlite"
     - DRUDBAL_ENV="dbal/sqlite/file"
     #- DRUDBAL_ENV="dbal/sqlite/memory"
-    - DRUDBAL_ENV="dbal/oci8"
+    #- DRUDBAL_ENV="dbal/oci8"
 
 matrix:
   fast_finish: true

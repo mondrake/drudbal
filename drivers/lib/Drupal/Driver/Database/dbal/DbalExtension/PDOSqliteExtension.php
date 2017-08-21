@@ -108,9 +108,11 @@ class PDOSqliteExtension extends AbstractExtension {
     // with the Drupal name, regardless of prefix. A table can be renamed so
     // that the prefix is no longer relevant.
     if (in_array($context, ['indexExists', 'dropIndex'])) {
+error_log('req: ' . $index_name);
       $dbal_table = $dbal_schema->getTable($this->tableName($drupal_table_name));
       foreach ($dbal_table->getIndexes() as $index) {
         $index_full_name = $index->getName();
+error_log($index_full_name);
         $matches = [];
         if (preg_match('/.*____(.+)/', $index_full_name, $matches)) {
           if ($matches[1] === $index_name) {
