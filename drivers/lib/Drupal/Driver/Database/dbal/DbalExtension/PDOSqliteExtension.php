@@ -124,7 +124,7 @@ class PDOSqliteExtension extends AbstractExtension {
       // Use an UUID to make the index identifier unique and not table
       // dependent (otherwise indexes need to be recreated if the table gets
       // renamed).
-      return 'IDX_' . Uuid::generate() . '____' . $index_name;
+      return 'IDX_' . str_replace('-', '', Uuid::generate()) . '____' . $index_name;
     }
   }
 
