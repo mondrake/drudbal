@@ -2,6 +2,7 @@
 
 namespace Drupal\Driver\Database\dbal\DbalExtension;
 
+use Drupal\Component\Uuid\Php as Uuid;
 use Drupal\Core\Database\Database;
 use Drupal\Core\Database\DatabaseExceptionWrapper;
 use Drupal\Core\Database\DatabaseNotFoundException;
@@ -104,8 +105,8 @@ class PDOSqliteExtension extends AbstractExtension {
    */
   public function getDbIndexName($context, DbalSchema $dbal_schema, $drupal_table_name, $index_name, array $table_prefix_info) {
     // If checking for index existence or dropping, see if an index exists
-    // with the Drupal name, regardless of prefix. It may be a table was
-    // renamed so the prefix is no longer relevant.
+    // with the Drupal name, regardless of prefix. A table can be renamed so
+    // that the prefix is no longer relevant.
     if (in_array($context, ['indexExists', 'dropIndex'])) {
       $dbal_table = $dbal_schema->getTable($this->tableName($drupal_table_name));
       foreach ($dbal_table->getIndexes() as $index) {
@@ -120,7 +121,11 @@ class PDOSqliteExtension extends AbstractExtension {
       return FALSE;
     }
     else {
-      return $table_prefix_info['table'] . '____' . $index_name;
+      // Use an UUID to make the index identifier unique and not table
+      // dependent (otherwise indexes need to be recreated if the table gets
+      // renamed).
+      $uuid = new Uuid();
+      return 'idx_' . str_replace('-', '', $uuid->generate()) . '____' . $index_name;
     }
   }
 
@@ -522,37 +527,6 @@ class PDOSqliteExtension extends AbstractExtension {
     }
 
     return $this;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function postRenameTable(DbalSchema $dbal_schema, string $drupal_table_name, string $drupal_new_table_name): void {
-    // Need to rename the indexes on the old table after rename. Drop and
-    // recreate them. In the schema, the old table name is present, but not
-    // the new name yet.
-    $indexes = $dbal_schema->getTable($this->tableName($drupal_table_name))->getIndexes();
-    foreach ($indexes as $index) {
-      if ($index->getName() === 'primary') {
-        continue;
-      }
-      try {
-        $this->dbalConnection->exec('DROP INDEX ' . $index->getName());
-        $matches = [];
-        if (preg_match('/(.+)____(.+)/', $index->getName(), $matches)) {
-          $unique = $index->isUnique() ? 'UNIQUE ' : '';
-          $this->dbalConnection->exec('CREATE ' . $unique . 'INDEX ' . $this->tableName($drupal_new_table_name) . '____' . $matches[2] . ' ON ' . $this->tableName($drupal_new_table_name) . ' (' . implode(', ', $index->getColumns()) . ')');
-        }
-      }
-      catch (DbalDriverException $e) {
-        if ($e->getErrorCode() === 6) {
-          // The table is locked and the index cannot be dropped.
-          return;
-        }
-        throw new DatabaseExceptionWrapper($e->getMessage(), 0, $e);
-      }
-    }
-    return;
   }
 
   /**
