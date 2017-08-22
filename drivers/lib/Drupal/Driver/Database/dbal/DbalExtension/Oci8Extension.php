@@ -393,7 +393,7 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException' && $this-
     $query = str_replace('RAND()', 'DBMS_RANDOM.VALUE', $query);
 
     // REGEXP is not available in Oracle. @todo refine
-    $query = preg_replace('/(.*\s+)(.*)(\s+REGEXP\s+)(.*)/', '$1 REGEXP_LIKE($2, $4)', $query);
+//    $query = preg_replace('/(.*\s+)(.*)(\s+REGEXP\s+)(.*)/', '$1 REGEXP_LIKE($2, $4)', $query);
 
     // In case of missing from, Oracle requires FROM DUAL.
     if (strpos($query, 'SELECT ') === 0 && strpos($query, ' FROM ') === FALSE) {

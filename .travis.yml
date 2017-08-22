@@ -192,8 +192,8 @@ script:
   - cd $DRUPAL_PATH/core
   # Only run selected tests to avoid Travis timeout.
   #- ../vendor/bin/phpunit --testsuite kernel --group $KERNEL_TESTS
+  - ../vendor/bin/phpunit --testsuite kernel --group Database
   - ../vendor/bin/phpunit --testsuite kernel --group views
-  - ../vendor/bin/phpunit --testsuite kernel --group field,Field
 
 #after_script:
   #- cd $DRUPAL_PATH/modules/contrib/drudbal
