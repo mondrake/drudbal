@@ -413,7 +413,7 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException' && $this-
         error_log($concat_sep);
         error_log('--------------b1');
         $parms_1 = array_shift($parms_1);
-        $concat_string = implode(' || ' . $concat_sep . ' || ', $parms_1);
+        $concat_string = implode(' || ', $parms_1);
         error_log($concat_string);
         error_log('--------------b2');
         error_log($match[1]);
