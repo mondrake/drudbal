@@ -407,14 +407,15 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException' && $this-
         error_log('--------------b0');
         $xxx_parms = [];
         preg_match_all('/([^,\s]+)/', $match[0], $xxx_parms);
+        $parms_1 = $xxx_parms[1];
         error_log(var_export($xxx_parms, TRUE));
         error_log('--------------b1');
         //$concat_sep = $xxx[0];
         //error_log($concat_sep);
         //$xxx = array_shift($xxx);
         //$concat_string = implode(" || $concat_sep || ", $xxx);
-        //$concat_string = implode(" || ", $xxx);
-        //error_log($concat_string);
+        $concat_string = implode('||', $parms_1);
+        error_log($concat_string);
         error_log('--------------b2');
         error_log($match[1]);
         error_log('--------------b3');
