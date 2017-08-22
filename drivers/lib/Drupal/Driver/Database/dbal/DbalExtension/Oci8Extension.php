@@ -389,11 +389,13 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException' && $this-
     // quotes.
     $query = preg_replace('/([\s\.(])(' . $this->oracleKeywordTokens . ')([\s,)])/', '$1"$2"$3', $query);
 
-    // RAND() is not available in Oracle.
+    // RAND() is not available in Oracle; convert to using
+    // DBMS_RANDOM.VALUE function.
     $query = str_replace('RAND()', 'DBMS_RANDOM.VALUE', $query);
 
-    // REGEXP is not available in Oracle. @todo refine
-//    $query = preg_replace('/(.*\s+)(.*)(\s+REGEXP\s+)(.*)/', '$1 REGEXP_LIKE($2, $4)', $query);
+    // REGEXP is not available in Oracle; convert to using REGEXP_LIKE
+    // function.
+    $query = preg_replace('/([^\s]+)\s+REGEXP\s+([^\s]+)/', 'REGEXP_LIKE($1, $2)', $query);
 
     // In case of missing from, Oracle requires FROM DUAL.
     if (strpos($query, 'SELECT ') === 0 && strpos($query, ' FROM ') === FALSE) {
