@@ -397,6 +397,16 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException' && $this-
     // function.
     $query = preg_replace('/([^\s]+)\s+REGEXP\s+([^\s]+)/', 'REGEXP_LIKE($1, $2)', $query);
 
+    // CONCAT_WS is not available in Oracle; convert to using || operator.
+    $matches = [];
+    if (preg_match_all('/(?:[\s\(])(CONCAT_WS\(([^\)]*)\))/', $query, $matches, PREG_OFFSET_CAPTURE)) {
+error_log(var_export($matches, TRUE));
+      foreach ($matches as $match) {
+$xxx = explode(', ', $match[2]);
+error_log(var_export($xxx, TRUE));
+      }
+    };
+
     // In case of missing from, Oracle requires FROM DUAL.
     if (strpos($query, 'SELECT ') === 0 && strpos($query, ' FROM ') === FALSE) {
       $query .= ' FROM DUAL';
