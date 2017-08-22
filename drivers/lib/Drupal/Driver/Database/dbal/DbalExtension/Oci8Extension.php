@@ -400,10 +400,21 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException' && $this-
     // CONCAT_WS is not available in Oracle; convert to using || operator.
     $matches = [];
     if (preg_match_all('/(?:[\s\(])(CONCAT_WS\(([^\)]*)\))/', $query, $matches, PREG_OFFSET_CAPTURE)) {
+error_log('--------------a');
 error_log(var_export($matches, TRUE));
-      foreach ($matches as $match) {
-$xxx = explode(', ', $match[2]);
+error_log('--------------a');
+      foreach ($matches[2] as $match) {
+error_log('--------------b0');
+$xxx = explode(', ', $match[0]);
 error_log(var_export($xxx, TRUE));
+error_log('--------------b1');
+$concat_sep = $xxx[0];
+$xxx = array_shift($xxx);
+$concat_string = implode(" || '$concat_sep' || ", $xxx);
+error_log($concat_string);
+error_log('--------------b2');
+error_log($match[1]);
+error_log('--------------b3');
       }
     };
 
