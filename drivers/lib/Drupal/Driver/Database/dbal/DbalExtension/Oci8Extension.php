@@ -400,23 +400,24 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException' && $this-
     // CONCAT_WS is not available in Oracle; convert to using || operator.
     $matches = [];
     if (preg_match_all('/(?:[\s\(])(CONCAT_WS\(([^\)]*)\))/', $query, $matches, PREG_OFFSET_CAPTURE)) {
-error_log('--------------a');
-error_log(var_export($matches, TRUE));
-error_log('--------------a');
+      error_log('--------------a');
+      error_log(var_export($matches, TRUE));
+      error_log('--------------a');
       foreach ($matches[2] as $match) {
-error_log('--------------b0');
-$xxx = explode(', ', $match[0]);
-error_log(var_export($xxx, TRUE));
-error_log('--------------b1');
-$concat_sep = $xxx[0];
-error_log($concat_sep);
-$xxx = array_shift($xxx);
-//$concat_string = implode(" || $concat_sep || ", $xxx);
-$concat_string = implode(" || ", $xxx);
-error_log($concat_string);
-error_log('--------------b2');
-error_log($match[1]);
-error_log('--------------b3');
+        error_log('--------------b0');
+        $xxx_parms = [];
+        preg_match_all('/([^,\s]+)/', $match[0], $xxx_parms);
+        error_log(var_export($xxx_parms, TRUE));
+        error_log('--------------b1');
+        //$concat_sep = $xxx[0];
+        //error_log($concat_sep);
+        //$xxx = array_shift($xxx);
+        //$concat_string = implode(" || $concat_sep || ", $xxx);
+        //$concat_string = implode(" || ", $xxx);
+        //error_log($concat_string);
+        error_log('--------------b2');
+        error_log($match[1]);
+        error_log('--------------b3');
       }
     };
 
