@@ -406,15 +406,13 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException' && $this-
       foreach ($matches[2] as $match) {
         error_log('--------------b0');
         $xxx_parms = [];
-        preg_match_all('/([^,\s]+)/', $match[0], $xxx_parms);
+        preg_match_all('/([^,]+)/', $match[0], $xxx_parms);
         $parms_1 = $xxx_parms[1];
-        error_log(var_export($xxx_parms, TRUE));
+        $concat_sep = $parms_1[0];
+        error_log($concat_sep);
         error_log('--------------b1');
-        //$concat_sep = $xxx[0];
-        //error_log($concat_sep);
-        //$xxx = array_shift($xxx);
-        //$concat_string = implode(" || $concat_sep || ", $xxx);
-        $concat_string = implode('||', $parms_1);
+        $parms_1 = array_shift($parms_1);
+        $concat_string = implode(' || ' . $concat_sep . ' || ', $parms_1);
         error_log($concat_string);
         error_log('--------------b2');
         error_log($match[1]);
