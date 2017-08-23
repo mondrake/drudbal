@@ -371,6 +371,10 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException' && $this-
    * {@inheritdoc}
    */
   public function alterStatement(&$query, array &$args) {
+if ($this->getDebugging()) error_log('pre-alter: ' . $query . ' : ' . var_export($args, TRUE));
+
+    // Modify placeholders and statement in case of placeholders with
+    // reserved keywords, and for empty strings.
     if (count($args)) {
       $temp_args = [];
       foreach ($args as $placeholder => $value) {
@@ -408,12 +412,15 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException' && $this-
         $sep = $parms[0];
         $repl = '';
         for ($i = 1, $first = FALSE; $i < count($parms); $i++) {
-          if ($parms[$i] === 'NULL') {
+          if ($parms[$i] === 'NULL') { // @todo check case insensitive
             continue;
           }
           if (array_key_exists($parms[$i], $args) && $args[$parms[$i]] === NULL) {
             unset($args[$parms[$i]]);
             continue;
+          }
+          if (array_key_exists($parms[$i], $args) && $args[$parms[$i]] === self::ORACLE_EMPTY_STRING_REPLACEMENT) {
+            $args[$parms[$i]] = '';
           }
           if ($first) {
             $repl .= ' || ' . $sep . ' || ';

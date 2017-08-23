@@ -1,16 +1,15 @@
-diff --git a/core/tests/Drupal/KernelTests/Core/Database/QueryTest.php b/core/tests/Drupal/KernelTests/Core/Database/QueryTest.php
-index 04ba8ad..7c49ebb 100644
---- a/core/tests/Drupal/KernelTests/Core/Database/QueryTest.php
-+++ b/core/tests/Drupal/KernelTests/Core/Database/QueryTest.php
-@@ -136,6 +136,8 @@ public function testConditionOperatorArgumentsSQLInjection() {
-    * @see http://bugs.php.net/bug.php?id=45259
+diff --git a/core/modules/views/tests/src/Kernel/Handler/ArgumentDateTest.php b/core/modules/views/tests/src/Kernel/Handler/ArgumentDateTest.php
+index db26e11..dac60fb 100644
+--- a/core/modules/views/tests/src/Kernel/Handler/ArgumentDateTest.php
++++ b/core/modules/views/tests/src/Kernel/Handler/ArgumentDateTest.php
+@@ -118,6 +118,7 @@ public function testDayHandler() {
+    * @see \Drupal\node\Plugin\views\argument\CreatedMonth
     */
-   public function testNumericExpressionSubstitution() {
-+    // @todo this requires altering the statement, Oracle does not support this syntax
-+    $this->markTestSkipped('Oracle does not support this syntax.');
-     $count = db_query('SELECT COUNT(*) >= 3 FROM {test}')->fetchField();
-     $this->assertEqual((bool) $count, TRUE);
- 
+   public function testMonthHandler() {
++\Drupal::database()->getDbalExtension()->setDebugging(TRUE);
+     $view = Views::getView('test_argument_date');
+     $view->setDisplay('embed_2');
+     $this->executeView($view, ['01']);
 diff --git a/core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php b/core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php
 index e239098..7346e6c 100644
 --- a/core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php
