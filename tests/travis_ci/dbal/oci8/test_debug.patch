@@ -1,18 +1,44 @@
 diff --git a/core/modules/views/src/Plugin/views/query/Sql.php b/core/modules/views/src/Plugin/views/query/Sql.php
-index ab056f5..1798b37 100644
+index ab056f5..c7265a6 100644
 --- a/core/modules/views/src/Plugin/views/query/Sql.php
 +++ b/core/modules/views/src/Plugin/views/query/Sql.php
-@@ -1817,6 +1817,10 @@ public function setupTimezone() {
-    * {@inheritdoc}
-    */
-   public function getDateFormat($field, $format, $string_date = FALSE) {
-+//if (Database::getConnection()->getDbalExtension()->getDebugging())
-+error_log(var_export($field, TRUE));
-+error_log(var_export($format, TRUE));
-+error_log(var_export($string_date, TRUE));
-     $db_type = Database::getConnection()->databaseType();
-     switch ($db_type) {
-       case 'mysql':
+@@ -1869,6 +1869,36 @@ public function getDateFormat($field, $format, $string_date = FALSE) {
+         // In order to allow for partials (eg, only the year), transform to a
+         // date, back to a string again.
+         return "TO_CHAR(TO_TIMESTAMP($field, 'YYYY-MM-DD HH24:MI:SS'), '$format')";
++      case 'oracle':
++        $replace = [
++          'Y' => 'YYYY',
++          'y' => 'YY',
++          'M' => 'Mon',
++          'm' => 'MM',
++          // No format for Numeric representation of a month, without leading
++          // zeros.
++          'n' => 'MM',
++          'F' => 'Month',
++          'D' => 'Dy',
++          'd' => 'DD',
++          'l' => 'Day',
++          // No format for Day of the month without leading zeros.
++          'j' => 'DD',
++          'W' => 'IW',
++          'H' => 'HH24',
++          'h' => 'HH12',
++          'i' => 'MI',
++          's' => 'SS',
++          'A' => 'AM',
++        ];
++        $format = strtr($format, $replace);
++        if (!$string_date) {
++          //return "TO_CHAR($field, '$format')";
++          return "TO_CHAR((TO_DATE('19700101', 'YYYYMMDD') + (1 / 24 / 60 / 60 / 1000) * $field), '$format')";
++        }
++        // In order to allow for partials (eg, only the year), transform to a
++        // date, back to a string again.
++        return "TO_CHAR(TO_TIMESTAMP($field, 'YYYY-MM-DD HH24:MI:SS'), '$format')";
+       case 'sqlite':
+         $replace = [
+           'Y' => '%Y',
 diff --git a/core/modules/views/tests/src/Kernel/Handler/ArgumentDateTest.php b/core/modules/views/tests/src/Kernel/Handler/ArgumentDateTest.php
 index db26e11..dac60fb 100644
 --- a/core/modules/views/tests/src/Kernel/Handler/ArgumentDateTest.php
