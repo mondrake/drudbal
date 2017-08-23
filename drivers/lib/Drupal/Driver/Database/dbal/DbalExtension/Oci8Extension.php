@@ -389,11 +389,44 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException' && $this-
     // quotes.
     $query = preg_replace('/([\s\.(])(' . $this->oracleKeywordTokens . ')([\s,)])/', '$1"$2"$3', $query);
 
-    // RAND() is not available in Oracle.
+    // RAND() is not available in Oracle; convert to using
+    // DBMS_RANDOM.VALUE function.
     $query = str_replace('RAND()', 'DBMS_RANDOM.VALUE', $query);
 
-    // REGEXP is not available in Oracle. @todo refine
-    $query = preg_replace('/(.*\s+)(.*)(\s+REGEXP\s+)(.*)/', '$1 REGEXP_LIKE($2, $4)', $query);
+    // REGEXP is not available in Oracle; convert to using REGEXP_LIKE
+    // function.
+    $query = preg_replace('/([^\s]+)\s+REGEXP\s+([^\s]+)/', 'REGEXP_LIKE($1, $2)', $query);
+
+    // CONCAT_WS is not available in Oracle; convert to using || operator.
+    $matches = [];
+    if (preg_match_all('/(?:[\s\(])(CONCAT_WS\(([^\)]*)\))/', $query, $matches, PREG_OFFSET_CAPTURE)) {
+      $concat_ws_replacements = [];
+      foreach ($matches[2] as $match) {
+        $concat_ws_parms_matches = [];
+        preg_match_all('/(\'(?:\\\\\\\\)+\'|\'(?:[^\'\\\\]|\\\\\'?|\'\')*\')|([^\'"\s,]+)/', $match[0], $concat_ws_parms_matches);
+        $parms = $concat_ws_parms_matches[0];
+        $sep = $parms[0];
+        $repl = '';
+        for ($i = 1, $first = FALSE; $i < count($parms); $i++) {
+          if ($parms[$i] === 'NULL') {
+            continue;
+          }
+          if (array_key_exists($parms[$i], $args) && $args[$parms[$i]] === NULL) {
+            unset($args[$parms[$i]]);
+            continue;
+          }
+          if ($first) {
+            $repl .= ' || ' . $sep . ' || ';
+          }
+          $repl .= $parms[$i];
+          $first = TRUE;
+        }
+        $concat_ws_replacements[] = "($repl)";
+      }
+      for ($i = count($concat_ws_replacements) - 1; $i >= 0; $i--) {
+        $query = substr_replace($query, $concat_ws_replacements[$i], $matches[1][$i][1], strlen($matches[1][$i][0]));
+      }
+    };
 
     // In case of missing from, Oracle requires FROM DUAL.
     if (strpos($query, 'SELECT ') === 0 && strpos($query, ' FROM ') === FALSE) {
