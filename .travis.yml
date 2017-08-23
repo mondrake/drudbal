@@ -86,7 +86,7 @@ before_install:
       elif [[ "$DRUDBAL_ENV" == "dbal/oci8" ]]; then
         export DBAL_URL="oci8://ORAROOT:DRUDBAL@$HOST_ADDR:1521/XE"
         export SIMPLETEST_DB="dbal://ORAROOT:DRUDBAL@$HOST_ADDR:1521/XE?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=oci8"
-        export KERNEL_TESTS="Database,Cache,field,Field"
+        export KERNEL_TESTS="Database,Cache,views"
 
       fi
 
