@@ -406,8 +406,21 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException' && $this-
         preg_match_all('/(\'(?:\\\\\\\\)+\'|\'(?:[^\'\\\\]|\\\\\'?|\'\')*\')|([^\'"\s,]+)/', $match[0], $concat_ws_parms_matches);
         $parms = $concat_ws_parms_matches[0];
         $sep = $parms[0];
-        array_shift($parms);
-        $concat_ws_replacements[] = '(' . implode(' || ' . $sep . ' || ', $parms) . ')';
+        $repl = '';
+        for ($i = 1, $first = FALSE; $i < count($parms); $i++) {
+          if ($parms[$i] === 'NULL') {
+            continue;
+          }
+          if (array_key_exists($parms[$i], $args) && $args[$parms[$i]] === NULL) {
+            continue;
+          }
+          if ($first) {
+            $repl .= ' || ' . $sep . ' || ';
+          }
+          $repl .= $parms[$i];
+          $first = TRUE;
+        }
+        $concat_ws_replacements[] = "($repl)";
       }
       for ($i = count($concat_ws_replacements) - 1; $i >= 0; $i--) {
         $query = substr_replace($query, $concat_ws_replacements[$i], $matches[1][$i][1], strlen($matches[1][$i][0]));
