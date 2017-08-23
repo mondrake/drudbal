@@ -400,24 +400,17 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException' && $this-
     // CONCAT_WS is not available in Oracle; convert to using || operator.
     $matches = [];
     if (preg_match_all('/(?:[\s\(])(CONCAT_WS\(([^\)]*)\))/', $query, $matches, PREG_OFFSET_CAPTURE)) {
-      error_log('--------------a');
-      error_log(var_export($matches, TRUE));
-      error_log('--------------a');
+      $concat_ws_replacements = [];
       foreach ($matches[2] as $match) {
-        error_log('--------------b0');
-        $xxx_parms = [];
-        preg_match_all('/(\'(?:\\\\\\\\)+\'|\'(?:[^\'\\\\]|\\\\\'?|\'\')*\')|(".*")|([^\'"\s,]+)/', $match[0], $xxx_parms);
-        $parms_1 = $xxx_parms[0];
-        error_log(var_export($xxx_parms, TRUE));
-        $concat_sep = $parms_1[0];
-        error_log($concat_sep);
-        error_log('--------------b1');
-        //$parms_1 = array_shift($parms_1);
-        $concat_string = implode(' || ', $parms_1);
-        error_log($concat_string);
-        error_log('--------------b2');
-        error_log($match[1]);
-        error_log('--------------b3');
+        $concat_ws_parms_matches = [];
+        preg_match_all('/(\'(?:\\\\\\\\)+\'|\'(?:[^\'\\\\]|\\\\\'?|\'\')*\')|([^\'"\s,]+)/', $match[0], $concat_ws_parms_matches);
+        $parms = $concat_ws_parms_matches[0];
+        $sep = $parms[0];
+        array_shift($parms);
+        $concat_ws_replacements[] = '(' . implode(' || ' . $sep . ' || ', $parms) . ')';
+      }
+      for ($i = count($concat_ws_replacements) - 1; $i >= 0; $i--) {
+        $query = substr_replace($query, $concat_ws_replacements[$i], $matches[1][$i][1], strlen($matches[1][$i][0]));
       }
     };
 
