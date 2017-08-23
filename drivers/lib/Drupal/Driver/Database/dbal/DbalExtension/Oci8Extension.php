@@ -412,6 +412,7 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException' && $this-
             continue;
           }
           if (array_key_exists($parms[$i], $args) && $args[$parms[$i]] === NULL) {
+            unset($args[$parms[$i]]);
             continue;
           }
           if ($first) {
