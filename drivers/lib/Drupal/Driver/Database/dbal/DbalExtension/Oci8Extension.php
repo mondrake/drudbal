@@ -387,7 +387,7 @@ if ($this->getDebugging()) error_log('pre-alter: ' . $query . ' : ' . var_export
       $temp_args = [];
       foreach ($args as $placeholder => $value) {
         $temp_pl = ltrim($placeholder, ':');
-        $temp_pl_short = $this->getLimitedIdentifier($temp_pl);
+        $temp_pl_short = $this->getLimitedIdentifier($temp_pl, 29);
 if ($this->getDebugging()) error_log('temp_pl: ' . $temp_pl);
 if ($this->getDebugging()) error_log('temp_pl_short: ' . $temp_pl_short);
         $key = $placeholder;
