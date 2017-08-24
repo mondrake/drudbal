@@ -79,7 +79,7 @@ and enter a 'database URL' compliant with Doctrine DBAL syntax. __Note:__ the dr
 6. If everything goes right, when you're welcomed to the new Drupal installation, visit the Status Report. The 'database'
 section will report something like:
 
-![status_report](https://cloud.githubusercontent.com/assets/1174864/24586319/d294c5f8-179d-11e7-8cb7-884522124e8c.png)
+![status_report](https://user-images.githubusercontent.com/1174864/29685128-ca25375c-8914-11e7-8305-9ba369f68067.png)
 
 ## Related DBAL issues/PRs
 Issue | Description   | Info          |
