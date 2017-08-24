@@ -394,7 +394,7 @@ if ($this->getDebugging()) error_log('pre-alter: ' . $query . ' : ' . var_export
           $query = str_replace($placeholder, $key, $query);
         }
         elseif ($temp_pl !== $temp_pl_short) {
-          $key = ':' : $temp_pl_short;
+          $key = ':' . $temp_pl_short;
           $query = str_replace($placeholder, $key, $query);
         }
         $temp_args[$key] = $value === '' ? self::ORACLE_EMPTY_STRING_REPLACEMENT : $value;  // @todo here check
