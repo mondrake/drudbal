@@ -105,6 +105,14 @@ class Oci8Extension extends AbstractExtension {
    * Database asset name resolution methods.
    */
 
+  protected function getLimitedIdentifier(string $identifier, int $max_length = 30): string {
+    if (strlen($identifier) > $max_length) {
+      $identifier_crc = hash('crc32b', $identifier);
+      return substr($identifier, 0, $max_length - 8) . $identifier_crc;
+    }
+    return $identifier;
+  }
+
   /**
    * {@inheritdoc}
    */
@@ -374,15 +382,20 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException' && $this-
 if ($this->getDebugging()) error_log('pre-alter: ' . $query . ' : ' . var_export($args, TRUE));
 
     // Modify placeholders and statement in case of placeholders with
-    // reserved keywords, and for empty strings.
+    // reserved keywords or exceeding Oracle limits, and for empty strings.
     if (count($args)) {
       $temp_args = [];
       foreach ($args as $placeholder => $value) {
         $temp_pl = ltrim($placeholder, ':');
+        $temp_pl_short = $this->getLimitedIdentifier($temp_pl);
         $key = $placeholder;
         if (in_array($temp_pl, static::$oracleKeywords, TRUE)) {
           $key = $placeholder . '____oracle';
-          $query = str_replace($placeholder, $placeholder . '____oracle', $query);
+          $query = str_replace($placeholder, $key, $query);
+        }
+        elseif ($temp_pl !== $temp_pl_short) {
+          $key = ':' : $temp_pl_short;
+          $query = str_replace($placeholder, $key, $query);
         }
         $temp_args[$key] = $value === '' ? self::ORACLE_EMPTY_STRING_REPLACEMENT : $value;  // @todo here check
       }
