@@ -40,7 +40,7 @@ index ab056f5..c7265a6 100644
          $replace = [
            'Y' => '%Y',
 diff --git a/core/modules/views/tests/src/Kernel/Handler/ArgumentDateTest.php b/core/modules/views/tests/src/Kernel/Handler/ArgumentDateTest.php
-index db26e11..dac60fb 100644
+index db26e11..8f32296 100644
 --- a/core/modules/views/tests/src/Kernel/Handler/ArgumentDateTest.php
 +++ b/core/modules/views/tests/src/Kernel/Handler/ArgumentDateTest.php
 @@ -118,6 +118,7 @@ public function testDayHandler() {
@@ -51,6 +51,14 @@ index db26e11..dac60fb 100644
      $view = Views::getView('test_argument_date');
      $view->setDisplay('embed_2');
      $this->executeView($view, ['01']);
+@@ -271,6 +272,7 @@ public function testYearHandler() {
+    * @see \Drupal\node\Plugin\views\argument\CreatedYearMonth
+    */
+   public function testYearMonthHandler() {
++\Drupal::database()->getDbalExtension()->setDebugging(TRUE);
+     $this->container->get('database')->update('views_test_data')
+       ->fields(['created' => gmmktime(0, 0, 0, 1, 1, 2001)])
+       ->condition('id', 3)
 diff --git a/core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php b/core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php
 index e239098..7346e6c 100644
 --- a/core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php
