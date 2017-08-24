@@ -9,7 +9,7 @@ dist: precise
 
 php:
   - 7.1
-  #- nightly
+  - nightly
 
 branches:
   except:
@@ -31,12 +31,12 @@ env:
     - SIMPLETEST_BASE_URL="http://$HOST_ADDR:$HTTP_PORT"
     - FULL_KERNEL_TESTS="Database,Cache,Entity,views,field,Field"
   matrix:
-    - DRUDBAL_ENV="mysql"
-    - DRUDBAL_ENV="dbal/mysql"
-    - DRUDBAL_ENV="dbal/mysqli"
-    - DRUDBAL_ENV="sqlite"
-    - DRUDBAL_ENV="dbal/sqlite/file"
-    - DRUDBAL_ENV="dbal/sqlite/memory"
+    #- DRUDBAL_ENV="mysql"
+    #- DRUDBAL_ENV="dbal/mysql"
+   # - DRUDBAL_ENV="dbal/mysqli"
+   # - DRUDBAL_ENV="sqlite"
+   # - DRUDBAL_ENV="dbal/sqlite/file"
+   # - DRUDBAL_ENV="dbal/sqlite/memory"
     - DRUDBAL_ENV="dbal/oci8"
 
 matrix:
@@ -86,8 +86,8 @@ before_install:
       elif [[ "$DRUDBAL_ENV" == "dbal/oci8" ]]; then
         export DBAL_URL="oci8://ORAROOT:DRUDBAL@$HOST_ADDR:1521/XE"
         export SIMPLETEST_DB="dbal://ORAROOT:DRUDBAL@$HOST_ADDR:1521/XE?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=oci8"
-        #export KERNEL_TESTS="Entity,field,Field"
-        export KERNEL_TESTS="Database,Cache,views"
+        export KERNEL_TESTS="Entity,field,Field,Config"
+        #export KERNEL_TESTS="Database,Cache,views"
 
       fi
 
