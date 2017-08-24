@@ -386,10 +386,10 @@ if ($this->getDebugging()) error_log('pre-alter: ' . $query . ' : ' . var_export
     if (count($args)) {
       $temp_args = [];
       foreach ($args as $placeholder => $value) {
-if ($this->getDebugging()) error_log('temp_pl: ' . $temp_pl);
-if ($this->getDebugging()) error_log('temp_pl_short: ' . $temp_pl_short);
         $temp_pl = ltrim($placeholder, ':');
         $temp_pl_short = $this->getLimitedIdentifier($temp_pl);
+if ($this->getDebugging()) error_log('temp_pl: ' . $temp_pl);
+if ($this->getDebugging()) error_log('temp_pl_short: ' . $temp_pl_short);
         $key = $placeholder;
         if (in_array($temp_pl, static::$oracleKeywords, TRUE)) {
           $key = $placeholder . '____oracle';
