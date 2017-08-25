@@ -3,7 +3,9 @@
 
 language: php
 
-dist: trusty
+sudo: required
+
+dist: precise
 
 php:
   - 7.1
