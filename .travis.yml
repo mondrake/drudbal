@@ -29,7 +29,7 @@ env:
     - HTTP_PORT="8080"
     # Drupal PHPUnit test variables.
     - SIMPLETEST_BASE_URL="http://$HOST_ADDR:$HTTP_PORT"
-    - FULL_KERNEL_TESTS="Database,Cache,Entity,views,field,Field"
+    - FULL_KERNEL_TESTS="Database,Cache,Config,Entity,views,field,Field"
   matrix:
     - DRUDBAL_ENV="mysql"
     - DRUDBAL_ENV="dbal/mysql"
@@ -87,7 +87,7 @@ before_install:
         export DBAL_URL="oci8://ORAROOT:DRUDBAL@$HOST_ADDR:1521/XE"
         export SIMPLETEST_DB="dbal://ORAROOT:DRUDBAL@$HOST_ADDR:1521/XE?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=oci8"
         #export KERNEL_TESTS="Entity,field,Field"
-        export KERNEL_TESTS="Database,Cache,views"
+        export KERNEL_TESTS="Database,Cache,Config,views"
 
       fi
 
@@ -156,6 +156,8 @@ before_install:
   - curl https://www.drupal.org/files/issues/2879677-3.patch | git apply
   # [#2881522] Add a Schema::getPrimaryKeyColumns method to remove database specific logic from test
   - curl https://www.drupal.org/files/issues/2881522-2.patch | git apply
+  # [#2657888] Add Date function support in DTBNG
+  - curl https://www.drupal.org/files/issues/2657888-12-d8-sqlsrv_oracle_date_support.patch | git apply
 
 install:
   # Copy the vendor dependencies.
