@@ -1,8 +1,8 @@
 diff --git a/core/modules/views/src/Plugin/views/query/Sql.php b/core/modules/views/src/Plugin/views/query/Sql.php
-index ab056f5..c7265a6 100644
+index ab056f5..0b8de5b 100644
 --- a/core/modules/views/src/Plugin/views/query/Sql.php
 +++ b/core/modules/views/src/Plugin/views/query/Sql.php
-@@ -1869,6 +1869,36 @@ public function getDateFormat($field, $format, $string_date = FALSE) {
+@@ -1869,6 +1869,35 @@ public function getDateFormat($field, $format, $string_date = FALSE) {
          // In order to allow for partials (eg, only the year), transform to a
          // date, back to a string again.
          return "TO_CHAR(TO_TIMESTAMP($field, 'YYYY-MM-DD HH24:MI:SS'), '$format')";
@@ -30,8 +30,7 @@ index ab056f5..c7265a6 100644
 +        ];
 +        $format = strtr($format, $replace);
 +        if (!$string_date) {
-+          //return "TO_CHAR($field, '$format')";
-+          return "TO_CHAR((TO_DATE('19700101', 'YYYYMMDD') + (1 / 24 / 60 / 60 / 1000) * $field), '$format')";
++          return "TO_CHAR((TO_DATE('19700101', 'YYYYMMDD') + (1 / 24 / 60 / 60) * $field), '$format')";
 +        }
 +        // In order to allow for partials (eg, only the year), transform to a
 +        // date, back to a string again.
