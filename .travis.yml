@@ -29,7 +29,7 @@ env:
     - HTTP_PORT="8080"
     # Drupal PHPUnit test variables.
     - SIMPLETEST_BASE_URL="http://$HOST_ADDR:$HTTP_PORT"
-    - FULL_KERNEL_TESTS="Database,Cache,Entity,views,field,Field"
+    - FULL_KERNEL_TESTS="Database,Cache,Config,Entity,views,field,Field"
   matrix:
     - DRUDBAL_ENV="mysql"
     - DRUDBAL_ENV="dbal/mysql"
