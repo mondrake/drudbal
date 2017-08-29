@@ -400,6 +400,9 @@ if ($this->getDebugging()) error_log('temp_pl_short: ' . $temp_pl_short);
       $args = $temp_args;
     }
 
+    // Replace empty strings.
+    $query = str_replace("''", "'" . self::ORACLE_EMPTY_STRING_REPLACEMENT . "'", $query);
+
     // Enclose any identifier that is a reserved keyword for Oracle in double
     // quotes.
     $query = preg_replace('/([\s\.(])(' . $this->oracleKeywordTokens . ')([\s,)])/', '$1"$2"$3', $query);
@@ -563,27 +566,6 @@ if ($this->getDebugging()) error_log($query . ' : ' . var_export($args, TRUE));
       'pass' => [],
     ];
 
-/*    $sql = 'create or replace type vargs as table of varchar2(32767);';
-    $this->getDbalConnection()->exec($sql);
-
-    $sql = <<<SQL
-create or replace function CONCAT_WS(separator varchar2,args vargs) return varchar2
-
-is
-    str         varchar2(32767);            -- output string
-    arg         pls_integer := 1;           -- argument counter
-
-begin
-    while arg <= args.count loop
-        str := str || args(arg) || separator;
-        arg := arg + 1;
-    end loop;
-    return str;
-
-end CONCAT_WS;
-SQL;
-    $this->getDbalConnection()->exec($sql);
-*/
     return $results;
   }
 
