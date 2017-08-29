@@ -31,12 +31,12 @@ env:
     - SIMPLETEST_BASE_URL="http://$HOST_ADDR:$HTTP_PORT"
     - FULL_KERNEL_TESTS="Database,Cache,Config,Entity,views,field,Field"
   matrix:
-    #- DRUDBAL_ENV="mysql"
-    #- DRUDBAL_ENV="dbal/mysql"
-    #- DRUDBAL_ENV="dbal/mysqli"
-    #- DRUDBAL_ENV="sqlite"
-    #- DRUDBAL_ENV="dbal/sqlite/file"
-    #- DRUDBAL_ENV="dbal/sqlite/memory"
+    - DRUDBAL_ENV="mysql"
+    - DRUDBAL_ENV="dbal/mysql"
+    - DRUDBAL_ENV="dbal/mysqli"
+    - DRUDBAL_ENV="sqlite"
+    - DRUDBAL_ENV="dbal/sqlite/file"
+    - DRUDBAL_ENV="dbal/sqlite/memory"
     - DRUDBAL_ENV="dbal/oci8"
 
 matrix:
