@@ -16,7 +16,6 @@ use Doctrine\DBAL\ConnectionException as DbalConnectionException;
 use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
 use Doctrine\DBAL\Schema\Schema as DbalSchema;
 use Doctrine\DBAL\Schema\Table as DbalTable;
-use Doctrine\DBAL\Version as DbalVersion;
 
 /**
  * Abstract DBAL Extension for MySql drivers.
