@@ -1,21 +1,29 @@
+diff --git a/core/modules/views/tests/src/Kernel/Handler/FilterCombineTest.php b/core/modules/views/tests/src/Kernel/Handler/FilterCombineTest.php
+index e5d3711..134e1a3 100644
+--- a/core/modules/views/tests/src/Kernel/Handler/FilterCombineTest.php
++++ b/core/modules/views/tests/src/Kernel/Handler/FilterCombineTest.php
+@@ -128,7 +128,10 @@ public function testFilterCombineWord() {
+       ],
+     ]);
+ 
++\Drupal::database()->getDbalExtension()->setDebugging(TRUE);
+     $this->executeView($view);
++error_log(var_export($view->result, TRUE));
++\Drupal::database()->getDbalExtension()->setDebugging(FALSE);
+     $resultset = [
+       [
+         'name' => 'John',
 diff --git a/core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php b/core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php
-index e239098..7346e6c 100644
+index e239098..99621c1 100644
 --- a/core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php
 +++ b/core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php
-@@ -117,6 +117,7 @@ public function testSchema() {
-     $this->assertEqual($count, 2, 'Two fields were successfully inserted.');
- 
-     // Try to drop the table.
-+//\Drupal::database()->getDbalExtension()->setDebugging(TRUE);
-     db_drop_table('test_table2');
-     $this->assertFalse(db_table_exists('test_table2'), 'The dropped table does not exist.');
- 
-@@ -136,8 +137,15 @@ public function testSchema() {
+@@ -136,8 +136,16 @@ public function testSchema() {
  
      $this->assertTrue($this->tryInsert(), 'Insert with a serial succeeded.');
      $max1 = db_query('SELECT MAX(test_serial) FROM {test_table}')->fetchField();
 +error_log('max1: ' . $max1);
      $this->assertTrue($this->tryInsert(), 'Insert with a serial succeeded.');
++error_log('a:');
 +$xx = db_select('test_table', 'c')
 +    ->fields('c')
 +    ->execute()
@@ -65,13 +73,3 @@ index e239098..7346e6c 100644
        return FALSE;
      }
    }
-@@ -811,7 +834,8 @@ public function testFindTables() {
-       'test_2_table',
-       'the_third_table',
-     ];
--    $this->assertEqual($tables, $expected, 'All tables were found.');
-+    // @todo this requires Oracle 12.2 since 'the_third_table' would be trimmed in test environment
-+    //$this->assertEqual($tables, $expected, 'All tables were found.');
- 
-     // Check the restrictive syntax.
-     $tables = Database::getConnection()->schema()->findTables('test_%');

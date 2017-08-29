@@ -15,9 +15,9 @@ $root_path = realpath('');
 // Initialize the autoloader.
 $class_loader = require_once $root_path . '/autoload.php';
 
-$connectionParams = array(
-    'url' => getenv("DBAL_URL"),
-);
+$connectionParams = [
+  'url' => getenv("DBAL_URL"),
+];
 
 $dbal_connection = DBALDriverManager::getConnection($connectionParams);
 echo($dbal_connection->getWrappedConnection()->getServerVersion() . "\n");
