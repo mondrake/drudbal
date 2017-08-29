@@ -87,7 +87,8 @@ before_install:
         export DBAL_URL="oci8://ORAROOT:DRUDBAL@$HOST_ADDR:1521/XE"
         export SIMPLETEST_DB="dbal://ORAROOT:DRUDBAL@$HOST_ADDR:1521/XE?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=oci8"
         #export KERNEL_TESTS="Entity,field,Field"
-        export KERNEL_TESTS="Database,Cache,Config,views"
+        #export KERNEL_TESTS="Database,Cache,Config,views"
+        export KERNEL_TESTS="views"
 
       fi
 
