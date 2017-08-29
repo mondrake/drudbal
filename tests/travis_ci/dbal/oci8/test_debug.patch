@@ -1,3 +1,27 @@
+diff --git a/core/modules/views/tests/src/Kernel/Handler/FilterBooleanOperatorStringTest.php b/core/modules/views/tests/src/Kernel/Handler/FilterBooleanOperatorStringTest.php
+index 325da51..da4088d 100644
+--- a/core/modules/views/tests/src/Kernel/Handler/FilterBooleanOperatorStringTest.php
++++ b/core/modules/views/tests/src/Kernel/Handler/FilterBooleanOperatorStringTest.php
+@@ -99,7 +99,9 @@ public function testFilterBooleanOperatorString() {
+         'value' => 0,
+       ],
+     ]);
++\Drupal::database()->getDbalExtension()->setDebugging(TRUE);
+     $this->executeView($view);
++error_log(var_export($view->result, TRUE));
+ 
+     $expected_result = [
+       ['id' => 2],
+@@ -144,7 +146,9 @@ public function testFilterGroupedExposed() {
+     $view->setDisplay();
+     $view->displayHandlers->get('default')->overrideOption('filters', $filters);
+ 
++\Drupal::database()->getDbalExtension()->setDebugging(TRUE);
+     $this->executeView($view);
++error_log(var_export($view->result, TRUE));
+ 
+     $expected_result = [
+       ['id' => 1],
 diff --git a/core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php b/core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php
 index e239098..99621c1 100644
 --- a/core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php
