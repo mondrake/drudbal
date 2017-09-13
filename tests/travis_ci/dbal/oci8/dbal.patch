@@ -168,37 +168,3 @@ index 9feecdc..d6be078 100644
      public function dropDatabase($database)
      {
          try {
-diff --git a/tests/Doctrine/Tests/DBAL/Functional/Schema/OracleSchemaManagerTest.php b/tests/Doctrine/Tests/DBAL/Functional/Schema/OracleSchemaManagerTest.php
-index bea2691..00f5a64 100644
---- a/tests/Doctrine/Tests/DBAL/Functional/Schema/OracleSchemaManagerTest.php
-+++ b/tests/Doctrine/Tests/DBAL/Functional/Schema/OracleSchemaManagerTest.php
-@@ -273,4 +273,29 @@ class OracleSchemaManagerTest extends SchemaManagerFunctionalTestCase
-         $this->assertSame('datetime', $columns['col_datetime']->getType()->getName());
-         $this->assertSame('datetimetz', $columns['col_datetimetz']->getType()->getName());
-     }
-+
-+    /**
-+     * @group DBAL-2766
-+     */
-+    public function testCreateSchemaNumberOfQueriesInvariable(): void
-+    {
-+        // Introspect the db schema.
-+        $preCount = $this->_sqlLoggerStack->currentQuery;
-+        $schema = $this->_sm->createSchema();
-+        $firstQueryCount = $this->_sqlLoggerStack->currentQuery - $preCount;
-+
-+        // Create a couple of additional tables.
-+        $this->_conn->executeUpdate("CREATE TABLE tbl_test_2766_0 (x_id VARCHAR2(255) DEFAULT 'x' NOT NULL, x_data CLOB DEFAULT NULL NULL, x_number NUMBER(10) DEFAULT 0 NOT NULL, PRIMARY KEY(x_id))");
-+        $this->_conn->executeUpdate("CREATE TABLE tbl_test_2766_1 (x_id VARCHAR2(255) DEFAULT 'x' NOT NULL, x_data CLOB DEFAULT NULL NULL, x_number NUMBER(10) DEFAULT 0 NOT NULL, x_parent_id VARCHAR2(255) DEFAULT 'x' NOT NULL, CONSTRAINT tbl_test_2766_fk_1 FOREIGN KEY (x_parent_id) REFERENCES tbl_test_2766_0(x_id), PRIMARY KEY(x_id))");
-+        $this->_conn->executeUpdate("CREATE UNIQUE INDEX tbl_test_2766_uix_1 ON tbl_test_2766_1 (x_number)");
-+
-+        // Introspect the db schema again.
-+        $preCount = $this->_sqlLoggerStack->currentQuery;
-+        $schema = $this->_sm->createSchema();
-+        $secondQueryCount = $this->_sqlLoggerStack->currentQuery - $preCount;
-+
-+        // The number of queries needed to execute createSchema should be the
-+        // same regardless of additional tables added.
-+        $this->assertEquals($firstQueryCount, $secondQueryCount);
-+    }
- }

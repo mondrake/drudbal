@@ -90,29 +90,29 @@ before_install:
       fi
 
   # Get Oracle XE.
-#  - |
-#      if [[ "$DRUDBAL_ENV" == "dbal/oci8" ]]; then
-#        export ORACLE_COOKIE=sqldev
-#        export ORACLE_FILE=oracle11g/xe/$ORACLE_BASEFILE
-#        export ORACLE_HOME=/u01/app/oracle/product/11.2.0/xe
-#        export ORACLE_SID=XE
-#        wget 'https://github.com/cbandy/travis-oracle/archive/v2.0.2.tar.gz'
-#        mkdir -p .travis/oracle
-#        tar x -C .travis/oracle --strip-components=1 -f v2.0.2.tar.gz
-#        if [[ ! -f $ORACLE_DOWNLOAD_DIR/$ORACLE_BASEFILE ]]; then
-#          .travis/oracle/download.sh
-#          cp .travis/oracle/$ORACLE_BASEFILE $ORACLE_DOWNLOAD_DIR
-#        fi
-#        if [[ ! -f .travis/oracle/$ORACLE_BASEFILE ]]; then
-#          cp $ORACLE_DOWNLOAD_DIR/$ORACLE_BASEFILE .travis/oracle/
-#        fi
-#        .travis/oracle/install.sh
-#        chmod 777 $HOME/build/mondrake/drudbal/tests/travis_ci/$DRUDBAL_ENV/oracle_user.sh
-#        $HOME/build/mondrake/drudbal/tests/travis_ci/$DRUDBAL_ENV/oracle_user.sh
-#        # Install Oci8 extension for PHP.
-#        echo $ORACLE_HOME | pecl install oci8
-#
-#      fi
+  - |
+      if [[ "$DRUDBAL_ENV" == "dbal/oci8" ]]; then
+        export ORACLE_COOKIE=sqldev
+        export ORACLE_FILE=oracle11g/xe/$ORACLE_BASEFILE
+        export ORACLE_HOME=/u01/app/oracle/product/11.2.0/xe
+        export ORACLE_SID=XE
+        wget 'https://github.com/cbandy/travis-oracle/archive/v2.0.2.tar.gz'
+        mkdir -p .travis/oracle
+        tar x -C .travis/oracle --strip-components=1 -f v2.0.2.tar.gz
+        if [[ ! -f $ORACLE_DOWNLOAD_DIR/$ORACLE_BASEFILE ]]; then
+          .travis/oracle/download.sh
+          cp .travis/oracle/$ORACLE_BASEFILE $ORACLE_DOWNLOAD_DIR
+        fi
+        if [[ ! -f .travis/oracle/$ORACLE_BASEFILE ]]; then
+          cp $ORACLE_DOWNLOAD_DIR/$ORACLE_BASEFILE .travis/oracle/
+        fi
+        .travis/oracle/install.sh
+        chmod 777 $HOME/build/mondrake/drudbal/tests/travis_ci/$DRUDBAL_ENV/oracle_user.sh
+        $HOME/build/mondrake/drudbal/tests/travis_ci/$DRUDBAL_ENV/oracle_user.sh
+        # Install Oci8 extension for PHP.
+        echo $ORACLE_HOME | pecl install oci8
+
+      fi
 
   # Remove XDebug.
   - phpenv config-rm xdebug.ini
