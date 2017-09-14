@@ -168,8 +168,8 @@ install:
   - cp -r $HOME/build/mondrake/drudbal $DRUPAL_PATH/modules/contrib
 
   # Patch DBAL for Oracle createSchema fixes https://github.com/doctrine/dbal/pull/2766
-  - cd $DRUPAL_PATH/vendor/doctrine/dbal
-  - patch -p1 < $DRUPAL_PATH/modules/contrib/drudbal/tests/travis_ci/$DRUDBAL_ENV/dbal.patch
+  #- cd $DRUPAL_PATH/vendor/doctrine/dbal
+  #- patch -p1 < $DRUPAL_PATH/modules/contrib/drudbal/tests/travis_ci/$DRUDBAL_ENV/dbal.patch
 
   # Create a directory for the driver, and symlink it to the module's one.
   - mkdir -p $DRUPAL_PATH/drivers/lib/Drupal/Driver/Database/
