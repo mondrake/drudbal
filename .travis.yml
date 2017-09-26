@@ -29,12 +29,12 @@ env:
     - SIMPLETEST_BASE_URL="http://$HOST_ADDR:$HTTP_PORT"
     - FULL_KERNEL_TESTS="Database,Cache,Config,Entity,views,field,Field"
   matrix:
-    - DRUDBAL_ENV="mysql"
-    - DRUDBAL_ENV="dbal/mysql"
-    - DRUDBAL_ENV="dbal/mysqli"
-    - DRUDBAL_ENV="sqlite"
-    - DRUDBAL_ENV="dbal/sqlite/file"
-    - DRUDBAL_ENV="dbal/sqlite/memory"
+    #- DRUDBAL_ENV="mysql"
+    #- DRUDBAL_ENV="dbal/mysql"
+    #- DRUDBAL_ENV="dbal/mysqli"
+    #- DRUDBAL_ENV="sqlite"
+    #- DRUDBAL_ENV="dbal/sqlite/file"
+    #- DRUDBAL_ENV="dbal/sqlite/memory"
     - DRUDBAL_ENV="dbal/oci8"
 
 matrix:
@@ -167,6 +167,10 @@ install:
   - mkdir -p $DRUPAL_PATH/modules/contrib/drudbal
   - cp -r $HOME/build/mondrake/drudbal $DRUPAL_PATH/modules/contrib
 
+  # Patch DBAL for Oracle createSchema fixes https://github.com/doctrine/dbal/pull/2766
+  #- cd $DRUPAL_PATH/vendor/doctrine/dbal
+  #- patch -p1 < $DRUPAL_PATH/modules/contrib/drudbal/tests/travis_ci/$DRUDBAL_ENV/dbal.patch
+
   # Create a directory for the driver, and symlink it to the module's one.
   - mkdir -p $DRUPAL_PATH/drivers/lib/Drupal/Driver/Database/
   - cd $DRUPAL_PATH/drivers/lib/Drupal/Driver/Database/
@@ -187,7 +191,7 @@ install:
 
   # Post install tasks.
   - if [[ ! "$DRUDBAL_ENV" == "dbal/sqlite/memory" ]]; then drupal site:status; fi
-  - php post_install.php
+  #- php post_install.php
 
 script:
   - cd $DRUPAL_PATH/core
