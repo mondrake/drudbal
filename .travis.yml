@@ -182,7 +182,7 @@ install:
   - php install_cli.php
 
   # Get a webserver running.
-  - drupal server $HOST_ADDR:$HOST_PORT &
+  - drupal server $HOST_ADDR:$HTTP_PORT &
   - sleep 4s
 
   # Post install tasks.
