@@ -44,7 +44,8 @@ matrix:
   fast_finish: true
   allow_failures:
     - php: nightly
-    - env: DRUDBAL_ENV="dbal/oci8"
+    - env: DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group Database,Cache,Config,Entity"
+    - env: DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group views,field,Field"
 
 cache:
   directories:
