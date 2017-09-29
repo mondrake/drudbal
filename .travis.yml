@@ -36,7 +36,7 @@ env:
     - DRUDBAL_ENV="sqlite" TEST_ARGS="--group Database"
     - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database,Cache,Config,Entity,Field"
     - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group views,field"
-    - DRUDBAL_ENV="dbal/sqlite/memory" TEST_ARGS="--testsuite unit,kernel --group Database"
+    - DRUDBAL_ENV="dbal/sqlite/memory" TEST_ARGS="--testsuite kernel --group Database"
     - DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group Database,Cache,Config,Entity"
     - DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group views,field,Field"
 
@@ -44,9 +44,7 @@ matrix:
   fast_finish: true
   allow_failures:
     - php: nightly
-    - env:
-      - DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group Database,Cache,Config,Entity"
-      - DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group views,field,Field"
+    - env: DRUDBAL_ENV="dbal/oci8"
 
 cache:
   directories:
@@ -196,7 +194,7 @@ install:
 script:
   - cd $DRUPAL_PATH/core
   # Only run selected tests to avoid Travis timeout.
-  - ../vendor/bin/phpunit $TEST_ARGS
+  - ../vendor/bin/phpunit $TEST_ARGS --verbose
 
 after_script:
   - cd $DRUPAL_PATH/modules/contrib/drudbal
