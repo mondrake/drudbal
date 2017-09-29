@@ -29,14 +29,14 @@ env:
     - SIMPLETEST_BASE_URL="http://$HOST_ADDR:$HTTP_PORT"
   matrix:
     - DRUDBAL_ENV="mysql" TEST_ARGS="--group Database"
-    - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Database,Cache,Config,Entity"
-    - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group views,field,Field"
-    - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Database,Cache,Config,Entity"
-    - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group views,field,Field"
+    - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Database,Cache,Config,Entity,Field"
+    - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group views,field"
+    - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Database,Cache,Config,Entity,Field"
+    - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group views,field"
     - DRUDBAL_ENV="sqlite" TEST_ARGS="--group Database"
-    - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database,Cache,Config,Entity"
-    - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group views,field,Field"
-    - DRUDBAL_ENV="dbal/sqlite/memory" TEST_ARGS="--group Database"
+    - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database,Cache,Config,Entity,Field"
+    - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group views,field"
+    - DRUDBAL_ENV="dbal/sqlite/memory" TEST_ARGS="--testsuite unit,kernel --group Database"
     - DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group Database,Cache,Config,Entity"
     - DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group views,field,Field"
 
@@ -163,6 +163,13 @@ install:
   # Copy the repo to the modules/contrib directory.
   - mkdir -p $DRUPAL_PATH/modules/contrib/drudbal
   - cp -r $HOME/build/mondrake/drudbal $DRUPAL_PATH/modules/contrib
+
+  # Patch DBAL for Oracle createSchema fixes https://github.com/doctrine/dbal/pull/2766
+  - |
+      if [[ "$DRUDBAL_ENV" == "dbal/oci8" ]]; then
+        cd $DRUPAL_PATH/vendor/doctrine/dbal
+        patch -p1 < $DRUPAL_PATH/modules/contrib/drudbal/tests/travis_ci/$DRUDBAL_ENV/dbal.patch
+      fi
 
   # Create a directory for the driver, and symlink it to the module's one.
   - mkdir -p $DRUPAL_PATH/drivers/lib/Drupal/Driver/Database/
