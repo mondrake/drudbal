@@ -28,17 +28,17 @@ env:
     # Drupal PHPUnit test variables.
     - SIMPLETEST_BASE_URL="http://$HOST_ADDR:$HTTP_PORT"
   matrix:
-    - DRUDBAL_ENV="mysql" TEST_ARGS="--group Database"
+    #- DRUDBAL_ENV="mysql" TEST_ARGS="--group Database"
     - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Database,Cache,Config,Entity,Field"
     - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group views,field"
-    - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Database,Cache,Config,Entity,Field"
-    - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group views,field"
-    - DRUDBAL_ENV="sqlite" TEST_ARGS="--group Database"
-    - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database,Cache,Config,Entity,Field"
-    - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group views,field"
-    - DRUDBAL_ENV="dbal/sqlite/memory" TEST_ARGS="--testsuite kernel --group Database"
-    - DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group Database,Cache,Config,Entity"
-    - DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group views,field,Field"
+    - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Database,Cache,Config,Entity,Field --testsuite functional"
+    #- DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group views,field"
+    #- DRUDBAL_ENV="sqlite" TEST_ARGS="--group Database"
+    #- DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database,Cache,Config,Entity,Field"
+    #- DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group views,field"
+    #- DRUDBAL_ENV="dbal/sqlite/memory" TEST_ARGS="--testsuite kernel --group Database"
+    #- DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group Database,Cache,Config,Entity"
+    #- DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group views,field,Field"
 
 matrix:
   fast_finish: true
@@ -202,6 +202,7 @@ after_script:
   - ../../../vendor/bin/phpcs
 
 notifications:
-  email:
-    on_success: never
-    on_failure: always
+#  email:
+#    on_success: never
+#    on_failure: always
+  email: false
