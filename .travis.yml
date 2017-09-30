@@ -32,7 +32,7 @@ env:
     - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Database,Cache,Config,Entity,Field"
     - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group views,field"
     - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Database,Cache,Config,Entity,Field --testsuite functional"
-    #- DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group views,field"
+    - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group views,field --testsuite functional"
     #- DRUDBAL_ENV="sqlite" TEST_ARGS="--group Database"
     #- DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database,Cache,Config,Entity,Field"
     #- DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group views,field"
@@ -152,6 +152,8 @@ before_install:
   - curl https://www.drupal.org/files/issues/2881522-2.patch | git apply
   # [#2657888] Add Date function support in DTBNG
   - curl https://www.drupal.org/files/issues/2657888-12-d8-sqlsrv_oracle_date_support.patch | git apply
+  # [#2912973] Mismatching call to databaseType() in LangcodeToAsciiUpdateTest
+  - curl https://www.drupal.org/files/issues/2912973-2.patch | git apply
 
 install:
   # Copy the vendor dependencies.
@@ -195,7 +197,7 @@ install:
 script:
   - cd $DRUPAL_PATH/core
   # Only run selected tests to avoid Travis timeout.
-  - ../vendor/bin/phpunit $TEST_ARGS --verbose
+  - ../vendor/bin/phpunit $TEST_ARGS
 
 after_script:
   - cd $DRUPAL_PATH/modules/contrib/drudbal
