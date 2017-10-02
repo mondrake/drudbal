@@ -1,5 +1,5 @@
 diff --git a/core/modules/field/tests/modules/field_test/field_test.field.inc b/core/modules/field/tests/modules/field_test/field_test.field.inc
-index 5edd25d..8959843 100644
+index 5edd25d..9354c41 100644
 --- a/core/modules/field/tests/modules/field_test/field_test.field.inc
 +++ b/core/modules/field/tests/modules/field_test/field_test.field.inc
 @@ -48,7 +48,9 @@ function field_test_entity_field_access($operation, FieldDefinitionInterface $fi
@@ -9,7 +9,7 @@ index 5edd25d..8959843 100644
 -    return AccessResult::forbiddenIf(!$account->hasPermission('view test_view_field content'))->cachePerPermissions();
 +//throw new \Exception($account->hasPermission('view test_view_field content') ? 'Auth' : 'Not Auth');
 +//    return AccessResult::forbiddenIf(!$account->hasPermission('view test_view_field content'))->cachePerPermissions();
-+    return TRUE;
++    return AccessResult::allowed();
    }
  
    return AccessResult::allowed();
