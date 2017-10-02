@@ -1,12 +1,12 @@
 diff --git a/core/modules/field/tests/src/Functional/FieldAccessTest.php b/core/modules/field/tests/src/Functional/FieldAccessTest.php
-index c7f234f..2cd6b93 100644
+index c7f234f..4a9ca52 100644
 --- a/core/modules/field/tests/src/Functional/FieldAccessTest.php
 +++ b/core/modules/field/tests/src/Functional/FieldAccessTest.php
 @@ -79,6 +79,7 @@ public function testFieldAccess() {
  
      // Assert the text is visible.
      $this->drupalGet('node/' . $this->node->id());
-+error_log($this->getSession()->getPage()->getContent());
++throw new \Exception($this->getSession()->getPage()->getContent());
      $this->assertText($this->testViewFieldValue);
  
      // Assert the text is not visible for anonymous users.
