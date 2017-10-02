@@ -10,6 +10,18 @@ index 5edd25d..65f7627 100644
    if ($field_definition->getName() == "field_no_{$operation}_access") {
      return AccessResult::forbidden();
    }
+diff --git a/core/modules/field/tests/src/Functional/FieldAccessTest.php b/core/modules/field/tests/src/Functional/FieldAccessTest.php
+index c7f234f..4a9ca52 100644
+--- a/core/modules/field/tests/src/Functional/FieldAccessTest.php
++++ b/core/modules/field/tests/src/Functional/FieldAccessTest.php
+@@ -79,6 +79,7 @@ public function testFieldAccess() {
+ 
+     // Assert the text is visible.
+     $this->drupalGet('node/' . $this->node->id());
++throw new \Exception($this->getSession()->getPage()->getContent());
+     $this->assertText($this->testViewFieldValue);
+ 
+     // Assert the text is not visible for anonymous users.
 diff --git a/core/modules/system/tests/src/Functional/Entity/EntityRevisionsTest.php b/core/modules/system/tests/src/Functional/Entity/EntityRevisionsTest.php
 index caf5fa2..0026749 100644
 --- a/core/modules/system/tests/src/Functional/Entity/EntityRevisionsTest.php
