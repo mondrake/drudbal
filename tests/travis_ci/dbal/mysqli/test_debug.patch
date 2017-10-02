@@ -1,15 +1,15 @@
 diff --git a/core/modules/field/tests/modules/field_test/field_test.field.inc b/core/modules/field/tests/modules/field_test/field_test.field.inc
-index 5edd25d..a81e761 100644
+index 5edd25d..65f7627 100644
 --- a/core/modules/field/tests/modules/field_test/field_test.field.inc
 +++ b/core/modules/field/tests/modules/field_test/field_test.field.inc
-@@ -48,6 +48,7 @@ function field_test_entity_field_access($operation, FieldDefinitionInterface $fi
-   // Only grant view access to test_view_field fields when the user has
-   // 'view test_view_field content' permission.
-   if ($field_definition->getName() == 'test_view_field' && $operation == 'view') {
-+throw new \Exception($account->hasPermission('view test_view_field content') ? 'Auth' : 'Not Auth');
-     return AccessResult::forbiddenIf(!$account->hasPermission('view test_view_field content'))->cachePerPermissions();
+@@ -41,6 +41,7 @@ function field_test_default_value(FieldableEntityInterface $entity, FieldDefinit
+  * Implements hook_entity_field_access().
+  */
+ function field_test_entity_field_access($operation, FieldDefinitionInterface $field_definition, AccountInterface $account, FieldItemListInterface $items = NULL) {
++throw new \Exception('pippo');
+   if ($field_definition->getName() == "field_no_{$operation}_access") {
+     return AccessResult::forbidden();
    }
- 
 diff --git a/core/modules/system/tests/src/Functional/Entity/EntityRevisionsTest.php b/core/modules/system/tests/src/Functional/Entity/EntityRevisionsTest.php
 index caf5fa2..0026749 100644
 --- a/core/modules/system/tests/src/Functional/Entity/EntityRevisionsTest.php
