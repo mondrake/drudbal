@@ -99,8 +99,7 @@ class Statement implements \IteratorAggregate, StatementInterface {
     try {
       $this->dbh->getDbalExtension()->alterStatement($statement, $params);
 if ($this->dbh->getDbalExtension()->getDebugging()) {
-  drupal_set_message($statement);
-  drupal_set_message(var_export($params, TRUE));
+  drupal_set_message(var_export([$statement, $params], TRUE));
 }
       $this->dbalStatement = $dbh->getDbalConnection()->prepare($statement);
     }
