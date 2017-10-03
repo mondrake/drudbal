@@ -98,6 +98,9 @@ class Statement implements \IteratorAggregate, StatementInterface {
 
     try {
       $this->dbh->getDbalExtension()->alterStatement($statement, $params);
+if ($this->dbh->getDbalExtension()->getDebugging()) {
+  drupal_set_message($statement);
+}
       $this->dbalStatement = $dbh->getDbalConnection()->prepare($statement);
     }
     catch (DBALException $e) {
