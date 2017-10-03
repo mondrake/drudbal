@@ -35,6 +35,9 @@ class MysqliExtension extends AbstractMySqlExtension {
   public function delegateFetch(DbalStatement $dbal_statement, $mode, $fetch_class) {
     if ($mode <= \PDO::FETCH_BOTH) {
       $row = $dbal_statement->fetch($mode);
+if ($this->getDebugging()) {
+  drupal_set_message(var_export($row, TRUE));
+}
       if (!$row) {
         return FALSE;
       }
@@ -48,6 +51,9 @@ class MysqliExtension extends AbstractMySqlExtension {
     }
     else {
       $row = $dbal_statement->fetch(\PDO::FETCH_ASSOC);
+if ($this->getDebugging()) {
+  drupal_set_message(var_export($row, TRUE));
+}
       if (!$row) {
         return FALSE;
       }
