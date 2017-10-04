@@ -54,9 +54,9 @@ class PDOMySqlExtension extends AbstractMySqlExtension {
       $dbal_statement->setFetchMode($mode, $fetch_class);
     }
     $ret = $dbal_statement->fetch($mode);
-if ($this->getDebugging()) {
-  drupal_set_message(var_export($ret, TRUE));
-}
+//if ($this->getDebugging()) {
+//  drupal_set_message(var_export($ret, TRUE));
+//}
     return $ret;
   }
 

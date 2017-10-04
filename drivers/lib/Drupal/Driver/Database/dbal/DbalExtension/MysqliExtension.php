@@ -44,9 +44,9 @@ class MysqliExtension extends AbstractMySqlExtension {
           $value = (string) $value;
         }
       }
-if ($this->getDebugging()) {
-  drupal_set_message("Mode:$mode " . var_export($row, TRUE));
-}
+//if ($this->getDebugging()) {
+//  drupal_set_message("Mode:$mode " . var_export($row, TRUE));
+//}
       return $row;
     }
     else {
@@ -60,9 +60,9 @@ if ($this->getDebugging()) {
           foreach ($row as $column => $value) {
             $ret->$column = (string) $value;
           }
-if ($this->getDebugging()) {
-  drupal_set_message("Mode:$mode " . var_export($ret, TRUE));
-}
+//if ($this->getDebugging()) {
+//  drupal_set_message("Mode:$mode " . var_export($ret, TRUE));
+//}
           return $ret;
 
         case \PDO::FETCH_CLASS:
@@ -70,9 +70,9 @@ if ($this->getDebugging()) {
           foreach ($row as $column => $value) {
             $ret->$column = (string) $value;
           }
-if ($this->getDebugging()) {
-  drupal_set_message("Mode:$mode " . var_export($ret, TRUE));
-}
+//if ($this->getDebugging()) {
+//  drupal_set_message("Mode:$mode " . var_export($ret, TRUE));
+//}
           return $ret;
 
         default:

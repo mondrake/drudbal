@@ -98,14 +98,63 @@ class Statement implements \IteratorAggregate, StatementInterface {
 
     try {
       $this->dbh->getDbalExtension()->alterStatement($statement, $params);
-if ($this->dbh->getDbalExtension()->getDebugging() && strpos($statement, 'cache_discovery') !== FALSE) {
-  drupal_set_message(var_export([$statement, $params], TRUE));
+if ($this->dbh->getDbalExtension()->getDebugging() && strpos($statement, 'cache_config') !== FALSE) {
+  drupal_set_message(var_export([$statement, $params, $this->formatBacktrace(debug_backtrace())], TRUE));
 }
       $this->dbalStatement = $dbh->getDbalConnection()->prepare($statement);
     }
     catch (DBALException $e) {
       throw new DatabaseExceptionWrapper($e->getMessage(), $e->getCode(), $e);
     }
+  }
+
+  /**
+   * Formats a backtrace into a plain-text string.
+   *
+   * The calls show values for scalar arguments and type names for complex ones.
+   *
+   * @param array $backtrace
+   *   A standard PHP backtrace.
+   *
+   * @return string
+   *   A plain-text line-wrapped string ready to be put inside <pre>.
+   */
+  public static function formatBacktrace(array $backtrace) {
+    $return = '';
+
+    foreach ($backtrace as $trace) {
+      $call = ['function' => '', 'args' => []];
+
+      if (isset($trace['class'])) {
+        $call['function'] = $trace['class'] . $trace['type'] . $trace['function'];
+      }
+      elseif (isset($trace['function'])) {
+        $call['function'] = $trace['function'];
+      }
+      else {
+        $call['function'] = 'main';
+      }
+
+/*      if (isset($trace['args'])) {
+        foreach ($trace['args'] as $arg) {
+          if (is_scalar($arg)) {
+            $call['args'][] = is_string($arg) ? '\'' . $arg . '\'' : $arg;
+          }
+          else {
+            $call['args'][] = ucfirst(gettype($arg));
+          }
+        }
+      }*/
+
+      $line = '';
+      if (isset($trace['line'])) {
+        $line = " (Line: {$trace['line']})";
+      }
+
+      $return .= $call['function'] . '(' . /*implode(', ', $call['args']) .*/ ")$line\n";
+    }
+
+    return $return;
   }
 
   /**
