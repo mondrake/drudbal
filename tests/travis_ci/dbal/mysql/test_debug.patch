@@ -22,6 +22,20 @@ index c7f234f..4a9ca52 100644
      $this->assertText($this->testViewFieldValue);
  
      // Assert the text is not visible for anonymous users.
+diff --git a/core/modules/filter/src/Element/ProcessedText.php b/core/modules/filter/src/Element/ProcessedText.php
+index 6e2b3ec..5dbc8ef 100644
+--- a/core/modules/filter/src/Element/ProcessedText.php
++++ b/core/modules/filter/src/Element/ProcessedText.php
+@@ -63,6 +63,9 @@ public function getInfo() {
+    * @ingroup sanitization
+    */
+   public static function preRenderText($element) {
++if (\Drupal::database()->getDbalExtension()->getDebugging()) {
++  drupal_set_message(var_export($element, TRUE));
++}
+     $format_id = $element['#format'];
+     $filter_types_to_skip = $element['#filter_types_to_skip'];
+     $text = $element['#text'];
 diff --git a/core/modules/system/tests/src/Functional/Entity/EntityRevisionsTest.php b/core/modules/system/tests/src/Functional/Entity/EntityRevisionsTest.php
 index caf5fa2..0026749 100644
 --- a/core/modules/system/tests/src/Functional/Entity/EntityRevisionsTest.php

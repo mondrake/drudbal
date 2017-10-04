@@ -99,7 +99,8 @@ class Statement implements \IteratorAggregate, StatementInterface {
     try {
       $this->dbh->getDbalExtension()->alterStatement($statement, $params);
 if ($this->dbh->getDbalExtension()->getDebugging() && strpos($statement, 'cache_config') !== FALSE) {
-  drupal_set_message(var_export([$statement, $params, $this->formatBacktrace(debug_backtrace())], TRUE));
+//  drupal_set_message(var_export([$statement, $params, $this->formatBacktrace(debug_backtrace())], TRUE));
+  drupal_set_message(var_export([$statement, $params], TRUE));
 }
       $this->dbalStatement = $dbh->getDbalConnection()->prepare($statement);
     }
