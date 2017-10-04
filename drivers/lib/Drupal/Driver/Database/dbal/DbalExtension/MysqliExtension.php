@@ -41,7 +41,7 @@ class MysqliExtension extends AbstractMySqlExtension {
       // @todo stringify also FETCH_NUM and FETCH_BOTH
       if ($mode === \PDO::FETCH_ASSOC) {
         foreach ($row as $column => &$value) {
-          $value = (string) $value;
+          $value = $value === NULL ? NULL : (string) $value;
         }
       }
       return $row;
@@ -55,14 +55,14 @@ class MysqliExtension extends AbstractMySqlExtension {
         case \PDO::FETCH_OBJ:
           $ret = new \stdClass();
           foreach ($row as $column => $value) {
-            $ret->$column = (string) $value;
+            $ret->$column = $value === NULL ? NULL : (string) $value;
           }
           return $ret;
 
         case \PDO::FETCH_CLASS:
           $ret = new $fetch_class();
           foreach ($row as $column => $value) {
-            $ret->$column = (string) $value;
+            $ret->$column = $value === NULL ? NULL : (string) $value;
           }
           return $ret;
 
