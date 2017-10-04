@@ -108,3 +108,4 @@ tbd | Add tests for Upsert with default values |
 [2881522](https://www.drupal.org/node/2881522) | Add a Schema::getPrimaryKeyColumns method to remove database specific logic from test |
 [2657888](https://www.drupal.org/node/2657888) | Add Date function support in DTBNG |
 [2912973](https://www.drupal.org/node/2912973) | Mismatching call to databaseType() in LangcodeToAsciiUpdateTest |
+tbd | Ensure that when INSERTing a NULL value in a database column, SELECTing it back returns NULL and not empty string - for all fetch modes |
