@@ -2,6 +2,7 @@
 
 namespace Drupal\Driver\Database\dbal\DbalExtension;
 
+use Drupal\Component\Uuid\Php as Uuid;
 use Drupal\Core\Database\Database;
 use Drupal\Core\Database\DatabaseExceptionWrapper;
 use Drupal\Core\Database\DatabaseNotFoundException;
@@ -87,12 +88,45 @@ class PDOSqliteExtension extends AbstractExtension {
   }
 
   /**
+   * Database asset name resolution methods.
+   */
+
+  /**
    * {@inheritdoc}
    */
-  public function delegateFullQualifiedTableName($drupal_table_name) {
+  public function getDbFullQualifiedTableName($drupal_table_name) {
     // @todo needs cleanup!!! vs other similar methods and finding index name
     $table_prefix_info = $this->connection->schema()->getPrefixInfoPublic($drupal_table_name);
     return $table_prefix_info['schema'] . '.' . $table_prefix_info['table'];
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getDbIndexName($context, DbalSchema $dbal_schema, $drupal_table_name, $index_name, array $table_prefix_info) {
+    // If checking for index existence or dropping, see if an index exists
+    // with the Drupal name, regardless of prefix. A table can be renamed so
+    // that the prefix is no longer relevant.
+    if (in_array($context, ['indexExists', 'dropIndex'])) {
+      $dbal_table = $dbal_schema->getTable($this->tableName($drupal_table_name));
+      foreach ($dbal_table->getIndexes() as $index) {
+        $index_full_name = $index->getName();
+        $matches = [];
+        if (preg_match('/.*____(.+)/', $index_full_name, $matches)) {
+          if ($matches[1] === $index_name) {
+            return $index_full_name;
+          }
+        }
+      }
+      return FALSE;
+    }
+    else {
+      // Use an UUID to make the index identifier unique and not table
+      // dependent (otherwise indexes need to be recreated if the table gets
+      // renamed).
+      $uuid = new Uuid();
+      return 'idx_' . str_replace('-', '', $uuid->generate()) . '____' . $index_name;
+    }
   }
 
   /**
@@ -307,6 +341,9 @@ class PDOSqliteExtension extends AbstractExtension {
         }
       }
     }
+    if ($this->getDebugging()) {
+      error_log($query . ' : ' . var_export($args, TRUE));
+    }
     return $this;
   }
 
@@ -416,6 +453,24 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
+  public function delegateTableExists(&$result, $drupal_table_name) {
+    try {
+      $result = $this->getDbalConnection()->getSchemaManager()->tablesExist([$this->tableName($drupal_table_name)]);
+    }
+    catch (DbalDriverException $e) {
+      if ($e->getErrorCode() === 17) {
+        $result = $this->getDbalConnection()->getSchemaManager()->tablesExist([$this->tableName($drupal_table_name)]);
+      }
+      else {
+        throw $e;
+      }
+    }
+    return TRUE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function delegateGetDbalColumnType(&$dbal_type, array $drupal_field_specs) {
     if (isset($drupal_field_specs['sqlite_type'])) {
       $dbal_type = $this->dbalConnection->getDatabasePlatform()->getDoctrineTypeMapping($drupal_field_specs['sqlite_type']);
@@ -464,6 +519,12 @@ class PDOSqliteExtension extends AbstractExtension {
       $dbal_column_options['default'] = str_replace(self::SINGLE_QUOTE_IDENTIFIER_REPLACEMENT, '\'\'', $dbal_column_options['default']);
     }
     $dbal_column_definition = str_replace(self::SINGLE_QUOTE_IDENTIFIER_REPLACEMENT, '\'\'', $dbal_column_definition);
+
+    // Column comments do not work when adding/changing a field in SQLite.
+    // @todo check if it can be moved as unset of option in alterDbalColumnOptions
+    if (in_array($context, ['addField', 'changeField'])) {
+      $dbal_column_definition = preg_replace('/(.+)(( --)(.+))/', "$1", $dbal_column_definition);
+    }
 
     return $this;
   }
@@ -627,31 +688,6 @@ class PDOSqliteExtension extends AbstractExtension {
     unset($new_schema['fields'][$field_name]['default']);
     $this->alterTable($drupal_table_name, $old_schema, $new_schema);
     return TRUE;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function getIndexFullName($context, DbalSchema $dbal_schema, $drupal_table_name, $index_name, array $table_prefix_info) {
-    // If checking for index existence or dropping, see if an index exists
-    // with the Drupal name, regardless of prefix. It may be a table was
-    // renamed so the prefix is no longer relevant.
-    if (in_array($context, ['indexExists', 'dropIndex'])) {
-      $dbal_table = $dbal_schema->getTable($this->tableName($drupal_table_name));
-      foreach ($dbal_table->getIndexes() as $index) {
-        $index_full_name = $index->getName();
-        $matches = [];
-        if (preg_match('/.*____(.+)/', $index_full_name, $matches)) {
-          if ($matches[1] === $index_name) {
-            return $index_full_name;
-          }
-        }
-      }
-      return FALSE;
-    }
-    else {
-      return $table_prefix_info['table'] . '____' . $index_name;
-    }
   }
 
   /**

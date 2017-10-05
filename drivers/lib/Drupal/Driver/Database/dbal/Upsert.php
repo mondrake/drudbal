@@ -77,6 +77,8 @@ class Upsert extends QueryUpsert {
    * {@inheritdoc}
    */
   public function __toString() {
+    $dbal_extension = $this->connection->getDbalExtension();
+
     $comments = $this->connection->makeComment($this->comments);
     $dbal_connection = $this->connection->getDbalConnection();
     $prefixed_table = $this->connection->getPrefixedTableName($this->table);
@@ -85,11 +87,11 @@ class Upsert extends QueryUpsert {
     $dbal_query = $dbal_connection->createQueryBuilder()->insert($prefixed_table);
 
     foreach ($this->defaultFields as $field) {
-      $dbal_query->setValue($field, 'DEFAULT');
+      $dbal_query->setValue($dbal_extension->getDbFieldName($field), 'DEFAULT');
     }
     $max_placeholder = 0;
     foreach ($this->insertFields as $field) {
-      $dbal_query->setValue($field, ':db_insert_placeholder_' . $max_placeholder++);
+      $dbal_query->setValue($dbal_extension->getDbFieldName($field), ':db_insert_placeholder_' . $max_placeholder++);
     }
     return $comments . $dbal_query->getSQL();
   }
@@ -106,6 +108,8 @@ class Upsert extends QueryUpsert {
    */
   protected function fallbackUpdate(array $insert_values) {
     $dbal_connection = $this->connection->getDbalConnection();
+    $dbal_extension = $this->connection->getDbalExtension();
+
     $prefixed_table = $this->connection->getPrefixedTableName($this->table);
 
     // Use the DBAL query builder for the UPDATE.
@@ -113,7 +117,7 @@ class Upsert extends QueryUpsert {
 
     // Set default fields first.
     foreach ($this->defaultFields as $field) {
-      $dbal_query->set($field, 'DEFAULT');
+      $dbal_query->set($dbal_extension->getDbFieldName($field), 'DEFAULT');
     }
 
     // Set values fields.
@@ -121,7 +125,7 @@ class Upsert extends QueryUpsert {
       if ($this->insertFields[$i] != $this->key) {
         // Updating the unique / primary key is not necessary.
         $dbal_query
-          ->set($this->insertFields[$i], ':db_update_placeholder_' . $i)
+          ->set($dbal_extension->getDbFieldName($this->insertFields[$i]), ':db_update_placeholder_' . $i)
           ->setParameter(':db_update_placeholder_' . $i, $insert_values[$i]);
       }
       else {

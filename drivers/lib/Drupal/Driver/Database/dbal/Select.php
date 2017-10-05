@@ -5,6 +5,9 @@ namespace Drupal\Driver\Database\dbal;
 use Drupal\Core\Database\Query\Select as QuerySelect;
 use Drupal\Core\Database\Query\SelectInterface;
 
+// @todo DBAL 2.6.0:
+// Is there a way to specify SELECT DISTINCT??
+
 /**
  * DruDbal implementation of \Drupal\Core\Database\Query\Select.
  *
@@ -19,6 +22,8 @@ class Select extends QuerySelect {
    * {@inheritdoc}
    */
   public function __toString() {
+    $dbal_extension = $this->connection->getDbalExtension();
+
     // For convenience, we compile the query ourselves if the caller forgot
     // to do it. This allows constructs like "(string) $query" to work. When
     // the query will be executed, it will be recompiled using the proper
@@ -38,22 +43,24 @@ class Select extends QuerySelect {
     $fields = [];
     foreach ($this->tables as $alias => $table) {
       if (!empty($table['all_fields'])) {
-        $dbal_query->addSelect($this->connection->escapeTable($alias) . '.*');
+        $dbal_query->addSelect($dbal_extension->getDbAlias($this->connection->escapeTable($alias)) . '.*');
       }
     }
     foreach ($this->fields as $field) {
-      $field_prefix = isset($field['table']) ? $this->connection->escapeTable($field['table']) . '.' : '';
-      $dbal_query->addSelect($field_prefix . $this->connection->escapeField($field['field']) . ' AS ' . $this->connection->escapeAlias($field['alias']));
+      $field_prefix = isset($field['table']) ? $dbal_extension->getDbAlias($this->connection->escapeTable($field['table'])) . '.' : '';
+      $escaped_field_field = $this->connection->escapeField($dbal_extension->getDbFieldName($field['field']));
+      $escaped_field_alias = $this->connection->escapeAlias($dbal_extension->getDbFieldName($field['alias']));
+      $dbal_query->addSelect($field_prefix . $escaped_field_field . ' AS ' . $escaped_field_alias);
     }
     foreach ($this->expressions as $expression) {
-      $dbal_query->addSelect($expression['expression'] . ' AS ' . $this->connection->escapeAlias($expression['alias']));
+      $dbal_query->addSelect($expression['expression'] . ' AS ' . $dbal_extension->getDbAlias($this->connection->escapeAlias($expression['alias'])));
     }
 
     // FROM - We presume all queries have a FROM, as any query that doesn't
     // won't need the query builder anyway.
     $root_alias = NULL;
     foreach ($this->tables as $table) {
-      $escaped_alias = $this->connection->escapeTable($table['alias']);
+      $escaped_alias = $dbal_extension->getDbAlias($this->connection->escapeTable($table['alias']));
 
       // If the table is a subquery, compile it and integrate it into this
       // query.
@@ -64,10 +71,12 @@ class Select extends QuerySelect {
         $escaped_table = '(' . (string) $subquery . ')';
       }
       else {
-        $escaped_table = $this->connection->escapeTable($table['table']);
         // Do not attempt prefixing cross database / schema queries.
-        if (strpos($escaped_table, '.') === FALSE) {
-          $escaped_table = $this->connection->getPrefixedTableName($escaped_table);
+        if (strpos($table['table'], '.') === FALSE) {
+          $escaped_table = $this->connection->getPrefixedTableName($this->connection->escapeTable($table['table']));
+        }
+        else {
+          $escaped_table = $table['table'];
         }
       }
 
@@ -78,17 +87,17 @@ class Select extends QuerySelect {
       else {
         switch (trim($table['join type'])) {
           case 'INNER':
-            $dbal_query->innerJoin($root_alias, $escaped_table, $escaped_alias, (string) $table['condition']);
+            $dbal_query->innerJoin($root_alias, $escaped_table, $escaped_alias, $dbal_extension->resolveAliases((string) $table['condition']));
             break;
 
           case 'LEFT OUTER':
           case 'LEFT':
-            $dbal_query->leftJoin($root_alias, $escaped_table, $escaped_alias, (string) $table['condition']);
+            $dbal_query->leftJoin($root_alias, $escaped_table, $escaped_alias, $dbal_extension->resolveAliases((string) $table['condition']));
             break;
 
           case 'RIGHT OUTER':
           case 'RIGHT':
-            $dbal_query->rightJoin($root_alias, $escaped_table, $escaped_alias, (string) $table['condition']);
+            $dbal_query->rightJoin($root_alias, $escaped_table, $escaped_alias, $dbal_extension->resolveAliases((string) $table['condition']));
             break;
 
         }
@@ -98,20 +107,26 @@ class Select extends QuerySelect {
     // WHERE
     // @todo this uses Drupal Condition API. Use DBAL expressions instead?
     if (count($this->condition)) {
-      $dbal_query->where((string) $this->condition);
+      $dbal_query->where($dbal_extension->resolveAliases((string) $this->condition));
     }
 
     // GROUP BY
     if ($this->group) {
+      $fields = $this->getFields();
       foreach ($this->group as $expression) {
-        $dbal_query->addGroupBy($expression);
+        if (strpos($expression, '.') === FALSE && isset($fields[$expression])) {
+          $dbal_query->addGroupBy($fields[$expression]['table'] . '.' . $fields[$expression]['field']);
+        }
+        else {
+          $dbal_query->addGroupBy($expression);
+        }
       }
     }
 
     // HAVING
     // @todo this uses Drupal Condition API. Use DBAL expressions instead?
     if (count($this->having)) {
-      $dbal_query->having((string) $this->having);
+      $dbal_query->having($dbal_extension->resolveAliases((string) $this->having));
     }
 
     // UNION is not supported by DBAL. Need to delegate to the DBAL extension.
@@ -119,7 +134,7 @@ class Select extends QuerySelect {
     // ORDER BY
     if ($this->order) {
       foreach ($this->order as $field => $direction) {
-        $dbal_query->addOrderBy($this->connection->escapeField($field), $direction);
+        $dbal_query->addOrderBy($dbal_extension->resolveAliases($this->connection->escapeField($field)), $direction);
       }
     }
 

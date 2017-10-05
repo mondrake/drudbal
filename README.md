@@ -18,16 +18,20 @@ called ```DBALExtension```, unique for the DBAL Driver in use, to which some ope
 delegated.
 
 ## Status
-(Updated: June 1, 2017)
+(Updated: July 25, 2017)
 
-The code in the ```master``` branch is meant to be working on a __MySql database, using either the 'mysql' or the 'mysqli' DBAL driver, and on a SQlite database, using the 'sqlite' DBAL driver__.
+The code in the ```master``` branch is working on a __MySql database__, using either the 'mysql' or the 'mysqli' DBAL driver, and on a __SQlite database__, using the 'sqlite' DBAL driver.
 
 'Working' means:
 1. it is possible to install a Drupal site via the installer, selecting 'Doctrine DBAL' as the database of choice;
 2. it is passing a selection of core PHPUnit tests for the Database, Cache, Entity and views groups of tests, executed on Travis CI. The latest patches for the issues listed in 'Related Drupal issues' below need to be applied to get a clean test run.
 
-The status of the driver classes implementation is as follows:
+The code in the ```dev-oracle``` branch installs on __Oracle__ 11.2.0.2.0, using DBAL 'oci8' driver, but fails tests. Big problems with Oracle:
+1. there's a hard limit of 30 chars on database asset identifiers (tables, triggers, indexes, etc.). Apparently Oracle 12.2 overcomes that limit, raising lenght to 128 chars, but this currently requires all sort of workarounds as many objects names in Drupal are longer than that.
+2. Oracle treats NULL and '' (empty string) in the same way. Drupal practice is to use these as different items - it builds CREATE TABLE statements with column definitions like "cid VARCHAR(255) DEFAULT '' NOT NULL" which is self-contradicting in Oracle terms.
+3. DBAL schema introspection is very slow on Oracle, see https://github.com/doctrine/dbal/issues/2676. This makes difficult to run the interactive installer since as at each batch request the schema get rebuilt.
 
+## Driver classes
 Class                         | Status        |
 ------------------------------|---------------|
 Connection                    | Implemented as a wrapper around ```DBAL\Connection```. |
@@ -47,11 +51,11 @@ Install/Tasks	                | Implemented. |
 
 Very rough instructions to install Drupal from scratch with this db driver under the hood:
 
-1. Requirements: build a Drupal code base via Composer, using latest Drupal development branch code and PHP 7.0+.
+1. Requirements: build a Drupal code base via Composer, using latest Drupal development branch code and PHP 7.1+.
 
 2. Get Doctrine DBAL, use latest version:
 ```
-$ composer require doctrine/dbal:^2.5.12
+$ composer require doctrine/dbal:^2.6.0
 ```
 
 3. Clone this repository to your contrib modules path:
@@ -75,7 +79,7 @@ and enter a 'database URL' compliant with Doctrine DBAL syntax. __Note:__ the dr
 6. If everything goes right, when you're welcomed to the new Drupal installation, visit the Status Report. The 'database'
 section will report something like:
 
-![status_report](https://cloud.githubusercontent.com/assets/1174864/24586319/d294c5f8-179d-11e7-8cb7-884522124e8c.png)
+![status_report](https://user-images.githubusercontent.com/1174864/29685128-ca25375c-8914-11e7-8305-9ba369f68067.png)
 
 ## Related DBAL issues/PRs
 Issue | Description   | Info          |
@@ -87,10 +91,8 @@ https://github.com/doctrine/dbal/pull/2717       | Introspect table comments in 
 https://github.com/doctrine/dbal/issues/1033     | DBAL-1096: schema-tool:update does not understand columnDefinition correctly | |
 https://github.com/doctrine/dbal/pull/881        | Add Mysql per-column charset support | |
 https://github.com/doctrine/dbal/pull/2412       | Add mysql specific indexes with lengths | |
-https://github.com/doctrine/dbal/issues/2380     | Unsigned numeric columns not generated correctly | Fixed in 2.6.0 |
 https://github.com/doctrine/migrations/issues/17 | Data loss on table renaming. | |
-https://github.com/doctrine/dbal/pull/2720       | SQLParserUtils::getPlaceholderPositions fails if there are quoted strings containing only backslashes | Fixed in 2.5.13 |
-https://github.com/doctrine/dbal/pull/2730       | Duplicate 'COMMENT' part in SQL statement | |
+https://github.com/doctrine/dbal/issues/2676     | Optimize Oracle SchemaManager  | |
 
 ## Related Drupal issues
 Issue | Description   |
@@ -104,3 +106,6 @@ tbd | Add tests for Upsert with default values |
 [2875679](https://www.drupal.org/node/2875679) | BasicSyntaxTest::testConcatFields fails with contrib driver |
 [2879677](https://www.drupal.org/node/2879677) | Decouple getting table vs column comments in Schema |
 [2881522](https://www.drupal.org/node/2881522) | Add a Schema::getPrimaryKeyColumns method to remove database specific logic from test |
+[2657888](https://www.drupal.org/node/2657888) | Add Date function support in DTBNG |
+[2912973](https://www.drupal.org/node/2912973) | Mismatching call to databaseType() in LangcodeToAsciiUpdateTest |
+tbd | Ensure that when INSERTing a NULL value in a database column, SELECTing it back returns NULL and not empty string - for all fetch modes |

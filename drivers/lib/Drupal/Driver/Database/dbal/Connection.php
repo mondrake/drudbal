@@ -14,6 +14,7 @@ use Drupal\Core\Database\TransactionNoActiveException;
 use Drupal\Core\Database\TransactionOutOfOrderException;
 
 use Drupal\Driver\Database\dbal\DbalExtension\MysqliExtension;
+use Drupal\Driver\Database\dbal\DbalExtension\Oci8Extension;
 use Drupal\Driver\Database\dbal\DbalExtension\PDOMySqlExtension;
 use Drupal\Driver\Database\dbal\DbalExtension\PDOSqliteExtension;
 
@@ -43,9 +44,21 @@ class Connection extends DatabaseConnection {
    */
   protected static $dbalClassMap = [
     'mysqli' => MysqliExtension::class,
+    'oci8' => Oci8Extension::class,
     'pdo_mysql' => PDOMySqlExtension::class,
     'pdo_sqlite' => PDOSqliteExtension::class,
   ];
+
+  /**
+   * Map of database tables.
+   *
+   * Drupal SQL statements wrap table names in curly brackets. This array
+   * maps this syntax to actual database tables, adding prefix and/or
+   * resolving platform specific constraints.
+   *
+   * @var string[]
+   */
+  protected $dbTables = [];
 
   /**
    * List of URL schemes from a database URL and their mappings to driver.
@@ -117,6 +130,26 @@ class Connection extends DatabaseConnection {
   }
 
   /**
+   * {@inheritdoc}
+   */
+  public function prefixTables($sql) {
+    $matches = [];
+    preg_match_all('/{(\S*)}/', $sql, $matches, PREG_SET_ORDER, 0);
+    foreach ($matches as $match) {
+      $table = $match[1];
+      if (isset($this->dbTables['{' . $table . '}'])) {
+        continue;
+      }
+      // Per-table prefixes are deprecated as of Drupal 8.2 so let's not get
+      // in the complexity of trying to manage that. Assume a single default
+      // prefix.
+      $prefixed_table = $this->prefixes['default'] . $table;
+      $this->dbTables['{' . $table . '}'] = $this->dbalExtension->getDbTableName($prefixed_table);
+    }
+    return str_replace(array_keys($this->dbTables), array_values($this->dbTables), $sql);
+  }
+
+  /**
    * Returns a prefixed table name.
    *
    * @param string $table_name
@@ -172,14 +205,20 @@ class Connection extends DatabaseConnection {
           return $stmt->rowCount();
 
         case Database::RETURN_INSERT_ID:
-          $sequence_name = isset($options['sequence_name']) ? $options['sequence_name'] : NULL;
-          return (string) $this->connection->lastInsertId($sequence_name);
+          try {
+            $sequence_name = isset($options['sequence_name']) ? $options['sequence_name'] : NULL;
+            return (string) $this->getDbalConnection()->lastInsertId($sequence_name);
+          }
+          catch (\Exception $e) {
+            return '0';
+          }
 
         case Database::RETURN_NULL:
           return NULL;
 
         default:
           throw new DBALException('Invalid return directive: ' . $options['return']);
+
       }
     }
     catch (\InvalidArgumentException $e) {
@@ -651,7 +690,7 @@ class Connection extends DatabaseConnection {
    * {@inheritdoc}
    */
   public function getFullQualifiedTableName($table) {
-    return $this->getDbalExtension()->delegateFullQualifiedTableName($table);
+    return $this->getDbalExtension()->getDbFullQualifiedTableName($table);
   }
 
   /**

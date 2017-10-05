@@ -29,15 +29,83 @@ interface DbalExtensionInterface {
   public function getDbalConnection();
 
   /**
-   * Get a fully qualified table name.
+   * Database asset name resolution methods.
+   */
+
+  /**
+   * Get the database table name, resolving platform specific constraints.
    *
-   * @param string $drupal_table_name
-   *   The name of the table in question.
+   * @param string $prefixed_table_name
+   *   The name of the table in question, already prefixed.
    *
    * @return string
-   *   The fully qualified table name.
+   *   The database table name.
    */
-  public function delegateFullQualifiedTableName($drupal_table_name);
+  public function getDbTableName($prefixed_table_name);
+
+  /**
+   * Get the database table name, including the schema prefix.
+   *
+   * @param string $drupal_table_name
+   *   A string with the Drupal name of the table.
+   *
+   * @return string
+   *   The database table name, including the schema prefix.
+   */
+  public function getDbFullQualifiedTableName($drupal_table_name);
+
+  /**
+   * Get the database field name, resolving platform specific constraints.
+   *
+   * @param string $field_name
+   *   The name of the field in question.
+   *
+   * @return string
+   *   The database field name.
+   */
+  public function getDbFieldName($field_name);
+
+  /**
+   * Get a valid alias, resolving platform specific constraints.
+   *
+   * @param string $alias
+   *   An alias.
+   *
+   * @return string
+   *   The alias usable in the DBMS.
+   */
+  public function getDbAlias($alias);
+
+  /**
+   * Replaces unconstrained alias in a string.
+   *
+   * @param string $unaliased
+   *   A string containing unconstrained aliases.
+   *
+   * @return string
+   *   The string with aliases usable in the DBMS.
+   */
+  public function resolveAliases(?string $unaliased): string;
+
+  /**
+   * Calculates an index name.
+   *
+   * @param string $context
+   *   The context from where the method is called. Can be 'indexExists',
+   *   'addUniqueKey', 'addIndex', 'dropIndex'.
+   * @param \Doctrine\DBAL\Schema\Schema $dbal_schema
+   *   The DBAL schema object.
+   * @param string $drupal_table_name
+   *   A string with the Drupal name of the table.
+   * @param string $index_name
+   *   A string with the Drupal name of the index.
+   * @param array $table_prefix_info
+   *   A keyed array with information about the schema, table name and prefix.
+   *
+   * @return string
+   *   A string with the name of the index to be used in the DBMS.
+   */
+  public function getDbIndexName($context, DbalSchema $dbal_schema, $drupal_table_name, $index_name, array $table_prefix_info);
 
   /**
    * Connection delegated methods.
@@ -301,6 +369,17 @@ interface DbalExtensionInterface {
    */
 
   /**
+   * Returns the name of the sequence to be checked for last insert id.
+   *
+   * @param string $drupal_table_name
+   *   The Drupal name of the table.
+   *
+   * @return string|null
+   *   The name of the sequence, or NULL if it is not needed.
+   */
+  public function getSequenceNameForInsert($drupal_table_name);
+
+  /**
    * Determines if an INSERT query should explicity add default fields.
    *
    * Some DBMS accept using the 'default' keyword when entering default values
@@ -514,6 +593,20 @@ interface DbalExtensionInterface {
   public function alterDbalColumnDefinition($context, &$dbal_column_definition, array &$dbal_column_options, $dbal_type, array $drupal_field_specs, $field_name);
 
   /**
+   * Post processes a table rename.
+   *
+   * Needed for example to rename a table's indexes.
+   *
+   * @param \Doctrine\DBAL\Schema\Schema $dbal_schema
+   *   The DBAL schema object.
+   * @param string $drupal_table_name
+   *   A string with the old Drupal name of the table.
+   * @param string $drupal_new_table_name
+   *   A string with the new Drupal name of the table.
+   */
+  public function postRenameTable(DbalSchema $dbal_schema, string $drupal_table_name, string $drupal_new_table_name): void;
+
+  /**
    * Adds a new field to a table.
    *
    * @param bool $primary_key_processed_by_extension
@@ -621,26 +714,6 @@ interface DbalExtensionInterface {
    *   by DBAL.
    */
   public function delegateFieldSetNoDefault(DbalSchema $dbal_schema, $drupal_table_name, $field_name);
-
-  /**
-   * Calculates an index name.
-   *
-   * @param string $context
-   *   The context from where the method is called. Can be 'indexExists',
-   *   'addUniqueKey', 'addIndex', 'dropIndex'.
-   * @param \Doctrine\DBAL\Schema\Schema $dbal_schema
-   *   The DBAL schema object.
-   * @param string $drupal_table_name
-   *   A string with the Drupal name of the table.
-   * @param string $index_name
-   *   A string with the Drupal name of the index.
-   * @param array $table_prefix_info
-   *   A keyed array with information about the schema, table name and prefix.
-   *
-   * @return string
-   *   A string with the name of the index to be used in the DBMS.
-   */
-  public function getIndexFullName($context, DbalSchema $dbal_schema, $drupal_table_name, $index_name, array $table_prefix_info);
 
   /**
    * Checks if an index exists.

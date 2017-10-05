@@ -12,6 +12,9 @@ use Doctrine\DBAL\Schema\Schema as DbalSchema;
 use Doctrine\DBAL\Schema\SchemaException as DbalSchemaException;
 use Doctrine\DBAL\Types\Type as DbalType;
 
+// @todo DBAL 2.6.0:
+// Added support for column inline comments in SQLite, check status (the declaration of support + the fact that on add/change field it does not work)
+
 /**
  * DruDbal implementation of \Drupal\Core\Database\Schema.
  *
@@ -103,7 +106,7 @@ class Schema extends DatabaseSchema {
     // Add columns.
     foreach ($table['fields'] as $field_name => $field) {
       $dbal_type = $this->getDbalColumnType($field);
-      $new_table->addColumn($field_name, $dbal_type, $this->getDbalColumnOptions('createTable', $field_name, $dbal_type, $field));
+      $new_table->addColumn($this->dbalExtension->getDbFieldName($field_name), $dbal_type, $this->getDbalColumnOptions('createTable', $field_name, $dbal_type, $field));
     }
 
     // Add primary key.
@@ -304,7 +307,12 @@ class Schema extends DatabaseSchema {
     // DBAL Schema will drop the old table and create a new one, so we go for
     // using the manager instead, that allows in-place renaming.
     // @see https://github.com/doctrine/migrations/issues/17
+    if ($this->dbalExtension->getDebugging()) {
+      error_log('renameTable ' . $this->tableName($table) . ' to ' . $this->tableName($new_name));
+    }
+    $dbal_schema = $this->dbalSchema();
     $this->dbalSchemaManager->renameTable($this->tableName($table), $this->tableName($new_name));
+    $this->dbalExtension->postRenameTable($dbal_schema, $table, $new_name);
     $this->dbalSchemaForceReload();
   }
 
@@ -331,7 +339,7 @@ class Schema extends DatabaseSchema {
     }
     catch (DbalSchemaException $e) {
       if ($e->getCode() === DbalSchemaException::TABLE_DOESNT_EXIST) {
-        // If he table is not in the DBAL schema, then we are good anyway.
+        // If the table is not in the DBAL schema, then we are good anyway.
         return TRUE;
       }
       else {
@@ -380,7 +388,7 @@ class Schema extends DatabaseSchema {
     }
     else {
       // DBAL extension did not pick up, proceed with DBAL.
-      $dbal_table->addColumn($field, $dbal_type, $dbal_column_options);
+      $dbal_table->addColumn($this->dbalExtension->getDbFieldName($field), $dbal_type, $dbal_column_options);
       // Manage change to primary key.
       if (!empty($keys_new['primary key'])) {
         // @todo in MySql, this could still be a list of columns with length.
@@ -439,7 +447,7 @@ class Schema extends DatabaseSchema {
     // DBAL extension did not pick up, proceed with DBAL.
     $current_schema = $this->dbalSchema();
     $to_schema = clone $current_schema;
-    $to_schema->getTable($this->tableName($table))->dropColumn($field);
+    $to_schema->getTable($this->tableName($table))->dropColumn($this->dbalExtension->getDbFieldName($field));
     $this->dbalExecuteSchemaChange($to_schema);
     return TRUE;
   }
@@ -463,7 +471,7 @@ class Schema extends DatabaseSchema {
     $to_schema = clone $current_schema;
     // @todo this may not work - need to see if ::escapeDefaultValue
     // provides a sensible output.
-    $to_schema->getTable($this->tableName($table))->getColumn($field)->setDefault($this->escapeDefaultValue($default));
+    $to_schema->getTable($this->tableName($table))->getColumn($this->dbalExtension->getDbFieldName($field))->setDefault($this->escapeDefaultValue($default));
     $this->dbalExecuteSchemaChange($to_schema);
   }
 
@@ -486,7 +494,7 @@ class Schema extends DatabaseSchema {
     $to_schema = clone $current_schema;
     // @todo this may not work - we need to 'DROP' the default, not set it
     // to null.
-    $to_schema->getTable($this->tableName($table))->getColumn($field)->setDefault(NULL);
+    $to_schema->getTable($this->tableName($table))->getColumn($this->dbalExtension->getDbFieldName($field))->setDefault(NULL);
     $this->dbalExecuteSchemaChange($to_schema);
   }
 
@@ -506,7 +514,7 @@ class Schema extends DatabaseSchema {
     }
 
     // DBAL extension did not pick up, proceed with DBAL.
-    $index_full_name = $this->dbalExtension->getIndexFullName('indexExists', $this->dbalSchema(), $table, $name, $this->getPrefixInfo($table));
+    $index_full_name = $this->dbalExtension->getDbIndexName('indexExists', $this->dbalSchema(), $table, $name, $this->getPrefixInfo($table));
     return in_array($index_full_name, array_keys($this->dbalSchemaManager->listTableIndexes($table_full_name)));
     // @todo it would be preferred to do
     // return $this->dbalSchema()->getTable($this->tableName($table))->hasIndex($index_full_name);
@@ -582,7 +590,7 @@ class Schema extends DatabaseSchema {
     }
 
     $table_full_name = $this->tableName($table);
-    $index_full_name = $this->dbalExtension->getIndexFullName('addUniqueKey', $this->dbalSchema(), $table, $name, $this->getPrefixInfo($table));
+    $index_full_name = $this->dbalExtension->getDbIndexName('addUniqueKey', $this->dbalSchema(), $table, $name, $this->getPrefixInfo($table));
 
     // Delegate to DBAL extension.
     if ($this->dbalExtension->delegateAddUniqueKey($this->dbalSchema(), $table_full_name, $index_full_name, $table, $name, $fields)) {
@@ -615,7 +623,7 @@ class Schema extends DatabaseSchema {
     }
 
     $table_full_name = $this->tableName($table);
-    $index_full_name = $this->dbalExtension->getIndexFullName('addIndex', $this->dbalSchema(), $table, $name, $this->getPrefixInfo($table));
+    $index_full_name = $this->dbalExtension->getDbIndexName('addIndex', $this->dbalSchema(), $table, $name, $this->getPrefixInfo($table));
 
     // Delegate to DBAL extension.
     if ($this->dbalExtension->delegateAddIndex($this->dbalSchema(), $table_full_name, $index_full_name, $table, $name, $fields, $spec)) {
@@ -638,7 +646,7 @@ class Schema extends DatabaseSchema {
     }
 
     $table_full_name = $this->tableName($table);
-    $index_full_name = $this->dbalExtension->getIndexFullName('dropIndex', $this->dbalSchema(), $table, $name, $this->getPrefixInfo($table));
+    $index_full_name = $this->dbalExtension->getDbIndexName('dropIndex', $this->dbalSchema(), $table, $name, $this->getPrefixInfo($table));
 
     // Delegate to DBAL extension.
     if ($this->dbalExtension->delegateDropIndex($this->dbalSchema(), $table_full_name, $index_full_name, $table, $name)) {
@@ -682,7 +690,7 @@ class Schema extends DatabaseSchema {
       return;
     }
     // We need to reload the schema at next get.
-    $this->dbalSchemaForceReload();  // @todo can we just change the column??
+    $this->dbalSchemaForceReload();  // @todo can we just replace the column object in the dbal schema??
 
     // New primary key.
     if (!empty($keys_new['primary key']) && !$primary_key_processed_by_extension) {
@@ -825,7 +833,7 @@ class Schema extends DatabaseSchema {
     if (!$this->tableExists($table)) {
       return FALSE;
     }
-    return in_array($column, array_keys($this->dbalSchemaManager->listTableColumns($this->tableName($table))));
+    return in_array($this->dbalExtension->getDbFieldName($column), array_keys($this->dbalSchemaManager->listTableColumns($this->tableName($table))));
   }
 
   /**
@@ -882,6 +890,9 @@ if (\Drupal::hasService('logger.factory')) {
    */
   protected function dbalExecuteSchemaChange(DbalSchema $to_schema) {
     foreach ($this->dbalSchema()->getMigrateToSql($to_schema, $this->dbalPlatform) as $sql) {
+      if ($this->dbalExtension->getDebugging()) {
+        error_log($sql);
+      }
       $this->connection->getDbalConnection()->exec($sql);
     }
     $this->dbalSetCurrentSchema($to_schema);
@@ -904,10 +915,10 @@ if (\Drupal::hasService('logger.factory')) {
     $return = [];
     foreach ($fields as $field) {
       if (is_array($field)) {
-        $return[] = $field[0];
+        $return[] = $this->dbalExtension->getDbFieldName($field[0]);
       }
       else {
-        $return[] = $field;
+        $return[] = $this->dbalExtension->getDbFieldName($field);
       }
     }
     return $return;

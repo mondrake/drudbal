@@ -37,6 +37,13 @@ class AbstractExtension implements DbalExtensionInterface {
   protected $statementClass;
 
   /**
+   * Enables debugging.
+   *
+   * @var bool
+   */
+  protected $isDebugging = FALSE;
+
+  /**
    * Constructs a DBAL extension object.
    *
    * @param \Drupal\Driver\Database\dbal\Connection $drudbal_connection
@@ -53,6 +60,26 @@ class AbstractExtension implements DbalExtensionInterface {
   }
 
   /**
+   * Sets debugging mode.
+   *
+   * @param bool $value
+   *   The debugging mode.
+   */
+  public function setDebugging(bool $value): void {
+    $this->isDebugging = $value;
+  }
+
+  /**
+   * Gets debugging mode.
+   *
+   * @return bool
+   *   The debugging mode.
+   */
+  public function getDebugging(): bool {
+    return $this->isDebugging;
+  }
+
+  /**
    * {@inheritdoc}
    */
   public function destroy() {
@@ -62,14 +89,14 @@ class AbstractExtension implements DbalExtensionInterface {
    * {@inheritdoc}
    */
   public function delegateClientVersion() {
-    throw new \LogicException("Method " . __METHOD__ . " not implemented for '" . $this->dbalConnection->getDriver()->getName() . "''");
+    throw new \LogicException("Method " . __METHOD__ . " not implemented for '" . $this->dbalConnection->getDriver()->getName() . "'");
   }
 
   /**
    * {@inheritdoc}
    */
   public function delegateQueryExceptionProcess($query, array $args, array $options, $message, \Exception $e) {
-    throw new \LogicException("Method " . __METHOD__ . " not implemented for '" . $this->dbalConnection->getDriver()->getName() . "''");
+    throw new \LogicException("Method " . __METHOD__ . " not implemented for '" . $this->dbalConnection->getDriver()->getName() . "'");
   }
 
   /**
@@ -80,12 +107,51 @@ class AbstractExtension implements DbalExtensionInterface {
   }
 
   /**
+   * Database asset name resolution methods.
+   */
+
+  /**
    * {@inheritdoc}
    */
-  public function delegateFullQualifiedTableName($drupal_table_name) {
+  public function getDbTableName($prefixed_table_name) {
+    return $prefixed_table_name;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getDbFullQualifiedTableName($drupal_table_name) {
     $options = $this->connection->getConnectionOptions();
     $prefix = $this->connection->tablePrefix($drupal_table_name);
-    return $options['database'] . '.' . $prefix . $drupal_table_name;
+    return $options['database'] . '.' . $this->getDbTableName($prefix . $drupal_table_name);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getDbFieldName($field_name) {
+    return $field_name;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getDbAlias($alias) {
+    return $alias;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function resolveAliases(?string $unaliased): string {
+    return $unaliased;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getDbIndexName($context, DbalSchema $dbal_schema, $drupal_table_name, $index_name, array $table_prefix_info) {
+    return $index_name;
   }
 
   /**
@@ -109,28 +175,28 @@ class AbstractExtension implements DbalExtensionInterface {
    * {@inheritdoc}
    */
   public static function preConnectionOpen(array &$connection_options, array &$dbal_connection_options) {
-    throw new \LogicException("Method " . __METHOD__ . " not implemented for '" . $this->dbalConnection->getDriver()->getName() . "''");
+    throw new \LogicException("Method " . __METHOD__ . " not implemented.");
   }
 
   /**
    * {@inheritdoc}
    */
   public static function postConnectionOpen(DbalConnection $dbal_connection, array &$connection_options, array &$dbal_connection_options) {
-    throw new \LogicException("Method " . __METHOD__ . " not implemented for '" . $this->dbalConnection->getDriver()->getName() . "''");
+    throw new \LogicException("Method " . __METHOD__ . " not implemented.");
   }
 
   /**
    * {@inheritdoc}
    */
   public function delegateTransactionSupport(array &$connection_options = []) {
-    throw new \LogicException("Method " . __METHOD__ . " not implemented for '" . $this->dbalConnection->getDriver()->getName() . "''");
+    throw new \LogicException("Method " . __METHOD__ . " not implemented for '" . $this->dbalConnection->getDriver()->getName() . "'");
   }
 
   /**
    * {@inheritdoc}
    */
   public function delegateTransactionalDdlSupport(array &$connection_options = []) {
-    throw new \LogicException("Method " . __METHOD__ . " not implemented for '" . $this->dbalConnection->getDriver()->getName() . "''");
+    throw new \LogicException("Method " . __METHOD__ . " not implemented for '" . $this->dbalConnection->getDriver()->getName() . "'");
   }
 
   /**
@@ -158,28 +224,28 @@ class AbstractExtension implements DbalExtensionInterface {
    * {@inheritdoc}
    */
   public function delegateNextId($existing_id = 0) {
-    throw new \LogicException("Method " . __METHOD__ . " not implemented for '" . $this->dbalConnection->getDriver()->getName() . "''");
+    throw new \LogicException("Method " . __METHOD__ . " not implemented for '" . $this->dbalConnection->getDriver()->getName() . "'");
   }
 
   /**
    * {@inheritdoc}
    */
   public function delegateQueryRange($query, $from, $count, array $args = [], array $options = []) {
-    throw new \LogicException("Method " . __METHOD__ . " not implemented for '" . $this->dbalConnection->getDriver()->getName() . "''");
+    throw new \LogicException("Method " . __METHOD__ . " not implemented for '" . $this->dbalConnection->getDriver()->getName() . "'");
   }
 
   /**
    * {@inheritdoc}
    */
   public function delegateQueryTemporary($drupal_table_name, $query, array $args = [], array $options = []) {
-    throw new \LogicException("Method " . __METHOD__ . " not implemented for '" . $this->dbalConnection->getDriver()->getName() . "''");
+    throw new \LogicException("Method " . __METHOD__ . " not implemented for '" . $this->dbalConnection->getDriver()->getName() . "'");
   }
 
   /**
    * {@inheritdoc}
    */
   public function delegateReleaseSavepointExceptionProcess(DbalDriverException $e) {
-    throw new \LogicException("Method " . __METHOD__ . " not implemented for '" . $this->dbalConnection->getDriver()->getName() . "''");
+    throw new \LogicException("Method " . __METHOD__ . " not implemented for '" . $this->dbalConnection->getDriver()->getName() . "'");
   }
 
   /**
@@ -204,7 +270,7 @@ class AbstractExtension implements DbalExtensionInterface {
    * {@inheritdoc}
    */
   public function delegateFetch(DbalStatement $dbal_statement, $mode, $fetch_class) {
-    throw new \LogicException("Method " . __METHOD__ . " not implemented for '" . $this->dbalConnection->getDriver()->getName() . "''");
+    throw new \LogicException("Method " . __METHOD__ . " not implemented for '" . $this->dbalConnection->getDriver()->getName() . "'");
   }
 
   /**
@@ -217,6 +283,13 @@ class AbstractExtension implements DbalExtensionInterface {
   /**
    * Insert delegated methods.
    */
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getSequenceNameForInsert($drupal_table_name) {
+    return NULL;
+  }
 
   /**
    * {@inheritdoc}
@@ -258,14 +331,14 @@ class AbstractExtension implements DbalExtensionInterface {
    * {@inheritdoc}
    */
   public static function delegateInstallConnectExceptionProcess(\Exception $e) {
-    throw new \LogicException("Method " . __METHOD__ . " not implemented for '" . $this->dbalConnection->getDriver()->getName() . "''");
+    throw new \LogicException("Method " . __METHOD__ . " not implemented for '" . $this->dbalConnection->getDriver()->getName() . "'");
   }
 
   /**
    * {@inheritdoc}
    */
   public function runInstallTasks() {
-    throw new \LogicException("Method " . __METHOD__ . " not implemented for '" . $this->dbalConnection->getDriver()->getName() . "''");
+    throw new \LogicException("Method " . __METHOD__ . " not implemented for '" . $this->dbalConnection->getDriver()->getName() . "'");
   }
 
   /**
@@ -325,7 +398,7 @@ class AbstractExtension implements DbalExtensionInterface {
    * {@inheritdoc}
    */
   public function getStringForDefault($string) {
-    throw new \LogicException("Method " . __METHOD__ . " not implemented for '" . $this->dbalConnection->getDriver()->getName() . "''");
+    throw new \LogicException("Method " . __METHOD__ . " not implemented for '" . $this->dbalConnection->getDriver()->getName() . "'");
   }
 
   /**
@@ -333,6 +406,13 @@ class AbstractExtension implements DbalExtensionInterface {
    */
   public function alterDbalColumnDefinition($context, &$dbal_column_definition, array &$dbal_column_options, $dbal_type, array $drupal_field_specs, $field_name) {
     return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function postRenameTable(DbalSchema $dbal_schema, string $drupal_table_name, string $drupal_new_table_name): void {
+    return;
   }
 
   /**
@@ -353,28 +433,21 @@ class AbstractExtension implements DbalExtensionInterface {
    * {@inheritdoc}
    */
   public function delegateChangeField(&$primary_key_processed_by_extension, DbalSchema $dbal_schema, $drupal_table_name, $field_name, $field_new_name, array $drupal_field_new_specs, array $keys_new_specs, array $dbal_column_options) {
-    throw new \LogicException("Method " . __METHOD__ . " not implemented for '" . $this->dbalConnection->getDriver()->getName() . "''");
+    throw new \LogicException("Method " . __METHOD__ . " not implemented for '" . $this->dbalConnection->getDriver()->getName() . "'");
   }
 
   /**
    * {@inheritdoc}
    */
   public function delegateFieldSetDefault(DbalSchema $dbal_schema, $drupal_table_name, $field_name, $default) {
-    throw new \LogicException("Method " . __METHOD__ . " not implemented for '" . $this->dbalConnection->getDriver()->getName() . "''");
+    throw new \LogicException("Method " . __METHOD__ . " not implemented for '" . $this->dbalConnection->getDriver()->getName() . "'");
   }
 
   /**
    * {@inheritdoc}
    */
   public function delegateFieldSetNoDefault(DbalSchema $dbal_schema, $drupal_table_name, $field_name) {
-    throw new \LogicException("Method " . __METHOD__ . " not implemented for '" . $this->dbalConnection->getDriver()->getName() . "''");
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function getIndexFullName($context, DbalSchema $dbal_schema, $drupal_table_name, $index_name, array $table_prefix_info) {
-    return $index_name;
+    throw new \LogicException("Method " . __METHOD__ . " not implemented for '" . $this->dbalConnection->getDriver()->getName() . "'");
   }
 
   /**
@@ -416,7 +489,7 @@ class AbstractExtension implements DbalExtensionInterface {
    * {@inheritdoc}
    */
   public function delegateGetTableComment(DbalSchema $dbal_schema, $drupal_table_name) {
-    throw new \RuntimeException("Table comments are not supported for '" . $this->dbalConnection->getDriver()->getName() . "''");
+    throw new \RuntimeException("Table comments are not supported for '" . $this->dbalConnection->getDriver()->getName() . "'");
   }
 
   /**
@@ -427,7 +500,7 @@ class AbstractExtension implements DbalExtensionInterface {
       return $dbal_schema->getTable($this->tableName($drupal_table_name))->getColumn($column)->getComment();
     }
     else {
-      throw new \RuntimeException("Column comments are not supported for '" . $this->dbalConnection->getDriver()->getName() . "''");
+      throw new \RuntimeException("Column comments are not supported for '" . $this->dbalConnection->getDriver()->getName() . "'");
     }
   }
 
