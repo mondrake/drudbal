@@ -844,16 +844,16 @@ class Schema extends DatabaseSchema {
    */
   protected function dbalSchema() {
     if ($this->dbalCurrentSchema === NULL) {
-if (\Drupal::hasService('logger.factory')) {
-  $backtrace = str_replace("\n", "<br/>", \Drupal\Core\Utility\Error::formatBacktrace(debug_backtrace()));
-  \Drupal::logger('drudbal')->notice('DBAL createSchema() invoked.<br/>' . $backtrace);
-}
+//if (\Drupal::hasService('logger.factory')) {
+//  $backtrace = str_replace("\n", "<br/>", \Drupal\Core\Utility\Error::formatBacktrace(debug_backtrace()));
+//  \Drupal::logger('drudbal')->notice('DBAL createSchema() invoked.<br/>' . $backtrace);
+//}
       $this->dbalSetCurrentSchema($this->dbalSchemaManager->createSchema());
     }
-if (\Drupal::hasService('logger.factory')) {
-  $backtrace = str_replace("\n", "<br/>", \Drupal\Core\Utility\Error::formatBacktrace(debug_backtrace()));
-  \Drupal::logger('drudbal')->notice('DBAL schema requested.<br/>' . $backtrace);
-}
+//if (\Drupal::hasService('logger.factory')) {
+//  $backtrace = str_replace("\n", "<br/>", \Drupal\Core\Utility\Error::formatBacktrace(debug_backtrace()));
+//  \Drupal::logger('drudbal')->notice('DBAL schema requested.<br/>' . $backtrace);
+//}
     return $this->dbalCurrentSchema;
   }
 
