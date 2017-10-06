@@ -36,7 +36,7 @@ env:
     #- DRUDBAL_ENV="dbal/mysql" TEST_ARGS="modules/field/tests/src/Functional/FieldAccessTest.php"
     #- DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="modules/field/tests/src/Functional/FieldAccessTest.php"
     #- DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group views --testsuite functional --testdox"
-    - DRUDBAL_ENV="sqlite" TEST_ARGS="--group Database,Entity --testsuite functional --testdox"
+    - DRUDBAL_ENV="sqlite" TEST_ARGS="--group Database,Entity --testsuite functional"
     #- DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database,Cache,Config,Entity,Field"
  #   - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group field"
   #  - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group views"
@@ -190,7 +190,7 @@ install:
   - php install_cli.php
 
   # Get a webserver running.
-  - sudo drupal server $HOST_ADDR:$HTTP_PORT &
+  - sudo php ../vendor/drupal/console/bin/drupal server $HOST_ADDR:$HTTP_PORT &
   - sleep 4s
 
   # Post install tasks.
