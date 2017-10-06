@@ -71,9 +71,9 @@ before_install:
         export SIMPLETEST_DB="dbal://root:@$HOST_ADDR/drudbal?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=mysqli#drudbal_"
 
       elif [[ "$DRUDBAL_ENV" == "sqlite" ]]; then
-        export DBAL_URL="sqlite:///sites/default/files/.ht.sqlite"
+        #export DBAL_URL="sqlite:///sites/default/files/.ht.sqlite"
         export SIMPLETEST_DB="sqlite://test_user:test_pass@test_host:3306/sites/default/files/.ht.sqlite"
-        export SQLITE_TMPDIR="/home/travis/drupal8/sites/default/files/sqlite_tmpdir"
+        #export SQLITE_TMPDIR="/home/travis/drupal8/sites/default/files/sqlite_tmpdir"
 
       elif [[ "$DRUDBAL_ENV" == "dbal/sqlite/file" ]]; then
         export DBAL_URL="sqlite:///sites/default/files/.ht.sqlite"
@@ -188,16 +188,16 @@ install:
   # Install Drupal.
   - cp $DRUPAL_PATH/modules/contrib/drudbal/tests/travis_ci/*.php $DRUPAL_PATH/core
   - cd $DRUPAL_PATH/core
-  - php install_cli.php
+  #- php install_cli.php
 
   # Get a webserver running.
   - drupal server $HOST_ADDR:$HTTP_PORT &
   - sleep 4s
 
   # Post install tasks.
-  - if [[ ! "$DRUDBAL_ENV" == "dbal/sqlite/memory" ]]; then drupal site:status; fi
-  - php post_install.php
-  - mkdir -p /home/travis/drupal8/sites/default/files/sqlite_tmpdir
+  #- if [[ ! "$DRUDBAL_ENV" == "dbal/sqlite/memory" ]]; then drupal site:status; fi
+  #- php post_install.php
+  #- mkdir -p /home/travis/drupal8/sites/default/files/sqlite_tmpdir
   - printenv
   #- cd $DRUPAL_PATH/sites/default
   #- chgrp www-data databasedir
