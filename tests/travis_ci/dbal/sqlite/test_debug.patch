@@ -1,0 +1,12 @@
+diff --git a/core/tests/Drupal/FunctionalTests/Update/UpdatePathTestBase.php b/core/tests/Drupal/FunctionalTests/Update/UpdatePathTestBase.php
+index 4aca500..17b5fef 100644
+--- a/core/tests/Drupal/FunctionalTests/Update/UpdatePathTestBase.php
++++ b/core/tests/Drupal/FunctionalTests/Update/UpdatePathTestBase.php
+@@ -403,6 +403,7 @@ protected function runDbTasks() {
+     \Drupal::setContainer($container);
+ 
+     require_once __DIR__ . '/../../../../includes/install.inc';
++error_log(ver_export(Database::getConnectionInfo(), TRUE));
+     $connection = Database::getConnection();
+     $errors = db_installer_object($connection->driver())->runTasks();
+     if (!empty($errors)) {
