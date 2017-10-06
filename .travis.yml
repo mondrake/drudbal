@@ -196,6 +196,7 @@ install:
   # Post install tasks.
   - if [[ ! "$DRUDBAL_ENV" == "dbal/sqlite/memory" ]]; then drupal site:status; fi
   - php post_install.php
+  - printenv
   #- cd $DRUPAL_PATH/sites/default
   #- chgrp www-data databasedir
   #-chgrp www-data databasedir/mydb.db
