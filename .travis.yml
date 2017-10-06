@@ -195,7 +195,7 @@ install:
 
   # Post install tasks.
   - if [[ ! "$DRUDBAL_ENV" == "dbal/sqlite/memory" ]]; then drupal site:status; fi
-  - la -al /home/travis/drupal8/sites/default/files
+  - ls -al /home/travis/drupal8/sites/default/files
   - rm -r /home/travis/drupal8/sites/default/files/.
   #- php post_install.php
   #- mkdir -p /home/travis/drupal8/sites/default/files/sqlite_tmpdir
