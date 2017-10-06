@@ -36,7 +36,7 @@ env:
     #- DRUDBAL_ENV="dbal/mysql" TEST_ARGS="modules/field/tests/src/Functional/FieldAccessTest.php"
     #- DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="modules/field/tests/src/Functional/FieldAccessTest.php"
     #- DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group views --testsuite functional --testdox"
-    - DRUDBAL_ENV="sqlite" TEST_ARGS="--group Database,Entity"
+    - DRUDBAL_ENV="sqlite" TEST_ARGS="--group Database,Entity --testsuite functional --testdox"
     #- DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database,Cache,Config,Entity,Field"
  #   - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group field"
   #  - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group views"
@@ -190,17 +190,17 @@ install:
   - php install_cli.php
 
   # Get a webserver running.
-  - drupal server $HOST_ADDR:$HTTP_PORT &
+  - sudo drupal server $HOST_ADDR:$HTTP_PORT &
   - sleep 4s
 
   # Post install tasks.
   - if [[ ! "$DRUDBAL_ENV" == "dbal/sqlite/memory" ]]; then drupal site:status; fi
   - php post_install.php
-  - cd $DRUPAL_PATH/sites/default
+  #- cd $DRUPAL_PATH/sites/default
   #- chgrp www-data databasedir
   #-chgrp www-data databasedir/mydb.db
-  - chmod 777 files
-  - chmod 777 files/.ht.sqlite
+  #- chmod 777 files
+  #- chmod 777 files/.ht.sqlite
 
 script:
   - cd $DRUPAL_PATH/core
