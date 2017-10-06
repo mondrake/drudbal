@@ -37,7 +37,7 @@ env:
     #- DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="modules/field/tests/src/Functional/FieldAccessTest.php"
     #- DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group views --testsuite functional --testdox"
     - DRUDBAL_ENV="sqlite" TEST_ARGS="--group Database,Entity --testsuite functional"
-    #- DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database,Cache,Config,Entity,Field"
+    - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database,Entity --testsuite functional"
  #   - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group field"
   #  - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group views"
     #- DRUDBAL_ENV="dbal/sqlite/memory" TEST_ARGS="--group Database --testsuite kernel"
@@ -71,9 +71,8 @@ before_install:
         export SIMPLETEST_DB="dbal://root:@$HOST_ADDR/drudbal?namespace=Drupal%5CDriver%5CDatabase%5Cdbal&dbal_driver=mysqli#drudbal_"
 
       elif [[ "$DRUDBAL_ENV" == "sqlite" ]]; then
-        #export DBAL_URL="sqlite:///sites/default/files/.ht.sqlite"
+        export DBAL_URL="sqlite:///sites/default/files/.ht.sqlite"
         export SIMPLETEST_DB="sqlite://test_user:test_pass@test_host:3306/sites/default/files/.ht.sqlite"
-        #export SQLITE_TMPDIR="/home/travis/drupal8/sites/default/files/sqlite_tmpdir"
 
       elif [[ "$DRUDBAL_ENV" == "dbal/sqlite/file" ]]; then
         export DBAL_URL="sqlite:///sites/default/files/.ht.sqlite"
@@ -198,7 +197,7 @@ install:
   #- if [[ ! "$DRUDBAL_ENV" == "dbal/sqlite/memory" ]]; then drupal site:status; fi
   #- php post_install.php
   #- mkdir -p /home/travis/drupal8/sites/default/files/sqlite_tmpdir
-  - printenv
+  #- printenv
   #- cd $DRUPAL_PATH/sites/default
   #- chgrp www-data databasedir
   #-chgrp www-data databasedir/mydb.db
