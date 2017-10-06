@@ -73,6 +73,7 @@ before_install:
       elif [[ "$DRUDBAL_ENV" == "sqlite" ]]; then
         export DBAL_URL="sqlite:///sites/default/files/.ht.sqlite"
         export SIMPLETEST_DB="sqlite://test_user:test_pass@test_host:3306/sites/default/files/.ht.sqlite"
+        export SQLITE_TMPDIR="/home/travis/drupal8/sites/default/files/sqlite_tmpdir"
 
       elif [[ "$DRUDBAL_ENV" == "dbal/sqlite/file" ]]; then
         export DBAL_URL="sqlite:///sites/default/files/.ht.sqlite"
@@ -196,6 +197,7 @@ install:
   # Post install tasks.
   - if [[ ! "$DRUDBAL_ENV" == "dbal/sqlite/memory" ]]; then drupal site:status; fi
   - php post_install.php
+  - mkdir -p /home/travis/drupal8/sites/default/files/sqlite_tmpdir
   - printenv
   #- cd $DRUPAL_PATH/sites/default
   #- chgrp www-data databasedir
