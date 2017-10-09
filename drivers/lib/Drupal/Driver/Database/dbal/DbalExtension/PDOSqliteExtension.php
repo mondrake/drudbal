@@ -144,6 +144,7 @@ class PDOSqliteExtension extends AbstractExtension {
       // Convert numeric values to strings when fetching.
       \PDO::ATTR_STRINGIFY_FETCHES => TRUE,
     ];
+error_log(var_export([$connection_options, $dbal_connection_options], TRUE));
   }
 
   /**
