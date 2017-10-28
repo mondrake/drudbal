@@ -109,7 +109,6 @@ before_install:
         $HOME/build/mondrake/drudbal/tests/travis_ci/$DRUDBAL_ENV/oracle_user.sh
         # Install Oci8 extension for PHP.
         echo $ORACLE_HOME | pecl install oci8
-
       fi
 
   # Remove XDebug.
