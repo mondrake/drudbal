@@ -28,18 +28,18 @@ env:
     # Drupal PHPUnit test variables.
     - SIMPLETEST_BASE_URL="http://$HOST_ADDR:$HTTP_PORT"
   matrix:
-    - DRUDBAL_ENV="mysql" TEST_ARGS="--group Database"
-    - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Database,Cache,Config,Entity,Field"
-    - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group field"
-    - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group views"
-    - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Database,Cache,Config,Entity,Field"
-    - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group field"
-    - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group views"
-    - DRUDBAL_ENV="sqlite" TEST_ARGS="--group Database --testsuite kernel"
-    - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database,Cache,Config,Entity,Field --testsuite kernel"
-    - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group field --testsuite kernel"
-    - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group views --testsuite kernel"
-    - DRUDBAL_ENV="dbal/sqlite/memory" TEST_ARGS="--group Database --testsuite kernel"
+    #- DRUDBAL_ENV="mysql" TEST_ARGS="--group Database"
+    #- DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Database,Cache,Config,Entity,Field"
+    #- DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group field"
+    #- DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group views"
+    #- DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Database,Cache,Config,Entity,Field"
+    #- DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group field"
+    #- DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group views"
+    #- DRUDBAL_ENV="sqlite" TEST_ARGS="--group Database --testsuite kernel"
+    #- DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database,Cache,Config,Entity,Field --testsuite kernel"
+    #- DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group field --testsuite kernel"
+    #- DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group views --testsuite kernel"
+    #- DRUDBAL_ENV="dbal/sqlite/memory" TEST_ARGS="--group Database --testsuite kernel"
     - DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group Database,Cache,Config --testsuite kernel"
     #- DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group Entity,views,field,Field"
 
@@ -94,9 +94,9 @@ before_install:
         export ORACLE_FILE=oracle11g/xe/$ORACLE_BASEFILE
         export ORACLE_HOME=/u01/app/oracle/product/11.2.0/xe
         export ORACLE_SID=XE
-        wget 'https://github.com/cbandy/travis-oracle/archive/v2.0.2.tar.gz'
+        wget 'https://github.com/cbandy/travis-oracle/archive/hotfix.tar.gz'
         mkdir -p .travis/oracle
-        tar x -C .travis/oracle --strip-components=1 -f v2.0.2.tar.gz
+        tar x -C .travis/oracle --strip-components=1 -f hotfix.tar.gz
         if [[ ! -f $ORACLE_DOWNLOAD_DIR/$ORACLE_BASEFILE ]]; then
           .travis/oracle/download.sh
           cp .travis/oracle/$ORACLE_BASEFILE $ORACLE_DOWNLOAD_DIR
