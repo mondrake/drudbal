@@ -28,7 +28,7 @@ env:
     # Drupal PHPUnit test variables.
     - SIMPLETEST_BASE_URL="http://$HOST_ADDR:$HTTP_PORT"
   matrix:
-    - DRUDBAL_ENV="mysql" TEST_ARGS="--group Database"
+    #- DRUDBAL_ENV="mysql" TEST_ARGS="--group Database"
     #- DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Database,Cache,Config,Entity,Field"
     #- DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group field"
     #- DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group views"
@@ -94,9 +94,9 @@ before_install:
         export ORACLE_FILE=oracle11g/xe/$ORACLE_BASEFILE
         export ORACLE_HOME=/u01/app/oracle/product/11.2.0/xe
         export ORACLE_SID=XE
-        wget 'https://github.com/cbandy/travis-oracle/archive/hotfix.tar.gz'
+        wget 'https://github.com/cbandy/travis-oracle/archive/2.0.3.tar.gz'
         mkdir -p .travis/oracle
-        tar x -C .travis/oracle --strip-components=1 -f hotfix.tar.gz
+        tar x -C .travis/oracle --strip-components=1 -f 2.0.3.tar.gz
         if [[ ! -f $ORACLE_DOWNLOAD_DIR/$ORACLE_BASEFILE ]]; then
           .travis/oracle/download.sh
           cp .travis/oracle/$ORACLE_BASEFILE $ORACLE_DOWNLOAD_DIR
