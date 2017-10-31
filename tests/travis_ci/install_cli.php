@@ -22,9 +22,9 @@ $settings = [
   ],
   'forms' => [
     'install_settings_form' => [
-      'driver' => 'dbal',
-      'dbal' => [
-        'dbal_url' => getenv("DBAL_URL"),
+      'driver' => 'sqlite',
+      'sqlite' => [
+        'database' => 'sites/default/files/.ht.sqlite',
       ],
     ],
     'install_configure_form' => [
