@@ -6,7 +6,6 @@ language: php
 sudo: required
 
 php:
-  - 7.1
   - 7.2
 
 branches:
@@ -46,7 +45,6 @@ env:
 matrix:
   fast_finish: true
   allow_failures:
-    - php: 7.2
     - env: DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group Database,Cache,Config --testsuite kernel"
 
 cache:
@@ -155,7 +153,14 @@ before_install:
   - curl https://www.drupal.org/files/issues/2657888-12-d8-sqlsrv_oracle_date_support.patch | git apply
   # [#2912973] Mismatching call to databaseType() in LangcodeToAsciiUpdateTest
   - curl https://www.drupal.org/files/issues/2912973-2.patch | git apply
-
+  # --- PHP 7.2 patches.
+  # [#2853503] Remove all assert('string') calls from Drupal core because deprecated in PHP 7.2
+  - curl https://www.drupal.org/files/issues/2853503-41.patch | git apply
+  # [#2915820] [PHP 7.2] FormValidator: Parameter must be an array or an object that implements Countable
+  - curl https://www.drupal.org/files/issues/29158200-form-16.patch | git apply
+  # [#2923015] [PHP 7.2] Incompatible method declarations
+  - curl https://www.drupal.org/files/issues/2923015.patch | git apply
+  
 install:
   # Copy the vendor dependencies.
   - mkdir -p $DRUPAL_PATH/vendor
