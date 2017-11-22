@@ -7,7 +7,7 @@ sudo: required
 
 php:
   - 7.1
-  - 7.2
+  #- 7.2
 
 branches:
   except:
@@ -156,7 +156,7 @@ before_install:
   # [#2912973] Mismatching call to databaseType() in LangcodeToAsciiUpdateTest
   - curl https://www.drupal.org/files/issues/2912973-2.patch | git apply
   # tbd
-  - curl https://www.drupal.org/files/issues/xx1122.patch | git apply
+  - curl https://www.drupal.org/files/issues/xx1122a.patch | git apply
 
 install:
   # Copy the vendor dependencies.
