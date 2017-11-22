@@ -281,6 +281,17 @@ class AbstractExtension implements DbalExtensionInterface {
   }
 
   /**
+   * Select delegated methods.
+   */
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getForUpdateSQL() {
+    return ' FOR UPDATE';
+  }
+
+  /**
    * Insert delegated methods.
    */
 
