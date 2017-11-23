@@ -318,6 +318,56 @@ class Schema extends DatabaseSchema {
   }
 
   /**
+   * Formats a backtrace into a plain-text string.
+   *
+   * The calls show values for scalar arguments and type names for complex ones.
+   *
+   * @param array $backtrace
+   *   A standard PHP backtrace.
+   *
+   * @return string
+   *   A plain-text line-wrapped string ready to be put inside <pre>.
+   */
+  public static function formatBacktrace(array $backtrace) {
+    $return = '';
+
+    foreach ($backtrace as $trace) {
+      $call = ['function' => '', 'args' => []];
+
+      if (isset($trace['class'])) {
+        $call['function'] = $trace['class'] . $trace['type'] . $trace['function'];
+      }
+      elseif (isset($trace['function'])) {
+        $call['function'] = $trace['function'];
+      }
+      else {
+        $call['function'] = 'main';
+      }
+
+/*      if (isset($trace['args'])) {
+        foreach ($trace['args'] as $arg) {
+          if (is_scalar($arg)) {
+            $call['args'][] = is_string($arg) ? '\'' . $arg . '\'' : $arg;
+          }
+          else {
+            $call['args'][] = ucfirst(gettype($arg));
+          }
+        }
+      }*/
+
+      $line = '';
+      if (isset($trace['line'])) {
+        $line = " (Line: {$trace['line']})";
+      }
+
+      $return .= $call['function'] . '(' . /*implode(', ', $call['args']) .*/ ")$line\n";
+    }
+
+    return $return;
+  }
+
+
+  /**
    * {@inheritdoc}
    */
   public function dropTable($table) {
@@ -338,10 +388,10 @@ class Schema extends DatabaseSchema {
       $this->dbalSchemaManager->dropTable($table_full_name);
     }
     catch (\Exception $e) {
-      Database::closeConnection();
-      $connection = Database::getConnection();
-      $connection->schema()->dropTable($table);
-      //throw new \Exception('bingobongo ' . $e->getMessage());
+      //Database::closeConnection();
+      //$connection = Database::getConnection();
+      //$connection->schema()->dropTable($table);
+      throw new \Exception('bingobongo ' . $e->getMessage() . "\n\n" . $this->formatBacktrace(debug_backtrace()));
     }
 
     // After dropping the table physically, still need to reflect it in the
