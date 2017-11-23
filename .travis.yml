@@ -41,7 +41,6 @@ env:
     - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group field --testsuite kernel"
     - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group views --testsuite kernel"
     - DRUDBAL_ENV="dbal/sqlite/memory" TEST_ARGS="--group Database --testsuite kernel"
-    - DRUDBAL_ENV="dbal/sqlite/memory" TEST_ARGS="--group Entity --testsuite kernel"
     - DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group Database,Cache,Config --testsuite kernel"
     #- DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group Entity,views,field,Field"
 
@@ -51,7 +50,7 @@ matrix:
     - php: 7.2
     - env: DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group Database,Cache,Config --testsuite kernel"
     - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Entity --testsuite kernel"
-    - env: DRUDBAL_ENV="dbal/sqlite/memory" TEST_ARGS="--group Entity --testsuite kernel"
+    - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group field --testsuite kernel"
 
 cache:
   directories:
