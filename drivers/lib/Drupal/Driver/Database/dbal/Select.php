@@ -175,9 +175,9 @@ class Select extends QuerySelect {
       $sql = $pre . $post;
     }
 
-    // FOR UPDATE @todo move to extension
+    // FOR UPDATE.
     if ($this->forUpdate) {
-      $sql .= ' FOR UPDATE';
+      $sql .= $dbal_extension->getForUpdateSQL();
     }
 
     return $comments . $sql;
