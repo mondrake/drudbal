@@ -7,7 +7,7 @@ sudo: required
 
 php:
   - 7.1
-  #- nightly
+  #- 7.2
 
 branches:
   except:
@@ -35,9 +35,10 @@ env:
     #- DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Database,Cache,Config,Entity,Field"
     #- DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group field"
     #- DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group views"
-    - DRUDBAL_ENV="sqlite" TEST_ARGS="--group Database"
-    - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database,Cache,Config,Entity,Field"
-    #- DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group field --testsuite kernel"
+    #- DRUDBAL_ENV="sqlite" TEST_ARGS="--group Database --testsuite kernel"
+    #- DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database,Cache,Config,Field --testsuite kernel"
+    - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Entity"
+    - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group field"
     #- DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group views --testsuite kernel"
     #- DRUDBAL_ENV="dbal/sqlite/memory" TEST_ARGS="--group Database --testsuite kernel"
     #- DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group Database,Cache,Config --testsuite kernel"
@@ -46,7 +47,7 @@ env:
 matrix:
   fast_finish: true
   allow_failures:
-    - php: nightly
+    - php: 7.2
     - env: DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group Database,Cache,Config --testsuite kernel"
 
 cache:
@@ -94,9 +95,9 @@ before_install:
         export ORACLE_FILE=oracle11g/xe/$ORACLE_BASEFILE
         export ORACLE_HOME=/u01/app/oracle/product/11.2.0/xe
         export ORACLE_SID=XE
-        wget 'https://github.com/cbandy/travis-oracle/archive/v2.0.2.tar.gz'
+        wget 'https://github.com/cbandy/travis-oracle/archive/v2.0.3.tar.gz'
         mkdir -p .travis/oracle
-        tar x -C .travis/oracle --strip-components=1 -f v2.0.2.tar.gz
+        tar x -C .travis/oracle --strip-components=1 -f v2.0.3.tar.gz
         if [[ ! -f $ORACLE_DOWNLOAD_DIR/$ORACLE_BASEFILE ]]; then
           .travis/oracle/download.sh
           cp .travis/oracle/$ORACLE_BASEFILE $ORACLE_DOWNLOAD_DIR
@@ -109,7 +110,6 @@ before_install:
         $HOME/build/mondrake/drudbal/tests/travis_ci/$DRUDBAL_ENV/oracle_user.sh
         # Install Oci8 extension for PHP.
         echo $ORACLE_HOME | pecl install oci8
-
       fi
 
   # Remove XDebug.
@@ -124,11 +124,11 @@ before_install:
         cd $DRUPAL_STAGING_DIR
         composer install --no-progress --no-suggest
         # Get Drupal Console
-        composer require "drupal/console:~1.0.0" --no-progress
-        composer require "doctrine/common:^2.7.1" --no-progress
+        composer require "drupal/console" --no-progress --no-suggest
+        composer require "doctrine/common:^2.7.1" --no-progress --no-suggest
         # Get Doctrine DBAL
-        composer require "doctrine/dbal:~2.6.1" --no-progress
-        composer update --no-progress --no-progress
+        composer require "doctrine/dbal:~2.6.2" --no-progress --no-suggest
+        composer update --no-progress --no-suggest
       fi
 
   # Always get latest Drupal core.
@@ -156,6 +156,8 @@ before_install:
   - curl https://www.drupal.org/files/issues/2657888-12-d8-sqlsrv_oracle_date_support.patch | git apply
   # [#2912973] Mismatching call to databaseType() in LangcodeToAsciiUpdateTest
   - curl https://www.drupal.org/files/issues/2912973-2.patch | git apply
+  # [#2925750] EntityDefinitionUpdateTest fails with contrib db driver
+  - curl https://www.drupal.org/files/issues/2925750-2.patch | git apply
 
 install:
   # Copy the vendor dependencies.

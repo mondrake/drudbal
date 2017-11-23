@@ -367,6 +367,17 @@ class PDOSqliteExtension extends AbstractExtension {
   }
 
   /**
+   * Select delegated methods.
+   */
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getForUpdateSQL() {
+    return NULL;
+  }
+
+  /**
    * Insert delegated methods.
    */
 

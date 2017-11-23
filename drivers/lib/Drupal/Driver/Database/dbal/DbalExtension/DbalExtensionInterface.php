@@ -365,6 +365,18 @@ interface DbalExtensionInterface {
   public function delegateRowCount(DbalStatement $dbal_statement);
 
   /**
+   * Select delegated methods.
+   */
+
+  /**
+   * Returns the SQL snippet that can be used for 'FOR UPDATE' selects.
+   *
+   * @return string|null
+   *   The SQL string, or NULL if it is not supported.
+   */
+  public function getForUpdateSQL();
+
+  /**
    * Insert delegated methods.
    */
 
