@@ -338,8 +338,8 @@ class Schema extends DatabaseSchema {
       $this->dbalSchemaManager->dropTable($table_full_name);
     }
     catch (\Exception $e) {
-      Database:closeConnection();
-      $connection = Database:getConnection();
+      Database::closeConnection();
+      $connection = Database::getConnection();
       $connection->schema()->dropTable($table);
       //throw new \Exception('bingobongo ' . $e->getMessage());
     }
