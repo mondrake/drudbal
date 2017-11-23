@@ -36,10 +36,12 @@ env:
     - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group field"
     - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group views"
     - DRUDBAL_ENV="sqlite" TEST_ARGS="--group Database --testsuite kernel"
-    - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database,Cache,Config,Entity,Field --testsuite kernel"
+    - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database,Cache,Config,Field --testsuite kernel"
+    - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Entity --testsuite kernel"
     - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group field --testsuite kernel"
     - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group views --testsuite kernel"
     - DRUDBAL_ENV="dbal/sqlite/memory" TEST_ARGS="--group Database --testsuite kernel"
+    - DRUDBAL_ENV="dbal/sqlite/memory" TEST_ARGS="--group Entity --testsuite kernel"
     - DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group Database,Cache,Config --testsuite kernel"
     #- DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group Entity,views,field,Field"
 
@@ -47,7 +49,10 @@ matrix:
   fast_finish: true
   allow_failures:
     - php: 7.2
-    - env: DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group Database,Cache,Config --testsuite kernel"
+    - env:
+      - DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group Database,Cache,Config --testsuite kernel"
+      - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Entity --testsuite kernel"
+      - DRUDBAL_ENV="dbal/sqlite/memory" TEST_ARGS="--group Entity --testsuite kernel"
 
 cache:
   directories:
@@ -155,8 +160,8 @@ before_install:
   - curl https://www.drupal.org/files/issues/2657888-12-d8-sqlsrv_oracle_date_support.patch | git apply
   # [#2912973] Mismatching call to databaseType() in LangcodeToAsciiUpdateTest
   - curl https://www.drupal.org/files/issues/2912973-2.patch | git apply
-  # tbd
-  - curl https://www.drupal.org/files/issues/xx1122b.patch | git apply
+  # [#2925750] EntityDefinitionUpdateTest fails with contrib db driver
+  - curl https://www.drupal.org/files/issues/2925750-2.patch | git apply
 
 install:
   # Copy the vendor dependencies.
