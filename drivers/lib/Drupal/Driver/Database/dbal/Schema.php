@@ -333,7 +333,12 @@ class Schema extends DatabaseSchema {
     // a broader set of capabilities.
     $table_full_name = $this->tableName($table);
     $current_schema = $this->dbalSchema();
-    $this->dbalSchemaManager->dropTable($table_full_name);
+    try {
+      $this->dbalSchemaManager->dropTable($table_full_name);
+    }
+    catch (\Exception $e) {
+      throw new \Exception('bingobongo ' . $e->getMessage());
+    }
 
     // After dropping the table physically, still need to reflect it in the
     // DBAL schema.
