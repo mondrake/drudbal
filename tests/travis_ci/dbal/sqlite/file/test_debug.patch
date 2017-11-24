@@ -1,13 +1,13 @@
 diff --git a/core/modules/field/field.purge.inc b/core/modules/field/field.purge.inc
-index a2b2b92..61cf7bd 100644
+index a2b2b92..76ecf67 100644
 --- a/core/modules/field/field.purge.inc
 +++ b/core/modules/field/field.purge.inc
 @@ -163,6 +163,8 @@ function field_purge_field_storage(FieldStorageDefinitionInterface $field_storag
    $deleted_fields_repository->removeFieldStorageDefinition($field_storage);
  
    // Notify the storage layer.
-+\Drupal\Core\Database\Database->closeConnection();
-+\Drupal\Core\Database\Database->getConnection();
++\Drupal\Core\Database\Database::closeConnection();
++\Drupal\Core\Database\Database::getConnection();
    \Drupal::entityManager()->getStorage($field_storage->getTargetEntityTypeId())->finalizePurge($field_storage);
  
    // Invoke external hooks after the cache is cleared for API consistency.
