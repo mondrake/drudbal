@@ -189,15 +189,15 @@ install:
   # Install Drupal.
   - cp $DRUPAL_PATH/modules/contrib/drudbal/tests/travis_ci/*.php $DRUPAL_PATH/core
   - cd $DRUPAL_PATH/core
-  - php install_cli.php
+  #- php install_cli.php
 
   # Get a webserver running.
-  - drupal server $HOST_ADDR:$HTTP_PORT &
-  - sleep 4s
+  #- drupal server $HOST_ADDR:$HTTP_PORT &
+  #- sleep 4s
 
   # Post install tasks.
   - if [[ ! "$DRUDBAL_ENV" == "dbal/sqlite/memory" ]]; then drupal site:status; fi
-  - php post_install.php
+  #- php post_install.php
 
 script:
   - cd $DRUPAL_PATH/core
@@ -206,7 +206,7 @@ script:
 
 after_script:
   - cd $DRUPAL_PATH/modules/contrib/drudbal
-  - ../../../vendor/bin/phpcs
+  #- ../../../vendor/bin/phpcs
 
 notifications:
   email:
