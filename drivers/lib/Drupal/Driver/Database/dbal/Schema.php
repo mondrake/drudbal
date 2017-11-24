@@ -2,7 +2,6 @@
 
 namespace Drupal\Driver\Database\dbal;
 
-use Drupal\Core\Database\Database;
 use Drupal\Core\Database\SchemaObjectExistsException;
 use Drupal\Core\Database\SchemaObjectDoesNotExistException;
 use Drupal\Core\Database\Schema as DatabaseSchema;
@@ -388,9 +387,6 @@ class Schema extends DatabaseSchema {
       $this->dbalSchemaManager->dropTable($table_full_name);
     }
     catch (\Exception $e) {
-      //Database::closeConnection();
-      //$connection = Database::getConnection();
-      //$connection->schema()->dropTable($table);
       throw new \Exception('bingobongo ' . $e->getMessage() . "\n\n" . $this->formatBacktrace(debug_backtrace()));
     }
 
