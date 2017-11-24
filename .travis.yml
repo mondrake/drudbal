@@ -196,7 +196,7 @@ install:
   #- sleep 4s
 
   # Post install tasks.
-  - if [[ ! "$DRUDBAL_ENV" == "dbal/sqlite/memory" ]]; then drupal site:status; fi
+  #- if [[ ! "$DRUDBAL_ENV" == "dbal/sqlite/memory" ]]; then drupal site:status; fi
   #- php post_install.php
 
 script:
