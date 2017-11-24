@@ -387,7 +387,7 @@ class Schema extends DatabaseSchema {
       $this->dbalSchemaManager->dropTable($table_full_name);
     }
     catch (\Exception $e) {
-      throw new \Exception('bingobongo ' . $e->getMessage() . "\n\n" . $this->formatBacktrace(debug_backtrace()));
+error_log('bingobongo ' . $e->getMessage() . "\n\n" . $this->formatBacktrace(debug_backtrace()));
     }
 
     // After dropping the table physically, still need to reflect it in the
