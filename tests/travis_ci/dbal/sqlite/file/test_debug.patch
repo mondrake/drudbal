@@ -1,16 +1,22 @@
-diff --git a/core/modules/field/field.purge.inc b/core/modules/field/field.purge.inc
-index a2b2b92..76ecf67 100644
---- a/core/modules/field/field.purge.inc
-+++ b/core/modules/field/field.purge.inc
-@@ -163,6 +163,8 @@ function field_purge_field_storage(FieldStorageDefinitionInterface $field_storag
-   $deleted_fields_repository->removeFieldStorageDefinition($field_storage);
- 
-   // Notify the storage layer.
-+\Drupal\Core\Database\Database::closeConnection();
-+\Drupal\Core\Database\Database::getConnection();
-   \Drupal::entityManager()->getStorage($field_storage->getTargetEntityTypeId())->finalizePurge($field_storage);
- 
-   // Invoke external hooks after the cache is cleared for API consistency.
+diff --git a/core/lib/Drupal/Core/Entity/Sql/SqlContentEntityStorageSchema.php b/core/lib/Drupal/Core/Entity/Sql/SqlContentEntityStorageSchema.php
+index 7f9fe4d..aeb5fae 100644
+--- a/core/lib/Drupal/Core/Entity/Sql/SqlContentEntityStorageSchema.php
++++ b/core/lib/Drupal/Core/Entity/Sql/SqlContentEntityStorageSchema.php
+@@ -1397,12 +1397,12 @@ protected function deleteDedicatedTableSchema(FieldStorageDefinitionInterface $s
+     $table_mapping = $this->storage->getTableMapping();
+     $table_name = $table_mapping->getDedicatedDataTableName($storage_definition, $storage_definition->isDeleted());
+     if ($this->database->schema()->tableExists($table_name)) {
+-      $this->database->schema()->dropTable($table_name);
++//      $this->database->schema()->dropTable($table_name);
+     }
+     if ($this->entityType->isRevisionable()) {
+       $revision_table_name = $table_mapping->getDedicatedRevisionTableName($storage_definition, $storage_definition->isDeleted());
+       if ($this->database->schema()->tableExists($revision_table_name)) {
+-        $this->database->schema()->dropTable($revision_table_name);
++//        $this->database->schema()->dropTable($revision_table_name);
+       }
+     }
+     $this->deleteFieldSchemaData($storage_definition);
 diff --git a/core/tests/Drupal/KernelTests/Core/Entity/EntityBundleFieldTest.php b/core/tests/Drupal/KernelTests/Core/Entity/EntityBundleFieldTest.php
 index 22476d7..6e3e18b 100644
 --- a/core/tests/Drupal/KernelTests/Core/Entity/EntityBundleFieldTest.php

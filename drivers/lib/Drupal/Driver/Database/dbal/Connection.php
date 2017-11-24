@@ -202,12 +202,7 @@ class Connection extends DatabaseConnection {
 
         case Database::RETURN_AFFECTED:
           $stmt->allowRowCount = TRUE;
-          $count = $stmt->rowCount();
-          $stmt = NULL;
-if ($this->dbalExtension->getDebugging()) {
-  error_log('Afffected : ' . $count);
-}
-          return $count;
+          return $stmt->rowCount();
 
         case Database::RETURN_INSERT_ID:
           try {
