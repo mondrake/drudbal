@@ -1,12 +1,12 @@
 diff --git a/core/tests/Drupal/KernelTests/Core/Entity/EntityBundleFieldTest.php b/core/tests/Drupal/KernelTests/Core/Entity/EntityBundleFieldTest.php
-index 22476d7..0ab572c 100644
+index 22476d7..6e3e18b 100644
 --- a/core/tests/Drupal/KernelTests/Core/Entity/EntityBundleFieldTest.php
 +++ b/core/tests/Drupal/KernelTests/Core/Entity/EntityBundleFieldTest.php
-@@ -44,6 +44,7 @@ protected function setUp() {
-    * Tests making use of a custom bundle field.
-    */
-   public function testCustomBundleFieldUsage() {
-+\Drupal::database()->getDbalExtension()->setDebugging(TRUE);
-     entity_test_create_bundle('custom');
+@@ -107,6 +107,7 @@ public function testCustomBundleFieldUsage() {
  
-     // Check that an entity with bundle entity_test does not have the custom
+     // Purge field data, and check that the storage definition has been
+     // completely removed once the data is purged.
++\Drupal::database()->getDbalExtension()->setDebugging(TRUE);
+     field_purge_batch(10);
+     $this->assertFalse($this->database->schema()->tableExists($table), 'Custom field table was deleted');
+   }
