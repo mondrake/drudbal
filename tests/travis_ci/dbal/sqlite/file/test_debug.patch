@@ -1,22 +1,26 @@
 diff --git a/core/lib/Drupal/Core/Entity/Sql/SqlContentEntityStorageSchema.php b/core/lib/Drupal/Core/Entity/Sql/SqlContentEntityStorageSchema.php
-index 7f9fe4d..aeb5fae 100644
+index 7f9fe4d..d231b7b 100644
 --- a/core/lib/Drupal/Core/Entity/Sql/SqlContentEntityStorageSchema.php
 +++ b/core/lib/Drupal/Core/Entity/Sql/SqlContentEntityStorageSchema.php
-@@ -1397,12 +1397,12 @@ protected function deleteDedicatedTableSchema(FieldStorageDefinitionInterface $s
+@@ -1396,14 +1396,14 @@ protected function createSharedTableSchema(FieldStorageDefinitionInterface $stor
+   protected function deleteDedicatedTableSchema(FieldStorageDefinitionInterface $storage_definition) {
      $table_mapping = $this->storage->getTableMapping();
      $table_name = $table_mapping->getDedicatedDataTableName($storage_definition, $storage_definition->isDeleted());
-     if ($this->database->schema()->tableExists($table_name)) {
--      $this->database->schema()->dropTable($table_name);
-+//      $this->database->schema()->dropTable($table_name);
-     }
+-    if ($this->database->schema()->tableExists($table_name)) {
++//    if ($this->database->schema()->tableExists($table_name)) {
+       $this->database->schema()->dropTable($table_name);
+-    }
++//    }
      if ($this->entityType->isRevisionable()) {
        $revision_table_name = $table_mapping->getDedicatedRevisionTableName($storage_definition, $storage_definition->isDeleted());
-       if ($this->database->schema()->tableExists($revision_table_name)) {
--        $this->database->schema()->dropTable($revision_table_name);
-+//        $this->database->schema()->dropTable($revision_table_name);
-       }
+-      if ($this->database->schema()->tableExists($revision_table_name)) {
++//      if ($this->database->schema()->tableExists($revision_table_name)) {
+         $this->database->schema()->dropTable($revision_table_name);
+-      }
++//      }
      }
      $this->deleteFieldSchemaData($storage_definition);
+   }
 diff --git a/core/tests/Drupal/KernelTests/Core/Entity/EntityBundleFieldTest.php b/core/tests/Drupal/KernelTests/Core/Entity/EntityBundleFieldTest.php
 index 22476d7..6e3e18b 100644
 --- a/core/tests/Drupal/KernelTests/Core/Entity/EntityBundleFieldTest.php
