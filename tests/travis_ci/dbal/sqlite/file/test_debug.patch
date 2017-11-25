@@ -1,20 +1,15 @@
 diff --git a/core/tests/Drupal/KernelTests/Core/Entity/EntityBundleFieldTest.php b/core/tests/Drupal/KernelTests/Core/Entity/EntityBundleFieldTest.php
-index 22476d7..0238c6d 100644
+index 22476d7..eb46d6f 100644
 --- a/core/tests/Drupal/KernelTests/Core/Entity/EntityBundleFieldTest.php
 +++ b/core/tests/Drupal/KernelTests/Core/Entity/EntityBundleFieldTest.php
-@@ -100,6 +100,7 @@ public function testCustomBundleFieldUsage() {
+@@ -100,6 +100,10 @@ public function testCustomBundleFieldUsage() {
        ->countQuery()
        ->execute();
      $this->assertEqual(1, $result->fetchField(), 'Field data has been deleted');
++    
++    // Ensure the database cursor is closed in order to unlock the table for
++    // dropping.
 +    $result = NULL;
  
      // Ensure that the field no longer exists in the field map.
      $field_map = \Drupal::entityManager()->getFieldMap();
-@@ -107,6 +108,7 @@ public function testCustomBundleFieldUsage() {
- 
-     // Purge field data, and check that the storage definition has been
-     // completely removed once the data is purged.
-+\Drupal::database()->getDbalExtension()->setDebugging(TRUE);
-     field_purge_batch(10);
-     $this->assertFalse($this->database->schema()->tableExists($table), 'Custom field table was deleted');
-   }
