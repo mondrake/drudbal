@@ -1,31 +1,16 @@
-diff --git a/core/lib/Drupal/Core/Entity/Sql/SqlContentEntityStorageSchema.php b/core/lib/Drupal/Core/Entity/Sql/SqlContentEntityStorageSchema.php
-index 7f9fe4d..d231b7b 100644
---- a/core/lib/Drupal/Core/Entity/Sql/SqlContentEntityStorageSchema.php
-+++ b/core/lib/Drupal/Core/Entity/Sql/SqlContentEntityStorageSchema.php
-@@ -1396,14 +1396,14 @@ protected function createSharedTableSchema(FieldStorageDefinitionInterface $stor
-   protected function deleteDedicatedTableSchema(FieldStorageDefinitionInterface $storage_definition) {
-     $table_mapping = $this->storage->getTableMapping();
-     $table_name = $table_mapping->getDedicatedDataTableName($storage_definition, $storage_definition->isDeleted());
--    if ($this->database->schema()->tableExists($table_name)) {
-+//    if ($this->database->schema()->tableExists($table_name)) {
-       $this->database->schema()->dropTable($table_name);
--    }
-+//    }
-     if ($this->entityType->isRevisionable()) {
-       $revision_table_name = $table_mapping->getDedicatedRevisionTableName($storage_definition, $storage_definition->isDeleted());
--      if ($this->database->schema()->tableExists($revision_table_name)) {
-+//      if ($this->database->schema()->tableExists($revision_table_name)) {
-         $this->database->schema()->dropTable($revision_table_name);
--      }
-+//      }
-     }
-     $this->deleteFieldSchemaData($storage_definition);
-   }
 diff --git a/core/tests/Drupal/KernelTests/Core/Entity/EntityBundleFieldTest.php b/core/tests/Drupal/KernelTests/Core/Entity/EntityBundleFieldTest.php
-index 22476d7..6e3e18b 100644
+index 22476d7..0238c6d 100644
 --- a/core/tests/Drupal/KernelTests/Core/Entity/EntityBundleFieldTest.php
 +++ b/core/tests/Drupal/KernelTests/Core/Entity/EntityBundleFieldTest.php
-@@ -107,6 +107,7 @@ public function testCustomBundleFieldUsage() {
+@@ -100,6 +100,7 @@ public function testCustomBundleFieldUsage() {
+       ->countQuery()
+       ->execute();
+     $this->assertEqual(1, $result->fetchField(), 'Field data has been deleted');
++    $result = NULL;
+ 
+     // Ensure that the field no longer exists in the field map.
+     $field_map = \Drupal::entityManager()->getFieldMap();
+@@ -107,6 +108,7 @@ public function testCustomBundleFieldUsage() {
  
      // Purge field data, and check that the storage definition has been
      // completely removed once the data is purged.
