@@ -1,5 +1,5 @@
 diff --git a/core/tests/Drupal/KernelTests/Core/Entity/EntityBundleFieldTest.php b/core/tests/Drupal/KernelTests/Core/Entity/EntityBundleFieldTest.php
-index 22476d7..eb46d6f 100644
+index 22476d7..dbc8ca2 100644
 --- a/core/tests/Drupal/KernelTests/Core/Entity/EntityBundleFieldTest.php
 +++ b/core/tests/Drupal/KernelTests/Core/Entity/EntityBundleFieldTest.php
 @@ -100,6 +100,10 @@ public function testCustomBundleFieldUsage() {
@@ -7,8 +7,8 @@ index 22476d7..eb46d6f 100644
        ->execute();
      $this->assertEqual(1, $result->fetchField(), 'Field data has been deleted');
 +    
-+    // Ensure the database cursor is closed in order to unlock the table for
-+    // dropping.
++    // Ensure the database statement cursor is closed, in order to unlock
++    // the storage table for dropping.
 +    $result = NULL;
  
      // Ensure that the field no longer exists in the field map.
