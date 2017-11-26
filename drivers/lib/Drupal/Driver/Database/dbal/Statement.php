@@ -74,6 +74,107 @@ class Statement implements \IteratorAggregate, StatementInterface {
   protected $fetchClass;
 
   /**
+   * Main data store.
+   *
+   * Used when prefetching all data.
+   *
+   * @var Array
+   */
+  protected $data = [];
+
+  /**
+   * The current row, retrieved in \PDO::FETCH_ASSOC format.
+   *
+   * Used when prefetching all data.
+   *
+   * @var Array
+   */
+  protected $currentRow = NULL;
+
+  /**
+   * The key of the current row.
+   *
+   * Used when prefetching all data.
+   *
+   * @var int
+   */
+  protected $currentKey = NULL;
+
+  /**
+   * The list of column names in this result set.
+   *
+   * Used when prefetching all data.
+   *
+   * @var Array
+   */
+  protected $columnNames = NULL;
+
+  /**
+   * The number of rows affected by the last query.
+   *
+   * Used when prefetching all data.
+   *
+   * @var int
+   */
+  protected $rowCount = NULL;
+
+  /**
+   * The number of rows in this result set.
+   *
+   * Used when prefetching all data.
+   *
+   * @var int
+   */
+  protected $resultRowCount = 0;
+
+  /**
+   * Holds the current fetch style (which will be used by the next fetch).
+   * @see \PDOStatement::fetch()
+   *
+   * Used when prefetching all data.
+   *
+   * @var int
+   */
+  protected $fetchStyle = \PDO::FETCH_OBJ;
+
+  /**
+   * Holds supplementary current fetch options (which will be used by the next fetch).
+   *
+   * Used when prefetching all data.
+   *
+   * @var Array
+   */
+  protected $fetchOptions = [
+    'class' => 'stdClass',
+    'constructor_args' => [],
+    'object' => NULL,
+    'column' => 0,
+  ];
+
+  /**
+   * Holds the default fetch style.
+   *
+   * Used when prefetching all data.
+   *
+   * @var int
+   */
+  protected $defaultFetchStyle = \PDO::FETCH_OBJ;
+
+  /**
+   * Holds supplementary default fetch options.
+   *
+   * Used when prefetching all data.
+   *
+   * @var Array
+   */
+  protected $defaultFetchOptions = [
+    'class' => 'stdClass',
+    'constructor_args' => [],
+    'object' => NULL,
+    'column' => 0,
+  ];
+
+  /**
    * Constructs a Statement object.
    *
    * @param \Drupal\Driver\Database\dbal\Connection $dbh
@@ -129,6 +230,32 @@ class Statement implements \IteratorAggregate, StatementInterface {
     }
 
     $this->dbalStatement->execute($args);
+
+    // Handle via prefetched data if needed.
+    if ($this->dbh->getDbalExtension()->onSelectPrefetchAllData()) {
+      if ($options['return'] == Database::RETURN_AFFECTED) {
+        $this->rowCount = $this->dbalStatement->rowCount();
+      }
+
+      // Fetch all the data from the reply, in order to release any lock
+      // as soon as possible.
+      $this->data = $this->dbalStatement->fetchAll(\PDO::FETCH_ASSOC);
+      // Destroy the statement as soon as possible. See the documentation of
+      // \Drupal\Core\Database\Driver\sqlite\Statement for an explanation.
+      unset($this->dbalStatement);
+
+      $this->resultRowCount = count($this->data);
+
+      if ($this->resultRowCount) {
+        $this->columnNames = array_keys($this->data[0]);
+      }
+      else {
+        $this->columnNames = [];
+      }
+
+      // Initialize the first row in $this->currentRow.
+      $this->next();
+    }
 
     if (!empty($logger)) {
       $query_end = microtime(TRUE);
@@ -244,7 +371,35 @@ class Statement implements \IteratorAggregate, StatementInterface {
   /**
    * {@inheritdoc}
    */
+  public function fetchColumn($index = 0) {
+    // Handle via prefetched data if needed.
+    if ($this->dbh->getDbalExtension()->onSelectPrefetchAllData()) {
+      if (isset($this->currentRow) && isset($this->columnNames[$index])) {
+        // We grab the value directly from $this->data, and format it.
+        $return = $this->currentRow[$this->columnNames[$index]];
+        $this->next();
+        return $return;
+      }
+      else {
+        return FALSE;
+      }
+    }
+    else {
+      return $this->dbalStatement->fetchColumn($index);
+    }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function fetchField($index = 0) {
+    return $this->fetchColumn($index);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+/*  public function fetchField($index = 0) {
     $record = $this->fetch(\PDO::FETCH_ASSOC);
     if (!$record) {
       return FALSE;
@@ -252,7 +407,7 @@ class Statement implements \IteratorAggregate, StatementInterface {
     $cols = array_keys($record);
     $ret = $record[$cols[$index]];
     return empty($ret) ? NULL : (string) $ret;
-  }
+  }*/
 
   /**
    * {@inheritdoc}
@@ -290,6 +445,20 @@ class Statement implements \IteratorAggregate, StatementInterface {
       $this->fetchClass = $a1;
     }
     return TRUE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function next() {
+    if (!empty($this->data)) {
+      $this->currentRow = reset($this->data);
+      $this->currentKey = key($this->data);
+      unset($this->data[$this->currentKey]);
+    }
+    else {
+      $this->currentRow = NULL;
+    }
   }
 
 }
