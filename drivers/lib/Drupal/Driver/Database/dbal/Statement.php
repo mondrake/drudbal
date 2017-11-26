@@ -270,15 +270,38 @@ class Statement implements \IteratorAggregate, StatementInterface {
    * {@inheritdoc}
    */
   public function fetch($mode = NULL, $cursor_orientation = NULL, $cursor_offset = NULL) {
-    if (is_string($mode)) {
-      $this->setFetchMode(\PDO::FETCH_CLASS, $mode);
-      $mode = \PDO::FETCH_CLASS;
+    // Handle via prefetched data if needed.
+    if ($this->dbh->getDbalExtension()->onSelectPrefetchAllData()) {
+      if (isset($this->currentRow)) {
+        // Set the fetch parameter.
+        $this->fetchStyle = isset($fetch_style) ? $fetch_style : $this->defaultFetchStyle;
+        $this->fetchOptions = $this->defaultFetchOptions;
+
+        // Grab the row in the format specified above.
+        $return = $this->current();
+        // Advance the cursor.
+        $this->next();
+
+        // Reset the fetch parameters to the value stored using setFetchMode().
+        $this->fetchStyle = $this->defaultFetchStyle;
+        $this->fetchOptions = $this->defaultFetchOptions;
+        return $return;
+      }
+      else {
+        return FALSE;
+      }
     }
     else {
-      $mode = $mode ?: $this->defaultFetchMode;
-    }
+      if (is_string($mode)) {
+        $this->setFetchMode(\PDO::FETCH_CLASS, $mode);
+        $mode = \PDO::FETCH_CLASS;
+      }
+      else {
+        $mode = $mode ?: $this->defaultFetchMode;
+      }
 
-    return $this->dbh->getDbalExtension()->delegateFetch($this->dbalStatement, $mode, $this->fetchClass);
+      return $this->dbh->getDbalExtension()->delegateFetch($this->dbalStatement, $mode, $this->fetchClass);
+    }
   }
 
   /**
@@ -338,22 +361,43 @@ class Statement implements \IteratorAggregate, StatementInterface {
    * {@inheritdoc}
    */
   public function fetchAllAssoc($key, $fetch = NULL) {
-    $return = [];
-    if (isset($fetch)) {
-      if (is_string($fetch)) {
-        $this->setFetchMode(\PDO::FETCH_CLASS, $fetch);
-      }
-      else {
-        $this->setFetchMode($fetch ?: $this->defaultFetchMode);
-      }
-    }
+    // Handle via prefetched data if needed.
+    if ($this->dbh->getDbalExtension()->onSelectPrefetchAllData()) {
+      $this->fetchStyle = isset($fetch_style) ? $fetch_style : $this->defaultFetchStyle;
+      $this->fetchOptions = $this->defaultFetchOptions;
 
-    while ($record = $this->fetch()) {
-      $record_key = is_object($record) ? $record->$key : $record[$key];
-      $return[$record_key] = $record;
-    }
+      $result = [];
+      // Traverse the array as PHP would have done.
+      while (isset($this->currentRow)) {
+        // Grab the row in its raw \PDO::FETCH_ASSOC format.
+        $result_row = $this->current();
+        $result[$this->currentRow[$key]] = $result_row;
+        $this->next();
+      }
 
-    return $return;
+      // Reset the fetch parameters to the value stored using setFetchMode().
+      $this->fetchStyle = $this->defaultFetchStyle;
+      $this->fetchOptions = $this->defaultFetchOptions;
+      return $result;
+    }
+    else {
+      $return = [];
+      if (isset($fetch)) {
+        if (is_string($fetch)) {
+          $this->setFetchMode(\PDO::FETCH_CLASS, $fetch);
+        }
+        else {
+          $this->setFetchMode($fetch ?: $this->defaultFetchMode);
+        }
+      }
+
+      while ($record = $this->fetch()) {
+        $record_key = is_object($record) ? $record->$key : $record[$key];
+        $return[$record_key] = $record;
+      }
+
+      return $return;
+    }
   }
 
   /**
@@ -446,6 +490,66 @@ class Statement implements \IteratorAggregate, StatementInterface {
       $this->fetchClass = $a1;
     }
     return TRUE;
+  }
+
+  /**
+   * Return the current row formatted according to the current fetch style.
+   *
+   * This is the core method of this class. It grabs the value at the current
+   * array position in $this->data and format it according to $this->fetchStyle
+   * and $this->fetchMode.
+   *
+   * @return mixed
+   *   The current row formatted as requested.
+   */
+  public function current() {
+    if (isset($this->currentRow)) {
+      switch ($this->fetchStyle) {
+        case \PDO::FETCH_ASSOC:
+          return $this->currentRow;
+        case \PDO::FETCH_BOTH:
+          // \PDO::FETCH_BOTH returns an array indexed by both the column name
+          // and the column number.
+          return $this->currentRow + array_values($this->currentRow);
+        case \PDO::FETCH_NUM:
+          return array_values($this->currentRow);
+        case \PDO::FETCH_LAZY:
+          // We do not do lazy as everything is fetched already. Fallback to
+          // \PDO::FETCH_OBJ.
+        case \PDO::FETCH_OBJ:
+          return (object) $this->currentRow;
+        case \PDO::FETCH_CLASS | \PDO::FETCH_CLASSTYPE:
+          $class_name = array_unshift($this->currentRow);
+          // Deliberate no break.
+        case \PDO::FETCH_CLASS:
+          if (!isset($class_name)) {
+            $class_name = $this->fetchOptions['class'];
+          }
+          if (count($this->fetchOptions['constructor_args'])) {
+            $reflector = new \ReflectionClass($class_name);
+            $result = $reflector->newInstanceArgs($this->fetchOptions['constructor_args']);
+          }
+          else {
+            $result = new $class_name();
+          }
+          foreach ($this->currentRow as $k => $v) {
+            $result->$k = $v;
+          }
+          return $result;
+        case \PDO::FETCH_INTO:
+          foreach ($this->currentRow as $k => $v) {
+            $this->fetchOptions['object']->$k = $v;
+          }
+          return $this->fetchOptions['object'];
+        case \PDO::FETCH_COLUMN:
+          if (isset($this->columnNames[$this->fetchOptions['column']])) {
+            return $this->currentRow[$this->columnNames[$this->fetchOptions['column']]];
+          }
+          else {
+            return;
+          }
+      }
+    }
   }
 
   /**
