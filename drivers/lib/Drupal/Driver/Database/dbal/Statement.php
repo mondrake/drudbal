@@ -2,6 +2,7 @@
 
 namespace Drupal\Driver\Database\dbal;
 
+use Drupal\Core\Database\Database;
 use Drupal\Core\Database\DatabaseExceptionWrapper;
 use Drupal\Core\Database\StatementInterface;
 use Drupal\Core\Database\RowCountException;
