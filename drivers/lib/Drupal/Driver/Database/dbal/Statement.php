@@ -308,31 +308,57 @@ class Statement implements \IteratorAggregate, StatementInterface {
    * {@inheritdoc}
    */
   public function fetchAll($mode = NULL, $column_index = NULL, $constructor_arguments = NULL) {
-    if (is_string($mode)) {
-      $this->setFetchMode(\PDO::FETCH_CLASS, $mode);
-      $mode = \PDO::FETCH_CLASS;
+    // Handle via prefetched data if needed.
+    if ($this->dbh->getDbalExtension()->onSelectPrefetchAllData()) {
+      $this->fetchStyle = isset($mode) ? $mode : $this->defaultFetchStyle;
+      $this->fetchOptions = $this->defaultFetchOptions;
+      if (isset($column_index)) {
+        $this->fetchOptions['column'] = $column_index;
+      }
+      if (isset($constructor_arguments)) {
+        $this->fetchOptions['constructor_args'] = $constructor_arguments;
+      }
+
+      $result = [];
+      // Traverse the array as PHP would have done.
+      while (isset($this->currentRow)) {
+        // Grab the row in the format specified above.
+        $result[] = $this->current();
+        $this->next();
+      }
+
+      // Reset the fetch parameters to the value stored using setFetchMode().
+      $this->fetchStyle = $this->defaultFetchStyle;
+      $this->fetchOptions = $this->defaultFetchOptions;
+      return $result;
     }
     else {
-      $mode = $mode ?: $this->defaultFetchMode;
-    }
+      if (is_string($mode)) {
+        $this->setFetchMode(\PDO::FETCH_CLASS, $mode);
+        $mode = \PDO::FETCH_CLASS;
+      }
+      else {
+        $mode = $mode ?: $this->defaultFetchMode;
+      }
 
-    $rows = [];
-    if (\PDO::FETCH_COLUMN == $mode) {
-      if ($column_index === NULL) {
-        $column_index = 0;
+      $rows = [];
+      if (\PDO::FETCH_COLUMN == $mode) {
+        if ($column_index === NULL) {
+          $column_index = 0;
+        }
+        while (($record = $this->fetch(\PDO::FETCH_ASSOC)) !== FALSE) {
+          $cols = array_keys($record);
+          $rows[] = $record[$cols[$column_index]];
+        }
       }
-      while (($record = $this->fetch(\PDO::FETCH_ASSOC)) !== FALSE) {
-        $cols = array_keys($record);
-        $rows[] = $record[$cols[$column_index]];
+      else {
+        while (($row = $this->fetch($mode)) !== FALSE) {
+          $rows[] = $row;
+        }
       }
-    }
-    else {
-      while (($row = $this->fetch($mode)) !== FALSE) {
-        $rows[] = $row;
-      }
-    }
 
-    return $rows;
+      return $rows;
+    }
   }
 
   /**
@@ -353,8 +379,24 @@ class Statement implements \IteratorAggregate, StatementInterface {
    * {@inheritdoc}
    */
   public function fetchCol($index = 0) {
-    $ret = $this->fetchAll(\PDO::FETCH_COLUMN, $index);
-    return $ret;
+    // Handle via prefetched data if needed.
+    if ($this->dbh->getDbalExtension()->onSelectPrefetchAllData()) {
+      if (isset($this->columnNames[$index])) {
+        $result = [];
+        // Traverse the array as PHP would have done.
+        while (isset($this->currentRow)) {
+          $result[] = $this->currentRow[$this->columnNames[$index]];
+          $this->next();
+        }
+        return $result;
+      }
+      else {
+        return [];
+      }
+    }
+    else {
+      return $this->fetchAll(\PDO::FETCH_COLUMN, $index);
+    }
   }
 
   /**
@@ -477,14 +519,54 @@ class Statement implements \IteratorAggregate, StatementInterface {
    * {@inheritdoc}
    */
   public function fetchAssoc() {
-    return $this->fetch(\PDO::FETCH_ASSOC);
+    // Handle via prefetched data if needed.
+    if ($this->dbh->getDbalExtension()->onSelectPrefetchAllData()) {
+      if (isset($this->currentRow)) {
+        $result = $this->currentRow;
+        $this->next();
+        return $result;
+      }
+      else {
+        return FALSE;
+      }
+    }
+    else {
+      return $this->fetch(\PDO::FETCH_ASSOC);
+    }
   }
 
   /**
    * {@inheritdoc}
    */
   public function fetchObject() {
-    return $this->fetch(\PDO::FETCH_OBJ);
+    // Handle via prefetched data if needed.
+    if ($this->dbh->getDbalExtension()->onSelectPrefetchAllData()) {
+      if (isset($this->currentRow)) {
+        if (!isset($class_name)) {
+          // Directly cast to an object to avoid a function call.
+          $result = (object) $this->currentRow;
+        }
+        else {
+          $this->fetchStyle = \PDO::FETCH_CLASS;
+          $this->fetchOptions = ['constructor_args' => $constructor_args];
+          // Grab the row in the format specified above.
+          $result = $this->current();
+          // Reset the fetch parameters to the value stored using setFetchMode().
+          $this->fetchStyle = $this->defaultFetchStyle;
+          $this->fetchOptions = $this->defaultFetchOptions;
+        }
+
+        $this->next();
+
+        return $result;
+      }
+      else {
+        return FALSE;
+      }
+    }
+    else {
+      return $this->fetch(\PDO::FETCH_OBJ);
+    }
   }
 
   /**
@@ -509,11 +591,35 @@ class Statement implements \IteratorAggregate, StatementInterface {
    * {@inheritdoc}
    */
   public function setFetchMode($mode, $a1 = NULL, $a2 = []) {
-    $this->defaultFetchMode = $mode;
-    if ($mode === \PDO::FETCH_CLASS) {
-      $this->fetchClass = $a1;
+    // Handle via prefetched data if needed.
+    if ($this->dbh->getDbalExtension()->onSelectPrefetchAllData()) {
+      $this->defaultFetchStyle = $mode;
+      switch ($mode) {
+        case \PDO::FETCH_CLASS:
+          $this->defaultFetchOptions['class'] = $a1;
+          if ($a2) {
+            $this->defaultFetchOptions['constructor_args'] = $a2;
+          }
+          break;
+        case \PDO::FETCH_COLUMN:
+          $this->defaultFetchOptions['column'] = $a1;
+          break;
+        case \PDO::FETCH_INTO:
+          $this->defaultFetchOptions['object'] = $a1;
+          break;
+      }
+
+      // Set the values for the next fetch.
+      $this->fetchStyle = $this->defaultFetchStyle;
+      $this->fetchOptions = $this->defaultFetchOptions;
     }
-    return TRUE;
+    else {
+      $this->defaultFetchMode = $mode;
+      if ($mode === \PDO::FETCH_CLASS) {
+        $this->fetchClass = $a1;
+      }
+      return TRUE;
+    }
   }
 
   /**
