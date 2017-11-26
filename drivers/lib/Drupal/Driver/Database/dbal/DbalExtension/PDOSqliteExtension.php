@@ -282,6 +282,13 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
+  public function onSelectPrefetchAllData() {
+    return TRUE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function alterStatement(&$query, array &$args) {
     // The PDO SQLite layer doesn't replace numeric placeholders in queries
     // correctly, and this makes numeric expressions (such as

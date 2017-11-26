@@ -255,6 +255,13 @@ class AbstractExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
+  public function onSelectPrefetchAllData() {
+    return FALSE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function delegateNamedPlaceholdersSupport() {
     return TRUE;
   }
