@@ -65,6 +65,7 @@ class PDOSqliteExtension extends AbstractExtension {
    * {@inheritdoc}
    */
   public function delegateQueryExceptionProcess($query, array $args, array $options, $message, \Exception $e) {
+throw new DatabaseExceptionWrapper($message, 0, $e);
     if ($e instanceof DatabaseExceptionWrapper) {
       $e = $e->getPrevious();
     }
