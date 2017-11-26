@@ -404,13 +404,32 @@ class Statement implements \IteratorAggregate, StatementInterface {
    * {@inheritdoc}
    */
   public function fetchAllKeyed($key_index = 0, $value_index = 1) {
-    $return = [];
-    $this->setFetchMode(\PDO::FETCH_ASSOC);
-    while ($record = $this->fetch(\PDO::FETCH_ASSOC)) {
-      $cols = array_keys($record);
-      $return[$record[$cols[$key_index]]] = $record[$cols[$value_index]];
+    // Handle via prefetched data if needed.
+    if ($this->dbh->getDbalExtension()->onSelectPrefetchAllData()) {
+      if (!isset($this->columnNames[$key_index]) || !isset($this->columnNames[$value_index])) {
+        return [];
+      }
+
+      $key = $this->columnNames[$key_index];
+      $value = $this->columnNames[$value_index];
+
+      $result = [];
+      // Traverse the array as PHP would have done.
+      while (isset($this->currentRow)) {
+        $result[$this->currentRow[$key]] = $this->currentRow[$value];
+        $this->next();
+      }
+      return $result;
     }
-    return $return;
+    else {
+      $return = [];
+      $this->setFetchMode(\PDO::FETCH_ASSOC);
+      while ($record = $this->fetch(\PDO::FETCH_ASSOC)) {
+        $cols = array_keys($record);
+        $return[$record[$cols[$key_index]]] = $record[$cols[$value_index]];
+      }
+      return $return;
+    }
   }
 
   /**
@@ -474,7 +493,12 @@ class Statement implements \IteratorAggregate, StatementInterface {
   public function rowCount() {
     // SELECT query should not use the method.
     if ($this->allowRowCount) {
-      return $this->dbh->getDbalExtension()->delegateRowCount($this->dbalStatement);
+      if ($this->dbh->getDbalExtension()->onSelectPrefetchAllData()) {
+        return $this->rowCount;
+      }
+      else {
+        return $this->dbh->getDbalExtension()->delegateRowCount($this->dbalStatement);
+      }
     }
     else {
       throw new RowCountException();
