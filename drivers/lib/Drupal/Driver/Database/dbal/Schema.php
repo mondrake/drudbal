@@ -334,6 +334,9 @@ class Schema extends DatabaseSchema {
     $table_full_name = $this->tableName($table);
     $current_schema = $this->dbalSchema();
     $this->dbalSchemaManager->dropTable($table_full_name);
+
+    // After dropping the table physically, still need to reflect it in the
+    // DBAL schema.
     try {
       $current_schema->dropTable($table_full_name);
     }
@@ -342,10 +345,9 @@ class Schema extends DatabaseSchema {
         // If the table is not in the DBAL schema, then we are good anyway.
         return TRUE;
       }
-      else {
-        throw $e;
-      }
+      throw $e;
     }
+
     return TRUE;
   }
 
