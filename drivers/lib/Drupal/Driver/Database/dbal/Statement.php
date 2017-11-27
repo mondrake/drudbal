@@ -405,7 +405,7 @@ class Statement implements \IteratorAggregate, StatementInterface {
   public function fetchAllAssoc($key, $fetch = NULL) {
     // Handle via prefetched data if needed.
     if ($this->dbh->getDbalExtension()->onSelectPrefetchAllData()) {
-      $this->fetchStyle = isset($fetch_style) ? $fetch_style : $this->defaultFetchStyle;
+      $this->fetchStyle = isset($fetch) ? $fetch : $this->defaultFetchStyle;
       $this->fetchOptions = $this->defaultFetchOptions;
 
       $result = [];
