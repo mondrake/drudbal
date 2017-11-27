@@ -202,6 +202,7 @@ script:
   - cd $DRUPAL_PATH/core
   # Only run selected tests to avoid Travis timeout.
   - ../vendor/bin/phpunit --verbose $TEST_ARGS
+  - ls -alR $DRUPAL_PATH/sites/default
 
 after_script:
   - cd $DRUPAL_PATH/modules/contrib/drudbal
