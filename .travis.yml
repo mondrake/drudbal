@@ -132,7 +132,9 @@ before_install:
       fi
 
   # Always get latest Drupal core.
-  - git clone http://git.drupal.org/project/drupal.git $DRUPAL_PATH
+  #- git clone http://git.drupal.org/project/drupal.git $DRUPAL_PATH
+  - mkdir -p $DRUPAL_PATH
+  - cp -r $DRUPAL_STAGING_DIR/. $DRUPAL_PATH
   - cd $DRUPAL_PATH
 
   # Apply Drupal core patches.
