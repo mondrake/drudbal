@@ -313,6 +313,14 @@ interface DbalExtensionInterface {
    */
 
   /**
+   * Informs the Statement on whether all data needs to be fetched on SELECT.
+   *
+   * @return bool
+   *   TRUE if data has to be prefetched, FALSE otherwise.
+   */
+  public function onSelectPrefetchAllData();
+
+  /**
    * Informs the Statement on whether named placeholders are supported.
    *
    * @return bool
