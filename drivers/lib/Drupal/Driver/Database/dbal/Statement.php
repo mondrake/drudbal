@@ -492,7 +492,8 @@ class Statement implements \IteratorAggregate, StatementInterface {
       }
     }
     else {
-      return (string) $this->dbalStatement->fetchColumn($index);
+      $ret = $this->dbalStatement->fetchColumn($index);
+      return $ret === NULL ? NULL : (string) $ret;
     }
   }
 
@@ -502,19 +503,6 @@ class Statement implements \IteratorAggregate, StatementInterface {
   public function fetchField($index = 0) {
     return $this->fetchColumn($index);
   }
-
-  /**
-   * {@inheritdoc}
-   */
-/*  public function fetchField($index = 0) {
-    $record = $this->fetch(\PDO::FETCH_ASSOC);
-    if (!$record) {
-      return FALSE;
-    }
-    $cols = array_keys($record);
-    $ret = $record[$cols[$index]];
-    return empty($ret) ? NULL : (string) $ret;
-  }*/
 
   /**
    * {@inheritdoc}
