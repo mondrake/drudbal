@@ -12,7 +12,7 @@ use Doctrine\DBAL\Schema\Schema as DbalSchema;
 use Doctrine\DBAL\Schema\SchemaException as DbalSchemaException;
 use Doctrine\DBAL\Types\Type as DbalType;
 
-// @todo DBAL 2.6.0:
+// @todo DBAL 2.6.3:
 // Added support for column inline comments in SQLite, check status (the declaration of support + the fact that on add/change field it does not work)
 
 /**

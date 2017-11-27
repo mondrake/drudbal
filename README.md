@@ -55,7 +55,7 @@ Very rough instructions to install Drupal from scratch with this db driver under
 
 2. Get Doctrine DBAL, use latest version:
 ```
-$ composer require doctrine/dbal:^2.6.0
+$ composer require doctrine/dbal:^2.6.3
 ```
 
 3. Clone this repository to your contrib modules path:
