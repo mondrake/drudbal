@@ -36,7 +36,8 @@ env:
     #- DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group field"
     #- DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group views"
     #- DRUDBAL_ENV="sqlite" TEST_ARGS="--group Database,Entity --testsuite kernel"
-    - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database,Cache,Config,Entity,Field --testsuite functional"
+    #- DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database,Cache,Config,Entity,Field --testsuite functional"
+    - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="modules/system/tests/src/Functional/Entity/Update/SqlContentEntityStorageSchemaIndexFilledTest.php"
     #- DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group field --testsuite kernel"
     #- DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group views --testsuite kernel"
     #-# DRUDBAL_ENV="dbal/sqlite/memory" TEST_ARGS="--group Database,Entity --testsuite kernel"
@@ -198,7 +199,7 @@ install:
 script:
   - cd $DRUPAL_PATH/core
   # Only run selected tests to avoid Travis timeout.
-  - ../vendor/bin/phpunit $TEST_ARGS
+  - ../vendor/bin/phpunit --verbose $TEST_ARGS
 
 after_script:
   - cd $DRUPAL_PATH/modules/contrib/drudbal

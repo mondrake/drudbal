@@ -293,12 +293,12 @@ class Connection extends DatabaseConnection {
     try {
       $dbal_connection_options = static::mapConnectionOptionsToDbal($connection_options);
       $dbal_extension_class::preConnectionOpen($connection_options, $dbal_connection_options);
-error_log(var_export($connection_options, TRUE));
-error_log(var_export($dbal_connection_options, TRUE));
       $dbal_connection = DBALDriverManager::getConnection($dbal_connection_options);
       $dbal_extension_class::postConnectionOpen($dbal_connection, $connection_options, $dbal_connection_options);
     }
     catch (DbalConnectionException $e) {
+error_log(var_export($connection_options, TRUE));
+error_log(var_export($dbal_connection_options, TRUE));
       throw new DatabaseExceptionWrapper($e->getMessage(), $e->getCode(), $e);
     }
     return $dbal_connection;
