@@ -297,8 +297,6 @@ class Connection extends DatabaseConnection {
       $dbal_extension_class::postConnectionOpen($dbal_connection, $connection_options, $dbal_connection_options);
     }
     catch (DbalConnectionException $e) {
-error_log(var_export($connection_options, TRUE));
-error_log(var_export($dbal_connection_options, TRUE));
       throw new DatabaseExceptionWrapper($e->getMessage(), $e->getCode(), $e);
     }
     return $dbal_connection;
