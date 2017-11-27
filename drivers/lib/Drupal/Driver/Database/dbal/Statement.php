@@ -492,7 +492,7 @@ class Statement implements \IteratorAggregate, StatementInterface {
       }
     }
     else {
-      return $this->dbalStatement->fetchColumn($index);
+      return (string) $this->dbalStatement->fetchColumn($index);
     }
   }
 
