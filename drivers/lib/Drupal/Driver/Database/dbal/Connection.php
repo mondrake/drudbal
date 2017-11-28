@@ -86,6 +86,26 @@ class Connection extends DatabaseConnection {
    */
   protected $dbalPlatform;
 
+/**
+ * All databases attached to the current database. This is used to allow
+ * prefixes to be safely handled without locking the table
+ *
+ * @var array
+ */
+protected $attachedDatabases = [];
+
+/**
+ * Whether or not a table has been dropped this request: the destructor will
+ * only try to get rid of unnecessary databases if there is potential of them
+ * being empty.
+ *
+ * This variable is set to public because Schema needs to
+ * access it. However, it should not be manually set.
+ *
+ * @var bool
+ */
+public $tableDropped = FALSE;
+
   /**
    * Constructs a Connection object.
    */
@@ -101,6 +121,25 @@ class Connection extends DatabaseConnection {
     // Unset $this->connection so that __get() can return the wrapped
     // DbalConnection on the extension instead.
     unset($this->connection);
+
+// Attach one database for each registered prefix.
+$prefixes = $this->prefixes;
+foreach ($prefixes as &$prefix) {
+  // Empty prefix means query the main database -- no need to attach anything.
+  if (!empty($prefix)) {
+    // Only attach the database once.
+    if (!isset($this->attachedDatabases[$prefix])) {
+      $this->attachedDatabases[$prefix] = $prefix;
+      $this->query('ATTACH DATABASE :database AS :prefix', [':database' => $connection_options['database'] . '-' . $prefix, ':prefix' => $prefix]);
+    }
+
+    // Add a ., so queries become prefix.table, which is proper syntax for
+    // querying an attached database.
+    $prefix .= '.';
+  }
+}
+// Regenerate the prefixes replacement table.
+$this->setPrefix($prefixes);
   }
 
   /**
@@ -294,9 +333,9 @@ class Connection extends DatabaseConnection {
       $dbal_connection_options = static::mapConnectionOptionsToDbal($connection_options);
       $dbal_extension_class::preConnectionOpen($connection_options, $dbal_connection_options);
       $dbal_connection = DBALDriverManager::getConnection($dbal_connection_options);
-error_log(var_export($connection_options, TRUE));
-error_log(var_export($dbal_connection_options, TRUE));
-error_log(var_export($dbal_connection, TRUE));
+//error_log(var_export($connection_options, TRUE));
+//error_log(var_export($dbal_connection_options, TRUE));
+//error_log(var_export($dbal_connection, TRUE));
       $dbal_extension_class::postConnectionOpen($dbal_connection, $connection_options, $dbal_connection_options);
     }
     catch (DbalConnectionException $e) {
