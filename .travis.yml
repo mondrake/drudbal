@@ -37,6 +37,7 @@ env:
     #- DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group views"
     #- DRUDBAL_ENV="sqlite" TEST_ARGS="--group Database,Entity --testsuite kernel"
     #- DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database,Cache,Config,Entity,Field --testsuite functional"
+    - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="modules/system/tests/src/Functional/Entity/Update/SqlContentEntityStorageSchemaIndexFilledTest.php"
     - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="modules/system/tests/src/Functional/Entity/Update/SqlContentEntityStorageSchemaIndexFilledTest.php"
     #- DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group field --testsuite kernel"
     #- DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group views --testsuite kernel"
@@ -188,15 +189,15 @@ install:
   # Install Drupal.
   - cp $DRUPAL_PATH/modules/contrib/drudbal/tests/travis_ci/*.php $DRUPAL_PATH/core
   - cd $DRUPAL_PATH/core
-  - php install_cli.php
+  #- php install_cli.php
 
   # Get a webserver running.
   - drupal server $HOST_ADDR:$HTTP_PORT &
   - sleep 4s
 
   # Post install tasks.
-  - if [[ ! "$DRUDBAL_ENV" == "dbal/sqlite/memory" ]]; then drupal site:status; fi
-  - php post_install.php
+  #- if [[ ! "$DRUDBAL_ENV" == "dbal/sqlite/memory" ]]; then drupal site:status; fi
+  #- php post_install.php
 
 script:
   - cd $DRUPAL_PATH/core

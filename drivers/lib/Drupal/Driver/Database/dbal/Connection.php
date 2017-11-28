@@ -333,9 +333,9 @@ $this->setPrefix($prefixes);*/
       $dbal_connection_options = static::mapConnectionOptionsToDbal($connection_options);
       $dbal_extension_class::preConnectionOpen($connection_options, $dbal_connection_options);
       $dbal_connection = DBALDriverManager::getConnection($dbal_connection_options);
-error_log(var_export($connection_options, TRUE));
-error_log(var_export($dbal_connection_options, TRUE));
-error_log(var_export($dbal_connection, TRUE));
+//error_log(var_export($connection_options, TRUE));
+//error_log(var_export($dbal_connection_options, TRUE));
+//error_log(var_export($dbal_connection, TRUE));
       $dbal_extension_class::postConnectionOpen($dbal_connection, $connection_options, $dbal_connection_options);
     }
     catch (DbalConnectionException $e) {
