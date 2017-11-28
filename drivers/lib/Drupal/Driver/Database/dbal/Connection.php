@@ -123,7 +123,7 @@ public $tableDropped = FALSE;
     unset($this->connection);
 
 // Attach one database for each registered prefix.
-$prefixes = $this->prefixes;
+/*$prefixes = $this->prefixes;
 foreach ($prefixes as &$prefix) {
   // Empty prefix means query the main database -- no need to attach anything.
   if (!empty($prefix)) {
@@ -139,7 +139,7 @@ foreach ($prefixes as &$prefix) {
   }
 }
 // Regenerate the prefixes replacement table.
-$this->setPrefix($prefixes);
+$this->setPrefix($prefixes);*/
   }
 
   /**
