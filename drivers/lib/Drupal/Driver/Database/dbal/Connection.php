@@ -121,25 +121,6 @@ public $tableDropped = FALSE;
     // Unset $this->connection so that __get() can return the wrapped
     // DbalConnection on the extension instead.
     unset($this->connection);
-
-// Attach one database for each registered prefix.
-/*$prefixes = $this->prefixes;
-foreach ($prefixes as &$prefix) {
-  // Empty prefix means query the main database -- no need to attach anything.
-  if (!empty($prefix)) {
-    // Only attach the database once.
-    if (!isset($this->attachedDatabases[$prefix])) {
-      $this->attachedDatabases[$prefix] = $prefix;
-      $this->query('ATTACH DATABASE :database AS :prefix', [':database' => $connection_options['database'] . '-' . $prefix, ':prefix' => $prefix]);
-    }
-
-    // Add a ., so queries become prefix.table, which is proper syntax for
-    // querying an attached database.
-    $prefix .= '.';
-  }
-}
-// Regenerate the prefixes replacement table.
-$this->setPrefix($prefixes);*/
   }
 
   /**
