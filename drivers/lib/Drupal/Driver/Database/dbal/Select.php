@@ -5,7 +5,7 @@ namespace Drupal\Driver\Database\dbal;
 use Drupal\Core\Database\Query\Select as QuerySelect;
 use Drupal\Core\Database\Query\SelectInterface;
 
-// @todo DBAL 2.6.0:
+// @todo DBAL 2.6.3:
 // Is there a way to specify SELECT DISTINCT??
 
 /**
