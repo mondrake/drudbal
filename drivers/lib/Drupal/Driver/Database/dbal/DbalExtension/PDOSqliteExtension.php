@@ -142,7 +142,7 @@ class PDOSqliteExtension extends AbstractExtension {
       $dbal_connection_options['path'] = 'file::memory:?cache=shared';
     }
     else {
-      $dbal_connection_options['path'] = $connection_options['database'];
+      $dbal_connection_options['path'] = DRUPAL_ROOT; //$connection_options['database'];
       if (isset($connection_options['prefix']['default']) && $connection_options['prefix']['default'] !== '') {
         $dbal_connection_options['path'] = $dbal_connection_options['path'] . '-' . $connection_options['prefix']['default'];
         $dbal_connection_options['url'] = $dbal_connection_options['url'] . '-' . $connection_options['prefix']['default'];
