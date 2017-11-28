@@ -203,7 +203,7 @@ script:
   - sudo chmod 777 ../sites/default/files
   # Only run selected tests to avoid Travis timeout.
   - ../vendor/bin/phpunit --verbose $TEST_ARGS
-  #- ls -alR $DRUPAL_PATH/sites/default
+  - ls -alR $DRUPAL_PATH/sites/default
   - ls -al $DRUPAL_PATH
 
 after_script:
