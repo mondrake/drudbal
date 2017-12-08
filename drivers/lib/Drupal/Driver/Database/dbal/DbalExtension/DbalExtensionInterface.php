@@ -313,6 +313,14 @@ interface DbalExtensionInterface {
    */
 
   /**
+   * Informs the Statement on whether all data needs to be fetched on SELECT.
+   *
+   * @return bool
+   *   TRUE if data has to be prefetched, FALSE otherwise.
+   */
+  public function onSelectPrefetchAllData();
+
+  /**
    * Informs the Statement on whether named placeholders are supported.
    *
    * @return bool
@@ -363,6 +371,18 @@ interface DbalExtensionInterface {
    *   statement.
    */
   public function delegateRowCount(DbalStatement $dbal_statement);
+
+  /**
+   * Select delegated methods.
+   */
+
+  /**
+   * Returns the SQL snippet that can be used for 'FOR UPDATE' selects.
+   *
+   * @return string|null
+   *   The SQL string, or NULL if it is not supported.
+   */
+  public function getForUpdateSQL();
 
   /**
    * Insert delegated methods.

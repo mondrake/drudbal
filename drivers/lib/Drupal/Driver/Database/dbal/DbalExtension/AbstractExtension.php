@@ -255,6 +255,13 @@ class AbstractExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
+  public function onSelectPrefetchAllData() {
+    return FALSE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function delegateNamedPlaceholdersSupport() {
     return TRUE;
   }
@@ -278,6 +285,17 @@ class AbstractExtension implements DbalExtensionInterface {
    */
   public function delegateRowCount(DbalStatement $dbal_statement) {
     return $dbal_statement->rowCount();
+  }
+
+  /**
+   * Select delegated methods.
+   */
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getForUpdateSQL() {
+    return ' FOR UPDATE';
   }
 
   /**

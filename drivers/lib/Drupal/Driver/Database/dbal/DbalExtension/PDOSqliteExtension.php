@@ -282,6 +282,13 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
+  public function onSelectPrefetchAllData() {
+    return TRUE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function alterStatement(&$query, array &$args) {
     // The PDO SQLite layer doesn't replace numeric placeholders in queries
     // correctly, and this makes numeric expressions (such as
@@ -355,6 +362,17 @@ class PDOSqliteExtension extends AbstractExtension {
       $dbal_statement->setFetchMode($mode, $fetch_class);
     }
     return $dbal_statement->fetch($mode);
+  }
+
+  /**
+   * Select delegated methods.
+   */
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getForUpdateSQL() {
+    return NULL;
   }
 
   /**
