@@ -52,6 +52,9 @@ cache:
     - $DRUPAL_STAGING_DIR
     - $ORACLE_DOWNLOAD_DIR
 
+before_cache:
+  - travis cache --delete
+
 before_install:
   # Set variables.
   - |
@@ -119,6 +122,11 @@ before_install:
       if [[ ! -f $DRUPAL_STAGING_DIR/index.php ]]; then
         git clone http://git.drupal.org/project/drupal.git $DRUPAL_STAGING_DIR
         cd $DRUPAL_STAGING_DIR
+        # --- PHP 7.2 patches.
+        # [#2927806] Use PHPUnit 6 for testing when PHP version >= 7.2
+        curl https://www.drupal.org/files/issues/2927806-57.patch | git apply
+        # [#2923015] [PHP 7.2] Incompatible method declarations
+        #- curl https://www.drupal.org/files/issues/2923015.patch | git apply
         composer install --no-progress --no-suggest
         # Get Drupal Console
         composer require "drupal/console" --no-progress --no-suggest
@@ -153,13 +161,6 @@ before_install:
   - curl https://www.drupal.org/files/issues/2657888-12-d8-sqlsrv_oracle_date_support.patch | git apply
   # [#2912973] Mismatching call to databaseType() in LangcodeToAsciiUpdateTest
   - curl https://www.drupal.org/files/issues/2912973-2.patch | git apply
-  # --- PHP 7.2 patches.
-  # [#2853503] Remove all assert('string') calls from Drupal core because deprecated in PHP 7.2
-  - curl https://www.drupal.org/files/issues/2853503-41.patch | git apply
-  # [#2915820] [PHP 7.2] FormValidator: Parameter must be an array or an object that implements Countable
-  - curl https://www.drupal.org/files/issues/29158200-form-16.patch | git apply
-  # [#2923015] [PHP 7.2] Incompatible method declarations
-  - curl https://www.drupal.org/files/issues/2923015.patch | git apply
   
 install:
   # Copy the vendor dependencies.
