@@ -51,7 +51,6 @@ matrix:
 
 cache:
   directories:
-    - $DRUPAL_STAGING_DIR
     - $ORACLE_DOWNLOAD_DIR
 
 before_install:
@@ -127,11 +126,11 @@ before_install:
         composer require "doctrine/common:^2.7.1" --no-progress --no-suggest
         # Get Doctrine DBAL
         composer require "doctrine/dbal:~2.6.3" --no-progress --no-suggest
-        composer update --no-progress --no-suggest
       fi
 
-  # Always get latest Drupal core.
-  - git clone http://git.drupal.org/project/drupal.git $DRUPAL_PATH
+  # Copy staged Drupal core to running path.
+  - mkdir -p $DRUPAL_PATH
+  - cp -r $DRUPAL_STAGING_DIR/. $DRUPAL_PATH
   - cd $DRUPAL_PATH
 
   # Apply Drupal core patches.
