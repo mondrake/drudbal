@@ -158,11 +158,6 @@ before_install:
   - curl https://www.drupal.org/files/issues/2930197-2.patch | git apply
 
 install:
-  # Copy the vendor dependencies.
-  - mkdir -p $DRUPAL_PATH/vendor
-  - cp -r $DRUPAL_STAGING_DIR/vendor/. $DRUPAL_PATH/vendor
-  - cp -r $DRUPAL_STAGING_DIR/composer.* $DRUPAL_PATH
-
   # Copy the repo to the modules/contrib directory.
   - mkdir -p $DRUPAL_PATH/modules/contrib/drudbal
   - cp -r $HOME/build/mondrake/drudbal $DRUPAL_PATH/modules/contrib
@@ -199,11 +194,11 @@ install:
 script:
   - cd $DRUPAL_PATH/core
   # Only run selected tests to avoid Travis timeout.
-  - ../vendor/bin/phpunit $TEST_ARGS
+  - $DRUPAL_PATH/vendor/bin/phpunit $TEST_ARGS
 
 after_script:
   - cd $DRUPAL_PATH/modules/contrib/drudbal
-  - ../../../vendor/bin/phpcs
+  - $DRUPAL_PATH/vendor/bin/phpcs
 
 notifications:
   email:
