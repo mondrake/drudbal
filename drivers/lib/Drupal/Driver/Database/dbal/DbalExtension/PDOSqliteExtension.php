@@ -322,7 +322,7 @@ class PDOSqliteExtension extends AbstractExtension {
       'A' => '',
     ];
 
-    $format = strtr($format, static::$replace);
+    $format = strtr($format, $replace);
 
     // SQLite does not have a ISO week substitution string, so it needs special
     // handling.
