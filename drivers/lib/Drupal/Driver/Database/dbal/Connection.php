@@ -87,6 +87,13 @@ class Connection extends DatabaseConnection {
   protected $dbalPlatform;
 
   /**
+   * The platform SQL provider.
+   *
+   * @var \Drupal\Core\Database\PlatformSql|null
+   */
+  protected $platformSql;
+
+  /**
    * Constructs a Connection object.
    */
   public function __construct(DbalConnection $dbal_connection, array $connection_options = []) {
@@ -127,6 +134,21 @@ class Connection extends DatabaseConnection {
    */
   public function clientVersion() {
     return $this->dbalExtension->delegateClientVersion();
+  }
+
+  /**
+   * Returns a PlatformSql object to retrieve platform specific SQL snippets.
+   *
+   * This method will lazy-load the appropriate class.
+   *
+   * @return \Drupal\Core\Database\PlatformSql
+   *   The PlatformSql object for this connection.
+   */
+  public function getPlatformSql() {
+    if (empty($this->platformSql)) {
+      $this->platformSql = new PlatformSql($this);
+    }
+    return $this->platformSql;
   }
 
   /**

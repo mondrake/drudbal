@@ -42,7 +42,7 @@ env:
     #- DRUDBAL_ENV="dbal/sqlite/memory" TEST_ARGS="--group Database,Entity --testsuite kernel"
     #- DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group Database,Cache,Config --testsuite kernel"
     #- DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group Entity,views,field,Field"
-    - DRUDBAL_ENV=""dbal/oci8"" TEST_ARGS="--group views --testsuite kernel"
+    - DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group views --testsuite kernel"
 
 matrix:
   fast_finish: true
