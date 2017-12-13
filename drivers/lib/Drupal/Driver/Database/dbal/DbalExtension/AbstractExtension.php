@@ -276,7 +276,7 @@ class AbstractExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function delegateSetFieldTimezoneOffsetSql($field, $offset) {
+  public function delegateSetFieldTimezoneOffsetSql(&$field, $offset) {
     throw new \LogicException("Method " . __METHOD__ . " not implemented for '" . $this->dbalConnection->getDriver()->getName() . "'");
   }
 

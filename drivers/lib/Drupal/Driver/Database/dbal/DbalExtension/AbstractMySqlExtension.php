@@ -372,7 +372,7 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateSetFieldTimezoneOffsetSql($field, $offset) {
+  public function delegateSetFieldTimezoneOffsetSql(&$field, $offset) {
     if (!empty($offset)) {
       $field = "($field + INTERVAL $offset SECOND)";
     }
