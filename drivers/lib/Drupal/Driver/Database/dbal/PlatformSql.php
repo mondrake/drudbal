@@ -76,7 +76,7 @@ class PlatformSql {
    * {@inheritdoc}
    */
   public function setTimezoneOffset($offset) {
-    $this->database->query("SET @@session.time_zone = '$offset'");
+    $this->connection->query("SET @@session.time_zone = '$offset'");
   }
 
   /**
