@@ -151,7 +151,7 @@ before_install:
   # [#2881522] Add a Schema::getPrimaryKeyColumns method to remove database specific logic from test
   - curl https://www.drupal.org/files/issues/2881522-2.patch | git apply
   # [#2657888] Add Date function support in DTBNG
-  - curl https://www.drupal.org/files/issues/2657888-12-d8-sqlsrv_oracle_date_support.patch | git apply
+  #- curl https://www.drupal.org/files/issues/2657888-12-d8-sqlsrv_oracle_date_support.patch | git apply
   # [#2912973] Mismatching call to databaseType() in LangcodeToAsciiUpdateTest
   - curl https://www.drupal.org/files/issues/2912973-2.patch | git apply
 
