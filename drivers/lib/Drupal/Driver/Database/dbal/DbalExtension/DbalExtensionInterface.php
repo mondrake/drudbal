@@ -309,6 +309,30 @@ interface DbalExtensionInterface {
   public function delegateReleaseSavepointExceptionProcess(DbalDriverException $e);
 
   /**
+   * PlatformSql delegated methods.
+   */
+
+  /**
+   * @todo
+   */
+  public function delegateGetDateFieldSql($field, $string_date);
+
+  /**
+   * @todo
+   */
+  public function delegateGetDateFormatSql($field, $format);
+
+  /**
+   * @todo
+   */
+  public function delegateSetTimezoneOffset($offset);
+
+  /**
+   * @todo
+   */
+  public function delegateSetFieldTimezoneOffsetSql($field, $offset);
+
+  /**
    * Statement delegated methods.
    */
 

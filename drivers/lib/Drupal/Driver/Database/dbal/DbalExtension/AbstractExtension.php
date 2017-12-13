@@ -249,6 +249,38 @@ class AbstractExtension implements DbalExtensionInterface {
   }
 
   /**
+   * PlatformSql delegated methods.
+   */
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateGetDateFieldSql($field, $string_date) {
+    throw new \LogicException("Method " . __METHOD__ . " not implemented for '" . $this->dbalConnection->getDriver()->getName() . "'");
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateGetDateFormatSql($field, $format) {
+    throw new \LogicException("Method " . __METHOD__ . " not implemented for '" . $this->dbalConnection->getDriver()->getName() . "'");
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateSetTimezoneOffset($offset) {
+    throw new \LogicException("Method " . __METHOD__ . " not implemented for '" . $this->dbalConnection->getDriver()->getName() . "'");
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateSetFieldTimezoneOffsetSql($field, $offset) {
+    throw new \LogicException("Method " . __METHOD__ . " not implemented for '" . $this->dbalConnection->getDriver()->getName() . "'");
+  }
+
+  /**
    * Statement delegated methods.
    */
 
