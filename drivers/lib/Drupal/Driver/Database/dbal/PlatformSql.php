@@ -12,7 +12,7 @@ use Drupal\Core\Database\Connection as DatabaseConnection;
  * code in Drupal\Driver\Database\dbal\DbalExtension\[dbal_driver_name]
  * classes and execution handed over to there.
  */
-class PlatformSql extends DatabasePlatformSql {
+class PlatformSql {
 
   /**
    * The database connection.

@@ -53,6 +53,7 @@ matrix:
 cache:
   directories:
     - $ORACLE_DOWNLOAD_DIR
+    - $DRUPAL_STAGING_DIR
 
 before_install:
   # Set variables.
