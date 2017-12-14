@@ -375,7 +375,7 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException' && $this-
    * {@inheritdoc}
    */
   public function delegateGetDateFieldSql(string $field, bool $string_date) : string {
-    if ($string_date) {
+    if (!$string_date) {
       return $field;
     }
     return "TO_TIMESTAMP($field, 'YYYY-MM-DD HH24:MI:SS')";
