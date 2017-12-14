@@ -28,20 +28,22 @@ env:
     # Drupal PHPUnit test variables.
     - SIMPLETEST_BASE_URL="http://$HOST_ADDR:$HTTP_PORT"
   matrix:
-    - DRUDBAL_ENV="mysql" TEST_ARGS="--group Database"
-    - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Database,Cache,Config,Entity,Field"
-    - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group field"
-    - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group views"
-    - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Database,Cache,Config,Entity,Field"
-    - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group field"
-    - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group views"
-    - DRUDBAL_ENV="sqlite" TEST_ARGS="--group Database,Entity --testsuite kernel"
-    - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database,Cache,Config,Entity,Field --testsuite kernel"
-    - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group field --testsuite kernel"
-    - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group views --testsuite kernel"
-    - DRUDBAL_ENV="dbal/sqlite/memory" TEST_ARGS="--group Database,Entity --testsuite kernel"
-    - DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group Database,Cache,Config --testsuite kernel"
+    #- DRUDBAL_ENV="mysql" TEST_ARGS="--group Database"
+    #- DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Database,Cache,Config,Entity,Field"
+    #- DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group field"
+    #- DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group views --testsuite kernel"
+    #- DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Database,Cache,Config,Entity,Field"
+    #- DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group field"
+    #- DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group views --testsuite kernel"
+    #- DRUDBAL_ENV="sqlite" TEST_ARGS="--group Database,Entity --testsuite kernel"
+    #- DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database,Cache,Config,Entity,Field --testsuite kernel"
+    #- DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group field --testsuite kernel"
+    #- DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group views --testsuite kernel"
+    #- DRUDBAL_ENV="dbal/sqlite/memory" TEST_ARGS="--group Database,Entity --testsuite kernel"
+    #- DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group Database,Cache,Config --testsuite kernel"
     #- DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group Entity,views,field,Field"
+    #- DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group views --testsuite kernel"
+    - DRUDBAL_ENV="dbal/oci8" TEST_ARGS="modules/views/tests/src/Kernel/Handler/ArgumentDateTest.php"
 
 matrix:
   fast_finish: true
@@ -52,6 +54,7 @@ matrix:
 cache:
   directories:
     - $ORACLE_DOWNLOAD_DIR
+    - $DRUPAL_STAGING_DIR
 
 before_install:
   # Set variables.
@@ -151,7 +154,7 @@ before_install:
   # [#2881522] Add a Schema::getPrimaryKeyColumns method to remove database specific logic from test
   - curl https://www.drupal.org/files/issues/2881522-2.patch | git apply
   # [#2657888] Add Date function support in DTBNG
-  #- curl https://www.drupal.org/files/issues/2657888-12-d8-sqlsrv_oracle_date_support.patch | git apply
+  - curl https://www.drupal.org/files/issues/2657888-18.patch | git apply
   # [#2912973] Mismatching call to databaseType() in LangcodeToAsciiUpdateTest
   - curl https://www.drupal.org/files/issues/2912973-2.patch | git apply
 
