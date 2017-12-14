@@ -378,7 +378,7 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException' && $this-
     if ($string_date) {
       return $field;
     }
-    return "TO_TIMESTAMP($field)";
+    return "TO_TIMESTAMP($field, 'YYYY-MM-DD HH24:MI:SS')";
   }
 
   /**
