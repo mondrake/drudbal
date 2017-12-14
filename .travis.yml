@@ -49,6 +49,7 @@ matrix:
   allow_failures:
     - php: 7.2
     - env: DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group Database,Cache,Config --testsuite kernel"
+    - env: DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group views --testsuite kernel"
 
 cache:
   directories:
