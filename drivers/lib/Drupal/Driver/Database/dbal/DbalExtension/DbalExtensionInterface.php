@@ -309,6 +309,56 @@ interface DbalExtensionInterface {
   public function delegateReleaseSavepointExceptionProcess(DbalDriverException $e);
 
   /**
+   * PlatformSql delegated methods.
+   */
+
+  /**
+   * Returns a native database expression for a given field.
+   *
+   * @param string $field
+   *   The query field that will be used in the expression.
+   * @param bool $string_date
+   *   For certain databases, date format functions vary depending on string or
+   *   numeric storage.
+   *
+   * @return string
+   *   An expression representing a date field with timezone.
+   */
+  public function delegateGetDateFieldSql(string $field, bool $string_date) : string;
+
+  /**
+   * Creates a native database date formatting.
+   *
+   * @param string $field
+   *   An appropriate query expression pointing to the date field.
+   * @param string $format
+   *   A format string for the result. For example: 'Y-m-d H:i:s'.
+   *
+   * @return string
+   *   A string representing the field formatted as a date as specified by
+   *   $format.
+   */
+  public function delegateGetDateFormatSql(string $field, string $format) : string;
+
+  /**
+   * Set the database to the given timezone.
+   *
+   * @param string $offset
+   *   The timezone.
+   */
+  public function delegateSetTimezoneOffset(string $offset) : void;
+
+  /**
+   * Applies the given offset to the given field.
+   *
+   * @param string &$field
+   *   The date field in a string format.
+   * @param int $offset
+   *   The timezone offset in seconds.
+   */
+  public function delegateSetFieldTimezoneOffsetSql(string &$field, int $offset) : void;
+
+  /**
    * Statement delegated methods.
    */
 
