@@ -324,7 +324,7 @@ interface DbalExtensionInterface {
    * @return string
    *   An expression representing a date field with timezone.
    */
-  public function delegateGetDateFieldSql($field, $string_date);
+  public function delegateGetDateFieldSql(string $field, bool $string_date) : string;
 
   /**
    * Creates a native database date formatting.
@@ -338,7 +338,7 @@ interface DbalExtensionInterface {
    *   A string representing the field formatted as a date as specified by
    *   $format.
    */
-  public function delegateGetDateFormatSql($field, $format);
+  public function delegateGetDateFormatSql(string $field, string $format) : string;
 
   /**
    * Set the database to the given timezone.
@@ -346,7 +346,7 @@ interface DbalExtensionInterface {
    * @param string $offset
    *   The timezone.
    */
-  public function delegateSetTimezoneOffset($offset);
+  public function delegateSetTimezoneOffset(string $offset) : string;
 
   /**
    * Applies the given offset to the given field.
@@ -356,7 +356,7 @@ interface DbalExtensionInterface {
    * @param int $offset
    *   The timezone offset in seconds.
    */
-  public function delegateSetFieldTimezoneOffsetSql(&$field, $offset);
+  public function delegateSetFieldTimezoneOffsetSql(string &$field, int $offset) : void;
 
   /**
    * Statement delegated methods.

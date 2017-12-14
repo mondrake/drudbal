@@ -255,28 +255,28 @@ class AbstractExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function delegateGetDateFieldSql($field, $string_date) {
+  public function delegateGetDateFieldSql(string $field, bool $string_date) {
     throw new \LogicException("Method " . __METHOD__ . " not implemented for '" . $this->dbalConnection->getDriver()->getName() . "'");
   }
 
   /**
    * {@inheritdoc}
    */
-  public function delegateGetDateFormatSql($field, $format) {
+  public function delegateGetDateFormatSql(string $field, string $format) {
     throw new \LogicException("Method " . __METHOD__ . " not implemented for '" . $this->dbalConnection->getDriver()->getName() . "'");
   }
 
   /**
    * {@inheritdoc}
    */
-  public function delegateSetTimezoneOffset($offset) {
+  public function delegateSetTimezoneOffset(string $offset) {
     throw new \LogicException("Method " . __METHOD__ . " not implemented for '" . $this->dbalConnection->getDriver()->getName() . "'");
   }
 
   /**
    * {@inheritdoc}
    */
-  public function delegateSetFieldTimezoneOffsetSql(&$field, $offset) {
+  public function delegateSetFieldTimezoneOffsetSql(string &$field, int $offset) {
     throw new \LogicException("Method " . __METHOD__ . " not implemented for '" . $this->dbalConnection->getDriver()->getName() . "'");
   }
 

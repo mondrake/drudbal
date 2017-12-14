@@ -374,17 +374,17 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException' && $this-
   /**
    * {@inheritdoc}
    */
-  public function delegateGetDateFieldSql($field, $string_date) {
+  public function delegateGetDateFieldSql(string $field, bool $string_date) {
     if ($string_date) {
-      $field = "strftime('%s', $field)";
+      return $field;
     }
-    return $field;
+    return "TO_CHAR((TO_DATE('19700101', 'YYYYMMDD') + (1 / 24 / 60 / 60) * $field), '$format')";
   }
 
   /**
    * {@inheritdoc}
    */
-  public function delegateGetDateFormatSql($field, $format) {
+  public function delegateGetDateFormatSql(string $field, string $format) {
     // An array of PHP-to-Oracle date replacement patterns.
     static $replace = [
       'Y' => 'YYYY',
@@ -418,14 +418,14 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException' && $this-
   /**
    * {@inheritdoc}
    */
-  public function delegateSetTimezoneOffset($offset) {
+  public function delegateSetTimezoneOffset(string $offset) {
     // Nothing to do here.
   }
 
   /**
    * {@inheritdoc}
    */
-  public function delegateSetFieldTimezoneOffsetSql($field, $offset) {
+  public function delegateSetFieldTimezoneOffsetSql(string $field, int $offset) {
     // Nothing to do here.
   }
 
