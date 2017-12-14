@@ -425,7 +425,7 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException' && $this-
   /**
    * {@inheritdoc}
    */
-  public function delegateSetFieldTimezoneOffsetSql(string $field, int $offset) : void {
+  public function delegateSetFieldTimezoneOffsetSql(string &$field, int $offset) : void {
     // Nothing to do here.
   }
 
