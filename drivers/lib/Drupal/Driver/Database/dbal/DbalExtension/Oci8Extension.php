@@ -378,7 +378,7 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException' && $this-
     if ($string_date) {
       return $field;
     }
-    return "XXXXX($field)";
+    return "TO_TIMESTAMP($field)";
   }
 
   /**
@@ -409,10 +409,7 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException' && $this-
     ];
 
     $format = strtr($format, $replace);
-
-    // In order to allow for partials (eg, only the year), transform to a
-    // date, back to a string again.
-    return "YYYYYY($field, '$format')";
+    return "TO_CHAR($field, '$format')";
   }
 
   /**
