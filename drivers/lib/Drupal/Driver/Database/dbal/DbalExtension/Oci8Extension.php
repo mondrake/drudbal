@@ -368,6 +368,66 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException' && $this-
   }
 
   /**
+   * PlatformSql delegated methods.
+   */
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateGetDateFieldSql(string $field, bool $string_date) : string {
+    if ($string_date) {
+      return $field;
+    }
+
+    return "TO_DATE('19700101', 'YYYYMMDD') + (1 / 24 / 60 / 60) * $field";
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateGetDateFormatSql(string $field, string $format) : string {
+    // An array of PHP-to-Oracle date replacement patterns.
+    static $replace = [
+      'Y' => 'YYYY',
+      'y' => 'YY',
+      'M' => 'MON',
+      'm' => 'MM',
+      // No format for Numeric representation of a month, without leading
+      // zeros.
+      'n' => 'MM',
+      'F' => 'MONTH',
+      'D' => 'DY',
+      'd' => 'DD',
+      'l' => 'DAY',
+      // No format for Day of the month without leading zeros.
+      'j' => 'DD',
+      'W' => 'IW',
+      'H' => 'HH24',
+      'h' => 'HH12',
+      'i' => 'MI',
+      's' => 'SS',
+      'A' => 'AM',
+    ];
+
+    $format = strtr($format, $replace);
+    return "TO_CHAR($field, '$format')";
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateSetTimezoneOffset(string $offset) : void {
+    // Nothing to do here.
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateSetFieldTimezoneOffsetSql(string &$field, int $offset) : void {
+    // Nothing to do here.
+  }
+
+  /**
    * Statement delegated methods.
    */
 
