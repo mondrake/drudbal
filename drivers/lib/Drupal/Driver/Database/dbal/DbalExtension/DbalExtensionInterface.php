@@ -346,7 +346,7 @@ interface DbalExtensionInterface {
    * @param string $offset
    *   The timezone.
    */
-  public function delegateSetTimezoneOffset(string $offset) : string;
+  public function delegateSetTimezoneOffset(string $offset) : void;
 
   /**
    * Applies the given offset to the given field.
