@@ -375,10 +375,11 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException' && $this-
    * {@inheritdoc}
    */
   public function delegateGetDateFieldSql(string $field, bool $string_date) : string {
-//    if ($string_date) {
+    if ($string_date) {
       return $field;
-//    }
-//    return "TO_TIMESTAMP($field, 'YYYY-MM-DD HH24:MI:SS')";
+    }
+
+    return "TO_DATE('19700101', 'YYYYMMDD') + (1 / 24 / 60 / 60) * $field";
   }
 
   /**
@@ -409,7 +410,7 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException' && $this-
     ];
 
     $format = strtr($format, $replace);
-    return "TO_CHAR((TO_DATE('19700101', 'YYYYMMDD') + (1 / 24 / 60 / 60) * $field), '$format')";
+    return "TO_CHAR($field, '$format')";
   }
 
   /**
