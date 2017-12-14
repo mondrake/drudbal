@@ -324,7 +324,7 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateGetDateFieldSql($field, $string_date) {
+  public function delegateGetDateFieldSql(string $field, bool $string_date) : string {
     if ($string_date) {
       return $field;
     }
@@ -337,7 +337,7 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateGetDateFormatSql($field, $format) {
+  public function delegateGetDateFormatSql(string $field, string $format) : string {
     // An array of PHP-to-MySQL replacement patterns.
     static $replace = [
       'Y' => '%Y',
@@ -365,14 +365,14 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateSetTimezoneOffset($offset) {
+  public function delegateSetTimezoneOffset(string $offset) : void {
     $this->dbalConnection->exec("SET @@session.time_zone = '$offset'");
   }
 
   /**
    * {@inheritdoc}
    */
-  public function delegateSetFieldTimezoneOffsetSql(&$field, $offset) {
+  public function delegateSetFieldTimezoneOffsetSql(string &$field, int $offset) : void {
     if (!empty($offset)) {
       $field = "($field + INTERVAL $offset SECOND)";
     }
