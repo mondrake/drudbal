@@ -378,7 +378,7 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException' && $this-
     if ($string_date) {
       return $field;
     }
-    return "TO_CHAR((TO_DATE('19700101', 'YYYYMMDD') + (1 / 24 / 60 / 60) * $field), '$format')";
+    return "(TO_DATE('19700101', 'YYYYMMDD') + (1 / 24 / 60 / 60) * $field)";
   }
 
   /**
