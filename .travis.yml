@@ -137,7 +137,7 @@ before_install:
 
   # Apply Drupal core patches.
   # [#2605284] Testing framework does not work with contributed database drivers
-  - curl https://www.drupal.org/files/issues/simpletest_is_broken_on-2605284-89.patch | git apply
+  - curl https://www.drupal.org/files/issues/2605284-121.patch | git apply
   # [#2867788] Log::findCaller fails to report the correct caller function with non-core drivers.
   - curl https://www.drupal.org/files/issues/2867788-22_0.patch | git apply
   # [#2871374] SelectTest::testVulnerableComment fails when driver overrides Select::__toString
