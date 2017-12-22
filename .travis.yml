@@ -6,8 +6,9 @@ language: php
 sudo: required
 
 php:
-  - 7.1
-  #- 7.2
+  #- 7.1
+  - 7.2
+  
 
 branches:
   except:
@@ -47,7 +48,6 @@ env:
 matrix:
   fast_finish: true
   allow_failures:
-    - php: 7.2
     - env: DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group Database,Cache,Config --testsuite kernel"
     - env: DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group views --testsuite kernel"
 
