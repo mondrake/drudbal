@@ -76,11 +76,11 @@ before_install:
 
       elif [[ "$DRUDBAL_ENV" == "dbal/sqlite/file" ]]; then
         export DBAL_URL="sqlite:///sites/default/files/.ht.sqlite"
-        export SIMPLETEST_DB="dbal:///sites/default/files/.ht.sqlite?dbal_driver=pdo_sqlite"
+        export SIMPLETEST_DB="dbal://fake/sites/default/files/.ht.sqlite?dbal_driver=pdo_sqlite"
 
       elif [[ "$DRUDBAL_ENV" == "dbal/sqlite/memory" ]]; then
         export DBAL_URL="sqlite:///:memory:"
-        export SIMPLETEST_DB="dbal:///:memory:?dbal_driver=pdo_sqlite"
+        export SIMPLETEST_DB="dbal://fake/:memory:?dbal_driver=pdo_sqlite"
 
       elif [[ "$DRUDBAL_ENV" == "dbal/oci8" ]]; then
         export DBAL_URL="oci8://ORAROOT:DRUDBAL@$HOST_ADDR:1521/XE"
