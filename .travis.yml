@@ -6,8 +6,7 @@ language: php
 sudo: required
 
 php:
-  - 7.1
-  #- 7.2
+  - 7.2
 
 branches:
   except:
@@ -47,7 +46,6 @@ env:
 matrix:
   fast_finish: true
   allow_failures:
-    - php: 7.2
     - env: DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group Database,Cache,Config --testsuite kernel"
     - env: DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group views --testsuite kernel"
 
@@ -122,6 +120,10 @@ before_install:
       if [[ ! -f $DRUPAL_STAGING_DIR/index.php ]]; then
         git clone http://git.drupal.org/project/drupal.git $DRUPAL_STAGING_DIR
         cd $DRUPAL_STAGING_DIR
+        # --- PHP 7.2 patches.
+        # [#2927806] Use PHPUnit 6 for testing when PHP version >= 7.2
+        curl https://www.drupal.org/files/issues/2927806-73.combined.patch | git apply
+        # --- PHP 7.2 patches.
         composer install --no-progress --no-suggest
         # Get Drupal Console
         composer require "drupal/console" --no-progress --no-suggest
@@ -156,7 +158,7 @@ before_install:
   - curl https://www.drupal.org/files/issues/2657888-18.patch | git apply
   # [#2912973] Mismatching call to databaseType() in LangcodeToAsciiUpdateTest
   - curl https://www.drupal.org/files/issues/2912973-2.patch | git apply
-
+  
 install:
   # Copy the repo to the modules/contrib directory.
   - mkdir -p $DRUPAL_PATH/modules/contrib/drudbal
