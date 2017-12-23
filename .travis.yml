@@ -6,8 +6,8 @@ language: php
 sudo: required
 
 php:
-  - 7.1
-  #- 7.2
+  #- 7.1
+  - 7.2
 
 branches:
   except:
@@ -47,7 +47,6 @@ env:
 matrix:
   fast_finish: true
   allow_failures:
-    - php: 7.2
     - env: DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group Database,Cache,Config --testsuite kernel"
     - env: DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group views --testsuite kernel"
 
@@ -156,6 +155,8 @@ before_install:
   - curl https://www.drupal.org/files/issues/2657888-18.patch | git apply
   # [#2912973] Mismatching call to databaseType() in LangcodeToAsciiUpdateTest
   - curl https://www.drupal.org/files/issues/2912973-2.patch | git apply
+  # [#2932777] Risky count() in SQLite Statement
+  - curl https://www.drupal.org/files/issues/2932777-2.patch | git apply
 
 install:
   # Copy the repo to the modules/contrib directory.
