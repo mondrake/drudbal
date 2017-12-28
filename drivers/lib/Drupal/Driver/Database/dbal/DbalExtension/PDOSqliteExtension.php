@@ -137,6 +137,7 @@ class PDOSqliteExtension extends AbstractExtension {
    * {@inheritdoc}
    */
   public static function preConnectionOpen(array &$connection_options, array &$dbal_connection_options) {
+error_log('herehere: '. var_export([$connection_options,$dbal_connection_options], TRUE) . ' :herehere');
     $dbal_connection_options['path'] = $connection_options['database'] === ':memory:' ? 'file::memory:?cache=shared' : $connection_options['database'];
     if (isset($connection_options['prefix']['default']) && $connection_options['prefix']['default'] !== '') {
       $dbal_connection_options['path'] = $dbal_connection_options['path'] . '-' . $connection_options['prefix']['default'];
