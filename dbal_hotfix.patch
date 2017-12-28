@@ -1,0 +1,13 @@
+diff --git a/lib/Doctrine/DBAL/Driver/PDOSqlite/Driver.php b/lib/Doctrine/DBAL/Driver/PDOSqlite/Driver.php
+index 4fe4e72..fae0295 100644
+--- a/lib/Doctrine/DBAL/Driver/PDOSqlite/Driver.php
++++ b/lib/Doctrine/DBAL/Driver/PDOSqlite/Driver.php
+@@ -84,7 +84,7 @@ class Driver extends AbstractSQLiteDriver
+         } elseif (isset($params['memory'])) {
+             $dsn .= ':memory:';
+         }
+-
++error_log('herehere: '. $dsn . ' :herehere');
+         return $dsn;
+     }
+ 
