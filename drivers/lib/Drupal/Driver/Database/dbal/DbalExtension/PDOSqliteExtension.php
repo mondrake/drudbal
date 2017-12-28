@@ -137,6 +137,7 @@ class PDOSqliteExtension extends AbstractExtension {
    * {@inheritdoc}
    */
   public static function preConnectionOpen(array &$connection_options, array &$dbal_connection_options) {
+error_log('beforebefore: '. var_export([$connection_options,$dbal_connection_options], TRUE) . ' :beforebefore');
     $dbal_connection_options['path'] = $connection_options['database'] === ':memory:' ? 'file::memory:?cache=shared' : $connection_options['database'];
     if (isset($connection_options['prefix']['default']) && $connection_options['prefix']['default'] !== '') {
       $dbal_connection_options['path'] = $dbal_connection_options['path'] . '-' . $connection_options['prefix']['default'];
@@ -147,7 +148,7 @@ class PDOSqliteExtension extends AbstractExtension {
       // Convert numeric values to strings when fetching.
       \PDO::ATTR_STRINGIFY_FETCHES => TRUE,
     ];
-error_log('herehere: '. var_export([$connection_options,$dbal_connection_options], TRUE) . ' :herehere');
+error_log('afterafter: '. var_export([$connection_options,$dbal_connection_options], TRUE) . ' :afterafter');
   }
 
   /**
