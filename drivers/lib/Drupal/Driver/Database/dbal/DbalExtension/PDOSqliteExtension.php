@@ -137,11 +137,12 @@ class PDOSqliteExtension extends AbstractExtension {
    * {@inheritdoc}
    */
   public static function preConnectionOpen(array &$connection_options, array &$dbal_connection_options) {
-error_log('beforebefore: '. var_export([$connection_options,$dbal_connection_options], TRUE) . ' :beforebefore');
-    $dbal_connection_options['path'] = $connection_options['database'] === ':memory:' ? 'file::memory:?cache=shared' : $connection_options['database'];
+//error_log('beforebefore: '. var_export([$connection_options,$dbal_connection_options], TRUE) . ' :beforebefore');
+    if ($connection_options['database'] === ':memory:') {
+      $dbal_connection_options['path'] = 'file::memory:?cache=shared';
+    }
     if (isset($connection_options['prefix']['default']) && $connection_options['prefix']['default'] !== '') {
-      $dbal_connection_options['path'] = $dbal_connection_options['path'] . '-' . $connection_options['prefix']['default'];
-      $dbal_connection_options['url'] = $dbal_connection_options['url'] . '-' . $connection_options['prefix']['default'];
+      $dbal_connection_options['url'] .= '-' . $connection_options['prefix']['default'];
     }
     unset($dbal_connection_options['dbname']);
     $dbal_connection_options['driverOptions'] += [
@@ -149,7 +150,6 @@ error_log('beforebefore: '. var_export([$connection_options,$dbal_connection_opt
       // Convert numeric values to strings when fetching.
       \PDO::ATTR_STRINGIFY_FETCHES => TRUE,
     ];
-error_log('afterafter: '. var_export([$connection_options,$dbal_connection_options], TRUE) . ' :afterafter');
   }
 
   /**
