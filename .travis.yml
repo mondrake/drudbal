@@ -76,8 +76,8 @@ before_install:
         export SIMPLETEST_DB="sqlite://test_user:test_pass@test_host:3306/sites/default/files/.ht.sqlite"
 
       elif [[ "$DRUDBAL_ENV" == "dbal/sqlite/file" ]]; then
-        export DBAL_URL="sqlite:///sites/default/files/.ht.sqlite"
-        export SIMPLETEST_DB="dbal://fake/sites/default/files/.ht.sqlite?dbal_driver=pdo_sqlite"
+        export DBAL_URL="sqlite:///sqlite-zorb"
+        export SIMPLETEST_DB="dbal://fake/sqlite-zorb?dbal_driver=pdo_sqlite"
 
       elif [[ "$DRUDBAL_ENV" == "dbal/sqlite/memory" ]]; then
         export DBAL_URL="sqlite:///:memory:"
@@ -196,7 +196,7 @@ install:
   # Post install tasks.
   #- if [[ ! "$DRUDBAL_ENV" == "dbal/sqlite/memory" ]]; then drupal site:status; fi
   #- php post_install.php
-  - chmod 777 $DRUPAL_PATH/sites/default/files
+  #- chmod 777 $DRUPAL_PATH/sites/default/files
 
 script:
   - cd $DRUPAL_PATH/core
@@ -204,7 +204,8 @@ script:
   - $DRUPAL_PATH/vendor/bin/phpunit $TEST_ARGS
 
 after_script:
-  - ls -alR $DRUPAL_PATH/sites/default
+  #- ls -alR $DRUPAL_PATH/sites/default
+  - ls -al $DRUPAL_PATH
   - cd $DRUPAL_PATH/modules/contrib/drudbal
   - $DRUPAL_PATH/vendor/bin/phpcs
 
