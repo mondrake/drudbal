@@ -159,7 +159,6 @@ before_install:
   - curl https://www.drupal.org/files/issues/2912973-2.patch | git apply
   # [#2932777] Risky count() in SQLite Statement
   - curl https://www.drupal.org/files/issues/2932777-2.patch | git apply
-  - git apply $DRUPAL_PATH/modules/contrib/drudbal/drupal_hotfix.patch
 
 install:
   # Copy the repo to the modules/contrib directory.
@@ -173,6 +172,7 @@ install:
         patch -p1 < $DRUPAL_PATH/modules/contrib/drudbal/tests/travis_ci/$DRUDBAL_ENV/dbal.patch
       fi
 
+  - git apply $DRUPAL_PATH/modules/contrib/drudbal/drupal_hotfix.patch
   - cd $DRUPAL_PATH/vendor/doctrine/dbal
   - patch -p1 < $DRUPAL_PATH/modules/contrib/drudbal/dbal_hotfix.patch
 
