@@ -1,0 +1,12 @@
+diff --git a/core/modules/migrate/tests/src/Kernel/MigrateTestBase.php b/core/modules/migrate/tests/src/Kernel/MigrateTestBase.php
+index 51e61d4..85c92e1 100644
+--- a/core/modules/migrate/tests/src/Kernel/MigrateTestBase.php
++++ b/core/modules/migrate/tests/src/Kernel/MigrateTestBase.php
+@@ -89,6 +89,7 @@ private function createMigrationConnection() {
+       $connection_info[$target]['prefix'][$value['prefix']['default']] = $value['prefix']['default'];
+     }
+     Database::addConnectionInfo('migrate', 'default', $connection_info['default']);
++error_log(var_export(Database::getAllConnectionInfo(), TRUE));
+   }
+ 
+   /**
