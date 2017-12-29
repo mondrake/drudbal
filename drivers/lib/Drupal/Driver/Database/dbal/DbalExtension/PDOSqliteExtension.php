@@ -138,11 +138,12 @@ class PDOSqliteExtension extends AbstractExtension {
    */
   public static function preConnectionOpen(array &$connection_options, array &$dbal_connection_options) {
 //error_log('beforebefore: '. var_export([$connection_options,$dbal_connection_options], TRUE) . ' :beforebefore');
-    if ($connection_options['database'] === ':memory:') {
-      $dbal_connection_options['path'] = 'file::memory:?cache=shared';
-    }
+    $dbal_connection_options['path'] = $connection_options['database'] === ':memory:' ? 'file::memory:?cache=shared' : $connection_options['database'];
     if (isset($connection_options['prefix']['default']) && $connection_options['prefix']['default'] !== '') {
-      $dbal_connection_options['url'] .= '-' . $connection_options['prefix']['default'];
+      $dbal_connection_options['path'] .= '-' . $connection_options['prefix']['default'];
+      if (isset($dbal_connection_options['url'])) {
+        $dbal_connection_options['url'] .= '-' . $connection_options['prefix']['default'];
+      }
     }
     unset($dbal_connection_options['dbname']);
     $dbal_connection_options['driverOptions'] += [
