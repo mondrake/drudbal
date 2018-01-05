@@ -221,6 +221,7 @@ class PDOSqliteExtension extends AbstractExtension {
    * {@inheritdoc}
    */
   public function postConstruct(array $connection_options) {
+    $prefixes = ['default' => ''];
     // Attach additional databases per prefix.
     foreach ($connection_options['prefix'] as $key => $prefix) {
       // Default prefix means query the main database -- no need to attach anything.
@@ -236,6 +237,7 @@ class PDOSqliteExtension extends AbstractExtension {
           }
           else {*/
             $this->connection->query('ATTACH DATABASE :database AS :prefix', [':database' => $connection_options['database'] . '-' . $prefix, ':prefix' => $prefix]);
+            $prefixes[$prefix] = $prefix . '.';
 //          }
         }
 
@@ -244,6 +246,7 @@ class PDOSqliteExtension extends AbstractExtension {
 //        $prefix .= '.';
       }
     }
+    $this->connection->setPrefix($prefixes);
   }
 
   /**

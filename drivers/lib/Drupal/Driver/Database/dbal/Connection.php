@@ -156,7 +156,7 @@ class Connection extends DatabaseConnection {
    * {@inheritdoc}
    */
   public function prefixTables($sql) {
-    $matches = [];
+/*    $matches = [];
     preg_match_all('/{(\S*)}/', $sql, $matches, PREG_SET_ORDER, 0);
     foreach ($matches as $match) {
       $table = $match[1];
@@ -169,7 +169,8 @@ class Connection extends DatabaseConnection {
       $prefixed_table = $this->prefixes['default'] . $table;
       $this->dbTables['{' . $table . '}'] = $this->dbalExtension->getDbTableName($prefixed_table);
     }
-    return str_replace(array_keys($this->dbTables), array_values($this->dbTables), $sql);
+    return str_replace(array_keys($this->dbTables), array_values($this->dbTables), $sql);*/
+    return str_replace($this->prefixSearch, $this->prefixReplace, $sql);
   }
 
   /**
