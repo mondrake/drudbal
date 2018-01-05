@@ -78,7 +78,7 @@ class PDOSqliteExtension extends AbstractExtension {
    * {@inheritdoc}
    */
   public function delegateClientVersion() {
-    return $this->dbalConnection->getWrappedConnection()->getAttribute(\PDO::ATTR_CLIENT_VERSION);
+    return $this->getDbalConnection()->getWrappedConnection()->getAttribute(\PDO::ATTR_CLIENT_VERSION);
   }
 
   /**
@@ -235,7 +235,7 @@ class PDOSqliteExtension extends AbstractExtension {
             $this->query('ATTACH DATABASE :database AS :prefix', [':database' => $connection_options['database'], ':prefix' => $prefix]);
           }
           else {*/
-            $dbal_connection->exec('ATTACH DATABASE ' . $connection_options['database'] . '-' . $connection_options['prefix']['default'] . '-' . $prefix . ' AS ' . $prefix);
+            $this->getDbalConnection()->exec('ATTACH DATABASE ' . $connection_options['database'] . '-' . $connection_options['prefix']['default'] . '-' . $prefix . ' AS ' . $prefix);
 //          }
         }
 
@@ -571,7 +571,7 @@ class PDOSqliteExtension extends AbstractExtension {
     ];
 
     // Ensure that Sqlite has the right minimum version.
-    $db_server_version = $this->dbalConnection->getWrappedConnection()->getServerVersion();
+    $db_server_version = $this->getDbalConnection()->getWrappedConnection()->getServerVersion();
     if (version_compare($db_server_version, self::SQLITE_MINIMUM_VERSION, '<')) {
       $results['fail'][] = t("The Sqlite version %version is less than the minimum required version %minimum_version.", [
         '%version' => $db_server_version,
@@ -634,7 +634,7 @@ class PDOSqliteExtension extends AbstractExtension {
    */
   public function delegateGetDbalColumnType(&$dbal_type, array $drupal_field_specs) {
     if (isset($drupal_field_specs['sqlite_type'])) {
-      $dbal_type = $this->dbalConnection->getDatabasePlatform()->getDoctrineTypeMapping($drupal_field_specs['sqlite_type']);
+      $dbal_type = $this->getDbalConnection()->getDatabasePlatform()->getDoctrineTypeMapping($drupal_field_specs['sqlite_type']);
       return TRUE;
     }
     return FALSE;
