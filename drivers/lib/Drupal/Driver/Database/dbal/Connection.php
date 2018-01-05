@@ -202,7 +202,7 @@ class Connection extends DatabaseConnection {
         $stmt->execute(NULL, $options);
       }
       else {
-if ($this->dbalExtension->getDebugging()) {
+if ($this->dbalExtension->getDebugging() && strpos($query, 'fci.entity_type') !== FALSE) {
   error_log($query);
 }
         $this->expandArguments($query, $args);
