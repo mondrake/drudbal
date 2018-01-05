@@ -1,0 +1,12 @@
+diff --git a/core/modules/migrate/src/MigrateExecutable.php b/core/modules/migrate/src/MigrateExecutable.php
+index d5b9d1a..3c7bf5f 100644
+--- a/core/modules/migrate/src/MigrateExecutable.php
++++ b/core/modules/migrate/src/MigrateExecutable.php
+@@ -185,6 +185,7 @@ public function import() {
+     $id_map = $this->migration->getIdMap();
+ 
+     try {
++\Drupal::database()->getDbalExtension()->setDebugging(TRUE);
+       $source->rewind();
+     }
+     catch (\Exception $e) {
