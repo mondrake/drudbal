@@ -1,12 +1,12 @@
 diff --git a/core/modules/field/tests/src/Kernel/Migrate/d7/MigrateFieldTest.php b/core/modules/field/tests/src/Kernel/Migrate/d7/MigrateFieldTest.php
-index 6531fe4..647e113 100644
+index 6531fe4..d84a095 100644
 --- a/core/modules/field/tests/src/Kernel/Migrate/d7/MigrateFieldTest.php
 +++ b/core/modules/field/tests/src/Kernel/Migrate/d7/MigrateFieldTest.php
-@@ -35,6 +35,7 @@ class MigrateFieldTest extends MigrateDrupal7TestBase {
-    * {@inheritdoc}
+@@ -36,6 +36,7 @@ class MigrateFieldTest extends MigrateDrupal7TestBase {
     */
    protected function setUp() {
-+\Drupal::database()->getDbalExtension()->setDebugging(TRUE);
      parent::setUp();
++\Drupal::database()->getDbalExtension()->setDebugging(TRUE);
      $this->installConfig(static::$modules);
      $this->executeMigration('d7_field');
+   }
