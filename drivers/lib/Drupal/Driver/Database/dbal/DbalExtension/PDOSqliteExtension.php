@@ -246,7 +246,7 @@ class PDOSqliteExtension extends AbstractExtension {
 //        $prefix .= '.';
       }
     }
-    $this->connection->setPrefix($prefixes);
+    $this->connection->setPrefixPublic($prefixes);
   }
 
   /**
