@@ -202,6 +202,7 @@ class Connection extends DatabaseConnection {
         $stmt->execute(NULL, $options);
       }
       else {
+error_log($query);
         $this->expandArguments($query, $args);
         // To protect against SQL injection, Drupal only supports executing one
         // statement at a time.  Thus, the presence of a SQL delimiter (the

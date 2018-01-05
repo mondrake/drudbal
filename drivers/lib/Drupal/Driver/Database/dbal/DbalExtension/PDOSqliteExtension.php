@@ -163,10 +163,6 @@ class PDOSqliteExtension extends AbstractExtension {
       if (isset($dbal_connection_options['url'])) {
         $dbal_connection_options['url'] .= '-' . $connection_options['prefix']['default'];
       }
-      else {
-        $dbal_connection_options['url'] = 'sqlite:///' . $dbal_connection_options['path'];
-//error_log(var_export(['drupal'=>$connection_options,'dbal'=>$dbal_connection_options] , TRUE));
-      }
     }
     unset($dbal_connection_options['dbname']);
     $dbal_connection_options['driverOptions'] += [
