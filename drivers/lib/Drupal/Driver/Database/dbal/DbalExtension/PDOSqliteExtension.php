@@ -235,7 +235,7 @@ class PDOSqliteExtension extends AbstractExtension {
             $this->query('ATTACH DATABASE :database AS :prefix', [':database' => $connection_options['database'], ':prefix' => $prefix]);
           }
           else {*/
-            $this->connection->query('ATTACH DATABASE :database AS :prefix', [':database' => $connection_options['database'] . '-' . $connection_options['prefix']['default'] . '-' . $prefix, ':prefix' => $prefix]);
+            $this->connection->query('ATTACH DATABASE :database AS :prefix', [':database' => $connection_options['database'] . '-' . $prefix, ':prefix' => $prefix]);
 //          }
         }
 
