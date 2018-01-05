@@ -55,6 +55,26 @@ class PDOSqliteExtension extends AbstractExtension {
   ];
 
   /**
+   * All databases attached to the current database. This is used to allow
+   * prefixes to be safely handled without locking the table
+   *
+   * @var array
+   */
+  protected $attachedDatabases = [];
+
+  /**
+   * Whether or not a table has been dropped this request: the destructor will
+   * only try to get rid of unnecessary databases if there is potential of them
+   * being empty.
+   *
+   * This variable is set to public because Schema needs to
+   * access it. However, it should not be manually set.
+   *
+   * @var bool
+   */
+  public $tableDropped = FALSE;
+
+  /**
    * {@inheritdoc}
    */
   public function delegateClientVersion() {
@@ -137,7 +157,6 @@ class PDOSqliteExtension extends AbstractExtension {
    * {@inheritdoc}
    */
   public static function preConnectionOpen(array &$connection_options, array &$dbal_connection_options) {
-//error_log('beforebefore: '. var_export([$connection_options,$dbal_connection_options], TRUE) . ' :beforebefore');
     $dbal_connection_options['path'] = $connection_options['database'] === ':memory:' ? 'file::memory:?cache=shared' : $connection_options['database'];
     if (isset($connection_options['prefix']['default']) && $connection_options['prefix']['default'] !== '') {
       $dbal_connection_options['path'] .= '-' . $connection_options['prefix']['default'];
@@ -157,6 +176,30 @@ class PDOSqliteExtension extends AbstractExtension {
    * {@inheritdoc}
    */
   public static function postConnectionOpen(DbalConnection $dbal_connection, array &$connection_options, array &$dbal_connection_options) {
+    // Attach additional databases per prefix.
+    foreach ($connection_options['prefix'] as $key => $prefix) {
+      // Empty prefix means query the main database -- no need to attach anything.
+      if ($key !== 'default') {
+        // Only attach the database once.
+        if (!isset($this->attachedDatabases[$prefix])) {
+          $this->attachedDatabases[$prefix] = $prefix;
+/*          if ($connection_options['database'] === ':memory:') {
+            // In memory database use ':memory:' as database name. According to
+            // http://www.sqlite.org/inmemorydb.html it will open a unique
+            // database so attaching it twice is not a problem.
+            $this->query('ATTACH DATABASE :database AS :prefix', [':database' => $connection_options['database'], ':prefix' => $prefix]);
+          }
+          else {*/
+            $dbal_connection->exec('ATTACH DATABASE ' . $connection_options['database'] . '-' . $connection_options['prefix']['default'] . '-' . $prefix . ' AS ' . $prefix);
+//          }
+        }
+
+        // Add a ., so queries become prefix.table, which is proper syntax for
+        // querying an attached database.
+//        $prefix .= '.';
+      }
+    }
+
     $pdo = $dbal_connection->getWrappedConnection();
 
     // Create functions needed by SQLite.

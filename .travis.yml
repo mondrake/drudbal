@@ -36,8 +36,9 @@ env:
     #- DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group field"
     #- DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group views"
     #- DRUDBAL_ENV="sqlite" TEST_ARGS="--group Database,Entity --testsuite kernel"
+    - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database"
     #- DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database,Cache,Config,Entity,Field --testsuite kernel"
-    - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group field --testsuite kernel"
+    #- DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group field --testsuite kernel"
     #- DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group views --testsuite kernel"
     #- DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="modules/system/tests/src/Functional/Entity/Update/SqlContentEntityStorageSchemaIndexFilledTest.php"
     #- DRUDBAL_ENV="dbal/sqlite/memory" TEST_ARGS="--group Database,Entity --testsuite kernel"
@@ -76,12 +77,12 @@ before_install:
         export SIMPLETEST_DB="sqlite://test_user:test_pass@test_host:3306/sites/default/files/.ht.sqlite"
 
       elif [[ "$DRUDBAL_ENV" == "dbal/sqlite/file" ]]; then
-        export DBAL_URL="sqlite:///sqlite-zorb"
-        export SIMPLETEST_DB="dbal://fake/sqlite-zorb?dbal_driver=pdo_sqlite"
+        export DBAL_URL="sqlite:///sqlite-drudbal"
+        export SIMPLETEST_DB="dbal://localhost/sqlite-drudbal?dbal_driver=pdo_sqlite#xoxo"
 
       elif [[ "$DRUDBAL_ENV" == "dbal/sqlite/memory" ]]; then
         export DBAL_URL="sqlite:///:memory:"
-        export SIMPLETEST_DB="dbal://fake/:memory:?dbal_driver=pdo_sqlite"
+        export SIMPLETEST_DB="dbal://localhost/:memory:?dbal_driver=pdo_sqlite"
 
       elif [[ "$DRUDBAL_ENV" == "dbal/oci8" ]]; then
         export DBAL_URL="oci8://ORAROOT:DRUDBAL@$HOST_ADDR:1521/XE"
@@ -171,10 +172,6 @@ install:
         cd $DRUPAL_PATH/vendor/doctrine/dbal
         patch -p1 < $DRUPAL_PATH/modules/contrib/drudbal/tests/travis_ci/$DRUDBAL_ENV/dbal.patch
       fi
-
-  - git apply $DRUPAL_PATH/modules/contrib/drudbal/drupal_hotfix.patch
-  - cd $DRUPAL_PATH/vendor/doctrine/dbal
-  - patch -p1 < $DRUPAL_PATH/modules/contrib/drudbal/dbal_hotfix.patch
 
   # Create a directory for the driver, and symlink it to the module's one.
   - mkdir -p $DRUPAL_PATH/drivers/lib/Drupal/Driver/Database/
