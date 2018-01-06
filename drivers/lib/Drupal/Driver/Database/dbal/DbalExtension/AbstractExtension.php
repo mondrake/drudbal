@@ -113,8 +113,8 @@ class AbstractExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function getDbTableName($prefixed_table_name) {
-    return $prefixed_table_name;
+  public function getDbTableName(string $drupal_prefix, string $drupal_table_name): string {
+    return $drupal_prefix . $drupal_table_name;
   }
 
   /**
@@ -123,7 +123,7 @@ class AbstractExtension implements DbalExtensionInterface {
   public function getDbFullQualifiedTableName($drupal_table_name) {
     $options = $this->connection->getConnectionOptions();
     $prefix = $this->connection->tablePrefix($drupal_table_name);
-    return $options['database'] . '.' . $this->getDbTableName($prefix . $drupal_table_name);
+    return $options['database'] . '.' . $this->getDbTableName($prefix, $drupal_table_name);
   }
 
   /**

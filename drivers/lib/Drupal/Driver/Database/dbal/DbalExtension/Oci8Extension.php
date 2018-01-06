@@ -116,7 +116,8 @@ class Oci8Extension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function getDbTableName($prefixed_table_name) {
+  public function getDbTableName(string $drupal_prefix, string $drupal_table_name): string {
+    $prefixed_table_name = $drupal_prefix . $drupal_table_name;
     // Max lenght for Oracle is 30 chars, but should be even lower to allow
     // DBAL creating triggers/sequences with table name + suffix.
     if (strlen($prefixed_table_name) > 24) {

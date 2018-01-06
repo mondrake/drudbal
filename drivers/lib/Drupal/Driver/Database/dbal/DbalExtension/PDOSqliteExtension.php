@@ -8,6 +8,7 @@ use Drupal\Core\Database\DatabaseExceptionWrapper;
 use Drupal\Core\Database\DatabaseNotFoundException;
 use Drupal\Core\Database\IntegrityConstraintViolationException;
 use Drupal\Core\Database\Driver\sqlite\Connection as SqliteConnectionBase;
+use Drupal\Driver\Database\dbal\Connection as DruDbalConnection;
 
 use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
@@ -16,10 +17,6 @@ use Doctrine\DBAL\Statement as DbalStatement;
 
 /**
  * Driver specific methods for pdo_sqlite.
- *
- * NOTE: DBAL Schema Manager does not manage namespaces, so instead of
- * having a separate attached database for each prefix like in core Sqlite
- * driver, we have all the tables in the same main db.
  */
 class PDOSqliteExtension extends AbstractExtension {
 
@@ -55,10 +52,53 @@ class PDOSqliteExtension extends AbstractExtension {
   ];
 
   /**
+   * Databases attached to the current database.
+   *
+   * This is used to allow prefixes to be safely handled without locking the
+   * table.
+   *
+   * @var array
+   */
+  protected $attachedDatabases = [];
+
+  /**
+   * Indicates that at least one table has been dropped during this request.
+   *
+   * The destructor will only try to get rid of unnecessary databases if there
+   * is potential of them being empty.
+   *
+   * @var bool
+   */
+  protected $tableDropped = FALSE;
+
+  /**
+   * {@inheritdoc}
+   */
+  public function __construct(DruDbalConnection $drudbal_connection, DbalConnection $dbal_connection, $statement_class) {
+    parent::__construct($drudbal_connection, $dbal_connection, $statement_class);
+
+    // Attach additional databases per prefix.
+    $connection_options = $drudbal_connection->getConnectionOptions();
+    $prefixes = ['default' => ''];
+    foreach ($connection_options['prefix'] as $key => $prefix) {
+      // Default prefix means query the main database -- no need to attach anything.
+      if ($key !== 'default') {
+        // Only attach the database once.
+        if (!isset($this->attachedDatabases[$prefix])) {
+          $this->attachedDatabases[$prefix] = $prefix;
+            $dbal_connection->executeQuery('ATTACH DATABASE ? AS ?', [$connection_options['database'] . '-' . $prefix, $prefix]);
+            $prefixes[$prefix] = $prefix . '.';
+        }
+      }
+    }
+    //$this->connection->setPrefixPublic($prefixes);
+  }
+
+  /**
    * {@inheritdoc}
    */
   public function delegateClientVersion() {
-    return $this->dbalConnection->getWrappedConnection()->getAttribute(\PDO::ATTR_CLIENT_VERSION);
+    return $this->getDbalConnection()->getWrappedConnection()->getAttribute(\PDO::ATTR_CLIENT_VERSION);
   }
 
   /**
@@ -94,10 +134,18 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
+  public function getDbTableName(string $drupal_prefix, string $drupal_table_name): string {
+    // In SQLite, the prefix is the database.
+    return $drupal_table_name;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function getDbFullQualifiedTableName($drupal_table_name) {
     // @todo needs cleanup!!! vs other similar methods and finding index name
     $table_prefix_info = $this->connection->schema()->getPrefixInfoPublic($drupal_table_name);
-    return $table_prefix_info['schema'] . '.' . $table_prefix_info['table'];
+    return $table_prefix_info['schema'] . '.' . $drupal_table_name;
   }
 
   /**
@@ -138,6 +186,12 @@ class PDOSqliteExtension extends AbstractExtension {
    */
   public static function preConnectionOpen(array &$connection_options, array &$dbal_connection_options) {
     $dbal_connection_options['path'] = $connection_options['database'] === ':memory:' ? 'file::memory:?cache=shared' : $connection_options['database'];
+    if (isset($connection_options['prefix']['default']) && $connection_options['prefix']['default'] !== '') {
+      $dbal_connection_options['path'] .= '-' . $connection_options['prefix']['default'];
+      if (isset($dbal_connection_options['url'])) {
+        $dbal_connection_options['url'] .= '-' . $connection_options['prefix']['default'];
+      }
+    }
     unset($dbal_connection_options['dbname']);
     $dbal_connection_options['driverOptions'] += [
       \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
@@ -516,7 +570,7 @@ class PDOSqliteExtension extends AbstractExtension {
     ];
 
     // Ensure that Sqlite has the right minimum version.
-    $db_server_version = $this->dbalConnection->getWrappedConnection()->getServerVersion();
+    $db_server_version = $this->getDbalConnection()->getWrappedConnection()->getServerVersion();
     if (version_compare($db_server_version, self::SQLITE_MINIMUM_VERSION, '<')) {
       $results['fail'][] = t("The Sqlite version %version is less than the minimum required version %minimum_version.", [
         '%version' => $db_server_version,
@@ -579,7 +633,7 @@ class PDOSqliteExtension extends AbstractExtension {
    */
   public function delegateGetDbalColumnType(&$dbal_type, array $drupal_field_specs) {
     if (isset($drupal_field_specs['sqlite_type'])) {
-      $dbal_type = $this->dbalConnection->getDatabasePlatform()->getDoctrineTypeMapping($drupal_field_specs['sqlite_type']);
+      $dbal_type = $this->getDbalConnection()->getDatabasePlatform()->getDoctrineTypeMapping($drupal_field_specs['sqlite_type']);
       return TRUE;
     }
     return FALSE;

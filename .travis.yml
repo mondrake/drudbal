@@ -47,6 +47,9 @@ env:
 matrix:
   fast_finish: true
   allow_failures:
+    - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database,Cache,Config,Entity,Field --testsuite kernel"
+    - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group field --testsuite kernel"
+    - env: DRUDBAL_ENV="dbal/sqlite/memory" TEST_ARGS="--group Database,Entity --testsuite kernel"
     - env: DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group Database,Cache,Config --testsuite kernel"
     - env: DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group views --testsuite kernel"
 
@@ -74,12 +77,12 @@ before_install:
         export SIMPLETEST_DB="sqlite://test_user:test_pass@test_host:3306/sites/default/files/.ht.sqlite"
 
       elif [[ "$DRUDBAL_ENV" == "dbal/sqlite/file" ]]; then
-        export DBAL_URL="sqlite:///sites/default/files/.ht.sqlite"
-        export SIMPLETEST_DB="dbal://fake/sites/default/files/.ht.sqlite?dbal_driver=pdo_sqlite"
+        export DBAL_URL="sqlite:///sqlite-drudbal"
+        export SIMPLETEST_DB="dbal://localhost/sqlite-drudbal?dbal_driver=pdo_sqlite"
 
       elif [[ "$DRUDBAL_ENV" == "dbal/sqlite/memory" ]]; then
         export DBAL_URL="sqlite:///:memory:"
-        export SIMPLETEST_DB="dbal://fake/:memory:?dbal_driver=pdo_sqlite"
+        export SIMPLETEST_DB="dbal://localhost/:memory:?dbal_driver=pdo_sqlite"
 
       elif [[ "$DRUDBAL_ENV" == "dbal/oci8" ]]; then
         export DBAL_URL="oci8://ORAROOT:DRUDBAL@$HOST_ADDR:1521/XE"
@@ -190,7 +193,7 @@ install:
 
   # Post install tasks.
   - if [[ ! "$DRUDBAL_ENV" == "dbal/sqlite/memory" ]]; then drupal site:status; fi
-  - php post_install.php
+  #- php post_install.php
 
 script:
   - cd $DRUPAL_PATH/core
