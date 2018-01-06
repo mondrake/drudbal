@@ -8,6 +8,7 @@ use Drupal\Core\Database\DatabaseExceptionWrapper;
 use Drupal\Core\Database\DatabaseNotFoundException;
 use Drupal\Core\Database\IntegrityConstraintViolationException;
 use Drupal\Core\Database\Driver\sqlite\Connection as SqliteConnectionBase;
+use Drupal\Driver\Database\dbal\Connection as DruDbalConnection;
 
 use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
@@ -53,6 +54,49 @@ class PDOSqliteExtension extends AbstractExtension {
     'LIKE BINARY' => ['postfix' => " ESCAPE '\\'", 'operator' => 'GLOB'],
     'NOT LIKE BINARY' => ['postfix' => " ESCAPE '\\'", 'operator' => 'NOT GLOB'],
   ];
+
+  /**
+   * Databases attached to the current database.
+   *
+   * This is used to allow prefixes to be safely handled without locking the
+   * table.
+   *
+   * @var array
+   */
+  protected $attachedDatabases = [];
+
+  /**
+   * Indicates that at least one table has been dropped during this request.
+   *
+   * The destructor will only try to get rid of unnecessary databases if there
+   * is potential of them being empty.
+   *
+   * @var bool
+   */
+  protected $tableDropped = FALSE;
+
+  /**
+   * {@inheritdoc}
+   */
+  public function __construct(DruDbalConnection $drudbal_connection, DbalConnection $dbal_connection, $statement_class) {
+    parent::__construct($drudbal_connection, $dbal_connection, $statement_class);
+    
+    // Attach additional databases per prefix.
+    $connection_options = $drudbal_connection->getConnectionOptions();
+    $prefixes = ['default' => ''];
+    foreach ($connection_options['prefix'] as $key => $prefix) {
+      // Default prefix means query the main database -- no need to attach anything.
+      if ($key !== 'default') {
+        // Only attach the database once.
+        if (!isset($this->attachedDatabases[$prefix])) {
+          $this->attachedDatabases[$prefix] = $prefix;
+            $this->connection->query('ATTACH DATABASE :database AS :prefix', [':database' => $connection_options['database'] . '-' . $prefix, ':prefix' => $prefix]);
+            $prefixes[$prefix] = $prefix . '.';
+        }
+      }
+    }
+    $this->connection->setPrefixPublic($prefixes);
+  }
 
   /**
    * {@inheritdoc}
