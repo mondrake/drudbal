@@ -86,12 +86,12 @@ class PDOSqliteExtension extends AbstractExtension {
         // Only attach the database once.
         if (!isset($this->attachedDatabases[$prefix])) {
           $this->attachedDatabases[$prefix] = $prefix;
-            $this->connection->query('ATTACH DATABASE :database AS :prefix', [':database' => $connection_options['database'] . '-' . $prefix, ':prefix' => $prefix]);
+            $dbal_connection->executeQuery('ATTACH DATABASE ? AS ?', [$connection_options['database'] . '-' . $prefix, $prefix]);
             $prefixes[$prefix] = $prefix . '.';
         }
       }
     }
-    $this->connection->setPrefixPublic($prefixes);
+    //$this->connection->setPrefixPublic($prefixes);
   }
 
   /**
