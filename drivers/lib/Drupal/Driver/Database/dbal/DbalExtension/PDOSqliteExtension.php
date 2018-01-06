@@ -145,7 +145,7 @@ class PDOSqliteExtension extends AbstractExtension {
   public function getDbFullQualifiedTableName($drupal_table_name) {
     // @todo needs cleanup!!! vs other similar methods and finding index name
     $table_prefix_info = $this->connection->schema()->getPrefixInfoPublic($drupal_table_name);
-    return $table_prefix_info['schema'] . '.' . $table_prefix_info['table'];
+    return $table_prefix_info['schema'] . '.' . $drupal_table_name;
   }
 
   /**
