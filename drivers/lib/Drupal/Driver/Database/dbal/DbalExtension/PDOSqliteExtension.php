@@ -17,10 +17,6 @@ use Doctrine\DBAL\Statement as DbalStatement;
 
 /**
  * Driver specific methods for pdo_sqlite.
- *
- * NOTE: DBAL Schema Manager does not manage namespaces, so instead of
- * having a separate attached database for each prefix like in core Sqlite
- * driver, we have all the tables in the same main db.
  */
 class PDOSqliteExtension extends AbstractExtension {
 
@@ -80,7 +76,7 @@ class PDOSqliteExtension extends AbstractExtension {
    */
   public function __construct(DruDbalConnection $drudbal_connection, DbalConnection $dbal_connection, $statement_class) {
     parent::__construct($drudbal_connection, $dbal_connection, $statement_class);
-    
+
     // Attach additional databases per prefix.
     $connection_options = $drudbal_connection->getConnectionOptions();
     $prefixes = ['default' => ''];
@@ -134,6 +130,14 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * Database asset name resolution methods.
    */
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getDbTableName(string $drupal_prefix, string $drupal_table_name): string {
+    // In SQLite, the prefix is the database.
+    return $drupal_table_name;
+  }
 
   /**
    * {@inheritdoc}

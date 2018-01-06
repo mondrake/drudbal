@@ -165,9 +165,7 @@ class Connection extends DatabaseConnection {
       // Per-table prefixes are deprecated as of Drupal 8.2 so let's not get
       // in the complexity of trying to manage that. Assume a single default
       // prefix.
-//      $prefixed_table = $this->prefixes['default'] . $table;
-      $prefixed_table = $table;
-      $this->dbTables['{' . $table . '}'] = $this->dbalExtension->getDbTableName($prefixed_table);
+      $this->dbTables['{' . $table . '}'] = $this->dbalExtension->getDbTableName($this->prefixes['default'], $table);
     }
     return str_replace(array_keys($this->dbTables), array_values($this->dbTables), $sql);
   }

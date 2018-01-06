@@ -35,13 +35,15 @@ interface DbalExtensionInterface {
   /**
    * Get the database table name, resolving platform specific constraints.
    *
-   * @param string $prefixed_table_name
-   *   The name of the table in question, already prefixed.
+   * @param string $drupal_prefix
+   *   A string with the Drupal prefix for the tables.
+   * @param string $drupal_table_name
+   *   A string with the Drupal name of the table.
    *
    * @return string
    *   The database table name.
    */
-  public function getDbTableName($prefixed_table_name);
+  public function getDbTableName(string $drupal_prefix, string $drupal_table_name): string;
 
   /**
    * Get the database table name, including the schema prefix.
