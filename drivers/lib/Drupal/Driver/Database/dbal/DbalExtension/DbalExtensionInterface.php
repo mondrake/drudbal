@@ -36,7 +36,7 @@ interface DbalExtensionInterface {
    * Get the database table name, resolving platform specific constraints.
    *
    * @param string $drupal_prefix
-   *   A string with the Drupal prefix for the tables.
+   *   A string with the Drupal prefix for the table.
    * @param string $drupal_table_name
    *   A string with the Drupal name of the table.
    *
@@ -44,6 +44,19 @@ interface DbalExtensionInterface {
    *   The database table name.
    */
   public function getDbTableName(string $drupal_prefix, string $drupal_table_name): string;
+
+  /**
+   * Get the Drupal table name, from a database-level table name.
+   *
+   * @param string $drupal_default_prefix
+   *   A string with the default Drupal prefix for the tables.
+   * @param string $db_table_name
+   *   A string with the database-level name of the table.
+   *
+   * @return string
+   *   The Drupal table name.
+   */
+  public function getDrupalTableName(string $drupal_default_prefix, string $db_table_name): string;
 
   /**
    * Get the database table name, including the schema prefix.
