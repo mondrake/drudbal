@@ -248,38 +248,6 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function postConstruct(array $connection_options) {
-    $prefixes = ['default' => ''];
-    // Attach additional databases per prefix.
-    foreach ($connection_options['prefix'] as $key => $prefix) {
-      // Default prefix means query the main database -- no need to attach anything.
-      if ($key !== 'default') {
-        // Only attach the database once.
-        if (!isset($this->attachedDatabases[$prefix])) {
-          $this->attachedDatabases[$prefix] = $prefix;
-/*          if ($connection_options['database'] === ':memory:') {
-            // In memory database use ':memory:' as database name. According to
-            // http://www.sqlite.org/inmemorydb.html it will open a unique
-            // database so attaching it twice is not a problem.
-            $this->query('ATTACH DATABASE :database AS :prefix', [':database' => $connection_options['database'], ':prefix' => $prefix]);
-          }
-          else {*/
-            $this->connection->query('ATTACH DATABASE :database AS :prefix', [':database' => $connection_options['database'] . '-' . $prefix, ':prefix' => $prefix]);
-            $prefixes[$prefix] = $prefix . '.';
-//          }
-        }
-
-        // Add a ., so queries become prefix.table, which is proper syntax for
-        // querying an attached database.
-//        $prefix .= '.';
-      }
-    }
-    $this->connection->setPrefixPublic($prefixes);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function delegateTransactionSupport(array &$connection_options = []) {
     return !isset($connection_options['transactions']) || ($connection_options['transactions'] !== FALSE);
   }

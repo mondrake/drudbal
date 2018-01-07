@@ -102,7 +102,6 @@ class Connection extends DatabaseConnection {
     $dbal_extension_class = static::getDbalExtensionClass($connection_options);
     $this->statementClass = static::getStatementClass($connection_options);
     $this->dbalExtension = new $dbal_extension_class($this, $dbal_connection, $this->statementClass);
-    $this->dbalExtension->postConstruct($this->connectionOptions);
     $this->dbalPlatform = $dbal_connection->getDatabasePlatform();
     $this->transactionSupport = $this->dbalExtension->delegateTransactionSupport($connection_options);
     $this->transactionalDDLSupport = $this->dbalExtension->delegateTransactionalDdlSupport($connection_options);
@@ -156,7 +155,7 @@ class Connection extends DatabaseConnection {
    * {@inheritdoc}
    */
   public function prefixTables($sql) {
-/*    $matches = [];
+    $matches = [];
     preg_match_all('/{(\S*)}/', $sql, $matches, PREG_SET_ORDER, 0);
     foreach ($matches as $match) {
       $table = $match[1];
@@ -168,8 +167,7 @@ class Connection extends DatabaseConnection {
       // prefix.
       $this->dbTables['{' . $table . '}'] = $this->dbalExtension->getDbTableName($this->prefixes['default'], $table);
     }
-    return str_replace(array_keys($this->dbTables), array_values($this->dbTables), $sql);*/
-    return str_replace($this->prefixSearch, $this->prefixReplace, $sql);
+    return str_replace(array_keys($this->dbTables), array_values($this->dbTables), $sql);
   }
 
   /**
