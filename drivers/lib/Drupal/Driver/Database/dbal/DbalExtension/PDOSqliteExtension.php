@@ -93,8 +93,8 @@ class PDOSqliteExtension extends AbstractExtension {
     }
     $this->connection->setPrefixPublic($prefixes);
 static $xxxcnt = 0;
-error_log('instance ' . $xxxcnt++);
-error_log(var_export([$connection_options, $prefixes], true));
+//error_log('instance ' . $xxxcnt++);
+//error_log(var_export([$connection_options, $prefixes], true));
   }
 
   /**
@@ -156,7 +156,7 @@ error_log(var_export([$connection_options, $prefixes], true));
   public function getDbFullQualifiedTableName($drupal_table_name) {
     // @todo needs cleanup!!! vs other similar methods and finding index name
     $table_prefix_info = $this->connection->schema()->getPrefixInfoPublic($drupal_table_name);
-error_log(var_export([$drupal_table_name, $table_prefix_info], true));
+//error_log(var_export([$drupal_table_name, $table_prefix_info], true));
     return $table_prefix_info['schema'] . '.' . $drupal_table_name;
   }
 
