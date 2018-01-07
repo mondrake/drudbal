@@ -157,7 +157,12 @@ static $xxxcnt = 0;
     // @todo needs cleanup!!! vs other similar methods and finding index name
     $table_prefix_info = $this->connection->schema()->getPrefixInfoPublic($drupal_table_name);
 //error_log(var_export([$drupal_table_name, $table_prefix_info], true));
-    return $table_prefix_info['schema'] . '.' . $drupal_table_name;
+    if ($table_prefix_info['schema'] === 'main') {
+      return $drupal_table_name;
+    }
+    else {
+      return $table_prefix_info['schema'] . '.' . $drupal_table_name;
+    }
   }
 
   /**
