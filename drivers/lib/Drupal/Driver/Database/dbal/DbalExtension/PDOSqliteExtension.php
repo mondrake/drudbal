@@ -93,7 +93,7 @@ public $instxxx;
     }
     $this->connection->setPrefixPublic($prefixes);
 static $xxxcnt = 0;
-$this->instxxx = $xxxcnt++
+$this->instxxx = $xxxcnt++;
 error_log('instance ' . $this->instxxx);
 error_log(var_export([$connection_options, $prefixes], true));
   }
