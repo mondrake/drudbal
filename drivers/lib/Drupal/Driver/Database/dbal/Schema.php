@@ -922,33 +922,10 @@ class Schema extends DatabaseSchema {
    * {@inheritdoc}
    */
   public function findTables($table_expression) {
-    $individually_prefixed_tables = $this->connection->getUnprefixedTablesMap();
-    $default_prefix = $this->connection->tablePrefix();
-    $default_prefix_length = strlen($default_prefix);
-
     $tables = [];
     foreach ($this->dbalExtension->delegateListTableNames() as $table_name) {
-      // Take into account tables that have an individual prefix.
-      if (isset($individually_prefixed_tables[$table_name])) {
-        $prefix_length = strlen($this->connection->tablePrefix($individually_prefixed_tables[$table_name]));
-      }
-      elseif ($default_prefix && substr($table_name, 0, $default_prefix_length) !== $default_prefix) {
-        // This table name does not start the default prefix, which means that
-        // it is not managed by Drupal so it should be excluded from the result.
-        continue;
-      }
-      else {
-        $prefix_length = $default_prefix_length;
-      }
-
-      // Remove the prefix from the returned tables.
-      $unprefixed_table_name = substr($table_name, $prefix_length);
-
-      // The pattern can match a table which is the same as the prefix. That
-      // will become an empty string when we remove the prefix, which will
-      // probably surprise the caller, besides not being a prefixed table. So
-      // remove it.
-      if (!empty($unprefixed_table_name)) {
+      $unprefixed_table_name = $this->dbalExtension->getDrupalTableName($this->connection->tablePrefix(), $table_name);
+      if ($unprefixed_table_name !== FALSE && $unprefixed_table_name !== '') {
         $tables[$unprefixed_table_name] = $unprefixed_table_name;
       }
     }
