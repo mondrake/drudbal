@@ -120,6 +120,31 @@ class AbstractExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
+  public function getDrupalTableName(string $drupal_default_prefix, string $db_table_name): string {
+    $individually_prefixed_tables = $this->connection->getUnprefixedTablesMap();
+    $default_prefix_length = strlen($drupal_default_prefix);
+
+    // Take into account tables that have an individual prefix.
+    // @todo individual prefixes are deprecated as of D8.2
+    if (isset($individually_prefixed_tables[$db_table_name])) {
+      $prefix_length = strlen($this->connection->tablePrefix($individually_prefixed_tables[$db_table_name]));
+    }
+    elseif ($drupal_default_prefix && substr($db_table_name, 0, $default_prefix_length) !== $drupal_default_prefix) {
+      // This table name does not start the default prefix, which means that
+      // it is not managed by Drupal so it should be excluded from the result.
+      return FALSE;
+    }
+    else {
+      $prefix_length = $default_prefix_length;
+    }
+
+    // Remove the prefix from the returned tables.
+    return substr($db_table_name, $prefix_length);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function getDbFullQualifiedTableName($drupal_table_name) {
     $options = $this->connection->getConnectionOptions();
     $prefix = $this->connection->tablePrefix($drupal_table_name);
