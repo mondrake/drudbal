@@ -92,6 +92,9 @@ class PDOSqliteExtension extends AbstractExtension {
       }
     }
     //$this->connection->setPrefixPublic($prefixes);
+static $xxxcnt = 0;
+error_log('instance ' . $xxxcnt++);
+error_log(var_export($connection_options, true));
   }
 
   /**
