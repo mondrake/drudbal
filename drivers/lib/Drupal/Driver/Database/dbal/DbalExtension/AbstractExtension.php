@@ -139,7 +139,7 @@ class AbstractExtension implements DbalExtensionInterface {
     }
 
     // Remove the prefix from the returned tables.
-    $unprefixed_table_name = substr($db_table_name, $prefix_length);
+    return substr($db_table_name, $prefix_length);
   }
 
   /**
