@@ -70,7 +70,7 @@ class PDOSqliteExtension extends AbstractExtension {
    * @var bool
    */
   protected $tableDropped = FALSE;
-
+public $instxxx;
   /**
    * {@inheritdoc}
    */
@@ -93,7 +93,8 @@ class PDOSqliteExtension extends AbstractExtension {
     }
     $this->connection->setPrefixPublic($prefixes);
 static $xxxcnt = 0;
-error_log('instance ' . $xxxcnt++);
+$this->instxxx = $xxxcnt++
+error_log('instance ' . $this->instxxx);
 error_log(var_export([$connection_options, $prefixes], true));
   }
 
