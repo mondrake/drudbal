@@ -156,6 +156,7 @@ error_log(var_export($connection_options, true));
   public function getDbFullQualifiedTableName($drupal_table_name) {
     // @todo needs cleanup!!! vs other similar methods and finding index name
     $table_prefix_info = $this->connection->schema()->getPrefixInfoPublic($drupal_table_name);
+error_log(var_export($table_prefix_info, true));
     return $table_prefix_info['schema'] . '.' . $drupal_table_name;
   }
 
