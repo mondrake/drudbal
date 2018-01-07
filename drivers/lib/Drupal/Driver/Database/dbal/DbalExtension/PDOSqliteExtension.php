@@ -503,7 +503,7 @@ static $xxxcnt = 0;
       }
     }
     if ($this->getDebugging()) {
-      error_log($query . ' : ' . var_export($args, TRUE));
+//      error_log($query . ' : ' . var_export($args, TRUE));
     }
     return $this;
   }
