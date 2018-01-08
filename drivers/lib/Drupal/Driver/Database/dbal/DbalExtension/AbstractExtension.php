@@ -159,6 +159,7 @@ error_log(var_export(['instance ' . $this->debugId, $drudbal_connection->getConn
   public function getDbFullQualifiedTableName($drupal_table_name) {
     $options = $this->connection->getConnectionOptions();
     $prefix = $this->connection->tablePrefix($drupal_table_name);
+error_log(var_export([$drupal_table_name, $prefix], true));
     return $options['database'] . '.' . $this->getDbTableName($prefix, $drupal_table_name);
   }
 
