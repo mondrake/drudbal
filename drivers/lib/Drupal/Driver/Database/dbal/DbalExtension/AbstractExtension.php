@@ -44,6 +44,13 @@ class AbstractExtension implements DbalExtensionInterface {
   protected static $isDebugging = FALSE;
 
   /**
+   * Instance debug ID.
+   *
+   * @var int
+   */
+  protected static $debugId;
+
+  /**
    * Constructs a DBAL extension object.
    *
    * @param \Drupal\Driver\Database\dbal\Connection $drudbal_connection
@@ -57,6 +64,10 @@ class AbstractExtension implements DbalExtensionInterface {
     $this->connection = $drudbal_connection;
     $this->dbalConnection = $dbal_connection;
     $this->statementClass = $statement_class;
+
+    static $debugIdCnt = 0;
+    $this->debugId = $debugIdCnt++;
+error_log(var_export(['instance ' . $this->debugId, $drudbal_connection->getConnectionOptions()], true));
   }
 
   /**
