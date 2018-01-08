@@ -189,12 +189,16 @@ class PDOSqliteExtension extends AbstractExtension {
    * {@inheritdoc}
    */
   public static function preConnectionOpen(array &$connection_options, array &$dbal_connection_options) {
-$connection_options['database'] = '/home/travis/drupal8/sqlite-drudbal';
-    $dbal_connection_options['path'] = $connection_options['database'] === ':memory:' ? 'file::memory:?cache=shared' : $connection_options['database'];
-    if (isset($connection_options['prefix']['default']) && $connection_options['prefix']['default'] !== '') {
-      $dbal_connection_options['path'] .= '-' . $connection_options['prefix']['default'];
-      if (isset($dbal_connection_options['url'])) {
-        $dbal_connection_options['url'] .= '-' . $connection_options['prefix']['default'];
+    if ($connection_options['database'] === ':memory:') {
+      $dbal_connection_options['path'] = 'file::memory:?cache=shared';
+    }
+    else {
+      $dbal_connection_options['path'] = $connection_options['database'];
+      if (isset($connection_options['prefix']['default']) && $connection_options['prefix']['default'] !== '') {
+        $dbal_connection_options['path'] .= '-' . $connection_options['prefix']['default'];
+        if (isset($dbal_connection_options['url'])) {
+          $dbal_connection_options['url'] .= '-' . $connection_options['prefix']['default'];
+        }
       }
     }
     unset($dbal_connection_options['dbname']);
