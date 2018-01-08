@@ -41,7 +41,14 @@ class AbstractExtension implements DbalExtensionInterface {
    *
    * @var bool
    */
-  protected $isDebugging = FALSE;
+  protected static $isDebugging = FALSE;
+
+  /**
+   * Instance debug ID.
+   *
+   * @var int
+   */
+  public $debugId;
 
   /**
    * Constructs a DBAL extension object.
@@ -57,6 +64,9 @@ class AbstractExtension implements DbalExtensionInterface {
     $this->connection = $drudbal_connection;
     $this->dbalConnection = $dbal_connection;
     $this->statementClass = $statement_class;
+
+    static $debugIdCnt = 0;
+    $this->debugId = $debugIdCnt++;
   }
 
   /**
@@ -66,7 +76,7 @@ class AbstractExtension implements DbalExtensionInterface {
    *   The debugging mode.
    */
   public function setDebugging(bool $value): void {
-    $this->isDebugging = $value;
+    static::$isDebugging = $value;
   }
 
   /**
@@ -76,7 +86,7 @@ class AbstractExtension implements DbalExtensionInterface {
    *   The debugging mode.
    */
   public function getDebugging(): bool {
-    return $this->isDebugging;
+    return static::$isDebugging;
   }
 
   /**
