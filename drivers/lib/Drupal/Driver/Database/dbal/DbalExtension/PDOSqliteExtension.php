@@ -79,19 +79,16 @@ class PDOSqliteExtension extends AbstractExtension {
 
     // Attach additional databases per prefix.
     $connection_options = $drudbal_connection->getConnectionOptions();
-    $prefixes = ['default' => ''];
+    $prefixes = [];
     foreach ($connection_options['prefix'] as $key => $prefix) {
       // Default prefix means query the main database -- no need to attach anything.
-      if ($key !== 'default') {
-        // Only attach the database once.
-        if (!isset($this->attachedDatabases[$prefix])) {
-          $this->attachedDatabases[$prefix] = $prefix;
-            $dbal_connection->executeQuery('ATTACH DATABASE ? AS ?', [$connection_options['database'] . '-' . $prefix, $prefix]);
-            $prefixes[$prefix] = $prefix . '.';
-        }
+      if ($key !== 'default' && !isset($this->attachedDatabases[$prefix])) {
+        $this->attachedDatabases[$prefix] = $prefix;
+        $dbal_connection->executeQuery('ATTACH DATABASE ? AS ?', [$connection_options['database'] . '-' . $prefix, $prefix]);
       }
+      $prefixes[$key] = $prefix;
     }
-    //$this->connection->setPrefixPublic($prefixes);
+    $this->connection->setPrefixPublic($prefixes);
   }
 
   /**
@@ -151,9 +148,8 @@ class PDOSqliteExtension extends AbstractExtension {
    * {@inheritdoc}
    */
   public function getDbFullQualifiedTableName($drupal_table_name) {
-    // @todo needs cleanup!!! vs other similar methods and finding index name
-    $table_prefix_info = $this->connection->schema()->getPrefixInfoPublic($drupal_table_name);
-    return $table_prefix_info['schema'] . '.' . $drupal_table_name;
+    $prefix = $this->connection->tablePrefix($drupal_table_name);
+    return $prefix . '.' . $drupal_table_name;
   }
 
   /**
@@ -193,11 +189,16 @@ class PDOSqliteExtension extends AbstractExtension {
    * {@inheritdoc}
    */
   public static function preConnectionOpen(array &$connection_options, array &$dbal_connection_options) {
-    $dbal_connection_options['path'] = $connection_options['database'] === ':memory:' ? 'file::memory:?cache=shared' : $connection_options['database'];
-    if (isset($connection_options['prefix']['default']) && $connection_options['prefix']['default'] !== '') {
-      $dbal_connection_options['path'] .= '-' . $connection_options['prefix']['default'];
-      if (isset($dbal_connection_options['url'])) {
-        $dbal_connection_options['url'] .= '-' . $connection_options['prefix']['default'];
+    if ($connection_options['database'] === ':memory:') {
+      $dbal_connection_options['path'] = 'file::memory:?cache=shared';
+    }
+    else {
+      $dbal_connection_options['path'] = $connection_options['database'];
+      if (isset($connection_options['prefix']['default']) && $connection_options['prefix']['default'] !== '') {
+        $dbal_connection_options['path'] .= '-' . $connection_options['prefix']['default'];
+        if (isset($dbal_connection_options['url'])) {
+          $dbal_connection_options['url'] .= '-' . $connection_options['prefix']['default'];
+        }
       }
     }
     unset($dbal_connection_options['dbname']);
