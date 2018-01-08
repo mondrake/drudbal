@@ -79,6 +79,7 @@ class PDOSqliteExtension extends AbstractExtension {
 
     // Attach additional databases per prefix.
     $connection_options = $drudbal_connection->getConnectionOptions();
+error_log(var_export(['instance ' . $this->debugId, $connection_options], true));
     $prefixes = [];
     foreach ($connection_options['prefix'] as $key => $prefix) {
       // Default prefix means query the main database -- no need to attach anything.
@@ -89,7 +90,6 @@ class PDOSqliteExtension extends AbstractExtension {
       $prefixes[$key] = $prefix;
     }
     $this->connection->setPrefixPublic($prefixes);
-//error_log(var_export(['instance ' . $this->debugId, $prefixes], true));
   }
 
   /**
