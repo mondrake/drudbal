@@ -67,7 +67,6 @@ class AbstractExtension implements DbalExtensionInterface {
 
     static $debugIdCnt = 0;
     $this->debugId = $debugIdCnt++;
-error_log(var_export(['instance ' . $this->debugId, $drudbal_connection->getConnectionOptions()], true));
   }
 
   /**
@@ -365,6 +364,13 @@ error_log(var_export([$drupal_table_name, $prefix, $options, $options['database'
    */
   public function getForUpdateSQL() {
     return ' FOR UPDATE';
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function alterFullQualifiedTableName(string $full_db_table_name): string {
+    return $full_db_table_name;
   }
 
   /**
