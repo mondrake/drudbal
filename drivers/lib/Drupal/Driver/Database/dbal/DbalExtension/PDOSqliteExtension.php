@@ -162,7 +162,7 @@ class PDOSqliteExtension extends AbstractExtension {
     // that the prefix is no longer relevant.
     if (in_array($context, ['indexExists', 'dropIndex'])) {
       $dbal_table = $dbal_schema->getTable($this->tableName($drupal_table_name));
-error_log(var_export([$drupal_table_name, $index_name, $dbal_table->getIndexes()], TRUE));
+error_log(var_export([$drupal_table_name, $index_name, array_keys($dbal_table->getIndexes())], TRUE));
       foreach ($dbal_table->getIndexes() as $index) {
         $index_full_name = $index->getName();
         $matches = [];
