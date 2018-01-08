@@ -28,21 +28,21 @@ env:
     # Drupal PHPUnit test variables.
     - SIMPLETEST_BASE_URL="http://$HOST_ADDR:$HTTP_PORT"
   matrix:
-    - DRUDBAL_ENV="mysql" TEST_ARGS="--group Database"
-    - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Database,Cache,Config,Entity,Field"
-    - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group field"
-    - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group views"
-    - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Database,Cache,Config,Entity,Field"
-    - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group field"
-    - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group views"
-    - DRUDBAL_ENV="sqlite" TEST_ARGS="--group Database,Entity --testsuite kernel"
-    - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database,Cache,Config,Entity,Field --testsuite kernel"
-    - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group field --testsuite kernel"
-    - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group views --testsuite kernel"
+    #- DRUDBAL_ENV="mysql" TEST_ARGS="--group Database"
+    #- DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Database,Cache,Config,Entity,Field"
+    #- DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group field"
+    #- DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group views"
+    #- DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Database,Cache,Config,Entity,Field"
+    #- DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group field"
+    #- DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group views"
+    #- DRUDBAL_ENV="sqlite" TEST_ARGS="--group Database,Entity --testsuite kernel"
+    - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database,Cache,Config,Entity,Field --testsuite functional"
+    - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group field --testsuite functional"
+    - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group views --testsuite functional"
     - DRUDBAL_ENV="dbal/sqlite/memory" TEST_ARGS="--group Database,Entity --testsuite kernel"
-    - DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group Database,Cache,Config --testsuite kernel"
+    #- DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group Database,Cache,Config --testsuite kernel"
     #- DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group Entity,views,field,Field"
-    - DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group views --testsuite kernel"
+    #- DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group views --testsuite kernel"
 
 matrix:
   fast_finish: true
@@ -53,6 +53,7 @@ matrix:
 cache:
   directories:
     - $ORACLE_DOWNLOAD_DIR
+    - $DRUPAL_STAGING_DIR
 
 before_install:
   # Set variables.
@@ -190,7 +191,6 @@ install:
 
   # Post install tasks.
   - if [[ ! "$DRUDBAL_ENV" == "dbal/sqlite/memory" ]]; then drupal site:status; fi
-  #- php post_install.php
 
 script:
   - cd $DRUPAL_PATH/core
@@ -198,10 +198,11 @@ script:
   - $DRUPAL_PATH/vendor/bin/phpunit $TEST_ARGS
 
 after_script:
+  - ls -al $DRUPAL_PATH
   - cd $DRUPAL_PATH/modules/contrib/drudbal
   - $DRUPAL_PATH/vendor/bin/phpcs
 
 notifications:
   email:
     on_success: never
-    on_failure: always
+    on_failure: never
