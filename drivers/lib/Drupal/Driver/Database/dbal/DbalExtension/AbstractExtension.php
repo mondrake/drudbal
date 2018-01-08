@@ -48,7 +48,7 @@ class AbstractExtension implements DbalExtensionInterface {
    *
    * @var int
    */
-  public static $debugId;
+  public $debugId;
 
   /**
    * Constructs a DBAL extension object.
