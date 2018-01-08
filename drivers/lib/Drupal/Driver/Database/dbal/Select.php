@@ -76,7 +76,7 @@ class Select extends QuerySelect {
           $escaped_table = $this->connection->getPrefixedTableName($this->connection->escapeTable($table['table']));
         }
         else {
-          $escaped_table = $table['table'];
+          $escaped_table = $dbal_extension->alterFullQualifiedTableName($table['table']);
         }
       }
 

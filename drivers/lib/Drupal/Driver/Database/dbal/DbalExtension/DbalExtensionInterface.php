@@ -450,6 +450,17 @@ interface DbalExtensionInterface {
   public function getForUpdateSQL();
 
   /**
+   * Returns an altered fully qualified database table name.
+   *
+   * @param string $full_db_table_name
+   *   The original fully qualified database table name.
+   *
+   * @return string
+   *   The altered fully qualified database table name.
+   */
+  public function alterFullQualifiedTableName(string $full_db_table_name): string;
+
+  /**
    * Insert delegated methods.
    */
 
