@@ -89,7 +89,7 @@ class PDOSqliteExtension extends AbstractExtension {
       $prefixes[$key] = $prefix;
     }
     $this->connection->setPrefixPublic($prefixes);
-error_log(var_export(['instance ' . $this->debugId, $connection_options, $prefixes], true));
+//error_log(var_export(['instance ' . $this->debugId, $connection_options, $prefixes], true));
   }
 
   /**
