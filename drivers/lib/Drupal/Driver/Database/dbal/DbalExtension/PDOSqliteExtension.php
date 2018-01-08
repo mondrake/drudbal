@@ -193,6 +193,7 @@ error_log(var_export(['instance ' . $this->debugId, $connection_options], true))
    * {@inheritdoc}
    */
   public static function preConnectionOpen(array &$connection_options, array &$dbal_connection_options) {
+$connection_options['database'] = '/home/travis/drupal8/sqlite-drudbal';
     $dbal_connection_options['path'] = $connection_options['database'] === ':memory:' ? 'file::memory:?cache=shared' : $connection_options['database'];
     if (isset($connection_options['prefix']['default']) && $connection_options['prefix']['default'] !== '') {
       $dbal_connection_options['path'] .= '-' . $connection_options['prefix']['default'];
