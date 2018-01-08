@@ -366,6 +366,13 @@ class AbstractExtension implements DbalExtensionInterface {
   }
 
   /**
+   * {@inheritdoc}
+   */
+  public function alterFullQualifiedTableName(string $full_db_table_name): string {
+    return $full_db_table_name;
+  }
+
+  /**
    * Insert delegated methods.
    */
 

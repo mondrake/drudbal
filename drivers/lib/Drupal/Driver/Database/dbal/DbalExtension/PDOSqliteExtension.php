@@ -149,7 +149,7 @@ class PDOSqliteExtension extends AbstractExtension {
    */
   public function getDbFullQualifiedTableName($drupal_table_name) {
     $prefix = $this->connection->tablePrefix($drupal_table_name);
-    return $prefix . '.' . $drupal_table_name;
+    return empty($prefix) ? 'main.' . $drupal_table_name : $prefix . '.' . $drupal_table_name;
   }
 
   /**
@@ -524,6 +524,22 @@ class PDOSqliteExtension extends AbstractExtension {
    */
   public function getForUpdateSQL() {
     return NULL;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function alterFullQualifiedTableName(string $full_db_table_name): string {
+    if (strpos($full_db_table_name, '.') === FALSE) {
+      return $full_db_table_name;
+    }
+
+    list($schema, $table_name) = explode('.', $full_db_table_name);
+    $connection_options = $this->connection->getConnectionOptions();
+    if (isset($connection_options['prefix']['default']) && $schema === $connection_options['prefix']['default']) {
+      return 'main.' . $table_name;
+    }
+    return $full_db_table_name;
   }
 
   /**
