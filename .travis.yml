@@ -76,7 +76,7 @@ before_install:
         export SIMPLETEST_DB="sqlite://test_user:test_pass@test_host:3306/sites/default/files/.ht.sqlite"
 
       elif [[ "$DRUDBAL_ENV" == "dbal/sqlite/file" ]]; then
-        export DBAL_URL="sqlite:///sqlite-drudbal"
+        export DBAL_URL="sqlite:///$DRUPAL_PATH/sqlite-drudbal"
         export SIMPLETEST_DB="dbal://localhost/$DRUPAL_PATH/sqlite-drudbal?dbal_driver=pdo_sqlite"
 
       elif [[ "$DRUDBAL_ENV" == "dbal/sqlite/memory" ]]; then
