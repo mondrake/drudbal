@@ -149,7 +149,7 @@ error_log(var_export(['instance ' . $this->debugId, $prefixes], true));
    * {@inheritdoc}
    */
   public function getDbFullQualifiedTableName($drupal_table_name) {
-error_log(var_export(['instance ' . $this->debugId, $this->connection->query('PRAGMA database_list')], true));
+error_log(var_export(['instance ' . $this->debugId, $this->connection->query('PRAGMA database_list')->fetchAll()], true));
     $prefix = $this->connection->tablePrefix($drupal_table_name);
     // @todo needs cleanup!!! vs other similar methods and finding index name
     //$table_prefix_info = $this->connection->schema()->getPrefixInfoPublic($drupal_table_name);
