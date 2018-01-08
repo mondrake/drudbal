@@ -108,6 +108,7 @@ class Connection extends DatabaseConnection {
     // Unset $this->connection so that __get() can return the wrapped
     // DbalConnection on the extension instead.
     unset($this->connection);
+//error_log(var_export([$this->query('PRAGMA database_list')->fetchAll()], true));
   }
 
   /**
