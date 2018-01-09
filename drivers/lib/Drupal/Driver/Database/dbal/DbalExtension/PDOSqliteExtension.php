@@ -228,7 +228,7 @@ class PDOSqliteExtension extends AbstractExtension {
    */
   public static function preConnectionOpen(array &$connection_options, array &$dbal_connection_options) {
     if ($connection_options['database'] === ':memory:') {
-error_log('***inmem***')
+error_log('***inmem***');
       $dbal_connection_options['path'] = 'file::memory:?cache=shared';
     }
     else {
