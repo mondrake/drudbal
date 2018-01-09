@@ -1,12 +1,13 @@
-diff --git a/core/modules/migrate/src/MigrateExecutable.php b/core/modules/migrate/src/MigrateExecutable.php
-index d5b9d1a..3c7bf5f 100644
---- a/core/modules/migrate/src/MigrateExecutable.php
-+++ b/core/modules/migrate/src/MigrateExecutable.php
-@@ -185,6 +185,7 @@ public function import() {
-     $id_map = $this->migration->getIdMap();
- 
-     try {
-+\Drupal::database()->getDbalExtension()->setDebugging(TRUE);
-       $source->rewind();
+diff --git a/core/tests/Drupal/FunctionalTests/Update/UpdatePathTestBase.php b/core/tests/Drupal/FunctionalTests/Update/UpdatePathTestBase.php
+index 4aca500..5017b85 100644
+--- a/core/tests/Drupal/FunctionalTests/Update/UpdatePathTestBase.php
++++ b/core/tests/Drupal/FunctionalTests/Update/UpdatePathTestBase.php
+@@ -384,6 +384,8 @@ protected function runUpdates() {
+         }
+       }
      }
-     catch (\Exception $e) {
++
++    Database::getConnection()->schema()->dbalSchemaForceReload();
+   }
+ 
+   /**
