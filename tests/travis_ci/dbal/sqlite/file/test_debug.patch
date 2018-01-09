@@ -1,0 +1,12 @@
+diff --git a/core/modules/system/tests/src/Functional/Entity/Update/SqlContentEntityStorageSchemaIndexTest.php b/core/modules/system/tests/src/Functional/Entity/Update/SqlContentEntityStorageSchemaIndexTest.php
+index 3954230..d63c99a 100644
+--- a/core/modules/system/tests/src/Functional/Entity/Update/SqlContentEntityStorageSchemaIndexTest.php
++++ b/core/modules/system/tests/src/Functional/Entity/Update/SqlContentEntityStorageSchemaIndexTest.php
+@@ -27,6 +27,7 @@ public function testIndex() {
+     // The initial Drupal 8 database dump before any updates does not include
+     // the entity ID in the entity field data table indices that were added in
+     // https://www.drupal.org/node/2261669.
++\Drupal::database()->getDbalExtension()->setDebugging(TRUE);
+     $this->assertTrue(db_index_exists('node_field_data', 'node__default_langcode'), 'Index node__default_langcode exists prior to running updates.');
+     $this->assertFalse(db_index_exists('node_field_data', 'node__id__default_langcode__langcode'), 'Index node__id__default_langcode__langcode does not exist prior to running updates.');
+     $this->assertFalse(db_index_exists('users_field_data', 'user__id__default_langcode__langcode'), 'Index users__id__default_langcode__langcode does not exist prior to running updates.');
