@@ -1,0 +1,13 @@
+diff --git a/core/tests/Drupal/FunctionalTests/Update/UpdatePathTestBase.php b/core/tests/Drupal/FunctionalTests/Update/UpdatePathTestBase.php
+index 4aca500..5017b85 100644
+--- a/core/tests/Drupal/FunctionalTests/Update/UpdatePathTestBase.php
++++ b/core/tests/Drupal/FunctionalTests/Update/UpdatePathTestBase.php
+@@ -384,6 +384,8 @@ protected function runUpdates() {
+         }
+       }
+     }
++
++    Database::getConnection()->schema()->dbalSchemaForceReload();
+   }
+ 
+   /**
