@@ -1,12 +1,13 @@
-diff --git a/core/modules/system/tests/src/Functional/Entity/Update/SqlContentEntityStorageSchemaIndexTest.php b/core/modules/system/tests/src/Functional/Entity/Update/SqlContentEntityStorageSchemaIndexTest.php
-index 3954230..1ee4ccf 100644
---- a/core/modules/system/tests/src/Functional/Entity/Update/SqlContentEntityStorageSchemaIndexTest.php
-+++ b/core/modules/system/tests/src/Functional/Entity/Update/SqlContentEntityStorageSchemaIndexTest.php
-@@ -34,6 +34,7 @@ public function testIndex() {
-     // Running database updates should update the entity schemata to add the
-     // indices from https://www.drupal.org/node/2261669.
-     $this->runUpdates();
-+\Drupal::database()->getDbalExtension()->setDebugging(TRUE);
-     $this->assertFalse(db_index_exists('node_field_data', 'node__default_langcode'), 'Index node__default_langcode properly removed.');
-     $this->assertTrue(db_index_exists('node_field_data', 'node__id__default_langcode__langcode'), 'Index node__id__default_langcode__langcode properly created on the node_field_data table.');
-     $this->assertTrue(db_index_exists('users_field_data', 'user__id__default_langcode__langcode'), 'Index users__id__default_langcode__langcode properly created on the user_field_data table.');
+diff --git a/core/tests/Drupal/FunctionalTests/Update/UpdatePathTestBase.php b/core/tests/Drupal/FunctionalTests/Update/UpdatePathTestBase.php
+index 4aca500..5017b85 100644
+--- a/core/tests/Drupal/FunctionalTests/Update/UpdatePathTestBase.php
++++ b/core/tests/Drupal/FunctionalTests/Update/UpdatePathTestBase.php
+@@ -384,6 +384,8 @@ protected function runUpdates() {
+         }
+       }
+     }
++
++    Database::getConnection()->schema()->dbalSchemaForceReload();
+   }
+ 
+   /**
