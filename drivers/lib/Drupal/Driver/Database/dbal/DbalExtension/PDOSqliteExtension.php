@@ -89,7 +89,6 @@ class PDOSqliteExtension extends AbstractExtension {
       $prefixes[$key] = $prefix;
     }
     $this->connection->setPrefixPublic($prefixes);
-//error_log(var_export(['instance ' . $this->debugId, $connection_options, $prefixes], true));
   }
 
   /**
@@ -162,7 +161,6 @@ class PDOSqliteExtension extends AbstractExtension {
     // that the prefix is no longer relevant.
     if (in_array($context, ['indexExists', 'dropIndex'])) {
       $dbal_table = $dbal_schema->getTable($this->tableName($drupal_table_name));
-if ($this->getDebugging() && $drupal_table_name === 'node_field_data') throw new \Exception(var_export([$drupal_table_name, $index_name, array_keys($dbal_table->getIndexes())], TRUE));
       foreach ($dbal_table->getIndexes() as $index) {
         $index_full_name = $index->getName();
         $matches = [];
