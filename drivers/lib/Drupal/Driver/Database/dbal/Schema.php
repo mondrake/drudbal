@@ -504,6 +504,7 @@ class Schema extends DatabaseSchema {
    * {@inheritdoc}
    */
   public function indexExists($table, $name) {
+$this->dbalSchemaForceReload();
     if (!$this->tableExists($table)) {
       return FALSE;
     }
