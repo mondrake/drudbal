@@ -81,14 +81,47 @@ class PDOSqliteExtension extends AbstractExtension {
     $connection_options = $drudbal_connection->getConnectionOptions();
     $prefixes = [];
     foreach ($connection_options['prefix'] as $key => $prefix) {
+      if ($key === 'default') {
+        $this->attachedDatabases['main'] = $connection_options['database'] . (empty($prefix) ? '' : ('-' . $prefix));
+      }
       // Default prefix means query the main database -- no need to attach anything.
       if ($key !== 'default' && !isset($this->attachedDatabases[$prefix])) {
-        $this->attachedDatabases[$prefix] = $prefix;
+        $this->attachedDatabases[$prefix] = $connection_options['database'] . '-' . $prefix;
         $dbal_connection->executeQuery('ATTACH DATABASE ? AS ?', [$connection_options['database'] . '-' . $prefix, $prefix]);
       }
       $prefixes[$key] = $prefix;
     }
     $this->connection->setPrefixPublic($prefixes);
+  }
+
+  /**
+   * Destructor for the SQLite connection.
+   *
+   * We prune empty databases on destruct, but only if tables have been
+   * dropped. This is especially needed when running the test suite, which
+   * creates and destroy databases several times in a row.
+   */
+  public function __destruct() {
+//    if ($this->tableDropped && !empty($this->attachedDatabases)) {
+      foreach ($this->attachedDatabases as $prefix => $db_file) {
+        // Check if the database is now empty, ignore the internal SQLite tables.
+        try {
+          $count = $this->connection->query('SELECT COUNT(*) FROM ' . $prefix . '.sqlite_master WHERE type = :type AND name NOT LIKE :pattern', [':type' => 'table', ':pattern' => 'sqlite_%'])->fetchField();
+
+          // We can prune the database file if it doesn't have any tables.
+          if ($count == 0) {
+            // Detaching the database fails at this point, but no other queries
+            // are executed after the connection is destructed so we can simply
+            // remove the database file.
+            unlink($db_file);
+          }
+        }
+        catch (\Exception $e) {
+          // Ignore the exception and continue. There is nothing we can do here
+          // to report the error or fail safe.
+        }
+      }
+//    }
   }
 
   /**
