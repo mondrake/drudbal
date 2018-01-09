@@ -77,6 +77,11 @@ class PDOSqliteExtension extends AbstractExtension {
   public function __construct(DruDbalConnection $drudbal_connection, DbalConnection $dbal_connection, $statement_class) {
     parent::__construct($drudbal_connection, $dbal_connection, $statement_class);
 
+    // If a memory database then do not try attaching per prefix.
+    if ($connection_options['database'] === ':memory:') {
+      return;
+    }
+
     // Attach additional databases per prefix.
     $connection_options = $drudbal_connection->getConnectionOptions();
     $prefixes = [];
@@ -223,6 +228,7 @@ class PDOSqliteExtension extends AbstractExtension {
    */
   public static function preConnectionOpen(array &$connection_options, array &$dbal_connection_options) {
     if ($connection_options['database'] === ':memory:') {
+error_log('***inmem***')
       $dbal_connection_options['path'] = 'file::memory:?cache=shared';
     }
     else {
@@ -533,7 +539,7 @@ class PDOSqliteExtension extends AbstractExtension {
       }
     }
     if ($this->getDebugging()) {
-//      error_log($query . ' : ' . var_export($args, TRUE));
+      error_log($query . ' : ' . var_export($args, TRUE));
     }
     return $this;
   }
