@@ -82,7 +82,6 @@ class Tasks extends InstallTasks {
    *   array stores pass/fail messages.
    */
   protected function connect() {
-error_log('***dbal install connect***');
     try {
       // Just set the active connection to default. This doesn't actually test
       // the connection.
