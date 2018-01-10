@@ -758,7 +758,9 @@ class PDOSqliteExtension extends AbstractExtension {
    * {@inheritdoc}
    */
   public function postDropTable(DbalSchema $dbal_schema, string $drupal_table_name): void  {
-    $this->tableDropped = FALSE;
+    // Signal that at least a table has been deleted so that housekeeping
+    // can happen when destructing the extension.
+    $this->tableDropped = TRUE;
   }
 
   /**
