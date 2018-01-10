@@ -107,7 +107,7 @@ class PDOSqliteExtension extends AbstractExtension {
    * creates and destroy databases several times in a row.
    */
   public function __destruct() {
-//    if ($this->tableDropped && !empty($this->attachedDatabases)) {
+    if ($this->tableDropped && !empty($this->attachedDatabases)) {
       foreach ($this->attachedDatabases as $prefix => $db_file) {
         // Check if the database is now empty, ignore the internal SQLite tables.
         try {
@@ -126,7 +126,7 @@ class PDOSqliteExtension extends AbstractExtension {
           // to report the error or fail safe.
         }
       }
-//    }
+    }
   }
 
   /**
@@ -752,6 +752,13 @@ class PDOSqliteExtension extends AbstractExtension {
     }
 
     return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function postDropTable(DbalSchema $dbal_schema, string $drupal_table_name): void  {
+    $this->tableDropped = FALSE;
   }
 
   /**

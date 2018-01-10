@@ -348,6 +348,7 @@ class Schema extends DatabaseSchema {
       throw $e;
     }
 
+    $this->dbalExtension->postDropTable($dbal_schema, $table);
     return TRUE;
   }
 

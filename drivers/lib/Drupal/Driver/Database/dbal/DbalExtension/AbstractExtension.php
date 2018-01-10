@@ -510,6 +510,13 @@ class AbstractExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
+  public function postDropTable(DbalSchema $dbal_schema, string $drupal_table_name): void  {
+    return;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function delegateAddField(&$primary_key_processed_by_extension, DbalSchema $dbal_schema, $drupal_table_name, $field_name, array $drupal_field_specs, array $keys_new_specs, array $dbal_column_options) {
     return FALSE;
   }
