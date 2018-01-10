@@ -1,5 +1,5 @@
 diff --git a/core/includes/install.core.inc b/core/includes/install.core.inc
-index a869d90..1e72178 100644
+index a869d90..aba673e 100644
 --- a/core/includes/install.core.inc
 +++ b/core/includes/install.core.inc
 @@ -93,6 +93,7 @@
@@ -14,7 +14,7 @@ index a869d90..1e72178 100644
   *   modified with information gleaned from the beginning of the page request.
   */
  function install_begin_request($class_loader, &$install_state) {
-+error_log("***install_begin_request start, install_state=$install_state***");
++error_log("***install_begin_request start***");
    $request = Request::createFromGlobals();
  
    // Add any installation parameters passed in via the URL.

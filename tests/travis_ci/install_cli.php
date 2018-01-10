@@ -46,6 +46,7 @@ $settings = [
   ],
 ];
 
+error_log('***install_cli start***');
 // Start the installer.
 require_once $root_path . '/core/includes/install.core.inc';
 Timer::start('drudbal:setup');
