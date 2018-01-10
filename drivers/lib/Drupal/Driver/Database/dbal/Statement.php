@@ -201,9 +201,6 @@ class Statement implements \IteratorAggregate, StatementInterface {
 
     try {
       $this->dbh->getDbalExtension()->alterStatement($statement, $params);
-if ($this->dbh->getDbalExtension()->getDebugging()) {
-  error_log('inst ' . $this->dbh->getDbalExtension()->debugId .': ' . $statement);
-}
       $this->dbalStatement = $dbh->getDbalConnection()->prepare($statement);
     }
     catch (DBALException $e) {
