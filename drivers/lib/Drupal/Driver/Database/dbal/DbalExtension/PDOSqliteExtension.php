@@ -77,13 +77,21 @@ class PDOSqliteExtension extends AbstractExtension {
   public function __construct(DruDbalConnection $drudbal_connection, DbalConnection $dbal_connection, $statement_class) {
     parent::__construct($drudbal_connection, $dbal_connection, $statement_class);
 
+    // If a memory database, then do not try to attach databases per prefix.
+    if ($drudbal_connection->getConnectionOptions()['database'] === ':memory:') {
+      return;
+    }
+
     // Attach additional databases per prefix.
     $connection_options = $drudbal_connection->getConnectionOptions();
     $prefixes = [];
     foreach ($connection_options['prefix'] as $key => $prefix) {
+      if ($key === 'default') {
+        $this->attachedDatabases['main'] = $connection_options['database'] . (empty($prefix) ? '' : ('-' . $prefix));
+      }
       // Default prefix means query the main database -- no need to attach anything.
       if ($key !== 'default' && !isset($this->attachedDatabases[$prefix])) {
-        $this->attachedDatabases[$prefix] = $prefix;
+        $this->attachedDatabases[$prefix] = $connection_options['database'] . '-' . $prefix;
         $dbal_connection->executeQuery('ATTACH DATABASE ? AS ?', [$connection_options['database'] . '-' . $prefix, $prefix]);
       }
       $prefixes[$key] = $prefix;
@@ -190,7 +198,9 @@ class PDOSqliteExtension extends AbstractExtension {
    */
   public static function preConnectionOpen(array &$connection_options, array &$dbal_connection_options) {
     if ($connection_options['database'] === ':memory:') {
-      $dbal_connection_options['path'] = 'file::memory:?cache=shared';
+      $dbal_connection_options['path'] = NULL;
+      $dbal_connection_options['url'] = 'sqlite:///:memory:';
+      $dbal_connection_options['memory'] = TRUE;
     }
     else {
       $dbal_connection_options['path'] = $connection_options['database'];
