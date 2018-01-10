@@ -77,7 +77,7 @@ class PDOSqliteExtension extends AbstractExtension {
   public function __construct(DruDbalConnection $drudbal_connection, DbalConnection $dbal_connection, $statement_class) {
     parent::__construct($drudbal_connection, $dbal_connection, $statement_class);
 
-    // If a memory database then do not try attaching per prefix.
+    // If a memory database, then do not try to attach databases per prefix.
     if ($drudbal_connection->getConnectionOptions()['database'] === ':memory:') {
       return;
     }
@@ -228,7 +228,6 @@ class PDOSqliteExtension extends AbstractExtension {
    */
   public static function preConnectionOpen(array &$connection_options, array &$dbal_connection_options) {
     if ($connection_options['database'] === ':memory:') {
-//      $dbal_connection_options['path'] = 'file::memory:?cache=shared';
       $dbal_connection_options['path'] = NULL;
       $dbal_connection_options['url'] = 'sqlite:///:memory:';
       $dbal_connection_options['memory'] = TRUE;

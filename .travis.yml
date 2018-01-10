@@ -43,7 +43,7 @@ env:
     #- DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="modules/field/tests/src/Kernel/Migrate/d7/MigrateFieldTest.php"
     #- DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group views --testsuite kernel"
     #- DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="modules/system/tests/src/Functional/Entity/Update/SqlContentEntityStorageSchemaIndexFilledTest.php"
-    - DRUDBAL_ENV="dbal/sqlite/memory" TEST_ARGS="--group Database --testsuite kernel"
+    #- DRUDBAL_ENV="dbal/sqlite/memory" TEST_ARGS="--group Database --testsuite kernel"
     #- DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group Database,Cache,Config --testsuite kernel"
     #- DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group Entity,views,field,Field"
     #- DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group views --testsuite kernel"
@@ -51,6 +51,7 @@ env:
 matrix:
   fast_finish: true
   allow_failures:
+    - env: DRUDBAL_ENV="dbal/sqlite/memory" TEST_ARGS="--group Database,Cache,Config,Entity,Field"
     - env: DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group Database,Cache,Config --testsuite kernel"
     - env: DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group views --testsuite kernel"
 
