@@ -1,0 +1,13 @@
+diff --git a/lib/Doctrine/DBAL/Driver/PDOSqlite/Driver.php b/lib/Doctrine/DBAL/Driver/PDOSqlite/Driver.php
+index 4fe4e72..952d57d 100644
+--- a/lib/Doctrine/DBAL/Driver/PDOSqlite/Driver.php
++++ b/lib/Doctrine/DBAL/Driver/PDOSqlite/Driver.php
+@@ -50,7 +50,7 @@ class Driver extends AbstractSQLiteDriver
+                 $this->_userDefinedFunctions, $driverOptions['userDefinedFunctions']);
+             unset($driverOptions['userDefinedFunctions']);
+         }
+-
++error_log(var_export([$params, $username, $password, $driverOptions], true));
+         try {
+             $pdo = new PDOConnection(
+                 $this->_constructPdoDsn($params),

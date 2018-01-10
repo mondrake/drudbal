@@ -170,7 +170,7 @@ install:
 
   # Patch DBAL for Oracle createSchema fixes https://github.com/doctrine/dbal/pull/2766
   - |
-      if [[ "$DRUDBAL_ENV" == "dbal/oci8" ]]; then
+      if [[ -f $DRUPAL_PATH/modules/contrib/drudbal/tests/travis_ci/$DRUDBAL_ENV/dbal.patch ]]; then
         cd $DRUPAL_PATH/vendor/doctrine/dbal
         patch -p1 < $DRUPAL_PATH/modules/contrib/drudbal/tests/travis_ci/$DRUDBAL_ENV/dbal.patch
       fi
