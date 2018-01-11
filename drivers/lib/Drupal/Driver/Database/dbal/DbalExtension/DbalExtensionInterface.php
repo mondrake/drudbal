@@ -703,6 +703,16 @@ interface DbalExtensionInterface {
   public function postRenameTable(DbalSchema $dbal_schema, string $drupal_table_name, string $drupal_new_table_name): void;
 
   /**
+   * Post processes a table drop.
+   *
+   * @param \Doctrine\DBAL\Schema\Schema $dbal_schema
+   *   The DBAL schema object.
+   * @param string $drupal_table_name
+   *   A string with the old Drupal name of the table.
+   */
+  public function postDropTable(DbalSchema $dbal_schema, string $drupal_table_name): void;
+
+  /**
    * Adds a new field to a table.
    *
    * @param bool $primary_key_processed_by_extension
