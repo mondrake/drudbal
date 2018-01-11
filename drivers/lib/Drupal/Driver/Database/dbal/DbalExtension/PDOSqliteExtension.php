@@ -100,6 +100,36 @@ class PDOSqliteExtension extends AbstractExtension {
   }
 
   /**
+   * Destructor for the SQLite connection.
+   *
+   * We prune empty databases on destruct, but only if tables have been
+   * dropped. This is especially needed when running the test suite, which
+   * creates and destroy databases several times in a row.
+   */
+  public function __destruct() {
+    if ($this->tableDropped && !empty($this->attachedDatabases)) {
+      foreach ($this->attachedDatabases as $prefix => $db_file) {
+        // Check if the database is now empty, ignore the internal SQLite tables.
+        try {
+          $count = $this->connection->query('SELECT COUNT(*) FROM ' . $prefix . '.sqlite_master WHERE type = :type AND name NOT LIKE :pattern', [':type' => 'table', ':pattern' => 'sqlite_%'])->fetchField();
+
+          // We can prune the database file if it doesn't have any tables.
+          if ($count == 0) {
+            // Detaching the database fails at this point, but no other queries
+            // are executed after the connection is destructed so we can simply
+            // remove the database file.
+            unlink($db_file);
+          }
+        }
+        catch (\Exception $e) {
+          // Ignore the exception and continue. There is nothing we can do here
+          // to report the error or fail safe.
+        }
+      }
+    }
+  }
+
+  /**
    * {@inheritdoc}
    */
   public function delegateClientVersion() {
@@ -722,6 +752,15 @@ class PDOSqliteExtension extends AbstractExtension {
     }
 
     return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function postDropTable(DbalSchema $dbal_schema, string $drupal_table_name): void  {
+    // Signal that at least a table has been deleted so that housekeeping
+    // can happen when destructing the extension.
+    $this->tableDropped = TRUE;
   }
 
   /**
