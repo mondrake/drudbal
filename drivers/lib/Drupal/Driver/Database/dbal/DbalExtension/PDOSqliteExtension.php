@@ -757,7 +757,7 @@ error_log('pre :' . $dbal_column_definition);
       $comment = '';
     }
 
-    $dbal_column_definition = $definition . $comment . '\n';
+    $dbal_column_definition = $definition . $comment . "\n";
 error_log('post:' . $dbal_column_definition);
 error_log('---------------------------------');
     return $this;
