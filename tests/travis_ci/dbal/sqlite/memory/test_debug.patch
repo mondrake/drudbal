@@ -1,0 +1,20 @@
+diff --git a/core/includes/install.core.inc b/core/includes/install.core.inc
+index a869d90..aba673e 100644
+--- a/core/includes/install.core.inc
++++ b/core/includes/install.core.inc
+@@ -93,6 +93,7 @@
+  * @see install_state_defaults()
+  */
+ function install_drupal($class_loader, $settings = []) {
++error_log('***install_drupal start***');
+   // Support the old way of calling this function with just a settings array.
+   // @todo Remove this when Drush is updated in the Drupal testing
+   //   infrastructure in https://www.drupal.org/node/2389243
+@@ -284,6 +285,7 @@ function install_state_defaults() {
+  *   modified with information gleaned from the beginning of the page request.
+  */
+ function install_begin_request($class_loader, &$install_state) {
++error_log("***install_begin_request start***");
+   $request = Request::createFromGlobals();
+ 
+   // Add any installation parameters passed in via the URL.

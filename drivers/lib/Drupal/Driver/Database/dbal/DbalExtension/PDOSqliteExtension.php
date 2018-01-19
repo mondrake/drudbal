@@ -716,10 +716,21 @@ class PDOSqliteExtension extends AbstractExtension {
    * {@inheritdoc}
    */
   public function alterDbalColumnDefinition($context, &$dbal_column_definition, array &$dbal_column_options, $dbal_type, array $drupal_field_specs, $field_name) {
+//error_log('pre :' . $dbal_column_definition);
+    $matches = NULL;
+    if (preg_match('/^(.+)(\s\-\-.*)$/', $dbal_column_definition, $matches) === 1) {
+      $definition = $matches[1];
+      $comment = $matches[2];
+    }
+    else {
+      $definition = $dbal_column_definition;
+      $comment = '';
+    }
+
     // DBAL does not support BINARY option for char/varchar columns.
     if (isset($drupal_field_specs['binary']) && $drupal_field_specs['binary'] === FALSE) {
-      $dbal_column_definition = preg_replace('/CHAR\(([0-9]+)\)/', '$0 COLLATE NOCASE_UTF8', $dbal_column_definition);
-      $dbal_column_definition = preg_replace('/TEXT\(([0-9]+)\)/', '$0 COLLATE NOCASE_UTF8', $dbal_column_definition);
+      $definition = preg_replace('/CHAR\(([0-9]+)\)/', '$0 COLLATE NOCASE_UTF8', $definition);
+      $definition = preg_replace('/TEXT\(([0-9]+)\)/', '$0 COLLATE NOCASE_UTF8', $definition);
     }
 
     // @todo just setting 'unsigned' to true does not enforce values >=0 in the
@@ -727,7 +738,7 @@ class PDOSqliteExtension extends AbstractExtension {
     if (isset($drupal_field_specs['type']) && in_array($drupal_field_specs['type'], [
       'float', 'numeric', 'serial', 'int',
     ]) && !empty($drupal_field_specs['unsigned']) && (bool) $drupal_field_specs['unsigned'] === TRUE) {
-      $dbal_column_definition .= ' CHECK (' . $field_name . '>= 0)';
+      $definition .= ' CHECK (' . $field_name . '>= 0)';
     }
 
     // @todo added to avoid edge cases; maybe this can be overridden in
@@ -735,22 +746,25 @@ class PDOSqliteExtension extends AbstractExtension {
     // @todo there is a duplication of single quotes when table is
     // introspected and re-created.
     if (array_key_exists('default', $drupal_field_specs) && $drupal_field_specs['default'] === '') {
-      $dbal_column_definition = preg_replace('/DEFAULT (?!:\'\')/', "$0 ''", $dbal_column_definition);
+      $definition = preg_replace('/DEFAULT (?!:\'\')/', "$0 ''", $definition);
     }
-    $dbal_column_definition = preg_replace('/DEFAULT\s+\'\'\'\'/', "DEFAULT ''", $dbal_column_definition);
+    $definition = preg_replace('/DEFAULT\s+\'\'\'\'/', "DEFAULT ''", $definition);
 
     // Decode single quotes.
     if (array_key_exists('default', $dbal_column_options)) {
       $dbal_column_options['default'] = str_replace(self::SINGLE_QUOTE_IDENTIFIER_REPLACEMENT, '\'\'', $dbal_column_options['default']);
     }
-    $dbal_column_definition = str_replace(self::SINGLE_QUOTE_IDENTIFIER_REPLACEMENT, '\'\'', $dbal_column_definition);
+    $definition = str_replace(self::SINGLE_QUOTE_IDENTIFIER_REPLACEMENT, '\'\'', $definition);
 
     // Column comments do not work when adding/changing a field in SQLite.
     // @todo check if it can be moved as unset of option in alterDbalColumnOptions
     if (in_array($context, ['addField', 'changeField'])) {
-      $dbal_column_definition = preg_replace('/(.+)(( --)(.+))/', "$1", $dbal_column_definition);
+      $comment = '';
     }
 
+    $dbal_column_definition = $definition . $comment . "\n";
+//error_log('post:' . $dbal_column_definition);
+//error_log('---------------------------------');
     return $this;
   }
 
