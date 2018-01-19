@@ -495,8 +495,6 @@ class Statement implements \IteratorAggregate, StatementInterface {
       $ret = $this->dbalStatement->fetchColumn($index);
       switch ($ret) {
         case NULL:
-          return NULL;
-
         case FALSE:
           return FALSE;
 
