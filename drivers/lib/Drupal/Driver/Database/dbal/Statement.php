@@ -478,7 +478,7 @@ class Statement implements \IteratorAggregate, StatementInterface {
   /**
    * {@inheritdoc}
    */
-  public function fetchColumn($index = 0) {
+  public function fetchField($index = 0) {
     // Handle via prefetched data if needed.
     if ($this->dbh->getDbalExtension()->onSelectPrefetchAllData()) {
       if (isset($this->currentRow) && isset($this->columnNames[$index])) {
@@ -492,16 +492,11 @@ class Statement implements \IteratorAggregate, StatementInterface {
       }
     }
     else {
-      $ret = $this->dbalStatement->fetchColumn($index);
-      return $ret === NULL ? NULL : (string) $ret;
+      if (($ret = $this->fetch(\PDO::FETCH_NUM)) === FALSE) {
+        return FALSE;
+      }
+      return $ret[$index] === NULL ? NULL : (string) $ret[$index];
     }
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function fetchField($index = 0) {
-    return $this->fetchColumn($index);
   }
 
   /**
