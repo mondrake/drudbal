@@ -716,7 +716,7 @@ class PDOSqliteExtension extends AbstractExtension {
    * {@inheritdoc}
    */
   public function alterDbalColumnDefinition($context, &$dbal_column_definition, array &$dbal_column_options, $dbal_type, array $drupal_field_specs, $field_name) {
-error_log('pre :' . $dbal_column_definition);
+//error_log('pre :' . $dbal_column_definition);
     $matches = NULL;
     if (preg_match('/^(.+)(\s\-\-.*)$/', $dbal_column_definition, $matches) === 1) {
       $definition = $matches[1];
@@ -763,8 +763,8 @@ error_log('pre :' . $dbal_column_definition);
     }
 
     $dbal_column_definition = $definition . $comment . "\n";
-error_log('post:' . $dbal_column_definition);
-error_log('---------------------------------');
+//error_log('post:' . $dbal_column_definition);
+//error_log('---------------------------------');
     return $this;
   }
 
