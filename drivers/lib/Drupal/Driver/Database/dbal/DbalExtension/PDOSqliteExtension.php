@@ -718,9 +718,14 @@ class PDOSqliteExtension extends AbstractExtension {
   public function alterDbalColumnDefinition($context, &$dbal_column_definition, array &$dbal_column_options, $dbal_type, array $drupal_field_specs, $field_name) {
 error_log('pre :' . $dbal_column_definition);
     $matches = NULL;
-    preg_match('/^(.+)( \-\-.*$|$)/', $dbal_column_definition, $matches);
-    $definition = $matches[1];
-    $comment = isset($matches[2]) ? $matches[2] : '';
+    if (preg_match('/^(.+)(\s\-\-.*)$/', $dbal_column_definition, $matches) === 1) {
+      $definition = $matches[1];
+      $comment = $matches[2];
+    }
+    else {
+      $definition = $dbal_column_definition;
+      $comment = '';
+    }
 
     // DBAL does not support BINARY option for char/varchar columns.
     if (isset($drupal_field_specs['binary']) && $drupal_field_specs['binary'] === FALSE) {
