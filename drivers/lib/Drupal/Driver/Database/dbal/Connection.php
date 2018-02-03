@@ -689,8 +689,8 @@ class Connection extends DatabaseConnection {
     $uri = new Uri();
 
     // Driver name as the URI scheme.
-    $uri = $uri->withScheme($connection_options['driver'])
-    
+    $uri = $uri->withScheme($connection_options['driver']);
+
     // User credentials if existing.
     if (isset($connection_options['username'])) {
       $uri = $uri->withUserInfo($connection_options['username'], isset($connection_options['password']) ? $connection_options['password'] : NULL);

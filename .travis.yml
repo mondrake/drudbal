@@ -54,7 +54,7 @@ matrix:
 
 cache:
   directories:
-    #- $DRUPAL_STAGING_DIR
+    - $DRUPAL_STAGING_DIR
     - $ORACLE_DOWNLOAD_DIR
 
 before_install:
