@@ -682,6 +682,7 @@ class Connection extends DatabaseConnection {
     return $this->getDbalConnection()->getWrappedConnection()->getServerVersion();
   }
 
+
   /**
    * {@inheritdoc}
    */
