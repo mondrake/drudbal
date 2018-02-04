@@ -1,9 +1,9 @@
 diff --git a/core/tests/Drupal/FunctionalTests/Update/UpdatePathTestBase.php b/core/tests/Drupal/FunctionalTests/Update/UpdatePathTestBase.php
-index 4aca500..5017b85 100644
+index 744f527..7ccbe2f 100644
 --- a/core/tests/Drupal/FunctionalTests/Update/UpdatePathTestBase.php
 +++ b/core/tests/Drupal/FunctionalTests/Update/UpdatePathTestBase.php
-@@ -384,6 +384,8 @@ protected function runUpdates() {
-         }
+@@ -386,6 +386,8 @@ protected function runUpdates() {
+         $this->assertFalse($needs_updates, 'After all updates ran, entity schema is up to date.');
        }
      }
 +
