@@ -99,7 +99,6 @@ Issue | Description   |
 ------|---------------|
 [2605284](https://www.drupal.org/node/2605284) | Testing framework does not work with contributed database drivers |
 [2867788](https://www.drupal.org/node/2867788) | Log::findCaller fails to report the correct caller function with non-core drivers |
-[2868273](https://www.drupal.org/node/2868273) | Missing a test for table TRUNCATE while in transaction |
 [2871374](https://www.drupal.org/node/2871374) | SelectTest::testVulnerableComment fails when driver overrides Select::\_\_toString |
 tbd | Add tests for Upsert with default values |
 [2874499](https://www.drupal.org/node/2874499) | Test failures when db driver is set to not support transactions |
