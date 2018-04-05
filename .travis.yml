@@ -115,7 +115,7 @@ before_install:
       fi
 
   # Remove XDebug.
-  - phpenv config-rm xdebug.ini
+  - if [[ ! "$TRAVIS_PHP_VERSION" == "nightly" ]]; then phpenv config-rm xdebug.ini; fi
   # Add APCu extension.
   - echo "extension = apcu.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
 
