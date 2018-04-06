@@ -800,6 +800,10 @@ class PDOSqliteExtension extends AbstractExtension {
       // Add the new field.
       $new_schema['fields'][$field_name] = $drupal_field_specs;
       $mapping[$field_name] = NULL;
+
+      // Add the new indexes.
+      $new_schema = array_merge($new_schema, $keys_new_specs);
+
       $this->alterTable($drupal_table_name, $old_schema, $new_schema, $mapping);
     }
     return TRUE;
