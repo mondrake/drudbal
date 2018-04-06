@@ -799,7 +799,8 @@ class PDOSqliteExtension extends AbstractExtension {
 
       // Add the new field.
       $new_schema['fields'][$field_name] = $drupal_field_specs;
-      $this->alterTable($drupal_table_name, $old_schema, $new_schema, []);
+      $mapping[$field_name] = NULL;
+      $this->alterTable($drupal_table_name, $old_schema, $new_schema, $mapping);
     }
     return TRUE;
   }
