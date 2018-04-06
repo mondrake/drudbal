@@ -799,6 +799,8 @@ class PDOSqliteExtension extends AbstractExtension {
 
       // Add the new field.
       $new_schema['fields'][$field_name] = $drupal_field_specs;
+
+      // Use the default value of the field.
       $mapping[$field_name] = NULL;
 
       // Add the new indexes.
