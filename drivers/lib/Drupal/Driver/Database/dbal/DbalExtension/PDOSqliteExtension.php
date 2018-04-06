@@ -790,18 +790,6 @@ class PDOSqliteExtension extends AbstractExtension {
       $dbal_column_options = $this->connection->schema()->getDbalColumnOptions('addField', $field_name, $dbal_type, $drupal_field_specs);
       $query = 'ALTER TABLE {' . $drupal_table_name . '} ADD ' . $field_name . ' ' . $dbal_column_options['columnDefinition'];
       $this->connection->query($query);
-
-      // Apply the initial value if set.
-      if (isset($drupal_field_specs['initial'])) {
-        $this->connection->update($drupal_table_name)
-          ->fields([$field_name => $drupal_field_specs['initial']])
-          ->execute();
-      }
-      if (isset($drupal_field_specs['initial_from_field'])) {
-        $this->connection->update($drupal_table_name)
-          ->expression($field_name, $drupal_field_specs['initial_from_field'])
-          ->execute();
-      }
     }
     else {
       // We cannot add the field directly. Use the slower table alteration
@@ -811,32 +799,7 @@ class PDOSqliteExtension extends AbstractExtension {
 
       // Add the new field.
       $new_schema['fields'][$field_name] = $drupal_field_specs;
-
-      // Build the mapping between the old fields and the new fields.
-      $mapping = [];
-      if (isset($drupal_field_specs['initial'])) {
-        // If we have a initial value, copy it over.
-        $mapping[$field_name] = [
-          'expression' => ':newfieldinitial',
-          'arguments' => [':newfieldinitial' => $drupal_field_specs['initial']],
-        ];
-      }
-      elseif (isset($drupal_field_specs['initial_from_field'])) {
-        // If we have a initial value, copy it over.
-        $mapping[$field_name] = [
-          'expression' => $drupal_field_specs['initial_from_field'],
-          'arguments' => [],
-        ];
-      }
-      else {
-        // Else use the default of the field.
-        $mapping[$field_name] = NULL;
-      }
-
-      // Add the new indexes.
-      $new_schema = array_merge($new_schema, $keys_new_specs);
-
-      $this->alterTable($drupal_table_name, $old_schema, $new_schema, $mapping);
+      $this->alterTable($drupal_table_name, $old_schema, $new_schema, []);
     }
     return TRUE;
   }

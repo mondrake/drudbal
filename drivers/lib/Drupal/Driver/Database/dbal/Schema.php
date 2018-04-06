@@ -417,6 +417,7 @@ class Schema extends DatabaseSchema {
       }
     }
 
+    // Apply the initial value if set.
     if (isset($spec['initial'])) {
       $this->connection->update($table)
         ->fields([$field => $spec['initial']])
