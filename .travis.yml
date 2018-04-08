@@ -7,8 +7,8 @@ sudo: required
 
 php:
   #- 7.1
-  - 7.2
-  #- nightly
+  #- 7.2
+  - nightly
 
 branches:
   except:
@@ -31,19 +31,19 @@ env:
   matrix:
     - DRUDBAL_ENV="mysql" TEST_ARGS="--group Database"
     - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Database,Cache,Config,Entity,Field"
-    - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group field,file"
-    - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group views"
-    - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Database,Cache,Config,Entity,Field"
-    - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group field,file"
-    - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group views"
-    - DRUDBAL_ENV="sqlite" TEST_ARGS="--group Database,Entity --testsuite kernel"
-    - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database,Cache,Config,Entity,Field"
-    - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group field,file"
-    - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group views"
+    #- DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group field,file"
+    #- DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group views"
+    #- DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Database,Cache,Config,Entity,Field"
+    #- DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group field,file"
+    #- DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group views"
+    #- DRUDBAL_ENV="sqlite" TEST_ARGS="--group Database,Entity --testsuite kernel"
+    #- DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database,Cache,Config,Entity,Field"
+    #- DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group field,file"
+    #- DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group views"
     #- DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Update,migrate,migrate_drupal,migrate_drupal_ui"
     - DRUDBAL_ENV="dbal/sqlite/memory" TEST_ARGS="--group Database,Cache,Config,Entity,Field"
-    - DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group Database,Cache,Config --testsuite kernel"
-    - DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group views --testsuite kernel"
+    #- DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group Database,Cache,Config --testsuite kernel"
+    #- DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group views --testsuite kernel"
 
 matrix:
   fast_finish: true
@@ -124,8 +124,8 @@ before_install:
       if [[ ! -f $DRUPAL_STAGING_DIR/index.php ]]; then
         git clone http://git.drupal.org/project/drupal.git $DRUPAL_STAGING_DIR
         cd $DRUPAL_STAGING_DIR
-        # @todo PHPUnit 7
-        # curl https://www.drupal.org/files/issues/2018-04-05/xx0405.patch | git apply        
+        # PHPUnit 7 patch
+        curl https://www.drupal.org/files/issues/2018-04-07/2950132-4.patch | git apply        
         composer install --no-progress --no-suggest
         composer run-script drupal-phpunit-upgrade
         # Get Drupal Console
