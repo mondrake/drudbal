@@ -8,12 +8,15 @@ use Drupal\Core\Database\Schema as DatabaseSchema;
 use Drupal\Component\Utility\Unicode;
 
 use Doctrine\DBAL\DBALException;
+use Doctrine\DBAL\Schema\Column as DbalColumn;
 use Doctrine\DBAL\Schema\Schema as DbalSchema;
 use Doctrine\DBAL\Schema\SchemaException as DbalSchemaException;
 use Doctrine\DBAL\Types\Type as DbalType;
 
 // @todo DBAL 2.6.0:
 // Added support for column inline comments in SQLite, check status (the declaration of support + the fact that on add/change field it does not work)
+// @todo DBAL 2.7:
+// implemented mysql column-level collation, check
 
 /**
  * DruDbal implementation of \Drupal\Core\Database\Schema.
@@ -236,7 +239,9 @@ class Schema extends DatabaseSchema {
     $this->dbalExtension->alterDbalColumnOptions($context, $options, $dbal_type, $field, $field_name);
 
     // Get the column definition from DBAL, and trim the field name.
-    $dbal_column_definition = substr($this->dbalPlatform->getColumnDeclarationSQL($field_name, $options), strlen($field_name) + 1);
+    $dbal_column = new DbalColumn($field_name, DbalType::getType($dbal_type), $options);
+    $this->dbalExtension->setDbalPlatformColumnOptions($context, $dbal_column, $options, $dbal_type, $field, $field_name);
+    $dbal_column_definition = substr($this->dbalPlatform->getColumnDeclarationSQL($field_name, $dbal_column->toArray()), strlen($field_name) + 1);
 
     // Let DBAL extension alter the column definition if required.
     $this->dbalExtension->alterDbalColumnDefinition($context, $dbal_column_definition, $options, $dbal_type, $field, $field_name);

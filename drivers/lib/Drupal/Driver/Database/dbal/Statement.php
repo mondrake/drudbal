@@ -15,6 +15,8 @@ use Doctrine\DBAL\SQLParserUtils;
 // provides PDO::FETCH_OBJ emulation for mysqli and oci8 statements, check;
 // Normalize method signatures for `fetch()` and `fetchAll()`, ensuring compatibility with the `PDOStatement` signature
 // `ResultStatement#fetchAll()` must define 3 arguments in order to be compatible with `PDOStatement#fetchAll()`
+// @todo DBAL 2.7:
+// remove usage of PDO:: constants
 
 /**
  * DruDbal implementation of \Drupal\Core\Database\Statement.

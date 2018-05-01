@@ -4,6 +4,7 @@ namespace Drupal\Driver\Database\dbal\DbalExtension;
 
 use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
+use Doctrine\DBAL\Schema\Column as DbalColumn;
 use Doctrine\DBAL\Schema\Schema as DbalSchema;
 use Doctrine\DBAL\Schema\Table as DbalTable;
 use Doctrine\DBAL\Statement as DbalStatement;
@@ -653,6 +654,28 @@ interface DbalExtensionInterface {
    * @return $this
    */
   public function alterDbalColumnOptions($context, array &$dbal_column_options, $dbal_type, array $drupal_field_specs, $field_name);
+
+  /**
+   * Set the platform column options.
+   *
+   * @param string $context
+   *   The context from where the method is called. Can be 'createTable',
+   *   'addField', 'changeField'.
+   * @param \Doctrine\DBAL\Schema\Column $dbal_column
+   *   A DBAL column object.
+   * @param array $dbal_column_options
+   *   An array of DBAL column options, including the SQL column definition
+   *   specification in the 'columnDefinition' option. Passed by reference.
+   * @param string $dbal_type
+   *   The DBAL type related to the field specified.
+   * @param array $drupal_field_specs
+   *   The field specification array, as taken from a schema definition.
+   * @param string $field_name
+   *   The name of the field.
+   *
+   * @return $this
+   */
+  public function setDbalPlatformColumnOptions($context, DbalColumn $dbal_column, array &$dbal_column_options, $dbal_type, array $drupal_field_specs, $field_name);
 
   /**
    * Gets a string valid to be used in a DBAL DDL statement.

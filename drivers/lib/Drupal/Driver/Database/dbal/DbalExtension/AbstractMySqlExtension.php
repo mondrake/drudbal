@@ -14,6 +14,7 @@ use Drupal\Core\Database\TransactionCommitFailedException;
 use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\ConnectionException as DbalConnectionException;
 use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
+use Doctrine\DBAL\Schema\Column as DbalColumn;
 use Doctrine\DBAL\Schema\Schema as DbalSchema;
 use Doctrine\DBAL\Schema\Table as DbalTable;
 
@@ -608,10 +609,10 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function alterDbalColumnOptions($context, array &$dbal_column_options, $dbal_type, array $drupal_field_specs, $field_name) {
+  public function setDbalPlatformColumnOptions($context, DbalColumn $dbal_column, array &$dbal_column_options, $dbal_type, array $drupal_field_specs, $field_name) {
     if (isset($drupal_field_specs['type']) && $drupal_field_specs['type'] === 'varchar_ascii') {
-      $dbal_column_options['charset'] = 'ascii';
-      $dbal_column_options['collation'] = 'ascii_general_ci';
+      $dbal_column->setPlatformOption('charset', 'ascii');
+      $dbal_column->setPlatformOption('collation', 'ascii_general_ci');
     }
     return $this;
   }
