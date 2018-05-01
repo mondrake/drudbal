@@ -6,6 +6,7 @@ use Drupal\Driver\Database\dbal\Connection as DruDbalConnection;
 
 use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
+use Doctrine\DBAL\Schema\Column as DbalColumn;
 use Doctrine\DBAL\Schema\Schema as DbalSchema;
 use Doctrine\DBAL\Schema\Table as DbalTable;
 use Doctrine\DBAL\Statement as DbalStatement;
@@ -483,6 +484,13 @@ class AbstractExtension implements DbalExtensionInterface {
    * {@inheritdoc}
    */
   public function alterDbalColumnOptions($context, array &$dbal_column_options, $dbal_type, array $drupal_field_specs, $field_name) {
+    return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setDbalPlatformColumnOptions($context, DbalColumn $dbal_column, array &$dbal_column_options, $dbal_type, array $drupal_field_specs, $field_name) {
     return $this;
   }
 
