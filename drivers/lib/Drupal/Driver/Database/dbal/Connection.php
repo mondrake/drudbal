@@ -300,7 +300,7 @@ class Connection extends DatabaseConnection {
         // If 'dbal_url' is also missing, then we are in a very very wrong
         // situation, as DBAL would not be able to determine the driver it
         // needs to use.
-        throw new ConnectionNotDefinedException(t("Database connection is not defined properly for the 'dbal' driver. The 'dbal_url' key is missing. Check the database connection definition in settings.php."));
+        throw new ConnectionNotDefinedException("Database connection is not defined properly for the 'dbal' driver. The 'dbal_url' key is missing. Check the database connection definition in settings.php.");
       }
       $dbal_connection = DbalDriverManager::getConnection([
         'url' => $connection_options['dbal_url'],
