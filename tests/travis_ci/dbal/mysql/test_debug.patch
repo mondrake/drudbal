@@ -1,5 +1,5 @@
 diff --git a/core/lib/Drupal.php b/core/lib/Drupal.php
-index e0b08670b7..ecf6176929 100644
+index e0b08670b7..2169b5691d 100644
 --- a/core/lib/Drupal.php
 +++ b/core/lib/Drupal.php
 @@ -118,6 +118,44 @@ public static function unsetContainer() {
@@ -52,7 +52,7 @@ index e0b08670b7..ecf6176929 100644
    public static function getContainer() {
      if (static::$container === NULL) {
 -      throw new ContainerNotInitializedException('\Drupal::$container is not initialized yet. \Drupal::setContainer() must be called with a real container.');
-+      throw new ContainerNotInitializedException('\Drupal::$container is not initialized yet. \Drupal::setContainer() must be called with a real container.' . $this->formatBacktrace(debug_backtrace()));
++      throw new ContainerNotInitializedException('\Drupal::$container is not initialized yet. \Drupal::setContainer() must be called with a real container.' . static::formatBacktrace(debug_backtrace()));
      }
      return static::$container;
    }
