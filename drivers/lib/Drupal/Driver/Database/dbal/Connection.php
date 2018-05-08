@@ -682,28 +682,81 @@ class Connection extends DatabaseConnection {
     return $this->getDbalConnection()->getWrappedConnection()->getServerVersion();
   }
 
+
   /**
    * {@inheritdoc}
    */
-  public static function getConnectionInfoAsUrlHelper(array $connection_options, UriInterface $uri) {
-    $uri = parent::getConnectionInfoAsUrlHelper($connection_options, $uri);
+  public static function getConnectionUrl(array $connection_options) {
+    $uri = new Uri();
+
+    // Driver name as the URI scheme.
+    $uri = $uri->withScheme($connection_options['driver']);
+
+    // User credentials if existing.
+    if (isset($connection_options['username'])) {
+      $uri = $uri->withUserInfo($connection_options['username'], isset($connection_options['password']) ? $connection_options['password'] : NULL);
+    }
+
+    $uri = $uri->withHost(isset($connection_options['host']) ? $connection_options['host'] : 'localhost');
+
+    if (!empty($connection_options['port'])) {
+      $uri = $uri->withPort($connection_options['port']);
+    }
+
+    $uri = $uri->withPath('/' . $connection_options['database']);
+
     // Add the 'dbal_driver' key to the URI.
     if (!empty($connection_options['dbal_driver'])) {
       $uri = Uri::withQueryValue($uri, 'dbal_driver', $connection_options['dbal_driver']);
     }
-    return $uri;
+
+    // Table prefix as the URI fragment.
+    if (!empty($connection_options['prefix']['default'])) {
+      $uri = $uri->withFragment($connection_options['prefix']['default']);
+    }
+
+    return (string) $uri;
   }
 
   /**
    * {@inheritdoc}
    */
-  public static function convertDbUrlToConnectionInfoHelper(UriInterface $uri, $root, array $connection_options) {
-    $connection_options = parent::convertDbUrlToConnectionInfoHelper($uri, $root, $connection_options);
+  public static function getConnectionInfoFromUrl($url, $root) {
+    $uri = new Uri($url);
+    if (empty($uri->getHost()) || empty($uri->getScheme()) || empty($uri->getPath())) {
+      throw new \InvalidArgumentException('Minimum requirement: driver://host/database');
+    }
+
+    // Build the connection information array.
+    $connection_options = [
+      'driver' => $uri->getScheme(),
+      'host' => $uri->getHost(),
+      // Strip the first leading slash of the path to get the database name.
+      // Note that additional leading slashes have meaning for some database
+      // drivers.
+      'database' => substr($uri->getPath(), 1),
+      'prefix' => $uri->getFragment() ?: NULL,
+      'namespace' => static::getNamespace(),
+    ];
+
+    $port = $uri->getPort();
+    if (!empty($port)) {
+      $connection_options['port'] = $port;
+    }
+
+    $user_info = $uri->getUserInfo();
+    if (!empty($user_info)) {
+      $user_info_elements = explode(':', $user_info, 2);
+      $connection_options['username'] = $user_info_elements[0];
+      $connection_options['password'] = isset($user_info_elements[1]) ? $user_info_elements[1] : '';
+    }
+
     // Add the 'dbal_driver' key to the connection options.
     $parts = [];
     parse_str($uri->getQuery(), $parts);
     $dbal_driver = isset($parts['dbal_driver']) ? $parts['dbal_driver'] : '';
     $connection_options['dbal_driver'] = $dbal_driver;
+
     return $connection_options;
   }
 
