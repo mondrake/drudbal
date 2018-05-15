@@ -28,6 +28,8 @@ env:
     - HTTP_PORT="8080"
     # Drupal PHPUnit test variables.
     - SIMPLETEST_BASE_URL="http://$HOST_ADDR:$HTTP_PORT"
+    # Suppress deprecation handling.
+    - SYMFONY_DEPRECATIONS_HELPER=disabled
   matrix:
     - DRUDBAL_ENV="mysql" TEST_ARGS="--group Database"
     - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Database,Cache,Config,Entity,Field"
