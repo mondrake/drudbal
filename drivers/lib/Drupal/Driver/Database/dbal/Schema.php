@@ -583,7 +583,7 @@ class Schema extends DatabaseSchema {
   /**
    * {@inheritdoc}
    */
-  public function getPrimaryKeyColumns($table) {
+  public function findPrimaryKeyColumns($table) {
     if (!$this->tableExists($table)) {
       return FALSE;
     }
