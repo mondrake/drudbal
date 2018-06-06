@@ -118,6 +118,7 @@ class Schema extends DatabaseSchema {
       // However we have to add here instead of separate calls to
       // ::addPrimaryKey to avoid failure when creating a table with an
       // autoincrement column.
+dump($table['primary key']);
       $new_table->setPrimaryKey($this->dbalGetFieldList($table['primary key']));
     }
 
@@ -455,12 +456,11 @@ class Schema extends DatabaseSchema {
       return FALSE;
     }
 
-    // When dropping a field that is part of a primary key, delete
-    // the entire primary key.
+    // When dropping a field that is part of a primary key, delete the entire
+    // primary key.
     $primary_key = $this->findPrimaryKeyColumns($table);
     if ((count($primary_key) > 1) && in_array($field, $primary_key, TRUE)) {
       $this->dropPrimaryKey($table);
-      $this->dbalSchemaForceReload();
     }
 
     // Delegate to DBAL extension.
