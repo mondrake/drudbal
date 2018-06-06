@@ -460,8 +460,9 @@ class Schema extends DatabaseSchema {
     $primary_key = $this->findPrimaryKeyColumns($table);
     if ((count($primary_key) > 1) && in_array($field, $primary_key, TRUE)) {
       $this->dropPrimaryKey($table);
+      $this->dbalSchemaForceReload();
     }
-    
+
     // Delegate to DBAL extension.
     if ($this->dbalExtension->delegateDropField($this->dbalSchema(), $table, $field)) {
       $this->dbalSchemaForceReload();
