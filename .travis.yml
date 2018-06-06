@@ -161,8 +161,6 @@ before_install:
   - curl https://www.drupal.org/files/issues/2912973-2.patch | git apply
   # [#2932777] Risky count() in SQLite Statement
   - curl https://www.drupal.org/files/issues/2932777-2.patch | git apply
-  # [#2974722] Fix dropping of columns in a composite primary key on MariaDB >=10.2.8 and make it consistent across database drivers
-  - curl https://www.drupal.org/files/issues/2018-06-06/2974722-43.patch | git apply
 
 install:
   # Copy the repo to the modules/contrib directory.
