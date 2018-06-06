@@ -591,7 +591,7 @@ class Schema extends DatabaseSchema {
       return $this->dbalSchema()->getTable($this->tableName($table))->getPrimaryKeyColumns();
     }
     catch (DBALException $e) {
-      return FALSE;
+      return [];
     }
   }
 
