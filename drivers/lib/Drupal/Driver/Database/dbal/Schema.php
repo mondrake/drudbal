@@ -455,6 +455,13 @@ class Schema extends DatabaseSchema {
       return FALSE;
     }
 
+    // When dropping a field that is part of a primary key, delete
+    // the entire primary key.
+    $primary_key = $this->findPrimaryKeyColumns($table);
+    if ((count($primary_key) > 1) && in_array($field, $primary_key, TRUE)) {
+      $this->dropPrimaryKey($table);
+    }
+    
     // Delegate to DBAL extension.
     if ($this->dbalExtension->delegateDropField($this->dbalSchema(), $table, $field)) {
       $this->dbalSchemaForceReload();
