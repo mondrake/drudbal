@@ -459,7 +459,11 @@ class Schema extends DatabaseSchema {
     // primary key.
     $primary_key = $this->findPrimaryKeyColumns($table);
     if (count($primary_key) && in_array($field, $primary_key, TRUE)) {
-      $this->dropPrimaryKey($table);
+      try {
+        $this->dropPrimaryKey($table);
+      }
+      catch (DBALException $e) {
+      }
     }
 
     // Delegate to DBAL extension.
