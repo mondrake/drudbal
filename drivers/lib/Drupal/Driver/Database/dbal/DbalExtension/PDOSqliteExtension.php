@@ -1091,7 +1091,7 @@ class PDOSqliteExtension extends AbstractExtension {
     foreach ($old_schema['full_index_names'] as $full_index_name) {
       $this->connection->query('DROP INDEX ' . $full_index_name);
     }
-
+if ($new_table === 'test_table_0') dump($new_schema);
     $this->connection->schema()->createTable($new_table, $new_schema);
 
     // Build a SQL query to migrate the data from the old table to the new.
