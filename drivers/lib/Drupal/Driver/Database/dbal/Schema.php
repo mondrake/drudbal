@@ -118,7 +118,6 @@ class Schema extends DatabaseSchema {
       // However we have to add here instead of separate calls to
       // ::addPrimaryKey to avoid failure when creating a table with an
       // autoincrement column.
-dump($table['primary key']);
       $new_table->setPrimaryKey($this->dbalGetFieldList($table['primary key']));
     }
 
