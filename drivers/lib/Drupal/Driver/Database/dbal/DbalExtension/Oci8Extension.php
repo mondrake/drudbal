@@ -761,7 +761,7 @@ if ($this->getDebugging()) error_log($query . ' : ' . var_export($args, TRUE));
 
     $sql = "ALTER TABLE " . $this->tableName($drupal_table_name) . " MODIFY ($field_name NUMBER(10) ";
     if ($change_nullability) {
-      $sql .= $drupal_field_new_specs['not null'] ? 'NOT NULL' : 'NULL';
+      $sql .= array_key_exists('not null', $drupal_field_new_specs) && $drupal_field_new_specs['not null'] ? 'NOT NULL' : 'NULL';
     }
     $sql .= ")";
     $this->connection->query($sql);

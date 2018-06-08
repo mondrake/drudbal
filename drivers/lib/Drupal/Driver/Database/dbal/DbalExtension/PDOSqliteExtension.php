@@ -1049,12 +1049,13 @@ class PDOSqliteExtension extends AbstractExtension {
    */
   protected function mapKeyDefinition(array $key_definition, array $mapping) {
     foreach ($key_definition as &$field) {
-      // The key definition can be an array($field, $length).
+      // The key definition can be an array [$field, $length].
       if (is_array($field)) {
         $field = &$field[0];
       }
-      if ($new_field = array_search($field, $mapping, TRUE)) {
-        $field = $new_field;
+      $mapped_field = array_search($field, $mapping, TRUE);
+      if ($mapped_field !== FALSE) {
+        $field = $mapped_field;
       }
     }
     return $key_definition;
