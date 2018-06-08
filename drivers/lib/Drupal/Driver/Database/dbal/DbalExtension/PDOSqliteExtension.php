@@ -850,7 +850,7 @@ class PDOSqliteExtension extends AbstractExtension {
 
     // Map the old field to the new field.
     if ($field_name != $field_new_name) {
-      $mapping[$field_name] = $field_new_name;
+      $mapping[$field_new_name] = $field_name;
     }
     else {
       $mapping = [];
@@ -1053,8 +1053,8 @@ class PDOSqliteExtension extends AbstractExtension {
       if (is_array($field)) {
         $field = &$field[0];
       }
-      if (isset($mapping[$field])) {
-        $field = $mapping[$field];
+      if ($new_field = array_search($field, $mapping, TRUE)) {
+        $field = $new_field;
       }
     }
     return $key_definition;
@@ -1098,7 +1098,6 @@ class PDOSqliteExtension extends AbstractExtension {
     $select = $this->connection->select($table);
 
     // Complete the mapping.
-    $mapping = array_flip($mapping);
     $possible_keys = array_keys($new_schema['fields']);
     $mapping += array_combine($possible_keys, $possible_keys);
 
