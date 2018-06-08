@@ -856,9 +856,11 @@ class PDOSqliteExtension extends AbstractExtension {
       $mapping = [];
     }
 
+if ($drupal_table_name === 'test_table') dump(['xxx0', $old_schema, $keys_new_specs, $mapping]);
     // Remove the previous definition and swap in the new one.
     unset($new_schema['fields'][$field_name]);
     $new_schema['fields'][$field_new_name] = $drupal_field_new_specs;
+if ($drupal_table_name === 'test_table') dump(['xxx1', $new_schema, $this->mapKeyDefinition($new_schema['primary key'], $mapping)]);
 
     // Map the former indexes to the new column name.
     $new_schema['primary key'] = $this->mapKeyDefinition($new_schema['primary key'], $mapping);
@@ -869,7 +871,6 @@ class PDOSqliteExtension extends AbstractExtension {
     }
 
     // Add in the keys from $keys_new_specs.
-if ($drupal_table_name === 'test_table') dump(['xxx', $old_schema, $new_schema, $keys_new_specs]);
     if (isset($keys_new_specs['primary key'])) {
       $new_schema['primary key'] = $keys_new_specs['primary key'];
     }
