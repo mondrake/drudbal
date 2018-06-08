@@ -127,7 +127,7 @@ before_install:
         git clone http://git.drupal.org/project/drupal.git $DRUPAL_STAGING_DIR
         cd $DRUPAL_STAGING_DIR
         # @todo PHPUnit 7
-        # curl https://www.drupal.org/files/issues/2018-04-05/xx0405.patch | git apply        
+        # curl https://www.drupal.org/files/issues/2018-04-05/xx0405.patch | git apply
         composer install --no-progress --no-suggest
         composer run-script drupal-phpunit-upgrade
         # Get Drupal Console
