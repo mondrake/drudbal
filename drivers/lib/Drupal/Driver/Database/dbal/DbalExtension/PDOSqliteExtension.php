@@ -869,6 +869,7 @@ class PDOSqliteExtension extends AbstractExtension {
     }
 
     // Add in the keys from $keys_new_specs.
+dump(['xxx', $old_schema, $new_schema, $keys_new_specs]);
     if (isset($keys_new_specs['primary key'])) {
       $new_schema['primary key'] = $keys_new_specs['primary key'];
     }
@@ -877,6 +878,7 @@ class PDOSqliteExtension extends AbstractExtension {
         $new_schema[$k] = $keys_new_specs[$k] + $new_schema[$k];
       }
     }
+dump(['yyy', $new_schema]);
 
     $this->alterTable($drupal_table_name, $old_schema, $new_schema, $mapping);
     return TRUE;
@@ -1091,7 +1093,7 @@ class PDOSqliteExtension extends AbstractExtension {
     foreach ($old_schema['full_index_names'] as $full_index_name) {
       $this->connection->query('DROP INDEX ' . $full_index_name);
     }
-if ($new_table === 'test_table_0') dump($new_schema);
+
     $this->connection->schema()->createTable($new_table, $new_schema);
 
     // Build a SQL query to migrate the data from the old table to the new.
