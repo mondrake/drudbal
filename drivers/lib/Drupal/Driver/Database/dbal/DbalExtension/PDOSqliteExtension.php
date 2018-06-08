@@ -850,17 +850,17 @@ class PDOSqliteExtension extends AbstractExtension {
 
     // Map the old field to the new field.
     if ($field_name != $field_new_name) {
-      $mapping[$field_new_name] = $field_name;
+      $mapping[$field_name] = $field_new_name;
     }
     else {
       $mapping = [];
     }
 
-if ($drupal_table_name === 'test_table') dump(['xxx0', $old_schema, $keys_new_specs, $mapping]);
+//if ($drupal_table_name === 'test_table') dump(['xxx0', $old_schema, $keys_new_specs, $mapping]);
     // Remove the previous definition and swap in the new one.
     unset($new_schema['fields'][$field_name]);
     $new_schema['fields'][$field_new_name] = $drupal_field_new_specs;
-if ($drupal_table_name === 'test_table') dump(['xxx1', $new_schema, $this->mapKeyDefinition($new_schema['primary key'], $mapping)]);
+//if ($drupal_table_name === 'test_table') dump(['xxx1', $new_schema, $this->mapKeyDefinition($new_schema['primary key'], $mapping)]);
 
     // Map the former indexes to the new column name.
     $new_schema['primary key'] = $this->mapKeyDefinition($new_schema['primary key'], $mapping);
@@ -879,7 +879,7 @@ if ($drupal_table_name === 'test_table') dump(['xxx1', $new_schema, $this->mapKe
         $new_schema[$k] = $keys_new_specs[$k] + $new_schema[$k];
       }
     }
-if ($drupal_table_name === 'test_table') dump(['yyy', $new_schema]);
+//if ($drupal_table_name === 'test_table') dump(['yyy', $new_schema]);
 
     $this->alterTable($drupal_table_name, $old_schema, $new_schema, $mapping);
     return TRUE;
