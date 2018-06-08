@@ -869,7 +869,7 @@ class PDOSqliteExtension extends AbstractExtension {
     }
 
     // Add in the keys from $keys_new_specs.
-dump(['xxx', $old_schema, $new_schema, $keys_new_specs]);
+if ($drupal_table_name === 'test_table') dump(['xxx', $old_schema, $new_schema, $keys_new_specs]);
     if (isset($keys_new_specs['primary key'])) {
       $new_schema['primary key'] = $keys_new_specs['primary key'];
     }
@@ -878,7 +878,7 @@ dump(['xxx', $old_schema, $new_schema, $keys_new_specs]);
         $new_schema[$k] = $keys_new_specs[$k] + $new_schema[$k];
       }
     }
-dump(['yyy', $new_schema]);
+if ($drupal_table_name === 'test_table') dump(['yyy', $new_schema]);
 
     $this->alterTable($drupal_table_name, $old_schema, $new_schema, $mapping);
     return TRUE;
