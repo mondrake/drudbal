@@ -151,8 +151,6 @@ before_install:
   - curl https://www.drupal.org/files/issues/2871374-2.patch | git apply
   # [#2874499] Test failures when db driver is set to not support transactions
   - curl https://www.drupal.org/files/issues/2874499-7-transaction-enabled.patch | git apply
-  # [#2875679] BasicSyntaxTest::testConcatFields fails with contrib driver
-  - curl https://www.drupal.org/files/issues/2875679-2.patch | git apply
   # [#2879677] Decouple getting table vs column comments in Schema
   - curl https://www.drupal.org/files/issues/2879677-5.patch | git apply
   # [#2657888] Add Date function support in DTBNG

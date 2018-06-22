@@ -102,7 +102,6 @@ Issue | Description   |
 [2871374](https://www.drupal.org/node/2871374) | SelectTest::testVulnerableComment fails when driver overrides Select::\_\_toString |
 tbd | Add tests for Upsert with default values |
 [2874499](https://www.drupal.org/node/2874499) | Test failures when db driver is set to not support transactions |
-[2875679](https://www.drupal.org/node/2875679) | BasicSyntaxTest::testConcatFields fails with contrib driver |
 [2879677](https://www.drupal.org/node/2879677) | Decouple getting table vs column comments in Schema |
 [2657888](https://www.drupal.org/node/2657888) | Add Date function support in DTBNG |
 [2912973](https://www.drupal.org/node/2912973) | Mismatching call to databaseType() in LangcodeToAsciiUpdateTest |
