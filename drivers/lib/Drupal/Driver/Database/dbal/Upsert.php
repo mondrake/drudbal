@@ -140,12 +140,15 @@ class Upsert extends QueryUpsert {
     // Execute the DBAL query directly. Needs to loop to wait and retry in case
     // of deadlock.
     // @todo note this drops support for comments.
-    for ($i = 0; $i < 3; $i++) {
+    for ($i = 0; $i < 300; $i++) {
       try {
         return $dbal_query->execute();
       }
       catch (DBALDeadlockException $e) {
-        usleep(20000);
+        if ($i === 299) {
+          throw $e;
+        }
+        usleep(2000);
       }
     }
   }
