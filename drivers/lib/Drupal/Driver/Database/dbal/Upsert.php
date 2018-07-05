@@ -4,6 +4,7 @@ namespace Drupal\Driver\Database\dbal;
 
 use Drupal\Core\Database\IntegrityConstraintViolationException;
 use Drupal\Core\Database\Query\Upsert as QueryUpsert;
+use Doctrine\DBAL\Exception\DeadlockException as DBALDeadlockException;
 
 /**
  * DruDbal implementation of \Drupal\Core\Database\Query\Upsert.
@@ -30,11 +31,10 @@ class Upsert extends QueryUpsert {
 
     $sql = (string) $this;
 
-    // @todo opening a transaction fails with MySql on 'file' group tests
-    //if ($this->connection->supportsTransactions()) {
-    //  // @codingStandardsIgnoreLine
-    //  $trn = $this->connection->startTransaction();
-    //}
+    if ($this->connection->supportsTransactions()) {
+      // @codingStandardsIgnoreLine
+      $trn = $this->connection->startTransaction();
+    }
 
     // Loop through the values to be UPSERTed.
     $last_insert_id = NULL;
@@ -137,9 +137,20 @@ class Upsert extends QueryUpsert {
       }
     }
 
-    // Execute the DBAL query directly.
+    // Execute the DBAL query directly. Needs loop to wait and retry in case
+    // of deadlock.
     // @todo note this drops support for comments.
-    return $dbal_query->execute();
+    for ($i = 0; $i < 100; $i++) {
+      try {
+        return $dbal_query->execute();
+      }
+      catch (DBALDeadlockException $e) {
+        if ($i === 99) {
+          throw $e;
+        }
+        usleep(5000);
+      }
+    }
   }
 
 }
