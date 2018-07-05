@@ -4,6 +4,7 @@ namespace Drupal\Driver\Database\dbal;
 
 use Drupal\Core\Database\IntegrityConstraintViolationException;
 use Drupal\Core\Database\Query\Upsert as QueryUpsert;
+use Doctrine\DBAL\Exception\DeadlockException as DBALDeadlockException;
 
 /**
  * DruDbal implementation of \Drupal\Core\Database\Query\Upsert.
@@ -136,9 +137,17 @@ class Upsert extends QueryUpsert {
       }
     }
 
-    // Execute the DBAL query directly.
+    // Execute the DBAL query directly. Needs to loop to wait and retry in case
+    // of deadlock.
     // @todo note this drops support for comments.
-    return $dbal_query->execute();
+    for ($i = 0; $i < 3; $i++) {
+      try {
+        return $dbal_query->execute();
+      }
+      catch (DBALDeadlockException $e) {
+        usleep(20000);
+      }
+    }
   }
 
 }
