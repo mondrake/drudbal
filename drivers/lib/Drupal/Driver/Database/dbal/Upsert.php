@@ -30,11 +30,10 @@ class Upsert extends QueryUpsert {
 
     $sql = (string) $this;
 
-    // @todo opening a transaction fails with MySql on 'file' group tests
-    //if ($this->connection->supportsTransactions()) {
-    //  // @codingStandardsIgnoreLine
-    //  $trn = $this->connection->startTransaction();
-    //}
+    if ($this->connection->supportsTransactions()) {
+      // @codingStandardsIgnoreLine
+      $trn = $this->connection->startTransaction();
+    }
 
     // Loop through the values to be UPSERTed.
     $last_insert_id = NULL;
