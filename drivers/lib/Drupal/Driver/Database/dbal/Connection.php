@@ -726,6 +726,9 @@ class Connection extends DatabaseConnection {
       throw new \InvalidArgumentException('Minimum requirement: driver://host/database');
     }
 
+    // Use reflection to get the namespace of the class being called.
+    $reflector = new \ReflectionClass(get_called_class());
+
     // Build the connection information array.
     $connection_options = [
       'driver' => $uri->getScheme(),
@@ -735,7 +738,7 @@ class Connection extends DatabaseConnection {
       // drivers.
       'database' => substr($uri->getPath(), 1),
       'prefix' => $uri->getFragment() ?: NULL,
-      'namespace' => static::getNamespace(),
+      'namespace' => $reflector->getNamespaceName(),
     ];
 
     $port = $uri->getPort();
