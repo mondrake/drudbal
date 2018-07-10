@@ -97,7 +97,6 @@ https://github.com/doctrine/dbal/issues/2676     | Optimize Oracle SchemaManager
 ## Related Drupal issues
 Issue | Description   |
 ------|---------------|
-[2605284](https://www.drupal.org/node/2605284) | Testing framework does not work with contributed database drivers |
 [2867788](https://www.drupal.org/node/2867788) | Log::findCaller fails to report the correct caller function with non-core drivers |
 [2871374](https://www.drupal.org/node/2871374) | SelectTest::testVulnerableComment fails when driver overrides Select::\_\_toString |
 tbd | Add tests for Upsert with default values |

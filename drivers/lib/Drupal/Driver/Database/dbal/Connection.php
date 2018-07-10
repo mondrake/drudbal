@@ -685,7 +685,7 @@ class Connection extends DatabaseConnection {
   /**
    * {@inheritdoc}
    */
-  public static function getConnectionUrl(array $connection_options) {
+  public static function createUrlFromConnectionOptions(array $connection_options) {
     $uri = new Uri();
 
     // Driver name as the URI scheme.
@@ -720,11 +720,14 @@ class Connection extends DatabaseConnection {
   /**
    * {@inheritdoc}
    */
-  public static function getConnectionInfoFromUrl($url, $root) {
+  public static function createConnectionOptionsFromUrl($url, $root) {
     $uri = new Uri($url);
     if (empty($uri->getHost()) || empty($uri->getScheme()) || empty($uri->getPath())) {
       throw new \InvalidArgumentException('Minimum requirement: driver://host/database');
     }
+
+    // Use reflection to get the namespace of the class being called.
+    $reflector = new \ReflectionClass(get_called_class());
 
     // Build the connection information array.
     $connection_options = [
@@ -735,7 +738,7 @@ class Connection extends DatabaseConnection {
       // drivers.
       'database' => substr($uri->getPath(), 1),
       'prefix' => $uri->getFragment() ?: NULL,
-      'namespace' => static::getNamespace(),
+      'namespace' => $reflector->getNamespaceName(),
     ];
 
     $port = $uri->getPort();
