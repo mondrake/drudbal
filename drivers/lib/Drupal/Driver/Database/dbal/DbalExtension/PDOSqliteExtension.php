@@ -995,7 +995,7 @@ if ($field_name === 'test_serial') throw new \Exception(var_export([$drupal_tabl
       }
       $schema['fields'][$column->getName()] = [
         'size' => $size,
-        'not null' => $column->getNotNull(),
+        'not null' => $column->getNotNull() || in_array($column->getName(), $dbal_table->getPrimaryKeyColumns()),
         'default' => ($column->getDefault() === NULL && $column->getNotNull() === FALSE) ? 'NULL' : $column->getDefault(),
       ];
       if ($column->getAutoincrement() === TRUE && in_array($dbal_type, [
