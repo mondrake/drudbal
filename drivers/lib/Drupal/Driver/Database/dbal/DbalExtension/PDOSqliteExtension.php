@@ -1092,7 +1092,7 @@ class PDOSqliteExtension extends AbstractExtension {
     foreach ($old_schema['full_index_names'] as $full_index_name) {
       $this->connection->query('DROP INDEX ' . $full_index_name);
     }
-throw new \Exception(var_export([$old_schema, $new_schema, $mapping], TRUE));
+//throw new \Exception(var_export([$old_schema, $new_schema, $mapping], TRUE));
     $this->connection->schema()->createTable($new_table, $new_schema);
 
     // Build a SQL query to migrate the data from the old table to the new.
