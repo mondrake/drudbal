@@ -91,6 +91,11 @@ class Schema extends DatabaseSchema {
       throw new SchemaObjectExistsException(t('Table @name already exists.', ['@name' => $name]));
     }
 
+    // Check primary key does not have nullable fields.
+    if (!empty($table['primary key']) && is_array($table['primary key'])) {
+      $this->ensureNotNullPrimaryKey($table['primary key'], $table['fields']);
+    }
+
     // Create table via DBAL.
     $current_schema = $this->dbalSchema();
     $to_schema = clone $current_schema;
@@ -366,6 +371,12 @@ class Schema extends DatabaseSchema {
     }
     if ($this->fieldExists($table, $field)) {
       throw new SchemaObjectExistsException(t("Cannot add field @table.@field: field already exists.", ['@field' => $field, '@table' => $table]));
+    }
+
+    // Fields that are part of a PRIMARY KEY must be added as NOT NULL.
+    $is_primary_key = isset($keys_new['primary key']) && in_array($field, $keys_new['primary key'], TRUE);
+    if ($is_primary_key) {
+      $this->ensureNotNullPrimaryKey($keys_new['primary key'], [$field => $spec]);
     }
 
     $fixnull = FALSE;
@@ -705,6 +716,9 @@ class Schema extends DatabaseSchema {
         '@name' => $field,
         '@name_new' => $field_new,
       ]));
+    }
+    if (isset($keys_new['primary key']) && in_array($field_new, $keys_new['primary key'], TRUE)) {
+      $this->ensureNotNullPrimaryKey($keys_new['primary key'], [$field_new => $spec]);
     }
 
     $dbal_type = $this->getDbalColumnType($spec);
