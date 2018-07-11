@@ -11,6 +11,7 @@ use Drupal\Core\Database\Driver\sqlite\Connection as SqliteConnectionBase;
 use Drupal\Driver\Database\dbal\Connection as DruDbalConnection;
 
 use Doctrine\DBAL\Connection as DbalConnection;
+use Doctrine\DBAL\Exception as DbalException;
 use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
 use Doctrine\DBAL\Schema\Schema as DbalSchema;
 use Doctrine\DBAL\Statement as DbalStatement;
@@ -779,7 +780,7 @@ class PDOSqliteExtension extends AbstractExtension {
    * {@inheritdoc}
    */
   public function delegateAddField(&$primary_key_processed_by_extension, DbalSchema $dbal_schema, $drupal_table_name, $field_name, array $drupal_field_specs, array $keys_new_specs, array $dbal_column_options) {
-if ($field_name === 'test_serial') throw new \Exception(var_export([$drupal_table_name, $field_name, $drupal_field_specs, $keys_new_specs, $dbal_column_options], TRUE));
+//if ($field_name === 'test_serial') throw new \Exception(var_export([$drupal_table_name, $field_name, $drupal_field_specs, $keys_new_specs, $dbal_column_options], TRUE));
     // SQLite doesn't have a full-featured ALTER TABLE statement. It only
     // supports adding new fields to a table, in some simple cases. In most
     // cases, we have to create a new table and copy the data over.
@@ -985,7 +986,15 @@ if ($field_name === 'test_serial') throw new \Exception(var_export([$drupal_tabl
 
     // Table.
     $dbal_table = $dbal_schema->getTable($this->tableName($table));
-
+    
+    // Primary key.
+    try {
+      $primary_key_columns = $dbal_table->getPrimaryKeyColumns();
+    }
+    catch (DBALException $e) {
+      $primary_key_columns = [];
+    }
+    
     // Columns.
     $columns = $dbal_table->getColumns();
     foreach ($columns as $column) {
@@ -995,7 +1004,7 @@ if ($field_name === 'test_serial') throw new \Exception(var_export([$drupal_tabl
       }
       $schema['fields'][$column->getName()] = [
         'size' => $size,
-        'not null' => $column->getNotNull() || in_array($column->getName(), $dbal_table->getPrimaryKeyColumns()),
+        'not null' => $column->getNotNull() || in_array($column->getName(), $primary_key_columns),
         'default' => ($column->getDefault() === NULL && $column->getNotNull() === FALSE) ? 'NULL' : $column->getDefault(),
       ];
       if ($column->getAutoincrement() === TRUE && in_array($dbal_type, [
