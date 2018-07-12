@@ -380,7 +380,7 @@ class Schema extends DatabaseSchema {
     }
 
     $fixnull = FALSE;
-    if (!empty($spec['not null']) && !isset($spec['default'])) {
+    if (!empty($spec['not null']) && !isset($spec['default']) && !$is_primary_key) {
       $fixnull = TRUE;
       $spec['not null'] = FALSE;
     }
