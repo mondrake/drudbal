@@ -780,7 +780,7 @@ class PDOSqliteExtension extends AbstractExtension {
    * {@inheritdoc}
    */
   public function delegateAddField(&$primary_key_processed_by_extension, DbalSchema $dbal_schema, $drupal_table_name, $field_name, array $drupal_field_specs, array $keys_new_specs, array $dbal_column_options) {
-//if ($field_name === 'test_serial') throw new \Exception(var_export([$drupal_table_name, $field_name, $drupal_field_specs, $keys_new_specs, $dbal_column_options], TRUE));
+if ($field_name === 'test_serial') throw new \Exception(var_export([$drupal_table_name, $field_name, $drupal_field_specs, $keys_new_specs, $dbal_column_options], TRUE));
     // SQLite doesn't have a full-featured ALTER TABLE statement. It only
     // supports adding new fields to a table, in some simple cases. In most
     // cases, we have to create a new table and copy the data over.
