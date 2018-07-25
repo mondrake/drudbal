@@ -164,7 +164,7 @@ class Tasks extends InstallTasks {
       '#default_value' => empty($database['dbal_url']) ? '' : $database['dbal_url'],
       '#rows' => 3,
       '#size' => 45,
-      '#required' => FALSE,
+      '#required' => TRUE,
       '#element_validate' => [[$this, 'validateDbalUrl']],
       '#states' => [
         'required' => [
@@ -179,7 +179,7 @@ class Tasks extends InstallTasks {
       '#title' => t('DBAL driver'),
       '#default_value' => empty($database['dbal_driver']) ? '' : $database['dbal_driver'],
     ];
-
+throw new \Exception(var_export(['database' => $database, 'form' => $form], TRUE));
     return $form;
   }
 
