@@ -157,11 +157,11 @@ class Tasks extends InstallTasks {
     $form['advanced_options']['port']['#type'] = 'hidden';
 
     // In functional tests, the 'dbal_url' database key needs to be rebuilt.
-    if (empty($database['dbal_url']) && isset($database['database'])) {
+/*    if (empty($database['dbal_url']) && isset($database['database'])) {
       $connection_options = $database;
       $connection_options['driver'] = 'dbal';
       $database['dbal_url'] = DruDbalConnection::createUrlFromConnectionOptions($connection_options);
-    }
+    }*/
 
     // Add a Dbal URL entry field.
     $form['dbal_url'] = [
