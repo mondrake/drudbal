@@ -164,7 +164,7 @@ class Tasks extends InstallTasks {
       '#default_value' => empty($database['dbal_url']) ? '' : $database['dbal_url'],
       '#rows' => 3,
       '#size' => 45,
-      '#required' => TRUE,
+      '#required' => FALSE,
       '#element_validate' => [[$this, 'validateDbalUrl']],
       '#states' => [
         'required' => [
