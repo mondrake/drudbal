@@ -12,12 +12,10 @@ use Drupal\Core\Database\TransactionCommitFailedException;
 use Drupal\Core\Database\TransactionNameNonUniqueException;
 use Drupal\Core\Database\TransactionNoActiveException;
 use Drupal\Core\Database\TransactionOutOfOrderException;
-
 use Drupal\Driver\Database\dbal\DbalExtension\MysqliExtension;
 use Drupal\Driver\Database\dbal\DbalExtension\Oci8Extension;
 use Drupal\Driver\Database\dbal\DbalExtension\PDOMySqlExtension;
 use Drupal\Driver\Database\dbal\DbalExtension\PDOSqliteExtension;
-
 use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\ConnectionException as DbalConnectionException;
 use Doctrine\DBAL\DBALException;
@@ -25,7 +23,6 @@ use Doctrine\DBAL\DriverManager as DbalDriverManager;
 use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
 use Doctrine\DBAL\Version as DbalVersion;
 use GuzzleHttp\Psr7\Uri;
-use Psr\Http\Message\UriInterface;
 
 /**
  * DruDbal implementation of \Drupal\Core\Database\Connection.
@@ -758,15 +755,6 @@ class Connection extends DatabaseConnection {
     parse_str($uri->getQuery(), $parts);
     $dbal_driver = isset($parts['dbal_driver']) ? $parts['dbal_driver'] : '';
     $connection_options['dbal_driver'] = $dbal_driver;
-
-    // Add the 'dbal_url' key to the connection options.
-    $dbal_uri = new Uri();
-    $dbal_uri = $dbal_uri->withScheme($dbal_driver);
-    $dbal_uri = $dbal_uri->withUserInfo($uri->getUserInfo());
-    $dbal_uri = $dbal_uri->withHost($uri->getHost());
-    $dbal_uri = $dbal_uri->withPort($uri->getPort());
-    $dbal_uri = $dbal_uri->withPath($uri->getPath());
-    $connection_options['dbal_url'] = (string) $dbal_uri;
 
     return $connection_options;
   }
