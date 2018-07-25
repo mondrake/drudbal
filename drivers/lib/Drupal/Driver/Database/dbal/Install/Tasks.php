@@ -180,7 +180,7 @@ class Tasks extends InstallTasks {
       '#default_value' => empty($database['dbal_driver']) ? '' : $database['dbal_driver'],
     ];
 //throw new \Exception(var_export(['database' => $database, 'form' => $form], TRUE));
-var_export(['database' => $database, 'form' => $form], TRUE);
+var_export(['database' => $database, 'form' => $form]);
     return $form;
   }
 
