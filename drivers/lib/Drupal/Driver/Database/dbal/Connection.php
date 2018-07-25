@@ -739,7 +739,6 @@ class Connection extends DatabaseConnection {
       'database' => substr($uri->getPath(), 1),
       'prefix' => $uri->getFragment() ?: NULL,
       'namespace' => $reflector->getNamespaceName(),
-//      'dbal_url' => $url,
     ];
 
     $port = $uri->getPort();
