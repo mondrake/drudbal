@@ -158,15 +158,16 @@ class Tasks extends InstallTasks {
 
     // In functional tests, the 'dbal_url' database key needs to be rebuilt.
     if (empty($database['dbal_url']) && isset($database['database'])) {
-      $database['dbal_url'] = 'mysql://root@127.0.0.1/drudbal';
+      $database['dbal_url'] = 'mysql://root:@127.0.0.1/drudbal';
       // Add the 'dbal_url' key to the connection options.
-      /*$dbal_uri = new Uri();
+      $dbal_uri = new Uri();
       $dbal_uri = $dbal_uri->withScheme($database['dbal_driver']);
       $dbal_uri = $dbal_uri->withUserInfo($database['username'], $database['password']);
       $dbal_uri = $dbal_uri->withHost(isset($database['host']) ? $database['host'] : 'localhost');
       $dbal_uri = $dbal_uri->withPort(isset($database['port']) ? $database['port'] : NULL);
       $dbal_uri = $dbal_uri->withPath('/' . $database['database']);
-      $database['dbal_url'] = (string) $dbal_uri;*/
+      /*$database['dbal_url'] = (string) $dbal_uri;*/
+//var_export([$database['dbal_url'], (string) $dbal_uri]);
     }
 
     // Add a Dbal URL entry field.
@@ -193,7 +194,6 @@ class Tasks extends InstallTasks {
       '#default_value' => empty($database['dbal_driver']) ? '' : $database['dbal_driver'],
     ];
 
-//var_export([$database, $form]);
     return $form;
   }
 
