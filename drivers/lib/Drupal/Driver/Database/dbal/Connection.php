@@ -759,6 +759,15 @@ class Connection extends DatabaseConnection {
     $dbal_driver = isset($parts['dbal_driver']) ? $parts['dbal_driver'] : '';
     $connection_options['dbal_driver'] = $dbal_driver;
 
+    // Add the 'dbal_url' key to the connection options.
+    $dbal_uri = new Uri();
+    $dbal_uri = $dbal_uri->withScheme($dbal_driver);
+    $dbal_uri = $dbal_uri->withUserInfo($uri->getUserInfo());
+    $dbal_uri = $dbal_uri->withHost($uri->getHost());
+    $dbal_uri = $dbal_uri->withPort($uri->getPort());
+    $dbal_uri = $dbal_uri->withPath($uri->getPath());
+    $connection_options['dbal_url'] = $dbal_uri;
+
     return $connection_options;
   }
 

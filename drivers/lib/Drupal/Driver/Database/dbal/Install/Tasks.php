@@ -157,12 +157,12 @@ class Tasks extends InstallTasks {
     $form['advanced_options']['port']['#type'] = 'hidden';
 
     // In functional tests, the 'dbal_url' database key needs to be rebuilt.
-    if (empty($database['dbal_url']) && isset($database['database'])) {
+/*    if (empty($database['dbal_url']) && isset($database['database'])) {
       //$connection_options = $database;
       //$connection_options['driver'] = 'dbal';
       //$database['dbal_url'] = DruDbalConnection::createUrlFromConnectionOptions($connection_options);
       $database['dbal_url'] = 'mysql://root:@127.0.0.1/drudbal#' . $database['prefix'];
-    }
+    }*/
 
     // Add a Dbal URL entry field.
     $form['dbal_url'] = [
@@ -188,7 +188,7 @@ class Tasks extends InstallTasks {
       '#default_value' => empty($database['dbal_driver']) ? '' : $database['dbal_driver'],
     ];
 
-//var_export(['database' => $database, 'form' => $form]);
+var_export(['database' => $database, 'form' => $form]);
     return $form;
   }
 
