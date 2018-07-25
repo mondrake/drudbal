@@ -161,7 +161,7 @@ class Tasks extends InstallTasks {
       //$connection_options = $database;
       //$connection_options['driver'] = 'dbal';
       //$database['dbal_url'] = DruDbalConnection::createUrlFromConnectionOptions($connection_options);
-      $database['dbal_url'] = 'mysql://root:@127.0.0.1/drudbal';
+      $database['dbal_url'] = 'pdo_mysql://root:@127.0.0.1/drudbal';
       // Add the 'dbal_url' key to the connection options.
       /*$dbal_uri = new Uri();
       $dbal_uri = $dbal_uri->withScheme($database['dbal_driver']);
