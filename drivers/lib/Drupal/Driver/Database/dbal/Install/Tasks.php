@@ -6,7 +6,7 @@ use Drupal\Core\Database\ConnectionNotDefinedException;
 use Drupal\Core\Database\Database;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Database\Install\Tasks as InstallTasks;
-use Drupal\Driver\Database\dbal\Connection as DruDbalConnection;z
+use Drupal\Driver\Database\dbal\Connection as DruDbalConnection;
 use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\Exception\ConnectionException as DbalExceptionConnectionException;
 use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
