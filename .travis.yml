@@ -71,11 +71,11 @@ before_install:
 
       elif [[ "$DRUDBAL_ENV" == "dbal/mysql" ]]; then
         export DBAL_URL="mysql://root:@$HOST_ADDR/drudbal"
-        export SIMPLETEST_DB="dbal://root:@$HOST_ADDR/drudbal?dbal_driver=pdo_mysql#drudbal_"
+        export SIMPLETEST_DB="dbal://root:@$HOST_ADDR/drudbal?dbal_driver=pdo_mysql"
 
       elif [[ "$DRUDBAL_ENV" == "dbal/mysqli" ]]; then
         export DBAL_URL="mysqli://root:@$HOST_ADDR/drudbal"
-        export SIMPLETEST_DB="dbal://root:@$HOST_ADDR/drudbal?dbal_driver=mysqli#drudbal_"
+        export SIMPLETEST_DB="dbal://root:@$HOST_ADDR/drudbal?dbal_driver=mysqli"
 
       elif [[ "$DRUDBAL_ENV" == "sqlite" ]]; then
         export DBAL_URL="sqlite:///sites/default/files/.ht.sqlite"
