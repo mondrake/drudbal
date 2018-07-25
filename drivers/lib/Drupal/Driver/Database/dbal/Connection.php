@@ -766,7 +766,7 @@ class Connection extends DatabaseConnection {
     $dbal_uri = $dbal_uri->withHost($uri->getHost());
     $dbal_uri = $dbal_uri->withPort($uri->getPort());
     $dbal_uri = $dbal_uri->withPath($uri->getPath());
-    $connection_options['dbal_url'] = $dbal_uri;
+    $connection_options['dbal_url'] = (string) $dbal_uri;
 
     return $connection_options;
   }
