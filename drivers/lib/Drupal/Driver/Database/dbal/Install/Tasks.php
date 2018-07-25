@@ -196,7 +196,6 @@ class Tasks extends InstallTasks {
       '#default_value' => empty($database['dbal_driver']) ? '' : $database['dbal_driver'],
     ];
 
-var_export(['database' => $database, 'form' => $form]);
     return $form;
   }
 
