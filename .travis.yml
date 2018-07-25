@@ -31,7 +31,7 @@ env:
     # Suppress deprecation handling.
     #- SYMFONY_DEPRECATIONS_HELPER=disabled
   matrix:
-    #- DRUDBAL_ENV="mysql" TEST_ARGS="--group Database"
+    - DRUDBAL_ENV="mysql" TEST_ARGS="--group Database"
     - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Database,Cache,Config,Entity,Field"
     - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group field"
     - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group file"
@@ -40,7 +40,7 @@ env:
     - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group field"
     - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group file"
     - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group views"
-    #- DRUDBAL_ENV="sqlite" TEST_ARGS="--group Database --testsuite kernel"
+    - DRUDBAL_ENV="sqlite" TEST_ARGS="--group Database --testsuite kernel"
     - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database,Cache,Config,Entity,Field"
     - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group field"
     - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group file"
@@ -149,7 +149,7 @@ before_install:
   # [#2867788] Log::findCaller fails to report the correct caller function with non-core drivers.
   - curl https://www.drupal.org/files/issues/2867788-22_0.patch | git apply
   # [#2871374] SelectTest::testVulnerableComment fails when driver overrides Select::__toString
-  - curl https://www.drupal.org/files/issues/2871374-2.patch | git apply
+  - curl https://www.drupal.org/files/issues/2018-07-25/2871374-6.patch | git apply
   # [#2874499] Test failures when db driver is set to not support transactions
   - curl https://www.drupal.org/files/issues/2874499-7-transaction-enabled.patch | git apply
   # [#2879677] Decouple getting table vs column comments in Schema
