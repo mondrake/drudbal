@@ -727,12 +727,6 @@ class PDOSqliteExtension extends AbstractExtension {
       $comment = '';
     }
 
-    // DBAL 2.8.0 supports 'PRIMARY KEY AUTOINCREMENT' for serial fields, that
-    // Drupal does not support.
-//    if (isset($drupal_field_specs['type']) && $drupal_field_specs['type'] === 'serial') {
-//      $definition = str_replace(' PRIMARY KEY AUTOINCREMENT', '', $definition);
-//    }
-
     // DBAL does not support BINARY option for char/varchar columns.
     if (isset($drupal_field_specs['binary']) && $drupal_field_specs['binary'] === FALSE) {
       $definition = preg_replace('/CHAR\(([0-9]+)\)/', '$0 COLLATE NOCASE_UTF8', $definition);
@@ -813,6 +807,15 @@ if ($field_name === 'test_composite_primary_key') $xx[] = $old_schema;
 
       // Add the new indexes.
       $new_schema = array_merge($new_schema, $keys_new_specs);
+
+      // Avoid serial fields in composite primary key.
+      if (count($keys_new_specs) > 1) {
+        foreach ($keys_new_specs as $key) {
+          if ($new_schema['fields'][$key]['type'] === 'serial') {
+            $new_schema['fields'][$key]['type'] = 'int';
+          }
+        }
+      }
 if ($field_name === 'test_composite_primary_key') {$xx[] = $new_schema; throw new \Exception(var_export($xx, TRUE));}
 
       $this->alterTable($drupal_table_name, $old_schema, $new_schema, $mapping);
@@ -993,7 +996,7 @@ if ($field_name === 'test_composite_primary_key') {$xx[] = $new_schema; throw ne
 
     // Table.
     $dbal_table = $dbal_schema->getTable($this->tableName($table));
-    
+
     // Primary key.
     try {
       $primary_key_columns = $dbal_table->getPrimaryKeyColumns();
@@ -1001,7 +1004,7 @@ if ($field_name === 'test_composite_primary_key') {$xx[] = $new_schema; throw ne
     catch (DBALException $e) {
       $primary_key_columns = [];
     }
-    
+
     // Columns.
     $columns = $dbal_table->getColumns();
     foreach ($columns as $column) {
