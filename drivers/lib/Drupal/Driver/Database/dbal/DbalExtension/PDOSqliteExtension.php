@@ -807,6 +807,15 @@ class PDOSqliteExtension extends AbstractExtension {
       // Add the new indexes.
       $new_schema = array_merge($new_schema, $keys_new_specs);
 
+      // Avoid serial fields in composite primary key.
+      if (count($keys_new_specs['primary key']) > 1) {
+        foreach ($keys_new_specs['primary key'] as $key) {
+          if ($new_schema['fields'][$key]['type'] === 'serial') {
+            $new_schema['fields'][$key]['type'] = 'int';
+          }
+        }
+      }
+
       $this->alterTable($drupal_table_name, $old_schema, $new_schema, $mapping);
     }
     return TRUE;
@@ -985,7 +994,7 @@ class PDOSqliteExtension extends AbstractExtension {
 
     // Table.
     $dbal_table = $dbal_schema->getTable($this->tableName($table));
-    
+
     // Primary key.
     try {
       $primary_key_columns = $dbal_table->getPrimaryKeyColumns();
@@ -993,7 +1002,7 @@ class PDOSqliteExtension extends AbstractExtension {
     catch (DBALException $e) {
       $primary_key_columns = [];
     }
-    
+
     // Columns.
     $columns = $dbal_table->getColumns();
     foreach ($columns as $column) {
