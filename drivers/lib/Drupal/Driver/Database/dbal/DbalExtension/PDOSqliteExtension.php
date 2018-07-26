@@ -796,7 +796,6 @@ class PDOSqliteExtension extends AbstractExtension {
       // We cannot add the field directly. Use the slower table alteration
       // method, starting from the old schema.
       $old_schema = $this->buildTableSpecFromDbalSchema($dbal_schema, $drupal_table_name);
-if ($field_name === 'test_composite_primary_key') $xx[] = $old_schema;
       $new_schema = $old_schema;
 
       // Add the new field.
@@ -811,6 +810,7 @@ if ($field_name === 'test_composite_primary_key') $xx[] = $old_schema;
       // Avoid serial fields in composite primary key.
       if (count($keys_new_specs) > 1) {
         foreach ($keys_new_specs as $key) {
+if ($field_name === 'test_composite_primary_key') {$xx[] = $key;}
           if ($new_schema['fields'][$key]['type'] === 'serial') {
             $new_schema['fields'][$key]['type'] = 'int';
           }
