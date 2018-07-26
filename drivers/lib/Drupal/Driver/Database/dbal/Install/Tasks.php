@@ -7,11 +7,11 @@ use Drupal\Core\Database\Database;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Database\Install\Tasks as InstallTasks;
 use Drupal\Driver\Database\dbal\Connection as DruDbalConnection;
+
 use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\Exception\ConnectionException as DbalExceptionConnectionException;
 use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
 use Doctrine\DBAL\DriverManager as DbalDriverManager;
-use GuzzleHttp\Psr7\Uri;
 
 /**
  * Specifies installation tasks for DruDbal driver.
@@ -158,18 +158,8 @@ class Tasks extends InstallTasks {
 
     // In functional tests, the 'dbal_url' database key needs to be rebuilt.
     if (empty($database['dbal_url']) && isset($database['database'])) {
-      //$connection_options = $database;
-      //$connection_options['driver'] = 'dbal';
-      //$database['dbal_url'] = DruDbalConnection::createUrlFromConnectionOptions($connection_options);
-      $database['dbal_url'] = 'mysql://root@127.0.0.1/drudbal';
-      // Add the 'dbal_url' key to the connection options.
-      /*$dbal_uri = new Uri();
-      $dbal_uri = $dbal_uri->withScheme($database['dbal_driver']);
-      $dbal_uri = $dbal_uri->withUserInfo($database['username'], $database['password']);
-      $dbal_uri = $dbal_uri->withHost(isset($database['host']) ? $database['host'] : 'localhost');
-      $dbal_uri = $dbal_uri->withPort(isset($database['port']) ? $database['port'] : NULL);
-      $dbal_uri = $dbal_uri->withPath('/' . $database['database']);
-      $database['dbal_url'] = (string) $dbal_uri;*/
+      //$database['dbal_url'] = 'mysql://root@127.0.0.1/drudbal';
+      $database['dbal_url'] = 'mysql://root:@127.0.0.1/drudbal';
     }
 
     // Add a Dbal URL entry field.
