@@ -156,10 +156,11 @@ class Tasks extends InstallTasks {
     $form['advanced_options']['host']['#type'] = 'hidden';
     $form['advanced_options']['port']['#type'] = 'hidden';
 
-    // In functional tests, the 'dbal_url' database key needs to be rebuilt.
+    // In functional tests, the 'dbal_url' database key is available from
+    // the DBAL_URL environnment variable.
     if (empty($database['dbal_url']) && isset($database['database'])) {
       //$database['dbal_url'] = 'mysql://root@127.0.0.1/drudbal';
-      $database['dbal_url'] = 'mysql://root:@127.0.0.1/drudbal';
+      $database['dbal_url'] = getenv("DBAL_URL");
     }
 
     // Add a Dbal URL entry field.
