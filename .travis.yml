@@ -71,7 +71,7 @@ before_install:
 
       elif [[ "$DRUDBAL_ENV" == "dbal/mysql" ]]; then
         export DBAL_URL="mysql://root:@$HOST_ADDR/drudbal"
-        export SIMPLETEST_DB="dbal://root:@$HOST_ADDR/drudbal?dbal_driver=mysql"
+        export SIMPLETEST_DB="dbal://root:@$HOST_ADDR/drudbal?dbal_driver=pdo_mysql"
 
       elif [[ "$DRUDBAL_ENV" == "dbal/mysqli" ]]; then
         export DBAL_URL="mysqli://root:@$HOST_ADDR/drudbal"
@@ -198,7 +198,7 @@ install:
 script:
   - cd $DRUPAL_PATH/core
   # Only run selected tests to avoid Travis timeout.
-  #- $DRUPAL_PATH/vendor/bin/phpunit $TEST_ARGS
+  #- $DRUPAL_PATH/vendor/bin/phpunit $TEST_ARGS 
   - $DRUPAL_PATH/vendor/bin/phpunit tests/Drupal/FunctionalTests/Datetime/TimestampTest.php
 
 after_script:
