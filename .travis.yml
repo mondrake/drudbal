@@ -71,11 +71,11 @@ before_install:
 
       elif [[ "$DRUDBAL_ENV" == "dbal/mysql" ]]; then
         export DBAL_URL="mysql://root:@$HOST_ADDR/drudbal"
-        export SIMPLETEST_DB="dbal://root:@$HOST_ADDR/drudbal?dbal_driver=pdo_mysql#drudbal_"
+        export SIMPLETEST_DB="dbal://root:@$HOST_ADDR/drudbal?dbal_driver=pdo_mysql"
 
       elif [[ "$DRUDBAL_ENV" == "dbal/mysqli" ]]; then
         export DBAL_URL="mysqli://root:@$HOST_ADDR/drudbal"
-        export SIMPLETEST_DB="dbal://root:@$HOST_ADDR/drudbal?dbal_driver=mysqli#drudbal_"
+        export SIMPLETEST_DB="dbal://root:@$HOST_ADDR/drudbal?dbal_driver=mysqli"
 
       elif [[ "$DRUDBAL_ENV" == "sqlite" ]]; then
         export DBAL_URL="sqlite:///sites/default/files/.ht.sqlite"
@@ -128,6 +128,7 @@ before_install:
   - |
       if [[ ! -f $DRUPAL_STAGING_DIR/index.php ]]; then
         git clone http://git.drupal.org/project/drupal.git $DRUPAL_STAGING_DIR
+        git checkout 8.7.x
         cd $DRUPAL_STAGING_DIR
         # @todo PHPUnit 7
         # curl https://www.drupal.org/files/issues/2018-04-05/xx0405.patch | git apply
