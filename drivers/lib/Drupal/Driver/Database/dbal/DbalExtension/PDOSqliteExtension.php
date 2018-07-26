@@ -802,7 +802,7 @@ class PDOSqliteExtension extends AbstractExtension {
       // We cannot add the field directly. Use the slower table alteration
       // method, starting from the old schema.
       $old_schema = $this->buildTableSpecFromDbalSchema($dbal_schema, $drupal_table_name);
-throw new \Exception(var_export($old_schema, TRUE));
+if ($field_name === 'test_composite_primary_key') throw new \Exception(var_export($old_schema, TRUE));
       $new_schema = $old_schema;
 
       // Add the new field.
