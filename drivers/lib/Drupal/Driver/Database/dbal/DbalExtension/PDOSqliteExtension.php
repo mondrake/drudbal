@@ -808,16 +808,13 @@ class PDOSqliteExtension extends AbstractExtension {
       $new_schema = array_merge($new_schema, $keys_new_specs);
 
       // Avoid serial fields in composite primary key.
-if ($field_name === 'test_composite_primary_key') {$xx[] = $keys_new_specs;}
       if (count($keys_new_specs['primary key']) > 1) {
         foreach ($keys_new_specs['primary key'] as $key) {
-if ($field_name === 'test_composite_primary_key') {$xx[] = $key;}
           if ($new_schema['fields'][$key]['type'] === 'serial') {
             $new_schema['fields'][$key]['type'] = 'int';
           }
         }
       }
-if ($field_name === 'test_composite_primary_key') {$xx[] = $new_schema; throw new \Exception(var_export($xx, TRUE));}
 
       $this->alterTable($drupal_table_name, $old_schema, $new_schema, $mapping);
     }
