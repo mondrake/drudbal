@@ -71,7 +71,7 @@ class Tasks extends InstallTasks {
     // Note: This is the minimum version of Doctrine DBAL; the minimum version
     // of the db server should be managed in
     // Drupal\Driver\Database\dbal\DbalExtension\[dbal_driver_name]::runInstallTasks.
-    return '2.6.0';
+    return '2.7.1';
   }
 
   /**
@@ -88,7 +88,7 @@ class Tasks extends InstallTasks {
       Database::setActiveConnection();
       // Now actually try to get a full Drupal connection object.
       Database::getConnection();
-      $this->pass(t('Drupal can CONNECT to the database ok.'));
+      $this->pass('Drupal can CONNECT to the database ok.');
       return TRUE;
     }
     catch (ConnectionNotDefinedException $e) {

@@ -55,7 +55,7 @@ Very rough instructions to install Drupal from scratch with this db driver under
 
 2. Get Doctrine DBAL, use latest version:
 ```
-$ composer require doctrine/dbal:^2.6.0
+$ composer require doctrine/dbal:^2.7.1
 ```
 
 3. Clone this repository to your contrib modules path:
@@ -97,14 +97,11 @@ https://github.com/doctrine/dbal/issues/2676     | Optimize Oracle SchemaManager
 ## Related Drupal issues
 Issue | Description   |
 ------|---------------|
-[2605284](https://www.drupal.org/node/2605284) | Testing framework does not work with contributed database drivers |
 [2867788](https://www.drupal.org/node/2867788) | Log::findCaller fails to report the correct caller function with non-core drivers |
 [2871374](https://www.drupal.org/node/2871374) | SelectTest::testVulnerableComment fails when driver overrides Select::\_\_toString |
 tbd | Add tests for Upsert with default values |
 [2874499](https://www.drupal.org/node/2874499) | Test failures when db driver is set to not support transactions |
-[2875679](https://www.drupal.org/node/2875679) | BasicSyntaxTest::testConcatFields fails with contrib driver |
 [2879677](https://www.drupal.org/node/2879677) | Decouple getting table vs column comments in Schema |
-[2881522](https://www.drupal.org/node/2881522) | Add a Schema::getPrimaryKeyColumns method to remove database specific logic from test |
 [2657888](https://www.drupal.org/node/2657888) | Add Date function support in DTBNG |
 [2912973](https://www.drupal.org/node/2912973) | Mismatching call to databaseType() in LangcodeToAsciiUpdateTest |
 tbd | Ensure that when INSERTing a NULL value in a database column, SELECTing it back returns NULL and not empty string - for all fetch modes |

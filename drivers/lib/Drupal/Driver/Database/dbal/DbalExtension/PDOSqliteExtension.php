@@ -11,6 +11,7 @@ use Drupal\Core\Database\Driver\sqlite\Connection as SqliteConnectionBase;
 use Drupal\Driver\Database\dbal\Connection as DruDbalConnection;
 
 use Doctrine\DBAL\Connection as DbalConnection;
+use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
 use Doctrine\DBAL\Schema\Schema as DbalSchema;
 use Doctrine\DBAL\Statement as DbalStatement;
@@ -984,7 +985,15 @@ class PDOSqliteExtension extends AbstractExtension {
 
     // Table.
     $dbal_table = $dbal_schema->getTable($this->tableName($table));
-
+    
+    // Primary key.
+    try {
+      $primary_key_columns = $dbal_table->getPrimaryKeyColumns();
+    }
+    catch (DBALException $e) {
+      $primary_key_columns = [];
+    }
+    
     // Columns.
     $columns = $dbal_table->getColumns();
     foreach ($columns as $column) {
@@ -994,7 +1003,7 @@ class PDOSqliteExtension extends AbstractExtension {
       }
       $schema['fields'][$column->getName()] = [
         'size' => $size,
-        'not null' => $column->getNotNull(),
+        'not null' => $column->getNotNull() || in_array($column->getName(), $primary_key_columns),
         'default' => ($column->getDefault() === NULL && $column->getNotNull() === FALSE) ? 'NULL' : $column->getDefault(),
       ];
       if ($column->getAutoincrement() === TRUE && in_array($dbal_type, [
@@ -1049,12 +1058,13 @@ class PDOSqliteExtension extends AbstractExtension {
    */
   protected function mapKeyDefinition(array $key_definition, array $mapping) {
     foreach ($key_definition as &$field) {
-      // The key definition can be an array($field, $length).
+      // The key definition can be an array [$field, $length].
       if (is_array($field)) {
         $field = &$field[0];
       }
-      if (isset($mapping[$field])) {
-        $field = $mapping[$field];
+      $mapped_field = array_search($field, $mapping, TRUE);
+      if ($mapped_field !== FALSE) {
+        $field = $mapped_field;
       }
     }
     return $key_definition;

@@ -8,12 +8,15 @@ use Drupal\Core\Database\Schema as DatabaseSchema;
 use Drupal\Component\Utility\Unicode;
 
 use Doctrine\DBAL\DBALException;
+use Doctrine\DBAL\Schema\Column as DbalColumn;
 use Doctrine\DBAL\Schema\Schema as DbalSchema;
 use Doctrine\DBAL\Schema\SchemaException as DbalSchemaException;
 use Doctrine\DBAL\Types\Type as DbalType;
 
 // @todo DBAL 2.6.0:
 // Added support for column inline comments in SQLite, check status (the declaration of support + the fact that on add/change field it does not work)
+// @todo DBAL 2.7:
+// implemented mysql column-level collation, check
 
 /**
  * DruDbal implementation of \Drupal\Core\Database\Schema.
@@ -86,6 +89,11 @@ class Schema extends DatabaseSchema {
   public function createTable($name, $table) {
     if ($this->tableExists($name)) {
       throw new SchemaObjectExistsException(t('Table @name already exists.', ['@name' => $name]));
+    }
+
+    // Check primary key does not have nullable fields.
+    if (!empty($table['primary key']) && is_array($table['primary key'])) {
+      $this->ensureNotNullPrimaryKey($table['primary key'], $table['fields']);
     }
 
     // Create table via DBAL.
@@ -236,7 +244,9 @@ class Schema extends DatabaseSchema {
     $this->dbalExtension->alterDbalColumnOptions($context, $options, $dbal_type, $field, $field_name);
 
     // Get the column definition from DBAL, and trim the field name.
-    $dbal_column_definition = substr($this->dbalPlatform->getColumnDeclarationSQL($field_name, $options), strlen($field_name) + 1);
+    $dbal_column = new DbalColumn($field_name, DbalType::getType($dbal_type), $options);
+    $this->dbalExtension->setDbalPlatformColumnOptions($context, $dbal_column, $options, $dbal_type, $field, $field_name);
+    $dbal_column_definition = substr($this->dbalPlatform->getColumnDeclarationSQL($field_name, $dbal_column->toArray()), strlen($field_name) + 1);
 
     // Let DBAL extension alter the column definition if required.
     $this->dbalExtension->alterDbalColumnDefinition($context, $dbal_column_definition, $options, $dbal_type, $field, $field_name);
@@ -363,8 +373,14 @@ class Schema extends DatabaseSchema {
       throw new SchemaObjectExistsException(t("Cannot add field @table.@field: field already exists.", ['@field' => $field, '@table' => $table]));
     }
 
+    // Fields that are part of a PRIMARY KEY must be added as NOT NULL.
+    $is_primary_key = isset($keys_new['primary key']) && in_array($field, $keys_new['primary key'], TRUE);
+    if ($is_primary_key) {
+      $this->ensureNotNullPrimaryKey($keys_new['primary key'], [$field => $spec]);
+    }
+
     $fixnull = FALSE;
-    if (!empty($spec['not null']) && !isset($spec['default'])) {
+    if (!empty($spec['not null']) && !isset($spec['default']) && !$is_primary_key) {
       $fixnull = TRUE;
       $spec['not null'] = FALSE;
     }
@@ -448,6 +464,17 @@ class Schema extends DatabaseSchema {
   public function dropField($table, $field) {
     if (!$this->fieldExists($table, $field)) {
       return FALSE;
+    }
+
+    // When dropping a field that is part of a primary key, delete the entire
+    // primary key.
+    $primary_key = $this->findPrimaryKeyColumns($table);
+    if (count($primary_key) && in_array($field, $primary_key, TRUE)) {
+      try {
+        $this->dropPrimaryKey($table);
+      }
+      catch (DBALException $e) {
+      }
     }
 
     // Delegate to DBAL extension.
@@ -578,7 +605,7 @@ class Schema extends DatabaseSchema {
   /**
    * {@inheritdoc}
    */
-  public function getPrimaryKeyColumns($table) {
+  protected function findPrimaryKeyColumns($table) {
     if (!$this->tableExists($table)) {
       return FALSE;
     }
@@ -586,7 +613,7 @@ class Schema extends DatabaseSchema {
       return $this->dbalSchema()->getTable($this->tableName($table))->getPrimaryKeyColumns();
     }
     catch (DBALException $e) {
-      return FALSE;
+      return [];
     }
   }
 
@@ -689,6 +716,9 @@ class Schema extends DatabaseSchema {
         '@name' => $field,
         '@name_new' => $field_new,
       ]));
+    }
+    if (isset($keys_new['primary key']) && in_array($field_new, $keys_new['primary key'], TRUE)) {
+      $this->ensureNotNullPrimaryKey($keys_new['primary key'], [$field_new => $spec]);
     }
 
     $dbal_type = $this->getDbalColumnType($spec);

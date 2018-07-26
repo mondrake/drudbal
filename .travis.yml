@@ -28,22 +28,27 @@ env:
     - HTTP_PORT="8080"
     # Drupal PHPUnit test variables.
     - SIMPLETEST_BASE_URL="http://$HOST_ADDR:$HTTP_PORT"
+    # Suppress deprecation handling.
+    #- SYMFONY_DEPRECATIONS_HELPER=disabled
   matrix:
-    - DRUDBAL_ENV="mysql" TEST_ARGS="--group Database"
-    - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Database,Cache,Config,Entity,Field"
-    - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group field,file"
-    - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group views"
-    - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Database,Cache,Config,Entity,Field"
-    - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group field,file"
-    - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group views"
-    - DRUDBAL_ENV="sqlite" TEST_ARGS="--group Database,Entity --testsuite kernel"
+    #- DRUDBAL_ENV="mysql" TEST_ARGS="--group Database"
+    #- DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Database,Cache,Config,Entity,Field"
+    #- DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group field"
+   # - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group file"
+    #- DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group views"
+    #- DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Database,Cache,Config,Entity,Field"
+    #- DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group field"
+    #- DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group file"
+    #- DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group views"
+    #- DRUDBAL_ENV="sqlite" TEST_ARGS="--group Database --testsuite kernel"
     - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database,Cache,Config,Entity,Field"
-    - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group field,file"
-    - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group views"
+    #- DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group field"
+    #- DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group file"
+    #- DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group views"
     #- DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Update,migrate,migrate_drupal,migrate_drupal_ui"
-    - DRUDBAL_ENV="dbal/sqlite/memory" TEST_ARGS="--group Database,Cache,Config,Entity,Field"
-    - DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group Database,Cache,Config --testsuite kernel"
-    - DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group views --testsuite kernel"
+  #  - DRUDBAL_ENV="dbal/sqlite/memory" TEST_ARGS="--group Database,Cache,Config,Entity,Field"
+  #  - DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group Database,Cache,Config --testsuite kernel"
+  #  - DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group views --testsuite kernel"
 
 matrix:
   fast_finish: true
@@ -54,7 +59,7 @@ matrix:
 
 cache:
   directories:
-    #- $DRUPAL_STAGING_DIR
+    - $DRUPAL_STAGING_DIR
     - $ORACLE_DOWNLOAD_DIR
 
 before_install:
@@ -125,14 +130,14 @@ before_install:
         git clone http://git.drupal.org/project/drupal.git $DRUPAL_STAGING_DIR
         cd $DRUPAL_STAGING_DIR
         # @todo PHPUnit 7
-        # curl https://www.drupal.org/files/issues/2018-04-05/xx0405.patch | git apply        
+        # curl https://www.drupal.org/files/issues/2018-04-05/xx0405.patch | git apply
         composer install --no-progress --no-suggest
         composer run-script drupal-phpunit-upgrade
         # Get Drupal Console
         composer require "drupal/console" --no-progress --no-suggest
         composer require "doctrine/common:^2.7.1" --no-progress --no-suggest
         # Get Doctrine DBAL
-        composer require "doctrine/dbal:~2.6.3" --no-progress --no-suggest
+        composer require "doctrine/dbal:2.8.0" --no-progress --no-suggest
       fi
 
   # Copy staged Drupal core to running path.
@@ -141,26 +146,18 @@ before_install:
   - cd $DRUPAL_PATH
 
   # Apply Drupal core patches.
-  # [#2605284] Testing framework does not work with contributed database drivers
-  - curl https://www.drupal.org/files/issues/2605284-167.patch | git apply
   # [#2867788] Log::findCaller fails to report the correct caller function with non-core drivers.
   - curl https://www.drupal.org/files/issues/2867788-22_0.patch | git apply
   # [#2871374] SelectTest::testVulnerableComment fails when driver overrides Select::__toString
   - curl https://www.drupal.org/files/issues/2871374-2.patch | git apply
   # [#2874499] Test failures when db driver is set to not support transactions
   - curl https://www.drupal.org/files/issues/2874499-7-transaction-enabled.patch | git apply
-  # [#2875679] BasicSyntaxTest::testConcatFields fails with contrib driver
-  - curl https://www.drupal.org/files/issues/2875679-2.patch | git apply
   # [#2879677] Decouple getting table vs column comments in Schema
   - curl https://www.drupal.org/files/issues/2879677-5.patch | git apply
-  # [#2881522] Add a Schema::getPrimaryKeyColumns method to remove database specific logic from test
-  - curl https://www.drupal.org/files/issues/2881522-2.patch | git apply
   # [#2657888] Add Date function support in DTBNG
   - curl https://www.drupal.org/files/issues/2657888-18.patch | git apply
   # [#2912973] Mismatching call to databaseType() in LangcodeToAsciiUpdateTest
   - curl https://www.drupal.org/files/issues/2912973-2.patch | git apply
-  # [#2932777] Risky count() in SQLite Statement
-  - curl https://www.drupal.org/files/issues/2932777-2.patch | git apply
 
 install:
   # Copy the repo to the modules/contrib directory.
