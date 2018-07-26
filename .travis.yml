@@ -198,8 +198,8 @@ install:
 script:
   - cd $DRUPAL_PATH/core
   # Only run selected tests to avoid Travis timeout.
-  #- $DRUPAL_PATH/vendor/bin/phpunit $TEST_ARGS 
-  - $DRUPAL_PATH/vendor/bin/phpunit tests/Drupal/FunctionalTests/Datetime/TimestampTest.php
+  - $DRUPAL_PATH/vendor/bin/phpunit $TEST_ARGS
+  #- $DRUPAL_PATH/vendor/bin/phpunit tests/Drupal/FunctionalTests/Datetime/TimestampTest.php
 
 after_script:
   - cd $DRUPAL_PATH/modules/contrib/drudbal

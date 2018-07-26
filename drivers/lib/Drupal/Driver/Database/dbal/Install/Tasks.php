@@ -159,7 +159,6 @@ class Tasks extends InstallTasks {
     // In functional tests, the 'dbal_url' database key is available from
     // the DBAL_URL environnment variable.
     if (empty($database['dbal_url']) && isset($database['database'])) {
-      //$database['dbal_url'] = 'mysql://root@127.0.0.1/drudbal';
       $database['dbal_url'] = getenv("DBAL_URL");
     }
 
