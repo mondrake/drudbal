@@ -198,7 +198,8 @@ install:
 script:
   - cd $DRUPAL_PATH/core
   # Only run selected tests to avoid Travis timeout.
-  - $DRUPAL_PATH/vendor/bin/phpunit $TEST_ARGS
+  #- $DRUPAL_PATH/vendor/bin/phpunit $TEST_ARGS
+  - $DRUPAL_PATH/vendor/bin/phpunit tests/Drupal/KernelTests/Core/Database/SchemaTest.php
 
 after_script:
   - cd $DRUPAL_PATH/modules/contrib/drudbal

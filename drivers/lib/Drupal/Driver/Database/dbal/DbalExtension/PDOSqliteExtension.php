@@ -727,6 +727,12 @@ class PDOSqliteExtension extends AbstractExtension {
       $comment = '';
     }
 
+    // DBAL 2.8.0 supports 'PRIMARY KEY AUTOINCREMENT' for serial fields, that
+    // Drupal does not support.
+    if (isset($drupal_field_specs['type']) && $drupal_field_specs['type'] === 'serial') {
+      $definition = str_replace(' PRIMARY KEY AUTOINCREMENT', '', $definition);
+    }
+
     // DBAL does not support BINARY option for char/varchar columns.
     if (isset($drupal_field_specs['binary']) && $drupal_field_specs['binary'] === FALSE) {
       $definition = preg_replace('/CHAR\(([0-9]+)\)/', '$0 COLLATE NOCASE_UTF8', $definition);
