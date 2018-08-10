@@ -33,29 +33,29 @@ env:
 
   matrix:
     #- DRUDBAL_ENV="mysql" TEST_ARGS="--group Database"
-    - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Database,Cache,Config,Entity,Field"
+    - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Database,Installer,Cache,Config,Entity,Field"
     #- DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group field"
     #- DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group file"
     #- DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group views"
-    - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Database,Cache,Config,Entity,Field"
+    - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Database,Installer,Cache,Config,Entity,Field"
     #- DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group field"
     #- DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group file"
     #- DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group views"
     #- DRUDBAL_ENV="sqlite" TEST_ARGS="--group Database"
-    - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database,Cache,Config,Entity,Field"
+    - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database,Installer,Cache,Config,Entity,Field"
     #- DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group field"
     #- DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group file"
     #- DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group views"
     #- DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Update,migrate,migrate_drupal,migrate_drupal_ui"
-    #- DRUDBAL_ENV="dbal/sqlite/memory" TEST_ARGS="--group Database,Cache,Config,Entity,Field"
-    #- DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group Database"
+    #- DRUDBAL_ENV="dbal/sqlite/memory" TEST_ARGS="--group Database,Installer,Cache,Config,Entity,Field"
+    - DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group Database,Installer"
     #- DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group views --testsuite kernel"
 
 matrix:
   fast_finish: true
   allow_failures:
-    - env: DRUDBAL_ENV="dbal/sqlite/memory" TEST_ARGS="--group Database,Cache,Config,Entity,Field"
-    - env: DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group Database"
+    - env: DRUDBAL_ENV="dbal/sqlite/memory" TEST_ARGS="--group Database,Installer,Cache,Config,Entity,Field"
+    - env: DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group Database,Installer"
     - env: DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group views --testsuite kernel"
 
 cache:
