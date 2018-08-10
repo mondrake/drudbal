@@ -197,8 +197,8 @@ install:
 
 script:
   # Only run selected tests to avoid Travis timeout.
-  #- $DRUPAL_PATH/vendor/bin/phpunit $TEST_ARGS
-  - $DRUPAL_PATH/vendor/bin/phpunit modules/config/tests/src/Functional/ConfigInstallProfileUnmetDependenciesTest.php
+  - $DRUPAL_PATH/vendor/bin/phpunit $TEST_ARGS
+  #- $DRUPAL_PATH/vendor/bin/phpunit modules/config/tests/src/Functional/ConfigInstallProfileUnmetDependenciesTest.php
 
 after_script:
   - cd $DRUPAL_PATH/modules/contrib/drudbal
