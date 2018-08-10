@@ -182,6 +182,7 @@ class Tasks extends InstallTasks {
     // Add a hidden field for the Dbal driver.
     $form['dbal_driver'] = [
 //      '#type' => 'hidden',
+      '#type' => 'textarea',
       '#title' => t('DBAL driver'),
       '#default_value' => empty($database['dbal_driver']) ? '' : $database['dbal_driver'],
     ];
