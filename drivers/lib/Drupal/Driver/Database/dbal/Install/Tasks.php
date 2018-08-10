@@ -71,7 +71,7 @@ class Tasks extends InstallTasks {
     // Note: This is the minimum version of Doctrine DBAL; the minimum version
     // of the db server should be managed in
     // Drupal\Driver\Database\dbal\DbalExtension\[dbal_driver_name]::runInstallTasks.
-    return '2.7.1';
+    return '2.8.0';
   }
 
   /**
@@ -148,13 +148,13 @@ class Tasks extends InstallTasks {
     $form = parent::getFormOptions($database);
 
     // Hide the options, will be resolved while processing the Dbal URL.
-//    $form['database']['#type'] = 'hidden';
+    $form['database']['#type'] = 'hidden';
     $form['database']['#required'] = FALSE;
-//    $form['username']['#type'] = 'hidden';
+    $form['username']['#type'] = 'hidden';
     $form['username']['#required'] = FALSE;
-//    $form['password']['#type'] = 'hidden';
-//    $form['advanced_options']['host']['#type'] = 'hidden';
-//    $form['advanced_options']['port']['#type'] = 'hidden';
+    $form['password']['#type'] = 'hidden';
+    $form['advanced_options']['host']['#type'] = 'hidden';
+    $form['advanced_options']['port']['#type'] = 'hidden';
 
     // In functional tests, the 'dbal_url' database key is available from
     // the DBAL_URL environnment variable.
@@ -181,8 +181,7 @@ class Tasks extends InstallTasks {
 
     // Add a hidden field for the Dbal driver.
     $form['dbal_driver'] = [
-//      '#type' => 'hidden',
-      '#type' => 'textarea',
+      '#type' => 'hidden',
       '#title' => t('DBAL driver'),
       '#default_value' => empty($database['dbal_driver']) ? '' : $database['dbal_driver'],
     ];
