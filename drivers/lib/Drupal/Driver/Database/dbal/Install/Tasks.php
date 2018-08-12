@@ -148,8 +148,9 @@ class Tasks extends InstallTasks {
     $form = parent::getFormOptions($database);
 
     // If in functional tests, some workarounds are needed.
-    // @todo this should be fixed in Drupal core
-    $is_testing = empty($database['dbal_url']) && isset($database['database']) && !empty(getenv("DBAL_URL"));
+    // @todo this should be fixed in Drupal core; in meantime consider testing
+    // also for the request's user-agent to check if we are in test mode.
+    $is_testing = !empty(getenv("DBAL_URL"));
 
     // Hide the options, will be resolved while processing the Dbal URL.
     if (!$is_testing) {
