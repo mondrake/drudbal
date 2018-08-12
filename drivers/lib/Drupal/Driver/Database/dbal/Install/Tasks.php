@@ -153,11 +153,11 @@ class Tasks extends InstallTasks {
     $is_testing = empty($database['dbal_url']) && !empty(getenv("DBAL_URL"));
 
     // Hide the options, will be resolved while processing the Dbal URL.
+    $form['database']['#required'] = FALSE;
+    $form['username']['#required'] = FALSE;
     if (!$is_testing) {
       $form['database']['#type'] = 'hidden';
-      $form['database']['#required'] = FALSE;
       $form['username']['#type'] = 'hidden';
-      $form['username']['#required'] = FALSE;
       $form['password']['#type'] = 'hidden';
       $form['advanced_options']['host']['#type'] = 'hidden';
       $form['advanced_options']['port']['#type'] = 'hidden';
