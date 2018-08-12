@@ -170,7 +170,7 @@ class Tasks extends InstallTasks {
       '#default_value' => empty($database['dbal_url']) ? '' : $database['dbal_url'],
       '#rows' => 3,
       '#size' => 45,
-      '#required' => TRUE,
+      '#required' => FALSE,
       '#element_validate' => [[$this, 'validateDbalUrl']],
       '#states' => [
         'required' => [
@@ -203,7 +203,7 @@ class Tasks extends InstallTasks {
       // In functional tests, the 'dbal_url' database key is available from
       // the DBAL_URL environnment variable.
       if (empty($form_state->getValue(['dbal', 'dbal_url'])) && !empty(getenv("DBAL_URL"))) {
-        $form_state->setValue(['dbal', 'dbal_url'],getenv("DBAL_URL"));
+        $form_state->setValue(['dbal', 'dbal_url'], getenv("DBAL_URL"));
       }
       $options = [];
       $options['url'] = $form_state->getValue(['dbal', 'dbal_url']);
