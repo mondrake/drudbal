@@ -153,15 +153,13 @@ class Tasks extends InstallTasks {
     $is_testing = empty($database['dbal_url']) && !empty(getenv("DBAL_URL"));
 
     // Hide the options, will be resolved while processing the Dbal URL.
+    $form['database']['#type'] = 'hidden';
     $form['database']['#required'] = FALSE;
+    $form['username']['#type'] = 'hidden';
     $form['username']['#required'] = FALSE;
-    if (!$is_testing) {
-      $form['database']['#type'] = 'hidden';
-      $form['username']['#type'] = 'hidden';
-      $form['password']['#type'] = 'hidden';
-      $form['advanced_options']['host']['#type'] = 'hidden';
-      $form['advanced_options']['port']['#type'] = 'hidden';
-    }
+    $form['password']['#type'] = 'hidden';
+    $form['advanced_options']['host']['#type'] = 'hidden';
+    $form['advanced_options']['port']['#type'] = 'hidden';
 
     // In functional tests, the 'dbal_url' database key is available from
     // the DBAL_URL environnment variable.
@@ -188,7 +186,7 @@ class Tasks extends InstallTasks {
 
     // Add a hidden field for the Dbal driver.
     $form['dbal_driver'] = [
-      '#type' => $is_testing ? 'textfield' : 'hidden',
+      '#type' => 'hidden',
       '#title' => t('DBAL driver'),
       '#default_value' => empty($database['dbal_driver']) ? '' : $database['dbal_driver'],
     ];
