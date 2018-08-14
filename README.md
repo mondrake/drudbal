@@ -106,3 +106,4 @@ tbd | Add tests for Upsert with default values |
 [2912973](https://www.drupal.org/node/2912973) | Mismatching call to databaseType() in LangcodeToAsciiUpdateTest |
 tbd | Ensure that when INSERTing a NULL value in a database column, SELECTing it back returns NULL and not empty string - for all fetch modes |
 tbd | UpdateTestBase::runUpdate should reset database schema after updating |
+[2992274](https://www.drupal.org/project/drupal/issues/2992274) | Installer tests fail if contrib driver hides database credentials form fields |
