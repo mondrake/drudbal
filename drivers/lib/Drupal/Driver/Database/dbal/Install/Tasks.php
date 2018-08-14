@@ -71,7 +71,7 @@ class Tasks extends InstallTasks {
     // Note: This is the minimum version of Doctrine DBAL; the minimum version
     // of the db server should be managed in
     // Drupal\Driver\Database\dbal\DbalExtension\[dbal_driver_name]::runInstallTasks.
-    return '2.7.1';
+    return '2.8.0';
   }
 
   /**
@@ -147,6 +147,11 @@ class Tasks extends InstallTasks {
   public function getFormOptions(array $database) {
     $form = parent::getFormOptions($database);
 
+    // If in functional tests, some workarounds are needed.
+    // @todo this should be fixed in Drupal core; in meantime consider testing
+    // also for the request's user-agent to check if we are in test mode.
+    $is_testing = empty($database['dbal_url']) && !empty(getenv("DBAL_URL"));
+
     // Hide the options, will be resolved while processing the Dbal URL.
     $form['database']['#type'] = 'hidden';
     $form['database']['#required'] = FALSE;
@@ -158,7 +163,7 @@ class Tasks extends InstallTasks {
 
     // In functional tests, the 'dbal_url' database key is available from
     // the DBAL_URL environnment variable.
-    if (empty($database['dbal_url']) && isset($database['database'])) {
+    if ($is_testing) {
       $database['dbal_url'] = getenv("DBAL_URL");
     }
 
@@ -170,7 +175,7 @@ class Tasks extends InstallTasks {
       '#default_value' => empty($database['dbal_url']) ? '' : $database['dbal_url'],
       '#rows' => 3,
       '#size' => 45,
-      '#required' => TRUE,
+      '#required' => $is_testing ? FALSE : TRUE,
       '#element_validate' => [[$this, 'validateDbalUrl']],
       '#states' => [
         'required' => [
@@ -200,6 +205,11 @@ class Tasks extends InstallTasks {
     // all the parameters required, including the actual DBAL driver being
     // used, so that it does get stored in the settings.
     try {
+      // In functional tests, the 'dbal_url' database key is available from
+      // the DBAL_URL environnment variable.
+      if (empty($form_state->getValue(['dbal', 'dbal_url'])) && !empty(getenv("DBAL_URL"))) {
+        $form_state->setValue(['dbal', 'dbal_url'], getenv("DBAL_URL"));
+      }
       $options = [];
       $options['url'] = $form_state->getValue(['dbal', 'dbal_url']);
       $dbal_connection = DbalDriverManager::getConnection($options);

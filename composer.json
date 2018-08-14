@@ -4,7 +4,7 @@
     "description": "Drupal driver for Doctrine DBAL.",
     "require": {
         "drupal/core": "~8.4",
-        "doctrine/dbal": "^2.7.1"
+        "doctrine/dbal": "^2.8.0"
     },
     "minimum-stability": "dev"
 }
