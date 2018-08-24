@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/mondrake/drudbal.svg?branch=master)](https://travis-ci.org/mondrake/drudbal)
 
-An __experimental__, work in progress, Drupal driver for Doctrine DBAL. __Do not use if not for trial. No support, sorry :)__
+An __experimental__ Drupal driver for Doctrine DBAL. __Do not use if not for trial. No support, sorry :)__
 
 ## Concept
 The concept is to use Doctrine DBAL as an additional database abstraction layer. The code of the DBAL Drupal database driver is meant
