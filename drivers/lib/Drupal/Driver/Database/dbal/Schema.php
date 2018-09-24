@@ -8,6 +8,7 @@ use Drupal\Core\Database\Schema as DatabaseSchema;
 use Drupal\Component\Utility\Unicode;
 
 use Doctrine\DBAL\DBALException;
+use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
 use Doctrine\DBAL\Schema\Column as DbalColumn;
 use Doctrine\DBAL\Schema\Schema as DbalSchema;
 use Doctrine\DBAL\Schema\SchemaException as DbalSchemaException;
@@ -392,7 +393,12 @@ class Schema extends DatabaseSchema {
     // Drop primary key if it is due to be changed.
     if (!empty($keys_new['primary key']) && $dbal_table->hasPrimaryKey()) {
       $dbal_table->dropPrimaryKey();
-      $this->dbalExecuteSchemaChange($to_schema);
+      try (
+        $this->dbalExecuteSchemaChange($to_schema);
+      }
+      catch (DbalDriverException $e) {
+        // If failing,  we assume the PK has been dropped.
+      }
       $current_schema = $this->dbalSchema();
       $to_schema = clone $current_schema;
       $dbal_table = $to_schema->getTable($this->tableName($table));
