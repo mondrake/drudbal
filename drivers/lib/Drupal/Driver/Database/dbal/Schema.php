@@ -397,7 +397,7 @@ class Schema extends DatabaseSchema {
         $this->dbalExecuteSchemaChange($to_schema);
       }
       catch (DbalDriverException $e) {
-        // If failing, we assume the PK has been dropped.
+        $this->dbalSchemaForceReload();
       }
       $current_schema = $this->dbalSchema();
       $to_schema = clone $current_schema;
@@ -420,7 +420,12 @@ class Schema extends DatabaseSchema {
         // However we have to add here instead of separate calls to
         // ::addPrimaryKey to avoid failure when creating a table with an
         // autoincrement column.
-        $dbal_table->setPrimaryKey($this->dbalGetFieldList($keys_new['primary key']));
+        try {
+          $dbal_table->setPrimaryKey($this->dbalGetFieldList($keys_new['primary key']));
+        }
+        catch (DbalSchemaException $e) {
+          // If failing, we assume the PK has been changed.
+        }
       }
       $this->dbalExecuteSchemaChange($to_schema);
     }
