@@ -25,7 +25,7 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
 
   /**
    * Minimum required mysql version.
-   * 
+   *
    * This can not be increased above '5.5.5' without dropping support for all
    * MariaDB versions. MariaDB prefixes its version string with '5.5.5-'. For
    * more information, see
