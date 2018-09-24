@@ -386,6 +386,7 @@ class Schema extends DatabaseSchema {
       $spec['not null'] = FALSE;
     }
 
+    $this->dbalSchemaForceReload();
     $current_schema = $this->dbalSchema();
     $to_schema = clone $current_schema;
     $dbal_table = $to_schema->getTable($this->tableName($table));
