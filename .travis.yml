@@ -156,7 +156,7 @@ before_install:
   # [#2871374] SelectTest::testVulnerableComment fails when driver overrides Select::__toString
   - curl https://www.drupal.org/files/issues/2018-07-25/2871374-6.patch | git apply
   # [#2874499] Test failures when db driver is set to not support transactions
-  - curl https://www.drupal.org/files/issues/2018-08-23/2874499-12-transaction-enabled.patch | git apply
+  # - curl https://www.drupal.org/files/issues/2018-08-23/2874499-12-transaction-enabled.patch | git apply
   # [#2879677] Decouple getting table vs column comments in Schema
   - curl https://www.drupal.org/files/issues/2018-08-01/2879677-8.patch | git apply
   # [#2657888] Add Date function support in DTBNG

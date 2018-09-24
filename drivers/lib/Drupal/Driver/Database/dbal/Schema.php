@@ -397,7 +397,7 @@ class Schema extends DatabaseSchema {
         $this->dbalExecuteSchemaChange($to_schema);
       }
       catch (DbalDriverException $e) {
-        // If failing, we assume the PK has been dropped.
+        // If failing,  we assume the PK has been dropped.
       }
       $current_schema = $this->dbalSchema();
       $to_schema = clone $current_schema;
