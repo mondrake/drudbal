@@ -957,12 +957,13 @@ class PDOSqliteExtension extends AbstractExtension {
     }
     else {
       unset($new_schema['primary key']);
+      // Change any serial field to int otherwise DBAL will interpret it as a
+      // primary key.
       foreach ($new_schema['fields'] as &$field) {
         if ($field['type'] === 'serial') {
           $field['type'] = 'int';
         }
       }
-throw new \Exception(var_export($new_schema, true));
       $this->alterTable($drupal_table_name, $old_schema, $new_schema, $mapping);
       $primary_key_dropped_by_extension = TRUE;
     }
