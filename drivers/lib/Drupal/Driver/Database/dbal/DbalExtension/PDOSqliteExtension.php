@@ -889,6 +889,7 @@ class PDOSqliteExtension extends AbstractExtension {
     }
 
     $this->alterTable($drupal_table_name, $old_schema, $new_schema, $mapping);
+    $primary_key_processed_by_extension = TRUE;
     return TRUE;
   }
 
