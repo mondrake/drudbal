@@ -33,7 +33,7 @@ env:
 
   matrix:
     #- DRUDBAL_ENV="mysql" TEST_ARGS="--group Database"
-    #- DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Database,Entity,Field"
+    - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Database"
     #- DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Installer,Cache,Config"
     #- DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group field"
     #- DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group file"
@@ -65,7 +65,7 @@ matrix:
 
 cache:
   directories:
-    #- $DRUPAL_STAGING_DIR
+    - $DRUPAL_STAGING_DIR
     - $ORACLE_DOWNLOAD_DIR
 
 before_install:
