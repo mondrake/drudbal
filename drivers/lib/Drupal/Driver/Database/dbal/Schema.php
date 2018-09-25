@@ -8,7 +8,6 @@ use Drupal\Core\Database\Schema as DatabaseSchema;
 use Drupal\Component\Utility\Unicode;
 
 use Doctrine\DBAL\DBALException;
-use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
 use Doctrine\DBAL\Schema\Column as DbalColumn;
 use Doctrine\DBAL\Schema\Schema as DbalSchema;
 use Doctrine\DBAL\Schema\SchemaException as DbalSchemaException;
