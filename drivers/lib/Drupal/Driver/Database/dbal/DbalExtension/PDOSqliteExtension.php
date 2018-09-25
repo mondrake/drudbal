@@ -959,7 +959,7 @@ class PDOSqliteExtension extends AbstractExtension {
       unset($new_schema['primary key']);
       foreach ($new_schema['fields'] as &$field) {
         if ($field['type'] === 'serial') {
-          $field['type'] === 'int';
+          $field['type'] = 'int';
         }
       }
 throw new \Exception(var_export($new_schema, true));
