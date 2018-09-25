@@ -390,7 +390,7 @@ class Schema extends DatabaseSchema {
     $dbal_table = $to_schema->getTable($this->tableName($table));
 
     // Drop primary key if it is due to be changed.
-    if (!empty($keys_new['primary key']) && $dbal_table->hasPrimaryKey()) {
+    if (isset($keys_new['primary key']) && $dbal_table->hasPrimaryKey()) {
       $dbal_table->dropPrimaryKey();
       $this->dbalExecuteSchemaChange($to_schema);
       $current_schema = $this->dbalSchema();
@@ -409,7 +409,7 @@ class Schema extends DatabaseSchema {
       // DBAL extension did not pick up, proceed with DBAL.
       $dbal_table->addColumn($this->dbalExtension->getDbFieldName($field), $dbal_type, $dbal_column_options);
       // Manage change to primary key.
-      if (!empty($keys_new['primary key'])) {
+      if (isset($keys_new['primary key'])) {
         // @todo in MySql, this could still be a list of columns with length.
         // However we have to add here instead of separate calls to
         // ::addPrimaryKey to avoid failure when creating a table with an
@@ -610,6 +610,7 @@ class Schema extends DatabaseSchema {
       return FALSE;
     }
     try {
+      $this->dbalSchemaForceReload();
       return $this->dbalSchema()->getTable($this->tableName($table))->getPrimaryKeyColumns();
     }
     catch (DBALException $e) {
