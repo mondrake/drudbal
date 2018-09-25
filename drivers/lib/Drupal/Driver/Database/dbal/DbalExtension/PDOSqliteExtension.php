@@ -948,6 +948,24 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
+  public function delegateDropPrimaryKey(&$primary_key_dropped_by_extension, DbalSchema $dbal_schema, $drupal_table_name) {
+    $old_schema = $this->buildTableSpecFromDbalSchema($dbal_schema, $drupal_table_name);
+    $new_schema = $old_schema;
+    $mapping = [];
+    if (!isset($new_schema['primary key'])) {
+      $primary_key_dropped_by_extension = FALSE;
+    }
+    else {
+      unset($new_schema['primary key']);
+      $this->alterTable($drupal_table_name, $old_schema, $new_schema, $mapping);
+      $primary_key_dropped_by_extension = TRUE;
+    }
+    return TRUE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function delegateDropIndex(DbalSchema $dbal_schema, $table_full_name, $index_full_name, $drupal_table_name, $drupal_index_name) {
     // Avoid DBAL managing of this that would go through table re-creation.
     $this->connection->query('DROP INDEX ' . $index_full_name);
