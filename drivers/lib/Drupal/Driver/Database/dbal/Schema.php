@@ -599,7 +599,6 @@ class Schema extends DatabaseSchema {
     $to_schema = clone $current_schema;
     $to_schema->getTable($table_full_name)->dropPrimaryKey();
     $this->dbalExecuteSchemaChange($to_schema);
-    $this->dbalSchemaForceReload();
     return TRUE;
   }
 
