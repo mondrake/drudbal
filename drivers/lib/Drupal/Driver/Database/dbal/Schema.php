@@ -386,7 +386,6 @@ class Schema extends DatabaseSchema {
       $spec['not null'] = FALSE;
     }
 
-    $this->dbalSchemaForceReload();
     $current_schema = $this->dbalSchema();
     $to_schema = clone $current_schema;
     $dbal_table = $to_schema->getTable($this->tableName($table));
@@ -612,6 +611,7 @@ class Schema extends DatabaseSchema {
       return FALSE;
     }
     try {
+      $this->dbalSchemaForceReload();
       return $this->dbalSchema()->getTable($this->tableName($table))->getPrimaryKeyColumns();
     }
     catch (DBALException $e) {
