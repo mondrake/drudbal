@@ -807,8 +807,16 @@ class PDOSqliteExtension extends AbstractExtension {
       // Add the new indexes.
       $new_schema = array_merge($new_schema, $keys_new_specs);
 
-      // Avoid serial fields in composite primary key.
-      if (count($keys_new_specs['primary key']) > 1) {
+      // Avoid serial fields in composite primary key or fields not in the
+      // primary key.
+      if (count($keys_new_specs['primary key']) === 1) {
+        foreach ($new_schema['fields'] as $field_name => &$field_value) {
+          if ($field_value['type'] === 'serial' && !in_array($field_name, $keys_new_specs['primary key'])) {
+            $field_value['type'] = 'int';
+          }
+        }
+      }
+      elseif (count($keys_new_specs['primary key']) > 1) {
         foreach ($keys_new_specs['primary key'] as $key) {
           if ($new_schema['fields'][$key]['type'] === 'serial') {
             $new_schema['fields'][$key]['type'] = 'int';
