@@ -944,9 +944,7 @@ interface DbalExtensionInterface {
    *   TRUE if the extension managed the request, FALSE if it has to be handled
    *   by DBAL.
    */
-  public function delegateDropPrimaryKey(&$primary_key_dropped_by_extension, DbalSchema $dbal_schema, $drupal_table_name) {
-    return FALSE;
-  }
+  public function delegateDropPrimaryKey(&$primary_key_dropped_by_extension, DbalSchema $dbal_schema, $drupal_table_name);
 
   /**
    * Drops an index.
