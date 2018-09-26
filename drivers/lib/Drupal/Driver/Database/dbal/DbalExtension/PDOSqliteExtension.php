@@ -823,8 +823,6 @@ class PDOSqliteExtension extends AbstractExtension {
           }
         }
       }
-//global $xxx;
-//if ($xxx) throw new \Exception(var_export($new_schema, TRUE));
       $this->alterTable($drupal_table_name, $old_schema, $new_schema, $mapping);
     }
     return TRUE;

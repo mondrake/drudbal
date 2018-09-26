@@ -1,13 +1,13 @@
-diff --git a/core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php b/core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php
-index 7619d61a34..ca25faa6d1 100644
---- a/core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php
-+++ b/core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php
-@@ -816,6 +816,8 @@ public function testSchemaChangePrimaryKey(array $initial_primary_key, array $re
- 
-     // Test that adding a field with a primary key will work even with a
-     // pre-existing primary key.
-+global $xxx;
-+$xxx = TRUE;
-     $this->schema->addField($table_name, 'test_field', ['type' => 'int', 'default' => 0, 'not null' => TRUE], ['primary key' => $initial_primary_key]);
-     $this->assertTrue($this->schema->fieldExists($table_name, 'test_field'));
-     $this->assertEquals($initial_primary_key, $find_primary_key_columns->invoke($this->schema, $table_name));
+diff --git a/core/tests/Drupal/FunctionalTests/Update/UpdatePathTestBase.php b/core/tests/Drupal/FunctionalTests/Update/UpdatePathTestBase.php
+index 744f527..7ccbe2f 100644
+--- a/core/tests/Drupal/FunctionalTests/Update/UpdatePathTestBase.php
++++ b/core/tests/Drupal/FunctionalTests/Update/UpdatePathTestBase.php
+@@ -386,6 +386,8 @@ protected function runUpdates() {
+         $this->assertFalse($needs_updates, 'After all updates ran, entity schema is up to date.');
+       }
+     }
++
++    Database::getConnection()->schema()->dbalSchemaForceReload();
+   }
+
+   /**
