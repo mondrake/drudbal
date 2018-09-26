@@ -807,15 +807,22 @@ class PDOSqliteExtension extends AbstractExtension {
       // Add the new indexes.
       $new_schema = array_merge($new_schema, $keys_new_specs);
 
-      // Avoid serial fields in composite primary key.
-      if (count($keys_new_specs['primary key']) > 1) {
+      // Avoid serial fields in composite primary key or fields not in the
+      // primary key.
+      if (count($keys_new_specs['primary key']) === 1) {
+        foreach ($new_schema['fields'] as $field_name => &$field_value) {
+          if ($field_value['type'] === 'serial' && !in_array($field_name, $keys_new_specs['primary key'])) {
+            $field_value['type'] = 'int';
+          }
+        }
+      }
+      elseif (count($keys_new_specs['primary key']) > 1) {
         foreach ($keys_new_specs['primary key'] as $key) {
           if ($new_schema['fields'][$key]['type'] === 'serial') {
             $new_schema['fields'][$key]['type'] = 'int';
           }
         }
       }
-
       $this->alterTable($drupal_table_name, $old_schema, $new_schema, $mapping);
     }
     return TRUE;
@@ -889,6 +896,7 @@ class PDOSqliteExtension extends AbstractExtension {
     }
 
     $this->alterTable($drupal_table_name, $old_schema, $new_schema, $mapping);
+    $primary_key_processed_by_extension = TRUE;
     return TRUE;
   }
 
@@ -941,6 +949,31 @@ class PDOSqliteExtension extends AbstractExtension {
     // Update DBAL Schema.
     $dbal_schema->getTable($table_full_name)->addIndex($index_columns, $index_full_name);
 
+    return TRUE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateDropPrimaryKey(&$primary_key_dropped_by_extension, DbalSchema $dbal_schema, $drupal_table_name) {
+    $old_schema = $this->buildTableSpecFromDbalSchema($dbal_schema, $drupal_table_name);
+    $new_schema = $old_schema;
+    $mapping = [];
+    if (!isset($new_schema['primary key'])) {
+      $primary_key_dropped_by_extension = FALSE;
+    }
+    else {
+      unset($new_schema['primary key']);
+      // Change any serial field to int otherwise DBAL will interpret it as a
+      // primary key.
+      foreach ($new_schema['fields'] as &$field) {
+        if ($field['type'] === 'serial') {
+          $field['type'] = 'int';
+        }
+      }
+      $this->alterTable($drupal_table_name, $old_schema, $new_schema, $mapping);
+      $primary_key_dropped_by_extension = TRUE;
+    }
     return TRUE;
   }
 

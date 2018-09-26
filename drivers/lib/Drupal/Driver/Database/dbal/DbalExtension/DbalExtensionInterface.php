@@ -930,6 +930,23 @@ interface DbalExtensionInterface {
   public function delegateAddIndex(DbalSchema $dbal_schema, $table_full_name, $index_full_name, $drupal_table_name, $drupal_index_name, array $drupal_field_specs, array $indexes_spec);
 
   /**
+   * Drops the primary key.
+   *
+   * @param bool $primary_key_dropped_by_extension
+   *   Passed by reference. Set to true if the extension dropped the primary
+   *   key, to FALSE otherwise.
+   * @param \Doctrine\DBAL\Schema\Schema $dbal_schema
+   *   The DBAL schema object.
+   * @param string $drupal_table_name
+   *   The Drupal name of the table.
+   *
+   * @return bool
+   *   TRUE if the extension managed the request, FALSE if it has to be handled
+   *   by DBAL.
+   */
+  public function delegateDropPrimaryKey(&$primary_key_dropped_by_extension, DbalSchema $dbal_schema, $drupal_table_name);
+
+  /**
    * Drops an index.
    *
    * @param \Doctrine\DBAL\Schema\Schema $dbal_schema

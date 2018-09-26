@@ -591,6 +591,14 @@ class Schema extends DatabaseSchema {
     if (!$this->tableExists($table)) {
       return FALSE;
     }
+
+    // Delegate to DBAL extension.
+    $primary_key_dropped_by_extension = FALSE;
+    if ($this->dbalExtension->delegateDropPrimaryKey($primary_key_dropped_by_extension, $this->dbalSchema(), $table)) {
+      $this->dbalSchemaForceReload();
+      return $primary_key_dropped_by_extension;
+    }
+
     $table_full_name = $this->tableName($table);
     if (!$this->dbalSchema()->getTable($table_full_name)->hasPrimaryKey()) {
       return FALSE;
