@@ -6,9 +6,7 @@ language: php
 sudo: required
 
 php:
-  #- 7.1
   - 7.2
-  #- nightly
 
 branches:
   except:
@@ -49,7 +47,6 @@ env:
     - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group field"
     - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group file"
     - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group views"
-    #- DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Update,migrate,migrate_drupal,migrate_drupal_ui"
     - DRUDBAL_ENV="dbal/sqlite/memory" TEST_ARGS="--group Database,Installer,Cache,Config,Entity,Field"
     - DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group Database"
     - DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group Installer,Cache,Config"
@@ -58,6 +55,7 @@ env:
 matrix:
   fast_finish: true
   allow_failures:
+    - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group file"
     - env: DRUDBAL_ENV="dbal/sqlite/memory" TEST_ARGS="--group Database,Installer,Cache,Config,Entity,Field"
     - env: DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group Database"
     - env: DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group Installer,Cache,Config"
