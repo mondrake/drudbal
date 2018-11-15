@@ -124,7 +124,7 @@ before_install:
       fi
 
   # Remove XDebug.
-  - if [[ ! "$TRAVIS_PHP_VERSION" == "nightly" ]]; then phpenv config-rm xdebug.ini; fi
+  - phpenv config-rm xdebug.ini || true
   # Add APCu extension.
   - echo "extension = apcu.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
 
@@ -195,7 +195,7 @@ install:
   - sleep 4s
 
   # Post install tasks.
-  - if [[ ! "$DRUDBAL_ENV" == "dbal/sqlite/memory" ]]; then drupal site:status; fi
+  - drupal site:status || true
 
 script:
   # Only run selected tests to avoid Travis timeout.
