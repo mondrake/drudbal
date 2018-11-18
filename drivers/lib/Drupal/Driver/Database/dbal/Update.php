@@ -29,17 +29,17 @@ class Update extends QueryUpdate {
    */
   public function execute() {
     // SQLite can raise "General error: 5 database is locked" errors when too
-    // many concurrent operations are attempted on the db. We wait and retry 
+    // many concurrent operations are attempted on the db. We wait and retry
     // in such circumstance.
     for ($i = 0; $i < 100; $i++) {
       try {
         return $this->connection->query((string) $this, $this->dbalQuery->getParameters(), $this->queryOptions);
       }
       catch (DatabaseExceptionWrapper $e) {
-        if (!$e->getPrevious() instanceof DBALLockWaitTimeoutException || $i === 99) {
-          throw $e;
-        }
-        usleep(5000);
+    //    if (!$e->getPrevious() instanceof DBALLockWaitTimeoutException || $i === 99) {
+    //      throw $e;
+    //    }
+        usleep(100000);
       }
     }
   }
