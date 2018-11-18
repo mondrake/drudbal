@@ -101,7 +101,7 @@ class Insert extends QueryInsert {
   /**
    * Wraps a query on the connection object to enable retrying.
    */
-  protected function doQuery(string $query, array $args = [], array $options = []) : int {
+  protected function doQuery(string $query, array $args = [], array $options = []) {
     // SQLite can raise "General error: 5 database is locked" errors when too
     // many concurrent operations are attempted on the db. We wait and retry
     // in such circumstance.
