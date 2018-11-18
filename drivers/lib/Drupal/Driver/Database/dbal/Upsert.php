@@ -2,9 +2,11 @@
 
 namespace Drupal\Driver\Database\dbal;
 
+use Drupal\Core\Database\DatabaseExceptionWrapper;
 use Drupal\Core\Database\IntegrityConstraintViolationException;
 use Drupal\Core\Database\Query\Upsert as QueryUpsert;
 use Doctrine\DBAL\Exception\DeadlockException as DBALDeadlockException;
+use Doctrine\DBAL\Exception\LockWaitTimeoutException as DBALLockWaitTimeoutException;
 
 /**
  * DruDbal implementation of \Drupal\Core\Database\Query\Upsert.
