@@ -81,12 +81,12 @@ class Upsert extends QueryUpsert {
     // SQLite can raise "General error: 5 database is locked" errors when too
     // many concurrent operations are attempted on the db. We wait and retry
     // in such circumstance.
-    for ($i = 0; $i < 100; $i++) {
+    for ($i = 0; $i < 1000; $i++) {
       try {
         return $this->connection->query($query, $args, $options);
       }
       catch (DatabaseExceptionWrapper $e) {
-        if (!$e->getPrevious() instanceof DBALLockWaitTimeoutException || $i === 99) {
+        if (!$e->getPrevious() instanceof DBALLockWaitTimeoutException || $i === 999) {
           throw $e;
         }
         usleep(100000);
