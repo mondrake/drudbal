@@ -88,9 +88,9 @@ class Upsert extends QueryUpsert {
         return $this->connection->query($query, $args, $options);
       }
       catch (DatabaseExceptionWrapper $e) {
-        if (!$e->getPrevious() instanceof DBALLockWaitTimeoutException || $i === 999) {
-          throw $e;
-        }
+    //    if (!$e->getPrevious() instanceof DBALLockWaitTimeoutException || $i === 999) {
+    //      throw $e;
+    //    }
         usleep(100000);
       }
     }
