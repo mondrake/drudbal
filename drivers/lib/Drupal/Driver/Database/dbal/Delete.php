@@ -41,7 +41,6 @@ class Delete extends QueryDelete {
         usleep(100000);
       }
     }
-    return $this->connection->query((string) $this, $this->dbalQuery->getParameters(), $this->queryOptions);
   }
 
   /**
