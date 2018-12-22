@@ -140,7 +140,7 @@ before_install:
         composer require "drupal/console" --no-progress --no-suggest
         composer require "doctrine/common:^2.8.1" --no-progress --no-suggest
         # Get Doctrine DBAL
-        composer require "doctrine/dbal:^2.9" --no-progress --no-suggest
+        composer require "doctrine/dbal:^2.8.1" --no-progress --no-suggest
       fi
 
   # Copy staged Drupal core to running path.
