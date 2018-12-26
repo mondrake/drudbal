@@ -134,13 +134,11 @@ before_install:
         git clone http://git.drupal.org/project/drupal.git $DRUPAL_STAGING_DIR
         cd $DRUPAL_STAGING_DIR
         git checkout 8.7.x
-        # Remove the limit for Doctrine Common < 2.9
-        curl https://www.drupal.org/files/issues/2018-12-22/xx1222.patch | git apply
         composer install --no-progress --no-suggest
         composer run-script drupal-phpunit-upgrade
         # Get Drupal Console
         composer require "drupal/console" --no-progress --no-suggest
-        composer require "doctrine/common:^2.9" --no-progress --no-suggest
+        composer update doctrine/common --no-progress --no-suggest
         # Get Doctrine DBAL
         composer require "doctrine/dbal:^2.9" --no-progress --no-suggest
       fi
