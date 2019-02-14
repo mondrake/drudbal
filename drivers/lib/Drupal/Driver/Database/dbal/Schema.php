@@ -674,7 +674,7 @@ class Schema extends DatabaseSchema {
       else {
         $index_schema['indexes'][$row->Key_name][] = $row->Column_name;
       }
-    }*(
+    }*/
 
     return $index_schema;
   }
