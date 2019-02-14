@@ -221,6 +221,15 @@ class PDOSqliteExtension extends AbstractExtension {
   }
 
   /**
+   * {@inheritdoc}
+   */
+  public function getDrupalIndexName(string $drupal_table_name, string $db_index_name): string {
+    $matches = [];
+    preg_match('/.*____(.+)/', $db_index_name, $matches);
+    return $matches[1] ?: null;
+  }
+
+  /**
    * Connection delegated methods.
    */
 
