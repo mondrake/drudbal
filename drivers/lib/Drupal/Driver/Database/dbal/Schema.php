@@ -655,26 +655,13 @@ class Schema extends DatabaseSchema {
         }
         $type = $index->isUnique() ?  'unique keys' : 'indexes';
         foreach ($index->getColumns() as $column) {
-          $index_schema[$type][$index->getName()] = $column;
+          $index_schema[$type][$index->getName()][] = $column;
         }
       }
     }
     catch (DBALException $e) {
       // Just continue.
     }
-
-/*    $result = $this->connection->query('SHOW INDEX FROM {' . $table . '}')->fetchAll();
-    foreach ($result as $row) {
-      if ($row->Key_name === 'PRIMARY') {
-        $index_schema['primary key'][] = $row->Column_name;
-      }
-      elseif ($row->Non_unique == 0) {
-        $index_schema['unique keys'][$row->Key_name][] = $row->Column_name;
-      }
-      else {
-        $index_schema['indexes'][$row->Key_name][] = $row->Column_name;
-      }
-    }*/
 
     return $index_schema;
   }
