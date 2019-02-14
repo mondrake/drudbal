@@ -655,7 +655,7 @@ class Schema extends DatabaseSchema {
         }
         $type = $index->isUnique() ?  'unique keys' : 'indexes';
         foreach ($index->getColumns() as $column) {
-          $index_schema[$type][$index->getName()][] = $column;
+          $index_schema[$type][$this->dbalExtension->getDrupalIndexName($index->getName())][] = $column;
         }
       }
     }

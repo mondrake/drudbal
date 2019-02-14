@@ -124,6 +124,19 @@ interface DbalExtensionInterface {
   public function getDbIndexName($context, DbalSchema $dbal_schema, $drupal_table_name, $index_name, array $table_prefix_info);
 
   /**
+   * Get the Drupal index name, from a database-level index name.
+   *
+   * @param string $drupal_table_name
+   *   A string with the Drupal name of the table.
+   * @param string $db_index_name
+   *   A string with the database-level name of the index.
+   *
+   * @return string
+   *   The Drupal index name.
+   */
+  public function getDrupalIndexName(string $drupal_table_name, string $db_index_name): string;
+
+  /**
    * Connection delegated methods.
    */
 

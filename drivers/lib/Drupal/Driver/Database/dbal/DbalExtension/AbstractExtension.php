@@ -191,6 +191,13 @@ class AbstractExtension implements DbalExtensionInterface {
   }
 
   /**
+   * {@inheritdoc}
+   */
+  public function getDrupalIndexName(string $drupal_table_name, string $db_index_name): string {
+    return $db_index_name;
+  }
+
+  /**
    * Returns a fully prefixed table name from Drupal's {table} syntax.
    *
    * @param string $drupal_table
