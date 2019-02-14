@@ -629,6 +629,59 @@ class Schema extends DatabaseSchema {
   /**
    * {@inheritdoc}
    */
+  protected function introspectIndexSchema($table) {
+    if (!$this->tableExists($table)) {
+      throw new SchemaObjectDoesNotExistException("The table $table doesn't exist.");
+    }
+
+    $index_schema = [
+      'primary key' => [],
+      'unique keys' => [],
+      'indexes' => [],
+    ];
+
+    try {
+      $this->dbalSchemaForceReload();
+
+      // Primary key.
+      foreach ($this->dbalSchema()->getTable($this->tableName($table))->getPrimaryKeyColumns() as $column) {
+        $index_schema['primary key'][] = $column;
+      }
+
+      // Indexes.
+      foreach ($this->dbalSchema()->getTable($this->tableName($table))->getIndexes() as $index) {
+        if ($index->isPrimary()) {
+          continue;
+        }
+        $type = $index->isUnique() ?  'unique keys' : 'indexes';
+        foreach ($index->getColumns() as $column) {
+          $index_schema[$type][$index->getName()] = $column;
+        }
+      }
+    }
+    catch (DBALException $e) {
+      // Just continue.
+    }
+
+/*    $result = $this->connection->query('SHOW INDEX FROM {' . $table . '}')->fetchAll();
+    foreach ($result as $row) {
+      if ($row->Key_name === 'PRIMARY') {
+        $index_schema['primary key'][] = $row->Column_name;
+      }
+      elseif ($row->Non_unique == 0) {
+        $index_schema['unique keys'][$row->Key_name][] = $row->Column_name;
+      }
+      else {
+        $index_schema['indexes'][$row->Key_name][] = $row->Column_name;
+      }
+    }*(
+
+    return $index_schema;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function addUniqueKey($table, $name, $fields) {
     if (!$this->tableExists($table)) {
       throw new SchemaObjectDoesNotExistException(t("Cannot add unique key @name to table @table: table doesn't exist.", ['@table' => $table, '@name' => $name]));
