@@ -133,7 +133,7 @@ before_install:
       if [[ ! -f $DRUPAL_STAGING_DIR/index.php ]]; then
         git clone http://git.drupal.org/project/drupal.git $DRUPAL_STAGING_DIR
         cd $DRUPAL_STAGING_DIR
-        git checkout 8.7.x
+        git checkout 8.8.x
         composer install --no-progress --no-suggest
         composer run-script drupal-phpunit-upgrade
         # Get Drupal Console
