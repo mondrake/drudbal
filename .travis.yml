@@ -162,7 +162,7 @@ before_install:
   # [#2912973] Mismatching call to databaseType() in LangcodeToAsciiUpdateTest
   - curl https://www.drupal.org/files/issues/2912973-2.patch | git apply
   # [#2992274] Installer tests fail if contrib driver hides database credentials form fields
-  - curl https://www.drupal.org/files/issues/2018-08-13/2992274-2.patch | git apply
+  - curl https://www.drupal.org/files/issues/2019-04-02/2992274-5.patch | git apply
 
 install:
   # Copy the repo to the modules/contrib directory.
