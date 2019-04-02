@@ -163,8 +163,6 @@ before_install:
   - curl https://www.drupal.org/files/issues/2912973-2.patch | git apply
   # [#2992274] Installer tests fail if contrib driver hides database credentials form fields
   - curl https://www.drupal.org/files/issues/2018-08-13/2992274-2.patch | git apply
-  # [#3034015] Class to test deprecation error for deprecated trait triggers deprecation error itself
-  - curl https://www.drupal.org/files/issues/2019-02-21/3034015-12.patch | git apply
 
 install:
   # Copy the repo to the modules/contrib directory.
