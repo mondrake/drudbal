@@ -150,7 +150,8 @@ class Tasks extends InstallTasks {
     // If in functional tests, some workarounds are needed.
     // @todo this should be fixed in Drupal core; in meantime consider testing
     // also for the request's user-agent to check if we are in test mode.
-    $is_testing = empty($database['dbal_url']) && !empty(getenv("DBAL_URL"));
+//$is_testing = empty($database['dbal_url']) && !empty(getenv("DBAL_URL"));
+    $is_install_interactive = PHP_SAPI !== 'cli';
 
     // Hide the options, will be resolved while processing the Dbal URL.
     $form['database']['#type'] = 'hidden';
@@ -163,7 +164,8 @@ class Tasks extends InstallTasks {
 
     // In functional tests, the 'dbal_url' database key is available from
     // the DBAL_URL environnment variable.
-    if ($is_testing) {
+//    if ($is_testing) {
+    if (!$is_install_interactive) {
       $database['dbal_url'] = getenv("DBAL_URL");
     }
 
@@ -175,7 +177,8 @@ class Tasks extends InstallTasks {
       '#default_value' => empty($database['dbal_url']) ? '' : $database['dbal_url'],
       '#rows' => 3,
       '#size' => 45,
-      '#required' => $is_testing ? FALSE : TRUE,
+//      '#required' => $is_testing ? FALSE : TRUE,
+      '#required' => $is_install_interactive,
       '#element_validate' => [[$this, 'validateDbalUrl']],
       '#states' => [
         'required' => [
