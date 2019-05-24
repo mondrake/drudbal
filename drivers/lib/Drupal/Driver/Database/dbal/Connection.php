@@ -318,6 +318,8 @@ dump($connection_options);
 dump('BBBBBBBBBBBBBBB');
 dump($dbal_connection_options);
       $dbal_extension_class::preConnectionOpen($connection_options, $dbal_connection_options);
+dump('CCCCCCCCCCCCCCC');
+dump($dbal_connection_options);
       $dbal_connection = DBALDriverManager::getConnection($dbal_connection_options);
       $dbal_extension_class::postConnectionOpen($dbal_connection, $connection_options, $dbal_connection_options);
     }
