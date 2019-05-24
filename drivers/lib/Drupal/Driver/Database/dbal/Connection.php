@@ -292,7 +292,6 @@ class Connection extends DatabaseConnection {
    * {@inheritdoc}
    */
   public static function open(array &$connection_options = []) {
-dump($connection_options);
     if (empty($connection_options['dbal_driver'])) {
       // If 'dbal_driver' is missing from the connection options, then we are
       // likely in an installation scenario where the database URL is invalid.
@@ -311,9 +310,13 @@ dump($connection_options);
       $connection_options['dbal_driver'] = $dbal_connection->getDriver()->getName();
     }
 
+dump('AAAAAAAAAAAAAAA');
+dump($connection_options);
     $dbal_extension_class = static::getDbalExtensionClass($connection_options);
     try {
       $dbal_connection_options = static::mapConnectionOptionsToDbal($connection_options);
+dump('BBBBBBBBBBBBBBB');
+dump($connection_options);
       $dbal_extension_class::preConnectionOpen($connection_options, $dbal_connection_options);
       $dbal_connection = DBALDriverManager::getConnection($dbal_connection_options);
       $dbal_extension_class::postConnectionOpen($dbal_connection, $connection_options, $dbal_connection_options);
