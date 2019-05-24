@@ -365,25 +365,25 @@ dump($dbal_connection_options);
       'dbal_statement_class' => NULL,
     ]);
     // Map to DBAL connection array the main keys from the Drupal connection.
-    if (isset($connection_options['database'])) {
+    if (!empty($connection_options['database'])) {
       $options['dbname'] = $connection_options['database'];
     }
-    if (isset($connection_options['username'])) {
+    if (!empty($connection_options['username'])) {
       $options['user'] = $connection_options['username'];
     }
-    if (isset($connection_options['password'])) {
+    if (!empty($connection_options['password'])) {
       $options['password'] = $connection_options['password'];
     }
-    if (isset($connection_options['host'])) {
+    if (!empty($connection_options['host'])) {
       $options['host'] = $connection_options['host'];
     }
-    if (isset($connection_options['port'])) {
+    if (!empty($connection_options['port'])) {
       $options['port'] = $connection_options['port'];
     }
-    if (isset($connection_options['dbal_url'])) {
+    if (!empty($connection_options['dbal_url'])) {
       $options['url'] = $connection_options['dbal_url'];
     }
-    if (isset($connection_options['dbal_driver'])) {
+    if (!empty($connection_options['dbal_driver'])) {
       $options['driver'] = $connection_options['dbal_driver'];
     }
     // If there is a 'pdo' key in Drupal, that needs to be mapped to the
