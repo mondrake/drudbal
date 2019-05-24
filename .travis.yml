@@ -135,7 +135,6 @@ before_install:
         cd $DRUPAL_STAGING_DIR
         git checkout 8.8.x
         composer install --no-progress --no-suggest
-        composer run-script drupal-phpunit-upgrade
         # Get Drupal Console
         composer require "drupal/console" --no-progress --no-suggest
         composer update doctrine/common --no-progress --no-suggest
