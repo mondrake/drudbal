@@ -292,6 +292,7 @@ class Connection extends DatabaseConnection {
    * {@inheritdoc}
    */
   public static function open(array &$connection_options = []) {
+dump($connection_options);
     if (empty($connection_options['dbal_driver'])) {
       // If 'dbal_driver' is missing from the connection options, then we are
       // likely in an installation scenario where the database URL is invalid.
