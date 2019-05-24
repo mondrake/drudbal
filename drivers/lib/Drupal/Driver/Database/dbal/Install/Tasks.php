@@ -147,9 +147,6 @@ class Tasks extends InstallTasks {
   public function getFormOptions(array $database) {
     $form = parent::getFormOptions($database);
 
-    // If in functional tests, some workarounds are needed.
-    // @todo this should be fixed in Drupal core; in meantime consider testing
-    // also for the request's user-agent to check if we are in test mode.
     $is_install_interactive = PHP_SAPI !== 'cli';
 
     // Hide the options, will be resolved while processing the Dbal URL.
@@ -160,12 +157,6 @@ class Tasks extends InstallTasks {
     $form['password']['#type'] = 'hidden';
     $form['advanced_options']['host']['#type'] = 'hidden';
     $form['advanced_options']['port']['#type'] = 'hidden';
-
-    // In functional tests, the 'dbal_url' database key is available from
-    // the DBAL_URL environnment variable.
-    if (!$is_install_interactive) {
-      $database['dbal_url'] = getenv("DBAL_URL");
-    }
 
     // Add a Dbal URL entry field.
     $form['dbal_url'] = [
@@ -211,11 +202,6 @@ class Tasks extends InstallTasks {
     // all the parameters required, including the actual DBAL driver being
     // used, so that it does get stored in the settings.
     try {
-      // In functional tests, the 'dbal_url' database key is available from
-      // the DBAL_URL environnment variable.
-      if (empty($form_state->getValue(['dbal', 'dbal_url'])) && !empty(getenv("DBAL_URL"))) {
-        $form_state->setValue(['dbal', 'dbal_url'], getenv("DBAL_URL"));
-      }
       $options = [];
       $options['url'] = $form_state->getValue(['dbal', 'dbal_url']);
       $dbal_connection = DbalDriverManager::getConnection($options);

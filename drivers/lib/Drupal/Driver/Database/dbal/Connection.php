@@ -310,16 +310,10 @@ class Connection extends DatabaseConnection {
       $connection_options['dbal_driver'] = $dbal_connection->getDriver()->getName();
     }
 
-dump('AAAAAAAAAAAAAAA');
-dump($connection_options);
     $dbal_extension_class = static::getDbalExtensionClass($connection_options);
     try {
       $dbal_connection_options = static::mapConnectionOptionsToDbal($connection_options);
-dump('BBBBBBBBBBBBBBB');
-dump($dbal_connection_options);
       $dbal_extension_class::preConnectionOpen($connection_options, $dbal_connection_options);
-dump('CCCCCCCCCCCCCCC');
-dump($dbal_connection_options);
       $dbal_connection = DBALDriverManager::getConnection($dbal_connection_options);
       $dbal_extension_class::postConnectionOpen($dbal_connection, $connection_options, $dbal_connection_options);
     }
