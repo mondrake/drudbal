@@ -149,7 +149,7 @@ before_install:
 
   # Apply Drupal core patches.
   # [#2867788] Log::findCaller fails to report the correct caller function with non-core drivers.
-  - curl https://www.drupal.org/files/issues/2867788-22_0.patch | git apply
+  - curl https://www.drupal.org/files/issues/2019-05-28/2867788-53.patch | git apply
   # [#2871374] SelectTest::testVulnerableComment fails when driver overrides Select::__toString
   - curl https://www.drupal.org/files/issues/2018-07-25/2871374-6.patch | git apply
   # [#2874499] Test failures when db driver is set to not support transactions
