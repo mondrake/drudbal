@@ -125,7 +125,8 @@ before_install:
 
   # Remove XDebug.
   - phpenv config-rm xdebug.ini || true
-  # Add APCu extension.
+  # Add APC and APCu extension.
+  - echo "extension = apc.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
   - echo "extension = apcu.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
 
   # Stage Drupal core to get dependencies.
