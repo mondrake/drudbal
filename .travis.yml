@@ -127,6 +127,7 @@ before_install:
   - phpenv config-rm xdebug.ini || true
   # Add APCu extension.
   - echo "extension = apcu.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
+  - echo "apc.enable_cli=1" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
   - cat ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
   - php -i
 
