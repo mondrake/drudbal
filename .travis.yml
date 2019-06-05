@@ -127,6 +127,9 @@ before_install:
   - phpenv config-rm xdebug.ini || true
   # Add APCu extension.
   - echo "extension = apcu.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
+  - echo "apc.enable_cli=1" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
+  - cat ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
+  - php -i
 
   # Stage Drupal core to get dependencies.
   - |
@@ -135,7 +138,6 @@ before_install:
         cd $DRUPAL_STAGING_DIR
         git checkout 8.8.x
         composer install --no-progress --no-suggest
-        composer run-script drupal-phpunit-upgrade
         # Get Drupal Console
         composer require "drupal/console" --no-progress --no-suggest
         composer update doctrine/common --no-progress --no-suggest
@@ -150,7 +152,7 @@ before_install:
 
   # Apply Drupal core patches.
   # [#2867788] Log::findCaller fails to report the correct caller function with non-core drivers.
-  - curl https://www.drupal.org/files/issues/2867788-22_0.patch | git apply
+  - curl https://www.drupal.org/files/issues/2019-05-28/2867788-53.patch | git apply
   # [#2871374] SelectTest::testVulnerableComment fails when driver overrides Select::__toString
   - curl https://www.drupal.org/files/issues/2018-07-25/2871374-6.patch | git apply
   # [#2874499] Test failures when db driver is set to not support transactions
