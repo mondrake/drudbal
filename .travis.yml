@@ -190,14 +190,15 @@ install:
   # Install Drupal.
   - cp $DRUPAL_PATH/modules/contrib/drudbal/tests/travis_ci/*.php $DRUPAL_PATH/core
   - cd $DRUPAL_PATH/core
-  - php install_cli.php
+  #- php install_cli.php
+  - drupal site:install minimal $SIMPLETEST_DB --no-interaction
 
   # Get a webserver running.
   - drupal server $HOST_ADDR:$HTTP_PORT &
   - sleep 4s
 
   # Post install tasks.
-  - drupal site:status || true
+  - drupal site:status -v || true
 
 script:
   # Only run selected tests to avoid Travis timeout.
