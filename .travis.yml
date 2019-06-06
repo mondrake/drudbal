@@ -31,24 +31,23 @@ env:
 
   matrix:
     - DRUDBAL_ENV="mysql" TEST_ARGS="--group Database"
-    #- DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Database,Entity,Field"
-    - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Database"
+    - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Database,Entity,Field"
     #- DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Installer,Cache,Config"
     #- DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group field"
     #- DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group file"
     #- DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group views"
-    #- DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Database,Entity,Field"
+    - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Database,Entity,Field"
     #- DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Installer,Cache,Config"
     #- DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group field"
     #- DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group file"
     #- DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group views"
     - DRUDBAL_ENV="sqlite" TEST_ARGS="--group Database"
-    #- DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database,Entity,Field"
+    - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database,Entity,Field"
     #- DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Installer,Cache,Config"
     #- DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group field"
     #- DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group file"
     #- DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group views"
-    #- DRUDBAL_ENV="dbal/sqlite/memory" TEST_ARGS="--group Database,Installer,Cache,Config,Entity,Field"
+    - DRUDBAL_ENV="dbal/sqlite/memory" TEST_ARGS="--group Database,Installer,Cache,Config,Entity,Field"
     #- DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group Database"
     #- DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group Installer,Cache,Config"
     #- DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group views --testsuite kernel"
@@ -71,31 +70,24 @@ before_install:
   # Set variables.
   - |
       if [[ "$DRUDBAL_ENV" == "mysql" ]]; then
-        export DBAL_URL="mysql://root:@$HOST_ADDR/drudbal"
         export SIMPLETEST_DB="mysql://root:@$HOST_ADDR/drudbal#drudbal_"
 
       elif [[ "$DRUDBAL_ENV" == "dbal/mysql" ]]; then
-        export DBAL_URL="mysql://root:@$HOST_ADDR/drudbal"
         export SIMPLETEST_DB="dbal://root:@$HOST_ADDR/drudbal?dbal_driver=pdo_mysql"
 
       elif [[ "$DRUDBAL_ENV" == "dbal/mysqli" ]]; then
-        export DBAL_URL="mysqli://root:@$HOST_ADDR/drudbal"
         export SIMPLETEST_DB="dbal://root:@$HOST_ADDR/drudbal?dbal_driver=mysqli"
 
       elif [[ "$DRUDBAL_ENV" == "sqlite" ]]; then
-        export DBAL_URL="sqlite:///sites/default/files/.ht.sqlite"
         export SIMPLETEST_DB="sqlite://localhost/sites/default/files/.ht.sqlite"
 
       elif [[ "$DRUDBAL_ENV" == "dbal/sqlite/file" ]]; then
-        export DBAL_URL="sqlite:///$DRUPAL_PATH/sqlite-drudbal"
         export SIMPLETEST_DB="dbal://localhost/$DRUPAL_PATH/sqlite-drudbal?dbal_driver=pdo_sqlite"
 
       elif [[ "$DRUDBAL_ENV" == "dbal/sqlite/memory" ]]; then
-        export DBAL_URL="sqlite:///:memory:"
         export SIMPLETEST_DB="dbal://localhost/:memory:?dbal_driver=pdo_sqlite"
 
       elif [[ "$DRUDBAL_ENV" == "dbal/oci8" ]]; then
-        export DBAL_URL="oci8://ORAROOT:DRUDBAL@$HOST_ADDR:1521/XE"
         export SIMPLETEST_DB="dbal://ORAROOT:DRUDBAL@$HOST_ADDR:1521/XE?dbal_driver=oci8"
 
       fi
@@ -191,7 +183,7 @@ install:
   - cp $DRUPAL_PATH/modules/contrib/drudbal/tests/travis_ci/*.php $DRUPAL_PATH/core
   - cd $DRUPAL_PATH/core
   - drupal site:install minimal $SIMPLETEST_DB --no-interaction
-  - cat ../sites/default/settings.php
+  #- cat ../sites/default/settings.php
 
   # Get a webserver running.
   - drupal server $HOST_ADDR:$HTTP_PORT &
