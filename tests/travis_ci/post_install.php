@@ -1,5 +1,7 @@
 <?php
 
+// NOTE - THIS FILE IS CURRENTLY UNUSED, INSTALLATION OCCURS VIA DRUPAL CONSOLE.
+
 /**
  * @file
  * Cleans up Drupal tables.

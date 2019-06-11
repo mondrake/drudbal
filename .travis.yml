@@ -32,25 +32,25 @@ env:
   matrix:
     - DRUDBAL_ENV="mysql" TEST_ARGS="--group Database"
     - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Database,Entity,Field"
-    #- DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Installer,Cache,Config"
-    #- DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group field"
-    #- DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group file"
-    #- DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group views"
+    - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Installer,Cache,Config"
+    - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group field"
+    - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group file"
+    - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group views"
     - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Database,Entity,Field"
-    #- DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Installer,Cache,Config"
-    #- DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group field"
-    #- DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group file"
-    #- DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group views"
+    - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Installer,Cache,Config"
+    - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group field"
+    - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group file"
+    - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group views"
     - DRUDBAL_ENV="sqlite" TEST_ARGS="--group Database"
     - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database,Entity,Field"
-    #- DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Installer,Cache,Config"
-    #- DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group field"
-    #- DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group file"
-    #- DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group views"
+    - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Installer,Cache,Config"
+    - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group field"
+    - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group file"
+    - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group views"
     - DRUDBAL_ENV="dbal/sqlite/memory" TEST_ARGS="--group Database,Installer,Cache,Config,Entity,Field"
-    #- DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group Database"
-    #- DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group Installer,Cache,Config"
-    #- DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group views --testsuite kernel"
+    - DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group Database"
+    - DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group Installer,Cache,Config"
+    - DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group views --testsuite kernel"
 
 matrix:
   fast_finish: true
@@ -130,8 +130,7 @@ before_install:
         git checkout 8.8.x
         composer install --no-progress --no-suggest
         # Get Drupal Console
-        composer require "drupal/console-core:dev-master as 1.8.0" --no-progress --no-suggest
-        composer require "drupal/console:dev-master" --no-progress --no-suggest
+        composer require "drupal/console:^1.9" --no-progress --no-suggest
         composer update doctrine/common --no-progress --no-suggest
         # Get Doctrine DBAL
         composer require "doctrine/dbal:^2.9" --no-progress --no-suggest
@@ -183,14 +182,13 @@ install:
   - cp $DRUPAL_PATH/modules/contrib/drudbal/tests/travis_ci/*.php $DRUPAL_PATH/core
   - cd $DRUPAL_PATH/core
   - drupal site:install minimal $SIMPLETEST_DB --no-interaction
-  #- cat ../sites/default/settings.php
 
   # Get a webserver running.
   - drupal server $HOST_ADDR:$HTTP_PORT &
   - sleep 4s
 
   # Post install tasks.
-  - drupal site:status -v || true
+  - drupal site:status || true
 
 script:
   # Only run selected tests to avoid Travis timeout.
