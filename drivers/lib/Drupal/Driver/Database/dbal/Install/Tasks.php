@@ -192,10 +192,17 @@ class Tasks extends InstallTasks {
    * keys.
    */
   public function validateDbalUrl(array $element, FormStateInterface $form_state, array $form) {
-    // If the 'dbal_url' field is empty, we are probably installing from CLI,
-    // and the other fields are already compiled. Just return.
+    // If the 'dbal_url' field is empty, we may be installing from CLI, and the
+    // other fields are already compiled.
     if (empty($form_state->getValue(['dbal', 'dbal_url']))) {
-      return;
+      // In functional tests, the 'dbal_url' database key is available from
+      // the DBAL_URL environnment variable. Otherwise, just return.
+      if (!empty(getenv("DBAL_URL"))) {
+        $form_state->setValue(['dbal', 'dbal_url'], getenv("DBAL_URL"));
+      }
+      else {
+        return;
+      }
     }
 
     // Opens a DBAL connection using the URL, just to resolve the details of
