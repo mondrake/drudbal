@@ -61,6 +61,11 @@ matrix:
     - env: DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group Installer,Cache,Config"
     - env: DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group views --testsuite kernel"
 
+mysql:
+  database: drupal_travis_db
+  username: root
+  encoding: utf8
+
 cache:
   directories:
     #- $DRUPAL_STAGING_DIR
@@ -70,11 +75,11 @@ before_install:
   # Set variables.
   - |
       if [[ "$DRUDBAL_ENV" == "mysql" ]]; then
-        export SIMPLETEST_DB="mysql://root:@$HOST_ADDR/drudbal#drudbal_"
+        export SIMPLETEST_DB="mysql://root:@$HOST_ADDR/drupal_travis_db#drudbal_"
 
       elif [[ "$DRUDBAL_ENV" == "dbal/mysql" ]]; then
-        export DBAL_URL="mysql://root:@$HOST_ADDR/drudbal"
-        export SIMPLETEST_DB="dbal://root:@$HOST_ADDR/drudbal?dbal_driver=pdo_mysql"
+        export DBAL_URL="mysql://root:@$HOST_ADDR/drupal_travis_db"
+        export SIMPLETEST_DB="dbal://root:@$HOST_ADDR/drupal_travis_db?dbal_driver=pdo_mysql"
 
       elif [[ "$DRUDBAL_ENV" == "dbal/mysqli" ]]; then
         export DBAL_URL="mysqli://root:@$HOST_ADDR/drudbal"
