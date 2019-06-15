@@ -30,27 +30,30 @@ env:
     #- SYMFONY_DEPRECATIONS_HELPER=disabled
 
   matrix:
-    - DRUDBAL_ENV="mysql" TEST_ARGS="--group Database"
-    - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Database,Entity,Field"
-    - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Installer,Cache,Config"
-    - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group field"
-    - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group file"
-    - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group views"
-    - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Database,Entity,Field"
-    - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Installer,Cache,Config"
-    - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group field"
-    - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group file"
-    - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group views"
-    - DRUDBAL_ENV="sqlite" TEST_ARGS="--group Database"
-    - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database,Entity,Field"
-    - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Installer,Cache,Config"
-    - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group field"
-    - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group file"
-    - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group views"
-    - DRUDBAL_ENV="dbal/sqlite/memory" TEST_ARGS="--group Database,Installer,Cache,Config,Entity,Field"
-    - DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group Database"
-    - DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group Installer,Cache,Config"
-    - DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group views --testsuite kernel"
+    # DRUDBAL_ENV="mysql" TEST_ARGS="--group Database"
+    # DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Database,Entity,Field"
+    # DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Installer,Cache,Config"
+    # DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group field"
+    # DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group file"
+    # DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group views"
+    # DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Database,Entity,Field"
+    # DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Installer,Cache,Config"
+    # DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group field"
+    # DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group file"
+    # DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group views"
+    # DRUDBAL_ENV="sqlite" TEST_ARGS="--group Database"
+    # DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database,Entity,Field"
+    # DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Installer,Cache,Config"
+    # DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group field"
+    # DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group file"
+    # DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group views"
+    # DRUDBAL_ENV="dbal/sqlite/memory" TEST_ARGS="--group Database,Installer,Cache,Config,Entity,Field"
+    # DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group Database"
+    # DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group Installer,Cache,Config"
+    # DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group views --testsuite kernel"
+    - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Installer"
+    - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Installer"
+    - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Installer"
 
 matrix:
   fast_finish: true
@@ -63,7 +66,7 @@ matrix:
 
 cache:
   directories:
-    #- $DRUPAL_STAGING_DIR
+    - $DRUPAL_STAGING_DIR
     - $ORACLE_DOWNLOAD_DIR
 
 services:
