@@ -1,5 +1,5 @@
 {
-    "name": "drupal/drudbal",
+    "name": "mondrake/drudbal",
     "type": "drupal-library",
     "description": "Drupal driver for Doctrine DBAL.",
     "require": {
