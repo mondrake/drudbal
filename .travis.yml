@@ -31,26 +31,26 @@ env:
 
   matrix:
     - DRUDBAL_ENV="mysql" TEST_ARGS="--group Database"
-    - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Database,Entity,Field"
-    - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Installer,Cache,Config"
-    - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group field"
-    - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group file"
-    - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group views"
-    - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Database,Entity,Field"
-    - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Installer,Cache,Config"
-    - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group field"
-    - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group file"
-    - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group views"
-    - DRUDBAL_ENV="sqlite" TEST_ARGS="--group Database"
-    - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database,Entity,Field"
-    - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Installer,Cache,Config"
-    - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group field"
-    - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group file"
-    - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group views"
-    - DRUDBAL_ENV="dbal/sqlite/memory" TEST_ARGS="--group Database,Installer,Cache,Config,Entity,Field"
-    - DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group Database"
-    - DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group Installer,Cache,Config"
-    - DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group views --testsuite kernel"
+    #- DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Database,Entity,Field"
+    #- DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Installer,Cache,Config"
+    #- DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group field"
+    #- DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group file"
+    #- DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group views"
+    #- DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Database,Entity,Field"
+    #- DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Installer,Cache,Config"
+    #- DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group field"
+    #- DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group file"
+    #- DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group views"
+    #- DRUDBAL_ENV="sqlite" TEST_ARGS="--group Database"
+    #- DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database,Entity,Field"
+    #- DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Installer,Cache,Config"
+    #- DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group field"
+    #- DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group file"
+    #- DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group views"
+    #- DRUDBAL_ENV="dbal/sqlite/memory" TEST_ARGS="--group Database,Installer,Cache,Config,Entity,Field"
+    #- DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group Database"
+    #- DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group Installer,Cache,Config"
+    #- DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group views --testsuite kernel"
 
 matrix:
   fast_finish: true
@@ -66,12 +66,15 @@ cache:
     #- $DRUPAL_STAGING_DIR
     - $ORACLE_DOWNLOAD_DIR
 
+services:
+  - mysql
+
 before_install:
   # Set variables.
   - |
       if [[ "$DRUDBAL_ENV" == "mysql" ]]; then
         export DBAL_URL="mysql://root:@$HOST_ADDR/drudbal"
-        export SIMPLETEST_DB="mysql://root:@localhost:3306/drudbal#drudbal_"
+        export SIMPLETEST_DB="mysql://root:@$HOST_ADDR:3306/drudbal#drudbal_"
 
       elif [[ "$DRUDBAL_ENV" == "dbal/mysql" ]]; then
         export DBAL_URL="mysql://root:@$HOST_ADDR/drudbal"
@@ -128,8 +131,8 @@ before_install:
   # Add APCu extension.
   - echo "extension = apcu.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
   - echo "apc.enable_cli=1" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
-  - cat ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
-  - php -i
+  - mysql -e 'CREATE DATABASE myapp_test;'
+  - mysql -e 'show databases;'
 
   # Stage Drupal core to get dependencies.
   - |
