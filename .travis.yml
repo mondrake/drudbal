@@ -190,7 +190,7 @@ install:
   # Install Drupal.
   - cp $DRUPAL_PATH/modules/contrib/drudbal/tests/travis_ci/*.php $DRUPAL_PATH/core
   - cd $DRUPAL_PATH/core
-  - drupal site:install minimal $SIMPLETEST_DB --no-interaction
+  #- drupal site:install minimal $SIMPLETEST_DB --no-interaction
 
   # Get a webserver running.
   - drupal server $HOST_ADDR:$HTTP_PORT &
