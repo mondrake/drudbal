@@ -73,8 +73,8 @@ before_install:
   # Set variables.
   - |
       if [[ "$DRUDBAL_ENV" == "mysql" ]]; then
-        export DBAL_URL="mysql://root:@$HOST_ADDR/drudbal"
-        export SIMPLETEST_DB="mysql://root:@$HOST_ADDR:3306/drudbal#drudbal_"
+        #export DBAL_URL="mysql://root:@$HOST_ADDR/drudbal"
+        export SIMPLETEST_DB="mysql://root:@$HOST_ADDR/drudbal#drudbal_"
 
       elif [[ "$DRUDBAL_ENV" == "dbal/mysql" ]]; then
         export DBAL_URL="mysql://root:@$HOST_ADDR/drudbal"
@@ -131,8 +131,6 @@ before_install:
   # Add APCu extension.
   - echo "extension = apcu.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
   - echo "apc.enable_cli=1" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
-  - mysql -e 'CREATE DATABASE myapp_test;'
-  - mysql -e 'show databases;'
 
   # Stage Drupal core to get dependencies.
   - |
@@ -193,7 +191,9 @@ install:
   # Install Drupal.
   - cp $DRUPAL_PATH/modules/contrib/drudbal/tests/travis_ci/*.php $DRUPAL_PATH/core
   - cd $DRUPAL_PATH/core
-  - php install_cli.php
+  - drupal site:install minimal $SIMPLETEST_DB --no-interaction 
+#  - php install_cli.php 
+  - mysql -e 'show databases;'
 
   # Get a webserver running.
   - drupal server $HOST_ADDR:$HTTP_PORT &
