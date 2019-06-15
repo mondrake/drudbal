@@ -66,11 +66,13 @@ cache:
     #- $DRUPAL_STAGING_DIR
     - $ORACLE_DOWNLOAD_DIR
 
+services:
+  - mysql
+
 before_install:
   # Set variables.
   - |
       if [[ "$DRUDBAL_ENV" == "mysql" ]]; then
-        export DBAL_URL="mysql://root:@$HOST_ADDR/drudbal"
         export SIMPLETEST_DB="mysql://root:@$HOST_ADDR/drudbal#drudbal_"
 
       elif [[ "$DRUDBAL_ENV" == "dbal/mysql" ]]; then
@@ -82,8 +84,7 @@ before_install:
         export SIMPLETEST_DB="dbal://root:@$HOST_ADDR/drudbal?dbal_driver=mysqli"
 
       elif [[ "$DRUDBAL_ENV" == "sqlite" ]]; then
-        export DBAL_URL="sqlite:///sites/default/files/.ht.sqlite"
-        export SIMPLETEST_DB="sqlite://test_user:test_pass@test_host:3306/sites/default/files/.ht.sqlite"
+        export SIMPLETEST_DB="sqlite://localhost/sites/default/files/.ht.sqlite"
 
       elif [[ "$DRUDBAL_ENV" == "dbal/sqlite/file" ]]; then
         export DBAL_URL="sqlite:///$DRUPAL_PATH/sqlite-drudbal"
@@ -128,8 +129,6 @@ before_install:
   # Add APCu extension.
   - echo "extension = apcu.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
   - echo "apc.enable_cli=1" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
-  - cat ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
-  - php -i
 
   # Stage Drupal core to get dependencies.
   - |
@@ -139,7 +138,7 @@ before_install:
         git checkout 8.8.x
         composer install --no-progress --no-suggest
         # Get Drupal Console
-        composer require "drupal/console" --no-progress --no-suggest
+        composer require "drupal/console:^1.9" --no-progress --no-suggest
         composer update doctrine/common --no-progress --no-suggest
         # Get Doctrine DBAL
         composer require "doctrine/dbal:^2.9" --no-progress --no-suggest
@@ -190,7 +189,7 @@ install:
   # Install Drupal.
   - cp $DRUPAL_PATH/modules/contrib/drudbal/tests/travis_ci/*.php $DRUPAL_PATH/core
   - cd $DRUPAL_PATH/core
-  - php install_cli.php
+  - drupal site:install minimal $SIMPLETEST_DB --no-interaction
 
   # Get a webserver running.
   - drupal server $HOST_ADDR:$HTTP_PORT &
