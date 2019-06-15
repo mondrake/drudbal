@@ -75,11 +75,11 @@ before_install:
   # Set variables.
   - |
       if [[ "$DRUDBAL_ENV" == "mysql" ]]; then
-        export SIMPLETEST_DB="mysql://root:@$HOST_ADDR/drupal_travis_db#drudbal_"
+        export SIMPLETEST_DB="mysql://root:@localhost/drupal_travis_db#drudbal_"
 
       elif [[ "$DRUDBAL_ENV" == "dbal/mysql" ]]; then
         export DBAL_URL="mysql://root:@$HOST_ADDR/drupal_travis_db"
-        export SIMPLETEST_DB="dbal://root:@$HOST_ADDR/drupal_travis_db?dbal_driver=pdo_mysql"
+        export SIMPLETEST_DB="dbal://root:@localhost/drupal_travis_db?dbal_driver=pdo_mysql"
 
       elif [[ "$DRUDBAL_ENV" == "dbal/mysqli" ]]; then
         export DBAL_URL="mysqli://root:@$HOST_ADDR/drudbal"
