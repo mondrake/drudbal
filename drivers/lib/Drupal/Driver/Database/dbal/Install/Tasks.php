@@ -197,12 +197,12 @@ class Tasks extends InstallTasks {
     if (empty($form_state->getValue(['dbal', 'dbal_url']))) {
       // In functional tests, the 'dbal_url' database key is available from
       // the DBAL_URL environnment variable. Otherwise, just return.
-/*      if (!empty(getenv("DBAL_URL"))) {
+      if (!empty(getenv("DBAL_URL"))) {
         $form_state->setValue(['dbal', 'dbal_url'], getenv("DBAL_URL"));
       }
-      else {*/
+      else {
         return;
-      //}
+      }
     }
 
     // Opens a DBAL connection using the URL, just to resolve the details of

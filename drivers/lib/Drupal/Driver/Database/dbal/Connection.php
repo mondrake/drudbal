@@ -25,7 +25,6 @@ use Doctrine\DBAL\DriverManager as DbalDriverManager;
 use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
 use Doctrine\DBAL\Version as DbalVersion;
 use GuzzleHttp\Psr7\Uri;
-use Psr\Http\Message\UriInterface;
 
 /**
  * DruDbal implementation of \Drupal\Core\Database\Connection.
