@@ -71,7 +71,7 @@ before_install:
   - |
       if [[ "$DRUDBAL_ENV" == "mysql" ]]; then
         export DBAL_URL="mysql://root:@$HOST_ADDR/drudbal"
-        export SIMPLETEST_DB="mysql://root:@$HOST_ADDR/drudbal#drudbal_"
+        export SIMPLETEST_DB="mysql://root:@localhost:3306/drudbal#drudbal_"
 
       elif [[ "$DRUDBAL_ENV" == "dbal/mysql" ]]; then
         export DBAL_URL="mysql://root:@$HOST_ADDR/drudbal"
