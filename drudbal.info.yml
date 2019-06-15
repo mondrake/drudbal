@@ -1,4 +1,0 @@
-name: DruDbal
-type: module
-description: 'Drupal driver for Doctrine DBAL.'
-core: 8.x
