@@ -141,7 +141,7 @@ before_install:
         composer require "drupal/console:^1.9" --no-progress --no-suggest
         composer update doctrine/common --no-progress --no-suggest
         # Get Doctrine DBAL
-        composer require "doctrine/dbal:^2.9" --no-progress --no-suggest
+        composer require "mondrake/drudbal:dev-master" --no-progress --no-suggest
       fi
 
   # Copy staged Drupal core to running path.
@@ -166,28 +166,28 @@ before_install:
   - curl https://www.drupal.org/files/issues/2019-04-02/2992274-5.patch | git apply
 
 install:
-  # Copy the repo to the modules/contrib directory.
-  - mkdir -p $DRUPAL_PATH/modules/contrib/drudbal
-  - cp -r $HOME/build/mondrake/drudbal $DRUPAL_PATH/modules/contrib
+  # Copy the cloned repo to the libraries/drudbal directory, overriding the
+  # composer install.
+  - rm -rf $DRUPAL_PATH/libraries/drudbal
+  - cp -r $HOME/build/mondrake/drudbal $DRUPAL_PATH/libraries/drudbal
 
   # Patch DBAL for Oracle createSchema fixes https://github.com/doctrine/dbal/pull/2766
   - |
       if [[ "$DRUDBAL_ENV" == "dbal/oci8" ]]; then
         cd $DRUPAL_PATH/vendor/doctrine/dbal
-        patch -p1 < $DRUPAL_PATH/modules/contrib/drudbal/tests/travis_ci/$DRUDBAL_ENV/dbal.patch
+        patch -p1 < $DRUPAL_PATH/libraries/drudbal/tests/travis_ci/$DRUDBAL_ENV/dbal.patch
       fi
 
   # Create a directory for the driver, and symlink it to the module's one.
   - mkdir -p $DRUPAL_PATH/drivers/lib/Drupal/Driver/Database/
   - cd $DRUPAL_PATH/drivers/lib/Drupal/Driver/Database/
-  - ln -s $DRUPAL_PATH/modules/contrib/drudbal/drivers/lib/Drupal/Driver/Database/dbal dbal
+  - ln -s $DRUPAL_PATH/libraries/drudbal/lib dbal
 
   # Patch tests for debugging if necessary.
   - cd $DRUPAL_PATH
-  - if [[ -f $DRUPAL_PATH/modules/contrib/drudbal/tests/travis_ci/$DRUDBAL_ENV/test_debug.patch ]]; then git apply -v $DRUPAL_PATH/modules/contrib/drudbal/tests/travis_ci/$DRUDBAL_ENV/test_debug.patch; fi
+  - if [[ -f $DRUPAL_PATH/libraries/drudbal/tests/travis_ci/$DRUDBAL_ENV/test_debug.patch ]]; then git apply -v $DRUPAL_PATH/libraries/drudbal/tests/travis_ci/$DRUDBAL_ENV/test_debug.patch; fi
 
   # Install Drupal.
-  - cp $DRUPAL_PATH/modules/contrib/drudbal/tests/travis_ci/*.php $DRUPAL_PATH/core
   - cd $DRUPAL_PATH/core
   - drupal site:install minimal $SIMPLETEST_DB --no-interaction
 
@@ -203,7 +203,7 @@ script:
   - $DRUPAL_PATH/vendor/bin/phpunit $TEST_ARGS
 
 after_script:
-  - cd $DRUPAL_PATH/modules/contrib/drudbal
+  - cd $DRUPAL_PATH/libraries/drudbal
   - $DRUPAL_PATH/vendor/bin/phpcs
 
 notifications:
