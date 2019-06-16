@@ -30,6 +30,7 @@ env:
     #- SYMFONY_DEPRECATIONS_HELPER=disabled
 
   matrix:
+    - DRUDBAL_ENV="mysql" TEST_ARGS="--group Database"
     - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Database,Entity,Field"
     - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Installer,Cache,Config"
     - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group field"
