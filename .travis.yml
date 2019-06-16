@@ -30,7 +30,7 @@ env:
     #- SYMFONY_DEPRECATIONS_HELPER=disabled
 
   matrix:
-    - DRUDBAL_ENV="mysql" TEST_ARGS="--group Database"
+    - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Database"
     #- DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Database,Entity,Field"
     #- DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Installer,Cache,Config"
     #- DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group field"
@@ -141,7 +141,7 @@ before_install:
         composer require "drupal/console:^1.9" --no-progress --no-suggest
         composer update doctrine/common --no-progress --no-suggest
         # Get Doctrine DBAL
-        composer require "mondrake/drudbal:dev-master" --no-progress --no-suggest
+        composer require "mondrake/drudbal:dev-dev-composer" --no-progress --no-suggest
       fi
 
   # Copy staged Drupal core to running path.
@@ -167,8 +167,8 @@ before_install:
 
 install:
   # Copy the repo to the modules/contrib directory.
-  - mkdir -p $DRUPAL_PATH/modules/contrib/drudbal
-  - cp -r $HOME/build/mondrake/drudbal $DRUPAL_PATH/modules/contrib
+  #- mkdir -p $DRUPAL_PATH/modules/contrib/drudbal
+  #- cp -r $HOME/build/mondrake/drudbal $DRUPAL_PATH/modules/contrib
 
   # Patch DBAL for Oracle createSchema fixes https://github.com/doctrine/dbal/pull/2766
   - |
@@ -178,16 +178,16 @@ install:
       fi
 
   # Create a directory for the driver, and symlink it to the module's one.
-  - mkdir -p $DRUPAL_PATH/drivers/lib/Drupal/Driver/Database/
+  #- mkdir -p $DRUPAL_PATH/drivers/lib/Drupal/Driver/Database/
   - cd $DRUPAL_PATH/drivers/lib/Drupal/Driver/Database/
-  - ln -s $DRUPAL_PATH/modules/contrib/drudbal/drivers/lib/Drupal/Driver/Database/dbal dbal
+  - ln -s $DRUPAL_PATH/vendor/mondrake/drudbal/lib dbal
 
   # Patch tests for debugging if necessary.
   - cd $DRUPAL_PATH
   - if [[ -f $DRUPAL_PATH/modules/contrib/drudbal/tests/travis_ci/$DRUDBAL_ENV/test_debug.patch ]]; then git apply -v $DRUPAL_PATH/modules/contrib/drudbal/tests/travis_ci/$DRUDBAL_ENV/test_debug.patch; fi
 
   # Install Drupal.
-  - cp $DRUPAL_PATH/modules/contrib/drudbal/tests/travis_ci/*.php $DRUPAL_PATH/core
+  #- cp $DRUPAL_PATH/modules/contrib/drudbal/tests/travis_ci/*.php $DRUPAL_PATH/core
   - cd $DRUPAL_PATH/core
   - drupal site:install minimal $SIMPLETEST_DB --no-interaction
 
