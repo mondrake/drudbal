@@ -1,6 +1,8 @@
 # DruDbal
 
 [![Build Status](https://travis-ci.org/mondrake/drudbal.svg?branch=master)](https://travis-ci.org/mondrake/drudbal)
+[![Total Downloads](https://poser.pugx.org/mondrake/drudbal/downloads)](https://packagist.org/packages/mondrake/drudbal)
+[![License](https://poser.pugx.org/mondrake/drudbal/license)](https://packagist.org/packages/mondrake/drudbal)
 
 An __experimental__ Drupal driver for Doctrine DBAL. __Do not use if not for trial. No support, sorry :)__
 
@@ -67,7 +69,7 @@ $ ln -s [DRUPAL_ROOT]/libraries/drudbal/lib dbal
 ```
 
 4. Launch the interactive installer. Proceed as usual and when on the db selection form, select 'Doctrine DBAL'
-and enter a 'database URL' compliant with Doctrine DBAL syntax. __Note:__ the driver works only with mysql, mysqli or sqlite DBAL drivers.
+and enter a 'database URL' compliant with Doctrine DBAL syntax. __Note:__ the driver works only with _mysql, mysqli, oci8 or sqlite_ DBAL drivers.
 
 ![configuration](https://cloud.githubusercontent.com/assets/1174864/24586418/7f86feb4-17a0-11e7-820f-eb1483dad07f.png)
 
