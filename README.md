@@ -9,8 +9,8 @@ The concept is to use Doctrine DBAL as an additional database abstraction layer.
 to be 'database agnostic', i.e. the driver should be able to execute on any db platform that DBAL supports (in theory, practically
 there still need to be db-platform specific hacks through the concept of DBAL extensions, see below).
 
-The Drupal database ```Connection``` class that this driver implements opens a ```DBAL\Connection```, and hands over statements' execution to it. DBAL\Connection itself wraps a lower level driver connection (```PDO``` for pdo_mysql and pdo_sqlite drivers, ```mysqli``` for the mysqli driver).
-Similarly, the ```Statement``` class is a wrapper of a ```DBAL\Statement```, which itself wraps a DBAL-driver level Statement.
+The Drupal database ```Connection``` class that this driver implements opens a ```DBAL\Connection```, and hands over statements' execution to it. ```DBAL\Connection``` itself wraps a lower level driver connection (```PDO``` for pdo_mysql and pdo_sqlite drivers, ```mysqli``` for the mysqli driver).
+Similarly, the ```Statement``` class is a wrapper of a ```DBAL\Statement```, which itself wraps a DBAL-driver level ```Statement```.
 The DBAL connection provides additional features like the Schema Manager that can introspect a database schema and build DDL statements, a Query Builder that can build SQL statements based on the database platform in use, etc. etc.
 
 To overcome DBAL limitations and/or fit Drupal specifics, the DBAL Drupal database driver also instantiates an additional object
@@ -18,7 +18,7 @@ called ```DBALExtension```, unique for the DBAL Driver in use, to which some ope
 delegated.
 
 ## Status
-(Updated: July 25, 2017)
+(Updated: June 16, 2019)
 
 The code in the ```master``` branch is working on a __MySql database__, using either the 'mysql' or the 'mysqli' DBAL driver, and on a __SQlite database__, using the 'sqlite' DBAL driver.
 
@@ -26,7 +26,7 @@ The code in the ```master``` branch is working on a __MySql database__, using ei
 1. it is possible to install a Drupal site via the installer, selecting 'Doctrine DBAL' as the database of choice;
 2. it is passing a selection of core PHPUnit tests for the Database, Cache, Entity and views groups of tests, executed on Travis CI. The latest patches for the issues listed in 'Related Drupal issues' below need to be applied to get a clean test run.
 
-The code in the ```dev-oracle``` branch installs on __Oracle__ 11.2.0.2.0, using DBAL 'oci8' driver, but fails tests. Big problems with Oracle:
+The driver can also install on __Oracle__ 11.2.0.2.0, using DBAL 'oci8' driver, but fails tests. Big problems with Oracle:
 1. there's a hard limit of 30 chars on database asset identifiers (tables, triggers, indexes, etc.). Apparently Oracle 12.2 overcomes that limit, raising lenght to 128 chars, but this currently requires all sort of workarounds as many objects names in Drupal are longer than that.
 2. Oracle treats NULL and '' (empty string) in the same way. Drupal practice is to use these as different items - it builds CREATE TABLE statements with column definitions like "cid VARCHAR(255) DEFAULT '' NOT NULL" which is self-contradicting in Oracle terms.
 3. DBAL schema introspection is very slow on Oracle, see https://github.com/doctrine/dbal/issues/2676. This makes difficult to run the interactive installer since as at each batch request the schema get rebuilt.
@@ -48,35 +48,30 @@ Upsert                        | Implemented with overrides to the ```execute``` 
 Install/Tasks	                | Implemented. |
 
 ## Installation
+(Updated: June 16, 2019)
 
 Very rough instructions to install Drupal from scratch with this db driver under the hood:
 
-1. Requirements: build a Drupal code base via Composer, using latest Drupal development branch code and PHP 7.1+.
+1. Requirements: build a Drupal code base via Composer, using latest Drupal development branch code and PHP 7.3+.
 
-2. Get Doctrine DBAL, use latest version:
+2. Get the library via Composer, it will install Doctrine DBAL as well:
 ```
-$ composer require doctrine/dbal:^2.9.0
-```
-
-3. Clone this repository to your contrib modules path:
-```
-$ cd [DRUPAL_ROOT]/[path_to_contrib_modules]
-$ git clone https://github.com/mondrake/drudbal.git
+$ composer require mondrake/drudbal:dev-master
 ```
 
-4. Create a directory for the contrib driver, and create a symlink to the 'dbal' subdirectory of the module. This way, when git pulling updates from the module's repo, the driver code will also be aligned.
+3. Create a directory for the contrib driver, and create a symlink to the 'dbal' subdirectory of the module. This way, when git pulling updates from the module's repo, the driver code will also be aligned.
 ```
 $ mkdir -p [DRUPAL_ROOT]/drivers/lib/Drupal/Driver/Database/
 $ cd [DRUPAL_ROOT]/drivers/lib/Drupal/Driver/Database/
-$ ln -s [DRUPAL_ROOT]/[path_to_contrib_modules]/drudbal/drivers/lib/Drupal/Driver/Database/dbal dbal
+$ ln -s [DRUPAL_ROOT]/libraries/drudbal/lib dbal
 ```
 
-5. Launch the interactive installer. Proceed as usual and when on the db selection form, select 'Doctrine DBAL'
+4. Launch the interactive installer. Proceed as usual and when on the db selection form, select 'Doctrine DBAL'
 and enter a 'database URL' compliant with Doctrine DBAL syntax. __Note:__ the driver works only with mysql, mysqli or sqlite DBAL drivers.
 
 ![configuration](https://cloud.githubusercontent.com/assets/1174864/24586418/7f86feb4-17a0-11e7-820f-eb1483dad07f.png)
 
-6. If everything goes right, when you're welcomed to the new Drupal installation, visit the Status Report. The 'database'
+5. If everything goes right, when you're welcomed to the new Drupal installation, visit the Status Report. The 'database'
 section will report something like:
 
 ![status_report](https://user-images.githubusercontent.com/1174864/29685128-ca25375c-8914-11e7-8305-9ba369f68067.png)

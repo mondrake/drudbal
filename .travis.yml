@@ -166,8 +166,9 @@ before_install:
   - curl https://www.drupal.org/files/issues/2019-04-02/2992274-5.patch | git apply
 
 install:
-  # Copy the repo to the libraries/drudbal directory.
-  - rm -r $DRUPAL_PATH/libraries/drudbal
+  # Copy the cloned repo to the libraries/drudbal directory, overriding the
+  # composer install.
+  - rm -rf $DRUPAL_PATH/libraries/drudbal
   - cp -r $HOME/build/mondrake/drudbal $DRUPAL_PATH/libraries/drudbal
 
   # Patch DBAL for Oracle createSchema fixes https://github.com/doctrine/dbal/pull/2766
