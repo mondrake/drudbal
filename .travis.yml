@@ -181,8 +181,10 @@ install:
   - mkdir -p $DRUPAL_PATH/drivers/lib/Drupal/Driver/Database/
   - cd $DRUPAL_PATH/drivers/lib/Drupal/Driver/Database/
   - ln -s $DRUPAL_PATH/vendor/mondrake/drudbal/lib dbal
-  - ls -al $DRUPAL_PATH/vendor/mondrake/drudbal/lib
-  - ls -al dbal 
+  - ls -al $DRUPAL_PATH/vendor
+  - ls -al $DRUPAL_PATH/vendor/mondrake
+  - ls -al $DRUPAL_PATH/vendor/mondrake/drudbal
+  - ls -al dbal
 
   # Patch tests for debugging if necessary.
   - cd $DRUPAL_PATH
