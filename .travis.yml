@@ -139,11 +139,9 @@ before_install:
         composer install --no-progress --no-suggest
         # Get Drupal Console
         composer require "drupal/console:^1.9" --no-progress --no-suggest
-        #composer update doctrine/common --no-progress --no-suggest
+        composer update doctrine/common --no-progress --no-suggest
         # Get Doctrine DBAL
-        #composer require "doctrine/dbal:^2.9" --no-progress --no-suggest
-        composer update
-        composer require "mondrake/drudbal:dev-master" --update-with-all-dependencies
+        composer require "mondrake/drudbal:dev-master" --no-progress --no-suggest
       fi
 
   # Copy staged Drupal core to running path.
