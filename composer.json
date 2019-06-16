@@ -7,7 +7,7 @@
         "drupal/core": "~8.8@dev",
         "doctrine/dbal": "^2.9",
         "symfony/filesystem": "*",
-        "webflo/drupal-finder": "*""
+        "webflo/drupal-finder": "*"
     },
     "minimum-stability": "dev"
 }
