@@ -180,11 +180,7 @@ install:
   # Create a directory for the driver, and symlink it to the module's one.
   - mkdir -p $DRUPAL_PATH/drivers/lib/Drupal/Driver/Database/
   - cd $DRUPAL_PATH/drivers/lib/Drupal/Driver/Database/
-  - ln -s $DRUPAL_PATH/vendor/mondrake/drudbal/lib dbal
-  - ls -al $DRUPAL_PATH/vendor
-  - ls -al $DRUPAL_PATH/vendor/mondrake
-  - ls -al $DRUPAL_PATH/vendor/mondrake/drudbal
-  - ls -al dbal
+  - ln -s $DRUPAL_PATH/libraries/drudbal/lib dbal
 
   # Patch tests for debugging if necessary.
   - cd $DRUPAL_PATH
