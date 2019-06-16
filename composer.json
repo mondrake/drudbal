@@ -5,7 +5,7 @@
     "require": {
         "php": ">=7.3",
         "drupal/core": "~8.8@dev",
-        "doctrine/dbal": "^2.9",
+        "doctrine/dbal": "^2.9.2",
         "symfony/filesystem": "*",
         "webflo/drupal-finder": "*"
     },
