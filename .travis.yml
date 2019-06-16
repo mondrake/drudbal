@@ -142,6 +142,7 @@ before_install:
         #composer update doctrine/common --no-progress --no-suggest
         # Get Doctrine DBAL
         #composer require "doctrine/dbal:^2.9" --no-progress --no-suggest
+        composer update
         composer require "mondrake/drudbal:dev-master" --update-with-all-dependencies
       fi
 
