@@ -169,7 +169,7 @@ before_install:
   # [#3065166] Modernize Drupal\KernelTests\Core\Database\ConnectionUnitTest
   - curl https://www.drupal.org/files/issues/2019-07-01/3065166-2.patch | git apply -v
   # [#2488350] Switch to a memory cache backend during installation
-  #- curl https://www.drupal.org/files/issues/2019-07-01/2488350-3-76.patch | git apply -v
+  - curl https://www.drupal.org/files/issues/2019-07-01/2488350-3-76.patch | git apply -v
 
 install:
   # Copy the cloned repo to the libraries/drudbal directory, overriding the
