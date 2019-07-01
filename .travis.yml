@@ -165,7 +165,7 @@ before_install:
   # [#2992274] Installer tests fail if contrib driver hides database credentials form fields
   - curl https://www.drupal.org/files/issues/2019-04-02/2992274-5.patch | git apply
   # [#2950132] Support PHPUnit 7 in Drupal 8
-  - curl https://www.drupal.org/files/issues/2019-06-30/2950132-97.patch | git apply -v
+  #- curl https://www.drupal.org/files/issues/2019-06-30/2950132-97.patch | git apply -v
 
 install:
   # Copy the cloned repo to the libraries/drudbal directory, overriding the
@@ -188,7 +188,7 @@ install:
   # Patch tests for debugging if necessary.
   - cd $DRUPAL_PATH
   - if [[ -f $DRUPAL_PATH/libraries/drudbal/tests/travis_ci/$DRUDBAL_ENV/test_debug.patch ]]; then git apply -v $DRUPAL_PATH/libraries/drudbal/tests/travis_ci/$DRUDBAL_ENV/test_debug.patch; fi
-  - composer update phpunit/phpunit symfony/phpunit-bridge phpspec/prophecy symfony/yaml --with-dependencies --no-progress
+  #- composer update phpunit/phpunit symfony/phpunit-bridge phpspec/prophecy symfony/yaml --with-dependencies --no-progress
 
   # Install Drupal.
   - cd $DRUPAL_PATH/core
@@ -203,7 +203,7 @@ install:
 
 script:
   # Only run selected tests to avoid Travis timeout.
-  - $DRUPAL_PATH/vendor/bin/phpunit -v $TEST_ARGS
+  - $DRUPAL_PATH/vendor/bin/phpunit $TEST_ARGS
 
 after_script:
   - cd $DRUPAL_PATH/libraries/drudbal
