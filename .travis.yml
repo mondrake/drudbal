@@ -30,19 +30,19 @@ env:
     #- SYMFONY_DEPRECATIONS_HELPER=disabled
 
   matrix:
-    - DRUDBAL_ENV="mysql" TEST_ARGS="--group Database"
-    - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Database,Entity,Field"
+    - DRUDBAL_ENV="mysql" TEST_ARGS="-v --group Database"
+    - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="-v --group Database,Entity,Field"
     - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Installer,Cache,Config"
     - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group field"
     - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group file"
     - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group views"
-    - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Database,Entity,Field"
+    - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="-v --group Database,Entity,Field"
     - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Installer,Cache,Config"
     - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group field"
     - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group file"
     - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group views"
-    - DRUDBAL_ENV="sqlite" TEST_ARGS="--group Database"
-    - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database,Entity,Field"
+    - DRUDBAL_ENV="sqlite" TEST_ARGS="-v --group Database"
+    - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="-v --group Database,Entity,Field"
     - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Installer,Cache,Config"
     - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group field"
     - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group file"
@@ -165,7 +165,9 @@ before_install:
   # [#2992274] Installer tests fail if contrib driver hides database credentials form fields
   - curl https://www.drupal.org/files/issues/2019-04-02/2992274-5.patch | git apply
   # [#2950132] Support PHPUnit 7 in Drupal 8
-  #- curl https://www.drupal.org/files/issues/2019-06-30/2950132-97.patch | git apply -v
+  - curl https://www.drupal.org/files/issues/2019-07-01/2950132-98_0.patch | git apply -v
+  # [#3065166] Modernize Drupal\KernelTests\Core\Database\ConnectionUnitTest
+  - curl https://www.drupal.org/files/issues/2019-07-01/3065166-2.patch | git apply -v
 
 install:
   # Copy the cloned repo to the libraries/drudbal directory, overriding the
@@ -188,7 +190,7 @@ install:
   # Patch tests for debugging if necessary.
   - cd $DRUPAL_PATH
   - if [[ -f $DRUPAL_PATH/libraries/drudbal/tests/travis_ci/$DRUDBAL_ENV/test_debug.patch ]]; then git apply -v $DRUPAL_PATH/libraries/drudbal/tests/travis_ci/$DRUDBAL_ENV/test_debug.patch; fi
-  #- composer update phpunit/phpunit symfony/phpunit-bridge phpspec/prophecy symfony/yaml --with-dependencies --no-progress
+  - composer update phpunit/phpunit symfony/phpunit-bridge phpspec/prophecy symfony/yaml --with-dependencies --no-progress
 
   # Install Drupal.
   - cd $DRUPAL_PATH/core
