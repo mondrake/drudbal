@@ -1,8 +1,8 @@
 # DruDbal
 
 [![Build Status](https://travis-ci.org/mondrake/drudbal.svg?branch=master)](https://travis-ci.org/mondrake/drudbal)
-[![Total Downloads](https://poser.pugx.org/mondrake/drudbal/downloads)](https://packagist.org/packages/mondrake/drudbal)
-[![License](https://poser.pugx.org/mondrake/drudbal/license)](https://packagist.org/packages/mondrake/drudbal)
+[![Total Downloads](https://img.shields.io/packagist/dt/mondrake/drudbal.svg)](https://packagist.org/packages/mondrake/drudbal)
+[![License](https://img.shields.io/github/license/mondrake/drudbal.svg)](https://packagist.org/packages/mondrake/drudbal)
 
 An __experimental__ Drupal driver for Doctrine DBAL. __Do not use if not for trial. No support, sorry :)__
 
