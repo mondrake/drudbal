@@ -8,6 +8,7 @@ use Drupal\Core\Database\StatementInterface;
 use Drupal\Core\Database\RowCountException;
 use Drupal\Driver\Database\dbal\Connection as DruDbalConnection;
 use Doctrine\DBAL\DBALException;
+use Doctrine\DBAL\FetchMode;
 use Doctrine\DBAL\SQLParserUtils;
 
 // @todo organize better prefetch vs normal
@@ -15,8 +16,6 @@ use Doctrine\DBAL\SQLParserUtils;
 // provides PDO::FETCH_OBJ emulation for mysqli and oci8 statements, check;
 // Normalize method signatures for `fetch()` and `fetchAll()`, ensuring compatibility with the `PDOStatement` signature
 // `ResultStatement#fetchAll()` must define 3 arguments in order to be compatible with `PDOStatement#fetchAll()`
-// @todo DBAL 2.7:
-// remove usage of PDO:: constants
 
 /**
  * DruDbal implementation of \Drupal\Core\Database\Statement.
@@ -243,7 +242,7 @@ class Statement implements \IteratorAggregate, StatementInterface {
 
       // Fetch all the data from the reply, in order to release any lock
       // as soon as possible.
-      $this->data = $this->dbalStatement->fetchAll(\PDO::FETCH_ASSOC);
+      $this->data = $this->dbalStatement->fetchAll(FetchMode::ASSOCIATIVE);
       // Destroy the statement as soon as possible. See the documentation of
       // \Drupal\Core\Database\Driver\sqlite\Statement for an explanation.
       unset($this->dbalStatement);

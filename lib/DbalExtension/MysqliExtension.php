@@ -4,6 +4,7 @@ namespace Drupal\Driver\Database\dbal\DbalExtension;
 
 use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\Driver\Mysqli\MysqliException;
+use Doctrine\DBAL\FetchMode;
 use Doctrine\DBAL\Statement as DbalStatement;
 
 /**
@@ -33,42 +34,64 @@ class MysqliExtension extends AbstractMySqlExtension {
    * {@inheritdoc}
    */
   public function delegateFetch(DbalStatement $dbal_statement, $mode, $fetch_class) {
-    if ($mode <= \PDO::FETCH_BOTH) {
-      $row = $dbal_statement->fetch($mode);
-      if (!$row) {
-        return FALSE;
-      }
-      // @todo stringify also FETCH_NUM and FETCH_BOTH
-      if ($mode === \PDO::FETCH_ASSOC) {
+    switch ($mode) {
+      case \PDO::FETCH_ASSOC:
+        $row = $dbal_statement->fetch(FetchMode::ASSOCIATIVE);
+        if (!$row) {
+          return FALSE;
+        }
         foreach ($row as $column => &$value) {
           $value = $value === NULL ? NULL : (string) $value;
         }
-      }
-      return $row;
-    }
-    else {
-      $row = $dbal_statement->fetch(\PDO::FETCH_ASSOC);
-      if (!$row) {
-        return FALSE;
-      }
-      switch ($mode) {
-        case \PDO::FETCH_OBJ:
-          $ret = new \stdClass();
-          foreach ($row as $column => $value) {
-            $ret->$column = $value === NULL ? NULL : (string) $value;
-          }
-          return $ret;
+        return $row;
 
-        case \PDO::FETCH_CLASS:
-          $ret = new $fetch_class();
-          foreach ($row as $column => $value) {
-            $ret->$column = $value === NULL ? NULL : (string) $value;
-          }
-          return $ret;
+      case \PDO::FETCH_NUM:
+        $row = $dbal_statement->fetch(FetchMode::NUMERIC);
+        if (!$row) {
+          return FALSE;
+        }
+        foreach ($row as $column => &$value) {
+          $value = $value === NULL ? NULL : (string) $value;
+        }
+        return $row;
 
-        default:
-          throw new MysqliException("Unknown fetch type '{$mode}'");
-      }
+      case \PDO::FETCH_BOTH:
+        $row = $dbal_statement->fetch(FetchMode::MIXED);
+        if (!$row) {
+          return FALSE;
+        }
+        foreach ($row as $column => &$value) {
+          $value = $value === NULL ? NULL : (string) $value;
+        }
+        return $row;
+
+      case \PDO::FETCH_OBJ:
+        $row = $dbal_statement->fetch(FetchMode::STANDARD_OBJECT);
+        if (!$row) {
+          return FALSE;
+        }
+        return $row;
+
+      case \PDO::FETCH_COLUMN:
+        $row = $dbal_statement->fetch(FetchMode::COLUMN);
+        if (!$row) {
+          return FALSE;
+        }
+        foreach ($row as $column => &$value) {
+          $value = $value === NULL ? NULL : (string) $value;
+        }
+        return $row;
+
+      case \PDO::FETCH_CLASS:
+        $row = $dbal_statement->fetch(FetchMode::CUSTOM_OBJECT);
+        return $row;
+
+      case \PDO::FETCH_CLASS | \PDO::FETCH_CLASSTYPE:
+        $row = $dbal_statement->fetch(FetchMode::CUSTOM_OBJECT);
+        return $row;
+
+      default:
+        throw new MysqliException("Unknown fetch type '{$mode}'");
     }
   }
 
