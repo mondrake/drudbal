@@ -294,8 +294,7 @@ class Statement implements \IteratorAggregate, StatementInterface {
     }
     else {
       if (is_string($mode)) {
-        $class = $mode;
-        $this->setFetchMode(\PDO::FETCH_CLASS, $class);
+        $this->setFetchMode(\PDO::FETCH_CLASS, $mode);
         $mode = \PDO::FETCH_CLASS;
       }
       else {
@@ -321,7 +320,7 @@ class Statement implements \IteratorAggregate, StatementInterface {
           return (object) $row;
 
         case \PDO::FETCH_CLASS:
-          $class_obj = new $class();
+          $class_obj = new $this->fetchClass();
           foreach ($row as $column => $value) {
             $class_obj->$column = $value;
           }
