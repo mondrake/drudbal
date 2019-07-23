@@ -3,8 +3,6 @@
 namespace Drupal\Driver\Database\dbal\DbalExtension;
 
 use Doctrine\DBAL\Connection as DbalConnection;
-use Doctrine\DBAL\Driver\Mysqli\MysqliException;
-use Doctrine\DBAL\FetchMode;
 use Doctrine\DBAL\Statement as DbalStatement;
 
 /**
@@ -33,54 +31,13 @@ class MysqliExtension extends AbstractMySqlExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateFetch(DbalStatement $dbal_statement, $mode, $fetch_class) {
-    $row = $dbal_statement->fetch(FetchMode::ASSOCIATIVE);
-    if (!$row) {
-      return FALSE;
+  public function processFetchedRecord(array $record) : array {
+    // Enforce all values are of type 'string'.
+    $result = [];
+    foreach ($record as $column => $value) {
+      $result[$column] = $value === NULL ? NULL : (string) $value;
     }
-    foreach ($row as $column => &$value) {
-      $value = $value === NULL ? NULL : (string) $value;
-    }
-    unset($value);
-    switch ($mode) {
-      case \PDO::FETCH_ASSOC:
-        return $row;
-
-      case \PDO::FETCH_NUM:
-        $num = [];
-        foreach ($row as $column => $value) {
-          $num[] = $value;
-        }
-        return $num;
-
-      case \PDO::FETCH_BOTH:
-        $num = [];
-        foreach ($row as $column => $value) {
-          $num[] = $value;
-        }
-        return $row + $num;
-
-      case \PDO::FETCH_OBJ:
-        return (object) $row;
-
-      case \PDO::FETCH_CLASS:
-        $class_obj = new $fetch_class();
-        foreach ($row as $column => $value) {
-          $class_obj->$column = $value;
-        }
-        return $class_obj;
-
-      case \PDO::FETCH_CLASS | \PDO::FETCH_CLASSTYPE:
-        $class = array_shift($row);
-        $class_obj = new $class();
-        foreach ($row as $column => $value) {
-          $class_obj->$column = $value;
-        }
-        return $class_obj;
-
-      default:
-        throw new MysqliException("Unknown fetch type '{$mode}'");
-    }
+    return $result;
   }
 
   /**

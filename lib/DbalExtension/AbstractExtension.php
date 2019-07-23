@@ -351,7 +351,7 @@ class AbstractExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function processFetchedRecord(array $record) : array;
+  public function processFetchedRecord(array $record) : array {
     return $record;
   }
 
