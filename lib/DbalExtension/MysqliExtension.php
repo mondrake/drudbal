@@ -46,10 +46,18 @@ class MysqliExtension extends AbstractMySqlExtension {
         return $row;
 
       case \PDO::FETCH_NUM:
-        return $row;
+        $num = [];
+        foreach ($row as $column => $value) {
+          $num[] = $value;
+        }
+        return $num;
 
       case \PDO::FETCH_BOTH:
-        return $row;
+        $num = [];
+        foreach ($row as $column => $value) {
+          $num[] = $value;
+        }
+        return $row + $num;
 
       case \PDO::FETCH_OBJ:
         return (object) $row;
