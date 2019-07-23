@@ -4,6 +4,7 @@ namespace Drupal\Driver\Database\dbal\DbalExtension;
 
 use Doctrine\DBAL\Driver\PDOException;
 use Doctrine\DBAL\Connection as DbalConnection;
+use Doctrine\DBAL\FetchMode;
 use Doctrine\DBAL\Statement as DbalStatement;
 
 /**
