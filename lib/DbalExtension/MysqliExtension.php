@@ -41,6 +41,7 @@ class MysqliExtension extends AbstractMySqlExtension {
     foreach ($row as $column => &$value) {
       $value = $value === NULL ? NULL : (string) $value;
     }
+    unset($value);
     switch ($mode) {
       case \PDO::FETCH_ASSOC:
         return $row;
