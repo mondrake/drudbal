@@ -302,7 +302,42 @@ class Statement implements \IteratorAggregate, StatementInterface {
         $mode = $mode ?: $this->defaultFetchMode;
       }
 
-      return $this->dbh->getDbalExtension()->delegateFetch($this->dbalStatement, $mode, $this->fetchClass);
+      $dbal_row = $this->dbalStatement->fetch(FetchMode::ASSOCIATIVE);
+      if (!$dbal_row) {
+        return FALSE;
+      }
+      $row = $this->dbh->getDbalExtension()->processFetchedRecord($dbal_row);
+      switch ($mode) {
+        case \PDO::FETCH_ASSOC:
+          return $row;
+
+        case \PDO::FETCH_NUM:
+          return array_values($row);
+
+        case \PDO::FETCH_BOTH:
+          return $row + array_values($row);
+
+        case \PDO::FETCH_OBJ:
+          return (object) $row;
+
+        case \PDO::FETCH_CLASS:
+          $class_obj = new $fetch_class();
+          foreach ($row as $column => $value) {
+            $class_obj->$column = $value;
+          }
+          return $class_obj;
+
+        case \PDO::FETCH_CLASS | \PDO::FETCH_CLASSTYPE:
+          $class = array_shift($row);
+          $class_obj = new $class();
+          foreach ($row as $column => $value) {
+            $class_obj->$column = $value;
+          }
+          return $class_obj;
+
+        default:
+          throw new DBALException("Unknown fetch type '{$mode}'");
+      }
     }
   }
 
