@@ -522,67 +522,20 @@ if ($this->getDebugging()) error_log($query . ' : ' . var_export($args, TRUE));
   /**
    * {@inheritdoc}
    */
-  public function delegateFetch(DbalStatement $dbal_statement, $mode, $fetch_class) {
-    if ($mode <= \PDO::FETCH_BOTH) {
-      $row = $dbal_statement->fetch($mode);
-      if (!$row) {
-        return FALSE;
+  public function processFetchedRecord(array $record) : array {
+    // Enforce all values are of type 'string'.
+    $result = [];
+    foreach ($record as $column => $value) {
+      $column = strtolower($column);
+      if ($column === 'doctrine_rownum') {
+        continue;
       }
-      // @todo stringify also FETCH_NUM and FETCH_BOTH
-      if ($mode === \PDO::FETCH_ASSOC) {
-        $adj_row = [];
-        foreach ($row as $column => $value) {
-          $column = strtolower($column);
-          if ($column === 'doctrine_rownum') {
-            continue;
-          }
-          if (isset($this->dbIdentifiersMap[$column])) {
-            $column = $this->dbIdentifiersMap[$column];
-          }
-          $adj_row[$column] = $value === self::ORACLE_EMPTY_STRING_REPLACEMENT ? '' : (string) $value;
-        }
-        $row = $adj_row;
+      if (isset($this->dbIdentifiersMap[$column])) {
+        $column = $this->dbIdentifiersMap[$column];
       }
-      return $row;
+      $result[$column] = $value === self::ORACLE_EMPTY_STRING_REPLACEMENT ? '' : (string) $value;
     }
-    else {
-      $row = $dbal_statement->fetch(\PDO::FETCH_ASSOC);
-      if (!$row) {
-        return FALSE;
-      }
-      switch ($mode) {
-        case \PDO::FETCH_OBJ:
-          $ret = new \stdClass();
-          foreach ($row as $column => $value) {
-            $column = strtolower($column);
-            if ($column === 'doctrine_rownum') {
-              continue;
-            }
-            if (isset($this->dbIdentifiersMap[$column])) {
-              $column = $this->dbIdentifiersMap[$column];
-            }
-            $ret->$column = $value === self::ORACLE_EMPTY_STRING_REPLACEMENT ? '' : (string) $value;
-          }
-          return $ret;
-
-        case \PDO::FETCH_CLASS:
-          $ret = new $fetch_class();
-          foreach ($row as $column => $value) {
-            $column = strtolower($column);
-            if ($column === 'doctrine_rownum') {
-              continue;
-            }
-            if (isset($this->dbIdentifiersMap[$column])) {
-              $column = $this->dbIdentifiersMap[$column];
-            }
-            $ret->$column = $value === self::ORACLE_EMPTY_STRING_REPLACEMENT ? '' : (string) $value;
-          }
-          return $ret;
-
-        default:
-          throw new MysqliException("Unknown fetch type '{$mode}'");
-      }
-    }
+    return $result;
   }
 
   /**
