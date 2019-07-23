@@ -1,0 +1,12 @@
+diff --git a/core/tests/Drupal/KernelTests/Core/Database/SelectOrderedTest.php b/core/tests/Drupal/KernelTests/Core/Database/SelectOrderedTest.php
+index a8fd385f0a..00fd1d863f 100644
+--- a/core/tests/Drupal/KernelTests/Core/Database/SelectOrderedTest.php
++++ b/core/tests/Drupal/KernelTests/Core/Database/SelectOrderedTest.php
+@@ -50,6 +50,7 @@ public function testSimpleSelectMultiOrdered() {
+       ['Paul', 26, 'Songwriter'],
+     ];
+     $results = $result->fetchAll(\PDO::FETCH_NUM);
++    $this->assertSame($expected, $results);
+     foreach ($expected as $k => $record) {
+       $num_records++;
+       foreach ($record as $kk => $col) {
