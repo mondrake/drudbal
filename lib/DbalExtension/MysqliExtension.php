@@ -62,9 +62,6 @@ class MysqliExtension extends AbstractMySqlExtension {
       case \PDO::FETCH_OBJ:
         return (object) $row;
 
-      case \PDO::FETCH_COLUMN:
-        return $row;
-
       case \PDO::FETCH_CLASS:
         $class_obj = new $fetch_class();
         foreach ($row as $column => $value) {
@@ -73,7 +70,12 @@ class MysqliExtension extends AbstractMySqlExtension {
         return $class_obj;
 
       case \PDO::FETCH_CLASS | \PDO::FETCH_CLASSTYPE:
-        return $row;
+        $class = array_shift($row);
+        $class_obj = new $class();
+        foreach ($row as $column => $value) {
+          $class_obj->$column = $value;
+        }
+        return $class_obj;
 
       default:
         throw new MysqliException("Unknown fetch type '{$mode}'");
