@@ -32,7 +32,7 @@ env:
   matrix:
     #- DRUDBAL_ENV="mysql" TEST_ARGS="-v --group Database"
     #- DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Database,Entity,Field"
-    #- DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Database"
+    - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Database"
     #- DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Installer,Cache,Config"
     #- DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group field"
     #- DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group file"
@@ -45,7 +45,7 @@ env:
     #- DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group views"
     #- DRUDBAL_ENV="sqlite" TEST_ARGS="--group Database"
     #- DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database,Entity,Field"
-    #- DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database"
+    - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database"
     #- DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Installer,Cache,Config"
     #- DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group field"
     #- DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group file"
