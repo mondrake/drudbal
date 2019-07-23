@@ -34,60 +34,37 @@ class MysqliExtension extends AbstractMySqlExtension {
    * {@inheritdoc}
    */
   public function delegateFetch(DbalStatement $dbal_statement, $mode, $fetch_class) {
+    $row = $dbal_statement->fetch(FetchMode::ASSOCIATIVE);
+    if (!$row) {
+      return FALSE;
+    }
+    foreach ($row as $column => &$value) {
+      $value = $value === NULL ? NULL : (string) $value;
+    }
     switch ($mode) {
       case \PDO::FETCH_ASSOC:
-        $row = $dbal_statement->fetch(FetchMode::ASSOCIATIVE);
-        if (!$row) {
-          return FALSE;
-        }
-        foreach ($row as $column => &$value) {
-          $value = $value === NULL ? NULL : (string) $value;
-        }
         return $row;
 
       case \PDO::FETCH_NUM:
-        $row = $dbal_statement->fetch(FetchMode::NUMERIC);
-        if (!$row) {
-          return FALSE;
-        }
-        foreach ($row as $column => &$value) {
-          $value = $value === NULL ? NULL : (string) $value;
-        }
         return $row;
 
       case \PDO::FETCH_BOTH:
-        $row = $dbal_statement->fetch(FetchMode::MIXED);
-        if (!$row) {
-          return FALSE;
-        }
-        foreach ($row as $column => &$value) {
-          $value = $value === NULL ? NULL : (string) $value;
-        }
         return $row;
 
       case \PDO::FETCH_OBJ:
-        $row = $dbal_statement->fetch(FetchMode::STANDARD_OBJECT);
-        if (!$row) {
-          return FALSE;
-        }
-        return $row;
+        return (object) $row;
 
       case \PDO::FETCH_COLUMN:
-        $row = $dbal_statement->fetch(FetchMode::COLUMN);
-        if (!$row) {
-          return FALSE;
-        }
-        foreach ($row as $column => &$value) {
-          $value = $value === NULL ? NULL : (string) $value;
-        }
         return $row;
 
       case \PDO::FETCH_CLASS:
-        $row = $dbal_statement->fetch(FetchMode::CUSTOM_OBJECT);
-        return $row;
+        $class_obj = new $fetch_class();
+        foreach ($row as $column => $value) {
+          $class_obj->$column = $value;
+        }
+        return $class_obj;
 
       case \PDO::FETCH_CLASS | \PDO::FETCH_CLASSTYPE:
-        $row = $dbal_statement->fetch(FetchMode::CUSTOM_OBJECT);
         return $row;
 
       default:
