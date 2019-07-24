@@ -556,16 +556,6 @@ class PDOSqliteExtension extends AbstractExtension {
   }
 
   /**
-   * {@inheritdoc}
-   */
-  public function delegateFetch(DbalStatement $dbal_statement, $mode, $fetch_class) {
-    if ($mode === \PDO::FETCH_CLASS) {
-      $dbal_statement->setFetchMode($mode, $fetch_class);
-    }
-    return $dbal_statement->fetch($mode);
-  }
-
-  /**
    * Select delegated methods.
    */
 

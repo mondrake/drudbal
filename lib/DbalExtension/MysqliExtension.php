@@ -3,7 +3,6 @@
 namespace Drupal\Driver\Database\dbal\DbalExtension;
 
 use Doctrine\DBAL\Connection as DbalConnection;
-use Doctrine\DBAL\Driver\Mysqli\MysqliException;
 use Doctrine\DBAL\Statement as DbalStatement;
 
 /**
@@ -32,44 +31,13 @@ class MysqliExtension extends AbstractMySqlExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateFetch(DbalStatement $dbal_statement, $mode, $fetch_class) {
-    if ($mode <= \PDO::FETCH_BOTH) {
-      $row = $dbal_statement->fetch($mode);
-      if (!$row) {
-        return FALSE;
-      }
-      // @todo stringify also FETCH_NUM and FETCH_BOTH
-      if ($mode === \PDO::FETCH_ASSOC) {
-        foreach ($row as $column => &$value) {
-          $value = $value === NULL ? NULL : (string) $value;
-        }
-      }
-      return $row;
+  public function processFetchedRecord(array $record) : array {
+    // Enforce all values are of type 'string'.
+    $result = [];
+    foreach ($record as $column => $value) {
+      $result[$column] = $value === NULL ? NULL : (string) $value;
     }
-    else {
-      $row = $dbal_statement->fetch(\PDO::FETCH_ASSOC);
-      if (!$row) {
-        return FALSE;
-      }
-      switch ($mode) {
-        case \PDO::FETCH_OBJ:
-          $ret = new \stdClass();
-          foreach ($row as $column => $value) {
-            $ret->$column = $value === NULL ? NULL : (string) $value;
-          }
-          return $ret;
-
-        case \PDO::FETCH_CLASS:
-          $ret = new $fetch_class();
-          foreach ($row as $column => $value) {
-            $ret->$column = $value === NULL ? NULL : (string) $value;
-          }
-          return $ret;
-
-        default:
-          throw new MysqliException("Unknown fetch type '{$mode}'");
-      }
-    }
+    return $result;
   }
 
   /**

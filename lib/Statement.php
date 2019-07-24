@@ -8,15 +8,13 @@ use Drupal\Core\Database\StatementInterface;
 use Drupal\Core\Database\RowCountException;
 use Drupal\Driver\Database\dbal\Connection as DruDbalConnection;
 use Doctrine\DBAL\DBALException;
+use Doctrine\DBAL\FetchMode;
 use Doctrine\DBAL\SQLParserUtils;
 
 // @todo organize better prefetch vs normal
 // @todo DBAL 2.6.0:
-// provides PDO::FETCH_OBJ emulation for mysqli and oci8 statements, check;
 // Normalize method signatures for `fetch()` and `fetchAll()`, ensuring compatibility with the `PDOStatement` signature
 // `ResultStatement#fetchAll()` must define 3 arguments in order to be compatible with `PDOStatement#fetchAll()`
-// @todo DBAL 2.7:
-// remove usage of PDO:: constants
 
 /**
  * DruDbal implementation of \Drupal\Core\Database\Statement.
@@ -243,7 +241,7 @@ class Statement implements \IteratorAggregate, StatementInterface {
 
       // Fetch all the data from the reply, in order to release any lock
       // as soon as possible.
-      $this->data = $this->dbalStatement->fetchAll(\PDO::FETCH_ASSOC);
+      $this->data = $this->dbalStatement->fetchAll(FetchMode::ASSOCIATIVE);
       // Destroy the statement as soon as possible. See the documentation of
       // \Drupal\Core\Database\Driver\sqlite\Statement for an explanation.
       unset($this->dbalStatement);
@@ -303,7 +301,42 @@ class Statement implements \IteratorAggregate, StatementInterface {
         $mode = $mode ?: $this->defaultFetchMode;
       }
 
-      return $this->dbh->getDbalExtension()->delegateFetch($this->dbalStatement, $mode, $this->fetchClass);
+      $dbal_row = $this->dbalStatement->fetch(FetchMode::ASSOCIATIVE);
+      if (!$dbal_row) {
+        return FALSE;
+      }
+      $row = $this->dbh->getDbalExtension()->processFetchedRecord($dbal_row);
+      switch ($mode) {
+        case \PDO::FETCH_ASSOC:
+          return $row;
+
+        case \PDO::FETCH_NUM:
+          return array_values($row);
+
+        case \PDO::FETCH_BOTH:
+          return $row + array_values($row);
+
+        case \PDO::FETCH_OBJ:
+          return (object) $row;
+
+        case \PDO::FETCH_CLASS:
+          $class_obj = new $this->fetchClass();
+          foreach ($row as $column => $value) {
+            $class_obj->$column = $value;
+          }
+          return $class_obj;
+
+        case \PDO::FETCH_CLASS | \PDO::FETCH_CLASSTYPE:
+          $class = array_shift($row);
+          $class_obj = new $class();
+          foreach ($row as $column => $value) {
+            $class_obj->$column = $value;
+          }
+          return $class_obj;
+
+        default:
+          throw new DBALException("Unknown fetch type '{$mode}'");
+      }
     }
   }
 
@@ -635,7 +668,7 @@ class Statement implements \IteratorAggregate, StatementInterface {
         case \PDO::FETCH_OBJ:
           return (object) $this->currentRow;
         case \PDO::FETCH_CLASS | \PDO::FETCH_CLASSTYPE:
-          $class_name = array_unshift($this->currentRow);
+          $class_name = array_shift($this->currentRow);
           // Deliberate no break.
         case \PDO::FETCH_CLASS:
           if (!isset($class_name)) {

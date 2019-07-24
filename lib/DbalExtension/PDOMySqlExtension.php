@@ -42,18 +42,4 @@ class PDOMySqlExtension extends AbstractMySqlExtension {
     return $this->dbalConnection->getWrappedConnection()->getAttribute(\PDO::ATTR_CLIENT_VERSION);
   }
 
-  /**
-   * Statement delegated methods.
-   */
-
-  /**
-   * {@inheritdoc}
-   */
-  public function delegateFetch(DbalStatement $dbal_statement, $mode, $fetch_class) {
-    if ($mode === \PDO::FETCH_CLASS) {
-      $dbal_statement->setFetchMode($mode, $fetch_class);
-    }
-    return $dbal_statement->fetch($mode);
-  }
-
 }

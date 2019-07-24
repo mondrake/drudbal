@@ -421,23 +421,15 @@ interface DbalExtensionInterface {
   public function alterStatement(&$query, array &$args);
 
   /**
-   * Fetches the next row from a result set.
+   * Processes a record fetched by DBAL for ensuring compliance with Drupal.
    *
-   * See http://php.net/manual/pdo.constants.php for the definition of the
-   * constants used.
+   * @param array $record
+   *   The record as fetched with FetchMode::ASSOCIATIVE by DBAL.
    *
-   * @param \Doctrine\DBAL\Statement $dbal_statement
-   *   The DBAL statement.
-   * @param int $mode
-   *   One of the PDO::FETCH_* constants.
-   * @param string $fetch_class
-   *   The class to be used for returning row results if \PDO::FETCH_CLASS
-   *   is specified for $mode.
-   *
-   * @return mixed
-   *   A result, formatted according to $mode.
+   * @return array
+   *   The processed record.
    */
-  public function delegateFetch(DbalStatement $dbal_statement, $mode, $fetch_class);
+  public function processFetchedRecord(array $record) : array;
 
   /**
    * Returns the number of rows affected by the last SQL statement.
