@@ -1059,7 +1059,7 @@ class PDOSqliteExtension extends AbstractExtension {
         $schema['fields'][$column->getName()]['unsigned'] = $column->getUnsigned();
       }
       if ($column->getLength() !== NULL) {
-        $schema['fields'][$column->getName()]['lenght'] = $column->getLength();
+        $schema['fields'][$column->getName()]['length'] = $column->getLength();
       }
       if ($column->getComment() !== NULL) {
         $schema['fields'][$column->getName()]['comment'] = $column->getComment();

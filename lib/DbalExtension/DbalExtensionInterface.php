@@ -935,6 +935,30 @@ interface DbalExtensionInterface {
   public function delegateAddIndex(DbalSchema $dbal_schema, $table_full_name, $index_full_name, $drupal_table_name, $drupal_index_name, array $drupal_field_specs, array $indexes_spec);
 
   /**
+   * Normalizes the fields of an index before creation.
+   *
+   * @param \Doctrine\DBAL\Schema\Schema $dbal_schema
+   *   The DBAL schema object.
+   * @param string $table_full_name
+   *   The name of the table.
+   * @param string $index_full_name
+   *   The name of the index.
+   * @param string $drupal_table_name
+   *   The Drupal name of the table.
+   * @param string $drupal_index_name
+   *   The Drupal name of the index.
+   * @param array $drupal_field_specs
+   *   The field specification array, as taken from a schema definition.
+   * @param array $indexes_spec
+   *   The table specification for the table, containing the index
+   *   specification.
+   *
+   * @return array
+   *   An array of normalized fields.
+   */
+  public function preprocessIndexFields(DbalSchema $dbal_schema, string $table_full_name, string $index_full_name, string $drupal_table_name, string $drupal_index_name, array $drupal_field_specs, array $indexes_spec) : array;
+
+  /**
    * Drops the primary key.
    *
    * @param bool $primary_key_dropped_by_extension

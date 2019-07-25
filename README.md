@@ -29,7 +29,7 @@ The code in the ```master``` branch is working on a __MySql database__, using ei
 2. it is passing a selection of core PHPUnit tests for the Database, Cache, Entity and views groups of tests, executed on Travis CI. The latest patches for the issues listed in 'Related Drupal issues' below need to be applied to get a clean test run.
 
 The driver can also install on __Oracle__ 11.2.0.2.0, using DBAL 'oci8' driver, but fails tests. Big problems with Oracle:
-1. there's a hard limit of 30 chars on database asset identifiers (tables, triggers, indexes, etc.). Apparently Oracle 12.2 overcomes that limit, raising lenght to 128 chars, but this currently requires all sort of workarounds as many objects names in Drupal are longer than that.
+1. there's a hard limit of 30 chars on database asset identifiers (tables, triggers, indexes, etc.). Apparently Oracle 12.2 overcomes that limit, raising length to 128 chars, but this currently requires all sort of workarounds as many objects names in Drupal are longer than that.
 2. Oracle treats NULL and '' (empty string) in the same way. Drupal practice is to use these as different items - it builds CREATE TABLE statements with column definitions like "cid VARCHAR(255) DEFAULT '' NOT NULL" which is self-contradicting in Oracle terms.
 3. DBAL schema introspection is very slow on Oracle, see https://github.com/doctrine/dbal/issues/2676. This makes difficult to run the interactive installer since as at each batch request the schema get rebuilt.
 
@@ -57,16 +57,17 @@ Very rough instructions to install Drupal from scratch with this db driver under
 1. Requirements: build a Drupal code base via Composer, using latest Drupal development branch code and PHP 7.3+.
 
 2. Get the library via Composer, it will install Doctrine DBAL as well:
-```
-$ composer require mondrake/drudbal:dev-master
-```
+  ```
+  $ composer require mondrake/drudbal:dev-master
+  ```
 
-3. Create a directory for the contrib driver, and create a symlink to the 'dbal' subdirectory of the module. This way, when git pulling updates from the module's repo, the driver code will also be aligned.
-```
-$ mkdir -p [DRUPAL_ROOT]/drivers/lib/Drupal/Driver/Database/
-$ cd [DRUPAL_ROOT]/drivers/lib/Drupal/Driver/Database/
-$ ln -s [DRUPAL_ROOT]/libraries/drudbal/lib dbal
-```
+3. Create a directory for the contrib driver, and create a symlink to the 'dbal' subdirectory of the module.
+This way, when running ```composer update``` for ```mondrake/drudbal```, the driver will be updated.
+  ```
+  $ mkdir -p [DRUPAL_ROOT]/drivers/lib/Drupal/Driver/Database/
+  $ cd [DRUPAL_ROOT]/drivers/lib/Drupal/Driver/Database/
+  $ ln -s [DRUPAL_ROOT]/libraries/drudbal/lib dbal
+  ```
 
 4. Launch the interactive installer. Proceed as usual and when on the db selection form, select 'Doctrine DBAL'
 and enter a 'database URL' compliant with Doctrine DBAL syntax. __Note:__ the driver works only with _mysql, mysqli, oci8 or sqlite_ DBAL drivers.
@@ -87,7 +88,6 @@ https://github.com/doctrine/dbal/pull/682        | [WIP] [DBAL-218] Add bulk ins
 https://github.com/doctrine/dbal/pull/2717       | Introspect table comments in Doctrine\DBAL\Schema\Table when generating schema | |
 https://github.com/doctrine/dbal/issues/1033     | DBAL-1096: schema-tool:update does not understand columnDefinition correctly | |
 https://github.com/doctrine/dbal/pull/881        | Add Mysql per-column charset support | |
-https://github.com/doctrine/dbal/pull/2412       | Add mysql specific indexes with lengths | fixed in 2.9.0 |
 https://github.com/doctrine/migrations/issues/17 | Data loss on table renaming. | |
 https://github.com/doctrine/dbal/issues/2676     | Optimize Oracle SchemaManager | |
 https://github.com/doctrine/dbal/pull/2415 .     | Add some MySQL platform data in Tables | fixed in 2.9.0 |

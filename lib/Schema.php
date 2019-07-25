@@ -719,9 +719,22 @@ class Schema extends DatabaseSchema {
     }
 
     // DBAL extension did not pick up, proceed with DBAL.
-    $current_schema = $this->dbalSchema();
-    $to_schema = clone $current_schema;
-    $to_schema->getTable($table_full_name)->addIndex($this->dbalGetFieldList($fields), $index_full_name);
+
+    // Normalizes index fields.
+    $normalized_fields = $this->dbalExtension->preprocessIndexFields($this->dbalSchema(), $table_full_name, $index_full_name, $table, $name, $fields, $spec);
+
+    // Add index.
+    $to_schema = clone $this->dbalSchema();
+    $column_lengths = [];
+    foreach ($normalized_fields as $column) {
+      if (is_array($column)) {
+        $column_lengths[] = $column[1];
+      }
+      else {
+        $column_lengths[] = NULL;
+      }
+    }
+    $to_schema->getTable($table_full_name)->addIndex($this->dbalGetFieldList($fields), $index_full_name, [], ['lengths' => $column_lengths]);
     $this->dbalExecuteSchemaChange($to_schema);
   }
 
