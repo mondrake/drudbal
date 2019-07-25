@@ -57,16 +57,17 @@ Very rough instructions to install Drupal from scratch with this db driver under
 1. Requirements: build a Drupal code base via Composer, using latest Drupal development branch code and PHP 7.3+.
 
 2. Get the library via Composer, it will install Doctrine DBAL as well:
-```
-$ composer require mondrake/drudbal:dev-master
-```
+  ```
+  $ composer require mondrake/drudbal:dev-master
+  ```
 
-3. Create a directory for the contrib driver, and create a symlink to the 'dbal' subdirectory of the module. This way, when git pulling updates from the module's repo, the driver code will also be aligned.
-```
-$ mkdir -p [DRUPAL_ROOT]/drivers/lib/Drupal/Driver/Database/
-$ cd [DRUPAL_ROOT]/drivers/lib/Drupal/Driver/Database/
-$ ln -s [DRUPAL_ROOT]/libraries/drudbal/lib dbal
-```
+3. Create a directory for the contrib driver, and create a symlink to the 'dbal' subdirectory of the module.
+This way, when running ```composer update``` for ```mondrake/drudbal```, the driver will be updated.
+  ```
+  $ mkdir -p [DRUPAL_ROOT]/drivers/lib/Drupal/Driver/Database/
+  $ cd [DRUPAL_ROOT]/drivers/lib/Drupal/Driver/Database/
+  $ ln -s [DRUPAL_ROOT]/libraries/drudbal/lib dbal
+  ```
 
 4. Launch the interactive installer. Proceed as usual and when on the db selection form, select 'Doctrine DBAL'
 and enter a 'database URL' compliant with Doctrine DBAL syntax. __Note:__ the driver works only with _mysql, mysqli, oci8 or sqlite_ DBAL drivers.
@@ -87,7 +88,6 @@ https://github.com/doctrine/dbal/pull/682        | [WIP] [DBAL-218] Add bulk ins
 https://github.com/doctrine/dbal/pull/2717       | Introspect table comments in Doctrine\DBAL\Schema\Table when generating schema | |
 https://github.com/doctrine/dbal/issues/1033     | DBAL-1096: schema-tool:update does not understand columnDefinition correctly | |
 https://github.com/doctrine/dbal/pull/881        | Add Mysql per-column charset support | |
-https://github.com/doctrine/dbal/pull/2412       | Add mysql specific indexes with lengths | fixed in 2.9.0 |
 https://github.com/doctrine/migrations/issues/17 | Data loss on table renaming. | |
 https://github.com/doctrine/dbal/issues/2676     | Optimize Oracle SchemaManager | |
 https://github.com/doctrine/dbal/pull/2415 .     | Add some MySQL platform data in Tables | fixed in 2.9.0 |

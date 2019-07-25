@@ -751,7 +751,7 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
   public function delegateAddIndex(DbalSchema $dbal_schema, $table_full_name, $index_full_name, $drupal_table_name, $drupal_index_name, array $drupal_field_specs, array $indexes_spec) {
     // DBAL does not support creating indexes with column lenghts.
     // @see https://github.com/doctrine/dbal/pull/2412
-    $indexes_spec['indexes'][$drupal_index_name] = $drupal_field_specs;
+/*    $indexes_spec['indexes'][$drupal_index_name] = $drupal_field_specs;
     $indexes = $this->getNormalizedIndexes($indexes_spec);
     if ($this->dbalResolveIndexColumnNames($indexes[$drupal_index_name]) === FALSE) {
       $this->connection->query('ALTER TABLE ' . $table_full_name . ' ADD INDEX `' . $index_full_name . '` (' . $this->createKeySql($indexes[$drupal_index_name]) . ')');
@@ -760,7 +760,7 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
       $dbal_schema->getTable($table_full_name)->addIndex($this->connection->schema()->dbalGetFieldList($drupal_field_specs), $index_full_name);
 
       return TRUE;
-    }
+    }*/
     return FALSE;
   }
 

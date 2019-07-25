@@ -712,6 +712,15 @@ class Schema extends DatabaseSchema {
 
     $table_full_name = $this->tableName($table);
     $index_full_name = $this->dbalExtension->getDbIndexName('addIndex', $this->dbalSchema(), $table, $name, $this->getPrefixInfo($table));
+    $column_lenghts = [];
+    foreach ($fields as $column) {
+      if (is_array($column)) {
+        $column_lenghts[] = $column[1];
+      }
+      else {
+        $column_lenghts[] = NULL;
+      }
+    }
 
     // Delegate to DBAL extension.
     if ($this->dbalExtension->delegateAddIndex($this->dbalSchema(), $table_full_name, $index_full_name, $table, $name, $fields, $spec)) {
@@ -721,7 +730,7 @@ class Schema extends DatabaseSchema {
     // DBAL extension did not pick up, proceed with DBAL.
     $current_schema = $this->dbalSchema();
     $to_schema = clone $current_schema;
-    $to_schema->getTable($table_full_name)->addIndex($this->dbalGetFieldList($fields), $index_full_name);
+    $to_schema->getTable($table_full_name)->addIndex($this->dbalGetFieldList($fields), $index_full_name, [], ['lenghts' => $column_lenghts]);
     $this->dbalExecuteSchemaChange($to_schema);
   }
 
