@@ -727,8 +727,8 @@ class Schema extends DatabaseSchema {
         $column_lenghts[] = NULL;
       }
     }
-throw new \Exception(var_export([$normalized_fields, $column_lenghts], true));
-    $to_schema->getTable($table_full_name)->addIndex($this->dbalGetFieldList($fields), $index_full_name, [], ['lenghts' => $column_lenghts]);
+//throw new \Exception(var_export([$normalized_fields, $column_lenghts], true));
+    $to_schema->getTable($table_full_name)->addIndex($this->dbalGetFieldList($fields), $index_full_name, [], ['lengths' => $column_lenghts]);
     $this->dbalExecuteSchemaChange($to_schema);
   }
 
