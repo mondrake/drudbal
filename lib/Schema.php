@@ -718,7 +718,9 @@ class Schema extends DatabaseSchema {
       return;
     }
 
-      // Normalizes index fields.
+    // DBAL extension did not pick up, proceed with DBAL.
+
+    // Normalizes index fields.
     $normalized_fields = $this->dbalExtension->preprocessIndexFields($this->dbalSchema(), $table_full_name, $index_full_name, $table, $name, $fields, $spec);
 
     // Add index.
@@ -732,7 +734,6 @@ class Schema extends DatabaseSchema {
         $column_lengths[] = NULL;
       }
     }
-//throw new \Exception(var_export([$normalized_fields, $column_lengths], true));
     $to_schema->getTable($table_full_name)->addIndex($this->dbalGetFieldList($fields), $index_full_name, [], ['lengths' => $column_lengths]);
     $this->dbalExecuteSchemaChange($to_schema);
   }
