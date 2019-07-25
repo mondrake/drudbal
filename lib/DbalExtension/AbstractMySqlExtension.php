@@ -714,40 +714,6 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateAddPrimaryKey(DbalSchema $dbal_schema, $table_full_name, $drupal_table_name, array $drupal_field_specs) {
-    // DBAL does not support creating indexes with column lengths.
-    // @see https://github.com/doctrine/dbal/pull/2412
-    if ($this->dbalResolveIndexColumnNames($drupal_field_specs) === FALSE) {
-      $this->connection->query('ALTER TABLE ' . $table_full_name . ' ADD PRIMARY KEY (' . $this->createKeySql($drupal_field_specs) . ')');
-
-      // Update DBAL Schema.
-      $dbal_schema->getTable($table_full_name)->setPrimaryKey($this->connection->schema()->dbalGetFieldList($drupal_field_specs));
-
-      return TRUE;
-    }
-    return FALSE;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function delegateAddUniqueKey(DbalSchema $dbal_schema, $table_full_name, $index_full_name, $drupal_table_name, $drupal_index_name, array $drupal_field_specs) {
-    // DBAL does not support creating indexes with column lengths.
-    // @see https://github.com/doctrine/dbal/pull/2412
-    if ($this->dbalResolveIndexColumnNames($drupal_field_specs) === FALSE) {
-      $this->connection->query('ALTER TABLE ' . $table_full_name . ' ADD UNIQUE KEY `' . $index_full_name . '` (' . $this->createKeySql($drupal_field_specs) . ')');
-
-      // Update DBAL Schema.
-      $dbal_schema->getTable($table_full_name)->addUniqueIndex($this->connection->schema()->dbalGetFieldList($drupal_field_specs), $index_full_name);
-
-      return TRUE;
-    }
-    return FALSE;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function preprocessIndexFields(DbalSchema $dbal_schema, string $table_full_name, string $index_full_name, string $drupal_table_name, string $drupal_index_name, array $drupal_field_specs, array $indexes_spec) : array {
     // We need to normalize the index columns length in MySql.
     $indexes_spec['indexes'][$drupal_index_name] = $drupal_field_specs;
@@ -875,31 +841,6 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
       }
     }
     return implode(', ', $return);
-  }
-
-  /**
-   * Determines if DBAL can process a list of fields.
-   *
-   * DBAL does not support creating indexes with column lengths, so here we
-   * determine if the extension should process adding keys/indexes instead
-   * of DBAL natively.
-   *
-   * @param array $fields
-   *   The array of fields in Drupal format.
-   *
-   * @return bool
-   *   FALSE if there is at least a column with length spec, TRUE if all the
-   *   columns are to be indexed to full length.
-   *
-   * @see https://github.com/doctrine/dbal/pull/2412
-   */
-  protected function dbalResolveIndexColumnNames(array $fields) {
-    foreach ($fields as $field) {
-      if (is_array($field)) {
-        return FALSE;
-      }
-    }
-    return TRUE;
   }
 
   /**
