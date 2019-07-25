@@ -716,6 +716,7 @@ class Schema extends DatabaseSchema {
     // Normalizes index fields.
     $normalized_fields = $this->dbalExtension->preprocessIndexFields($this->dbalSchema(), $table_full_name, $index_full_name, $table, $name, $fields, $spec);
 
+throw new \Exception(var_export($normalized_fields, true));
     // Add index.
     $to_schema = clone $this->dbalSchema();
     $column_lenghts = [];
