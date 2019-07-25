@@ -713,22 +713,27 @@ class Schema extends DatabaseSchema {
     $table_full_name = $this->tableName($table);
     $index_full_name = $this->dbalExtension->getDbIndexName('addIndex', $this->dbalSchema(), $table, $name, $this->getPrefixInfo($table));
 
-    // Normalizes index fields.
+    // Delegate to DBAL extension.
+    if ($this->dbalExtension->delegateAddIndex($this->dbalSchema(), $table_full_name, $index_full_name, $table, $name, $fields, $spec)) {
+      return;
+    }
+
+      // Normalizes index fields.
     $normalized_fields = $this->dbalExtension->preprocessIndexFields($this->dbalSchema(), $table_full_name, $index_full_name, $table, $name, $fields, $spec);
 
     // Add index.
     $to_schema = clone $this->dbalSchema();
-    $column_lenghts = [];
+    $column_lengths = [];
     foreach ($normalized_fields as $column) {
       if (is_array($column)) {
-        $column_lenghts[] = $column[1];
+        $column_lengths[] = $column[1];
       }
       else {
-        $column_lenghts[] = NULL;
+        $column_lengths[] = NULL;
       }
     }
-//throw new \Exception(var_export([$normalized_fields, $column_lenghts], true));
-    $to_schema->getTable($table_full_name)->addIndex($this->dbalGetFieldList($fields), $index_full_name, [], ['lengths' => $column_lenghts]);
+//throw new \Exception(var_export([$normalized_fields, $column_lengths], true));
+    $to_schema->getTable($table_full_name)->addIndex($this->dbalGetFieldList($fields), $index_full_name, [], ['lengths' => $column_lengths]);
     $this->dbalExecuteSchemaChange($to_schema);
   }
 
