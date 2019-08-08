@@ -30,27 +30,27 @@ env:
     #- SYMFONY_DEPRECATIONS_HELPER=disabled
 
   matrix:
-    #- DRUDBAL_ENV="mysql" TEST_ARGS="--group Database"
+    - DRUDBAL_ENV="mysql" TEST_ARGS="--group Database"
     - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Database,Entity,Field"
     - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Installer,Cache,Config"
-    #- DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group field"
-    #- DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group file"
-    #- DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group views"
+    - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group field"
+    - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group file"
+    - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group views"
     - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Database,Entity,Field"
     - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Installer,Cache,Config"
-    #- DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group field"
-    #- DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group file"
-    #- DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group views"
-    #- DRUDBAL_ENV="sqlite" TEST_ARGS="--group Database"
+    - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group field"
+    - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group file"
+    - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group views"
+    - DRUDBAL_ENV="sqlite" TEST_ARGS="--group Database"
     - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database,Entity,Field"
     - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Installer,Cache,Config"
-    #- DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group field"
-    #- DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group file"
-    #- DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group views"
-    #- DRUDBAL_ENV="dbal/sqlite/memory" TEST_ARGS="--group Database,Installer,Cache,Config,Entity,Field"
-    #- DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group Database"
-    #- DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group Installer,Cache,Config"
-    #- DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group views --testsuite kernel"
+    - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group field"
+    - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group file"
+    - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group views"
+    - DRUDBAL_ENV="dbal/sqlite/memory" TEST_ARGS="--group Database,Installer,Cache,Config,Entity,Field"
+    - DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group Database"
+    - DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group Installer,Cache,Config"
+    - DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group views --testsuite kernel"
 
 matrix:
   fast_finish: true
@@ -168,7 +168,7 @@ before_install:
   # [#3065166] Modernize Drupal\KernelTests\Core\Database\ConnectionUnitTest
   #- curl https://www.drupal.org/files/issues/2019-07-01/3065166-2.patch | git apply -v
   # [#2966607] Invalidating 'node_list' and other broad cache tags early in a transaction severely increases lock wait time and probability of deadlock
-  - curl https://www.drupal.org/files/issues/2019-08-05/2966607-114.patch | git apply
+  - curl https://www.drupal.org/files/issues/2019-08-08/2966607-119.patch | git apply
 
 install:
   # Copy the cloned repo to the libraries/drudbal directory, overriding the
