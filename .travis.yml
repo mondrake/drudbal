@@ -138,7 +138,7 @@ before_install:
         composer install --no-progress --no-suggest
         # Get Drupal Console
         composer require "drupal/console:^1.9.1" --no-progress --no-suggest
-        composer update doctrine/common --no-progress --no-suggest
+        composer update doctrine/common phpunit/phpunit phpspec/prophecy --with-dependencies --no-progress --no-suggest
         # Get Doctrine DBAL
         composer require "mondrake/drudbal:dev-master" --no-progress --no-suggest
       fi
