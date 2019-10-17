@@ -194,14 +194,14 @@ install:
 
   # Install Drupal.
   - cd $DRUPAL_PATH/core
-  - drupal site:install minimal $SIMPLETEST_DB --no-interaction
+  #- drupal site:install minimal $SIMPLETEST_DB --no-interaction
 
   # Get a webserver running.
   - drupal server $HOST_ADDR:$HTTP_PORT &
   - sleep 4s
 
   # Post install tasks.
-  - drupal site:status || true
+  #- drupal site:status || true
 
 script:
   # Only run selected tests to avoid Travis timeout.
