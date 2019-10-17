@@ -48,9 +48,9 @@ env:
     - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group file"
     - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group views"
     - DRUDBAL_ENV="dbal/sqlite/memory" TEST_ARGS="--group Database,Installer,Cache,Config,Entity,Field"
-    #- DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group Database"
-    #- DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group Installer,Cache,Config"
-    #- DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group views --testsuite kernel"
+    ##- DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group Database"
+    ##- DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group Installer,Cache,Config"
+    ##- DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group views --testsuite kernel"
 
 matrix:
   fast_finish: true
@@ -68,6 +68,11 @@ cache:
 
 services:
   - mysql
+
+mysql:
+  database: drudbal
+  username: root
+  encoding: utf8
 
 before_install:
   # Set variables.
@@ -129,6 +134,9 @@ before_install:
   # Add APCu extension.
   - echo "extension = apcu.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
   - echo "apc.enable_cli=1" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
+
+  # Create the test db.
+  - mysql -e 'CREATE DATABASE IF NOT EXISTS drudbal;'
 
   # Stage Drupal core to get dependencies.
   - |

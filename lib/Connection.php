@@ -551,6 +551,14 @@ class Connection extends DatabaseConnection {
         $rolled_back_other_active_savepoints = TRUE;
       }
     }
+
+    // Notify the callbacks about the rollback.
+    $callbacks = $this->rootTransactionEndCallbacks;
+    $this->rootTransactionEndCallbacks = [];
+    foreach ($callbacks as $callback) {
+      call_user_func($callback, FALSE);
+    }
+
     $this->connection->rollBack();
     if ($rolled_back_other_active_savepoints) {
       throw new TransactionOutOfOrderException();
@@ -592,12 +600,7 @@ class Connection extends DatabaseConnection {
       // If there are no more layers left then we should commit.
       unset($this->transactionLayers[$name]);
       if (empty($this->transactionLayers)) {
-        try {
-          $this->getDbalConnection()->commit();
-        }
-        catch (DbalConnectionException $e) {
-          throw new TransactionCommitFailedException();
-        }
+        $this->doCommit();
       }
       else {
         // Attempt to release this savepoint in the standard way.
@@ -612,6 +615,33 @@ class Connection extends DatabaseConnection {
           };
         }
       }
+    }
+  }
+
+  /**
+   * Do the actual commit, invoke post-commit callbacks.
+   *
+   * @internal
+   */
+  protected function doCommit() {
+    try {
+      $this->getDbalConnection()->commit();
+      $success = TRUE;
+    }
+    catch (DbalConnectionException $e) {
+      $success = FALSE;
+    }
+
+    if (!empty($this->rootTransactionEndCallbacks)) {
+      $callbacks = $this->rootTransactionEndCallbacks;
+      $this->rootTransactionEndCallbacks = [];
+      foreach ($callbacks as $callback) {
+        call_user_func($callback, $success);
+      }
+    }
+
+    if (!$success) {
+      throw new TransactionCommitFailedException();
     }
   }
 
