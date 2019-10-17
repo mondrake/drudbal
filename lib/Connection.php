@@ -625,7 +625,8 @@ class Connection extends DatabaseConnection {
    */
   protected function doCommit() {
     try {
-      $success = $this->getDbalConnection()->commit();
+      $this->getDbalConnection()->commit();
+      $success = TRUE;
     }
     catch (DbalConnectionException $e) {
       $success = FALSE;
