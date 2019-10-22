@@ -6,7 +6,7 @@ language: php
 sudo: required
 
 php:
-  - 7.3
+  - 7.4snapshot
 
 branches:
   except:
