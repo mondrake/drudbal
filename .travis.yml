@@ -171,10 +171,8 @@ before_install:
   - curl https://www.drupal.org/files/issues/2912973-2.patch | git apply
   # [#2992274] Installer tests fail if contrib driver hides database credentials form fields
   - curl https://www.drupal.org/files/issues/2019-04-02/2992274-5.patch | git apply
-  # [#2950132] Support PHPUnit 7 in Drupal 8
-  #- curl https://www.drupal.org/files/issues/2019-08-01/2950132-103.patch | git apply -v
-  # [#3065166] Modernize Drupal\KernelTests\Core\Database\ConnectionUnitTest
-  #- curl https://www.drupal.org/files/issues/2019-07-01/3065166-2.patch | git apply -v
+  # PHP 7.4 patch
+  - curl https://www.drupal.org/files/issues/2019-10-23/3086374-3-79.patch | git apply -v
 
 install:
   # Copy the cloned repo to the libraries/drudbal directory, overriding the
