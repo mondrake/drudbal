@@ -85,10 +85,9 @@ Issue | Description   | Info          |
 https://github.com/doctrine/dbal/issues/1349     | DBAL-182: Insert and Merge Query Objects | |
 https://github.com/doctrine/dbal/issues/1320     | DBAL-163: Upsert support in DBAL | |
 https://github.com/doctrine/dbal/pull/682        | [WIP] [DBAL-218] Add bulk insert query | |
-https://github.com/doctrine/dbal/pull/2717       | Introspect table comments in Doctrine\DBAL\Schema\Table when generating schema | |
-https://github.com/doctrine/dbal/pull/3512       | Support for comments on table in all databases | |
+https://github.com/doctrine/dbal/pull/2717       | Introspect table comments in Doctrine\DBAL\Schema\Table when generating schema | fixed in 2.10.0 |
+https://github.com/doctrine/dbal/pull/3512       | Support for comments on table in all databases | fixed in 2.10.0 |
 https://github.com/doctrine/dbal/issues/1033     | DBAL-1096: schema-tool:update does not understand columnDefinition correctly | |
-https://github.com/doctrine/dbal/pull/881        | Add Mysql per-column charset support | |
 https://github.com/doctrine/migrations/issues/17 | Data loss on table renaming. | |
 https://github.com/doctrine/dbal/issues/2676     | Optimize Oracle SchemaManager | |
 https://github.com/doctrine/dbal/pull/2415 .     | Add some MySQL platform data in Tables | fixed in 2.9.0 |
