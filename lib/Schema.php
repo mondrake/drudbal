@@ -402,7 +402,7 @@ class Schema extends DatabaseSchema {
     $primary_key_processed_by_extension = FALSE;
     $dbal_type = $this->getDbalColumnType($spec);
     $dbal_column_options = $this->getDbalColumnOptions('addField', $field, $dbal_type, $spec);
-dump($this->dbalSchema()->getTable($this->tableName($table)));
+if ($field === 'test_serial' && $table === 'test_table') dump($this->dbalSchema()->getTable($this->tableName($table)));
     if ($this->dbalExtension->delegateAddField($primary_key_processed_by_extension, $this->dbalSchema(), $table, $field, $spec, $keys_new, $dbal_column_options)) {
       $this->dbalSchemaForceReload();
     }
@@ -419,7 +419,7 @@ dump($this->dbalSchema()->getTable($this->tableName($table)));
       }
       $this->dbalExecuteSchemaChange($to_schema);
     }
-dump($this->dbalSchema()->getTable($this->tableName($table)));
+if ($field === 'test_serial' && $table === 'test_table') dump($this->dbalSchema()->getTable($this->tableName($table)));
 
     // Add unique keys.
     if (!empty($keys_new['unique keys'])) {
