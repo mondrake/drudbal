@@ -617,7 +617,7 @@ class AbstractExtension implements DbalExtensionInterface {
    * {@inheritdoc}
    */
   public function delegateGetTableComment(DbalSchema $dbal_schema, $drupal_table_name) {
-    throw new \RuntimeException("Table comments are not supported for '" . $this->dbalConnection->getDriver()->getName() . "'");
+    return $dbal_schema->getTable($this->tableName($drupal_table_name))->getComment();
   }
 
   /**

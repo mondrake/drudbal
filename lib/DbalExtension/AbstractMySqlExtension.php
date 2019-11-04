@@ -718,28 +718,6 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateGetTableComment(DbalSchema $dbal_schema, $drupal_table_name) {
-    // DBAL cannot retrieve table comments from introspected schema.
-    // @see https://github.com/doctrine/dbal/issues/1335
-    $dbal_query = $this->dbalConnection->createQueryBuilder();
-    $dbal_query
-      ->select('table_comment')
-      ->from('information_schema.tables')
-      ->where(
-          $dbal_query->expr()->andX(
-            $dbal_query->expr()->eq('table_schema', '?'),
-            $dbal_query->expr()->eq('table_name', '?')
-          )
-        )
-      ->setParameter(0, $this->dbalConnection->getDatabase())
-      ->setParameter(1, $this->tableName($drupal_table_name));
-    $comment = $dbal_query->execute()->fetchColumn();
-    return $comment;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function alterSetTableComment(&$comment, $drupal_table_name, DbalSchema $dbal_schema, array $drupal_table_spec) {
     $comment = Unicode::truncate($comment, self::COMMENT_MAX_TABLE, TRUE, TRUE);
     return $this;

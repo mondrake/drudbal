@@ -990,13 +990,6 @@ class PDOSqliteExtension extends AbstractExtension {
   }
 
   /**
-   * {@inheritdoc}
-   */
-  public function delegateGetTableComment(DbalSchema $dbal_schema, $drupal_table_name) {
-    throw new \RuntimeException('Table comments are not supported in SQlite.');
-  }
-
-  /**
    * Find out the schema of a table.
    *
    * This function uses introspection methods provided by the database to
