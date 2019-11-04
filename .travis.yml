@@ -35,12 +35,14 @@ env:
     - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Installer,Cache,Config"
     - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group field"
     - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group file"
-    - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group views"
+    - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group views --testsuite=kernel"
+    - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group views --testsuite=functional"
     - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Database,Entity,Field"
     - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Installer,Cache,Config"
     - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group field"
     - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group file"
-    - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group views"
+    - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group views --testsuite=kernel"
+    - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group views --testsuite=functional"
     - DRUDBAL_ENV="sqlite" TEST_ARGS="--group Database"
     - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database,Entity,Field"
     - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Installer,Cache,Config"
@@ -163,18 +165,12 @@ before_install:
   - curl https://www.drupal.org/files/issues/2018-07-25/2871374-6.patch | git apply
   # [#2874499] Test failures when db driver is set to not support transactions
   #- curl https://www.drupal.org/files/issues/2018-08-23/2874499-12-transaction-enabled.patch | git apply
-  # [#2879677] Decouple getting table vs column comments in Schema
-  - curl https://www.drupal.org/files/issues/2019-06-12/2879677-10.patch | git apply
   # [#2657888] Add Date function support in DTBNG
   - curl https://www.drupal.org/files/issues/2657888-18.patch | git apply
   # [#2912973] Mismatching call to databaseType() in LangcodeToAsciiUpdateTest
   - curl https://www.drupal.org/files/issues/2912973-2.patch | git apply
   # [#2992274] Installer tests fail if contrib driver hides database credentials form fields
   - curl https://www.drupal.org/files/issues/2019-04-02/2992274-5.patch | git apply
-  # [#2950132] Support PHPUnit 7 in Drupal 8
-  #- curl https://www.drupal.org/files/issues/2019-08-01/2950132-103.patch | git apply -v
-  # [#3065166] Modernize Drupal\KernelTests\Core\Database\ConnectionUnitTest
-  #- curl https://www.drupal.org/files/issues/2019-07-01/3065166-2.patch | git apply -v
 
 install:
   # Copy the cloned repo to the libraries/drudbal directory, overriding the
