@@ -1014,6 +1014,11 @@ class PDOSqliteExtension extends AbstractExtension {
     // Table.
     $dbal_table = $dbal_schema->getTable($this->tableName($table));
 
+    // Description.
+    if ($dbal_table->getComment() !== NULL) {
+      $schema['description'] = $dbal_table->getComment();
+    }
+
     // Primary key.
     try {
       $primary_key_columns = $dbal_table->getPrimaryKeyColumns();
