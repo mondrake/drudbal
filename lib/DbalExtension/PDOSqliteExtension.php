@@ -755,12 +755,6 @@ class PDOSqliteExtension extends AbstractExtension {
     }
     $definition = str_replace(self::SINGLE_QUOTE_IDENTIFIER_REPLACEMENT, '\'\'', $definition);
 
-    // Column comments do not work when adding/changing a field in SQLite.
-    // @todo check if it can be moved as unset of option in alterDbalColumnOptions
-    if (in_array($context, ['addField', 'changeField'])) {
-      $comment = '';
-    }
-
     $dbal_column_definition = $definition . $comment . "\n";
 
     return $this;
@@ -893,7 +887,7 @@ class PDOSqliteExtension extends AbstractExtension {
         $new_schema[$k] = $keys_new_specs[$k] + $new_schema[$k];
       }
     }
-
+dump($drupal_table_name, $old_schema, $new_schema, $mapping);
     $this->alterTable($drupal_table_name, $old_schema, $new_schema, $mapping);
     $primary_key_processed_by_extension = TRUE;
     return TRUE;
