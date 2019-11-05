@@ -108,7 +108,6 @@ class Schema extends DatabaseSchema {
 
     // Let DBAL extension alter the table options if required.
     $this->dbalExtension->alterCreateTableOptions($new_table, $to_schema, $table, $name);
-global $xxx;
 
     // Add columns.
     foreach ($table['fields'] as $field_name => $field) {
@@ -124,6 +123,7 @@ global $xxx;
       // autoincrement column.
       $new_table->setPrimaryKey($this->dbalGetFieldList($table['primary key']));
     }
+global $xxx;
 if ($xxx) dump(['spec' => $table, 'dbal' => $new_table]);
     // Execute the table creation.
     $this->dbalExecuteSchemaChange($to_schema);
@@ -233,23 +233,19 @@ if ($xxx) dump(['spec' => $table, 'dbal' => $new_table]);
       $options['notnull'] = TRUE;
     }
 
-global $xxx;
     if (!empty($field['description'])) {
       $comment = $this->connection->prefixTables($field['description']);
       $this->dbalExtension->alterSetColumnComment($comment, $dbal_type, $field, $field_name);
       $options['comment'] = $this->prepareComment($comment);
     }
-if ($xxx) dump(['4' => '4', $options['default']]);
 
     // Let DBAL extension alter the column options if required.
     $this->dbalExtension->alterDbalColumnOptions($context, $options, $dbal_type, $field, $field_name);
-if ($xxx) dump(['5' => '5', $options['default']]);
 
     // Get the column definition from DBAL, and trim the field name.
     $dbal_column = new DbalColumn($field_name, DbalType::getType($dbal_type), $options);
     $this->dbalExtension->setDbalPlatformColumnOptions($context, $dbal_column, $options, $dbal_type, $field, $field_name);
     $dbal_column_definition = substr($this->dbalPlatform->getColumnDeclarationSQL($field_name, $dbal_column->toArray()), strlen($field_name) + 1);
-if ($xxx) dump(['6' => '6', $dbal_column_definition]);
 
     // Let DBAL extension alter the column definition if required.
     $this->dbalExtension->alterDbalColumnDefinition($context, $dbal_column_definition, $options, $dbal_type, $field, $field_name);
