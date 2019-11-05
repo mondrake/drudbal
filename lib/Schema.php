@@ -113,7 +113,6 @@ global $xxx;
     // Add columns.
     foreach ($table['fields'] as $field_name => $field) {
       $dbal_type = $this->getDbalColumnType($field);
-if ($xxx) dump(['dbal_type' => $dbal_type, 'name' => $field_name, 'spec' => $field, 'options' => $this->getDbalColumnOptions('createTable', $field_name, $dbal_type, $field)]);
       $new_table->addColumn($this->dbalExtension->getDbFieldName($field_name), $dbal_type, $this->getDbalColumnOptions('createTable', $field_name, $dbal_type, $field));
     }
 
@@ -240,8 +239,10 @@ if ($xxx) dump(['spec' => $table, 'dbal' => $new_table]);
       $options['comment'] = $this->prepareComment($comment);
     }
 
+if ($xxx) dump(['pre', $context, $options, $dbal_type, $field, $field_name]);
     // Let DBAL extension alter the column options if required.
     $this->dbalExtension->alterDbalColumnOptions($context, $options, $dbal_type, $field, $field_name);
+if ($xxx) dump(['post', $context, $options, $dbal_type, $field, $field_name]);
 
     // Get the column definition from DBAL, and trim the field name.
     $dbal_column = new DbalColumn($field_name, DbalType::getType($dbal_type), $options);
