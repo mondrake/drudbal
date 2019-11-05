@@ -239,6 +239,7 @@ if ($xxx) dump(['spec' => $table, 'dbal' => $new_table]);
       $options['comment'] = $this->prepareComment($comment);
     }
 
+global $xxx;
 if ($xxx) dump(['pre', $context, $options, $dbal_type, $field, $field_name]);
     // Let DBAL extension alter the column options if required.
     $this->dbalExtension->alterDbalColumnOptions($context, $options, $dbal_type, $field, $field_name);
