@@ -1,0 +1,27 @@
+diff --git a/lib/Doctrine/DBAL/Schema/SqliteSchemaManager.php b/lib/Doctrine/DBAL/Schema/SqliteSchemaManager.php
+index 0c2f4befa..db18888f4 100644
+--- a/lib/Doctrine/DBAL/Schema/SqliteSchemaManager.php
++++ b/lib/Doctrine/DBAL/Schema/SqliteSchemaManager.php
+@@ -458,11 +458,11 @@ CREATE\sTABLE # Match "CREATE TABLE"
+ ( # Start capture
+    (?:\s*--[^\n]*\n?)+ # Capture anything that starts with whitespaces followed by -- until the end of the line(s)
+ )/ix';
+-
+         if (preg_match($pattern, $sql, $match) !== 1) {
+             return null;
+         }
+-
++global $xxx;
++if ($xxx) dump([$pattern, $sql, $match]);
+         $comment = preg_replace('{^\s*--}m', '', rtrim($match[1], "\n"));
+ 
+         return $comment === '' ? null : $comment;
+@@ -477,6 +477,8 @@ CREATE\sTABLE # Match "CREATE TABLE"
+             return null;
+         }
+ 
++global $xxx;
++if ($xxx) dump([$pattern, $sql, $match]);
+         $comment = preg_replace('{^\s*--}m', '', rtrim($match[1], "\n"));
+ 
+         return $comment === '' ? null : $comment;
