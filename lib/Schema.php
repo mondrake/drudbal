@@ -124,7 +124,7 @@ class Schema extends DatabaseSchema {
       $new_table->setPrimaryKey($this->dbalGetFieldList($table['primary key']));
     }
 global $xxx;
-if ($xxx) dump(['spec' => $table, 'dbal' => $new_table]);
+//if ($xxx) dump(['spec' => $table, 'dbal' => $new_table]);
 if ($xxx) $this->dbalExtension->setDebugging(TRUE);
     // Execute the table creation.
     $this->dbalExecuteSchemaChange($to_schema);
