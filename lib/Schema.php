@@ -128,6 +128,7 @@ global $xxx;
 if ($xxx) $this->dbalExtension->setDebugging(TRUE);
     // Execute the table creation.
     $this->dbalExecuteSchemaChange($to_schema);
+if ($xxx) $this->dbalSchemaForceReload();
 if ($xxx) $this->dbalExtension->setDebugging(FALSE);
 
     // Add unique keys.
