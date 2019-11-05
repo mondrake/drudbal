@@ -79,7 +79,7 @@ class Schema extends DatabaseSchema {
    * @return string
    *   The fully prefixed table name to be used in the DBMS.
    */
-  protected function tableName($drupal_table) {
+  public function tableName($drupal_table) {
     return $this->connection->getPrefixedTableName($drupal_table);
   }
 
@@ -402,7 +402,7 @@ class Schema extends DatabaseSchema {
     $primary_key_processed_by_extension = FALSE;
     $dbal_type = $this->getDbalColumnType($spec);
     $dbal_column_options = $this->getDbalColumnOptions('addField', $field, $dbal_type, $spec);
-if ($field === 'test_serial' && $table === 'test_table') dump($this->dbalSchema()->getTable($this->tableName($table)));
+//if ($field === 'test_serial' && $table === 'test_table') dump($this->dbalSchema()->getTable($this->tableName($table)));
     if ($this->dbalExtension->delegateAddField($primary_key_processed_by_extension, $this->dbalSchema(), $table, $field, $spec, $keys_new, $dbal_column_options)) {
       $this->dbalSchemaForceReload();
     }
@@ -419,7 +419,7 @@ if ($field === 'test_serial' && $table === 'test_table') dump($this->dbalSchema(
       }
       $this->dbalExecuteSchemaChange($to_schema);
     }
-if ($field === 'test_serial' && $table === 'test_table') dump($this->dbalSchema()->getTable($this->tableName($table)));
+//if ($field === 'test_serial' && $table === 'test_table') dump($this->dbalSchema()->getTable($this->tableName($table)));
 
     // Add unique keys.
     if (!empty($keys_new['unique keys'])) {
@@ -902,7 +902,7 @@ if ($field === 'test_serial' && $table === 'test_table') dump($this->dbalSchema(
    * @return \Doctrine\DBAL\Schema\Schema
    *   The DBAL schema of the database.
    */
-  protected function dbalSchema() {
+  public function dbalSchema() {
     if ($this->dbalCurrentSchema === NULL) {
       $this->dbalSetCurrentSchema($this->dbalSchemaManager->createSchema());
     }

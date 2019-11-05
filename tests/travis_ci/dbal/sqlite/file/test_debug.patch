@@ -1,13 +1,16 @@
-diff --git a/core/tests/Drupal/FunctionalTests/Update/UpdatePathTestBase.php b/core/tests/Drupal/FunctionalTests/Update/UpdatePathTestBase.php
-index 19598407bd..117e1f6a77 100644
---- a/core/tests/Drupal/FunctionalTests/Update/UpdatePathTestBase.php
-+++ b/core/tests/Drupal/FunctionalTests/Update/UpdatePathTestBase.php
-@@ -387,6 +387,8 @@ protected function runUpdates() {
-         $this->assertFalse($needs_updates, 'After all updates ran, entity schema is up to date.');
-       }
-     }
-+
-+    Database::getConnection()->schema()->dbalSchemaForceReload();
-   }
+diff --git a/core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php b/core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php
+index 2a86e3470f..fc38f265dc 100644
+--- a/core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php
++++ b/core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php
+@@ -153,8 +153,11 @@ public function testSchema() {
  
-   /**
+     // Recreate the table.
+     $this->schema->createTable('test_table', $table_specification);
++dump($this->schema->dbalSchema()->getTable($this->schema->tableName('test_table')));
+     $this->schema->changeField('test_table', 'test_field', 'test_field', ['type' => 'int', 'not null' => TRUE, 'default' => 0]);
++dump($this->schema->dbalSchema()->getTable($this->schema->tableName('test_table')));
+     $this->schema->addField('test_table', 'test_serial', ['type' => 'int', 'not null' => TRUE, 'default' => 0, 'description' => 'Added column description.']);
++dump($this->schema->dbalSchema()->getTable($this->schema->tableName('test_table')));
+ 
+     // Assert that the column comment has been set.
+     $this->checkSchemaComment('Added column description.', 'test_table', 'test_serial');
