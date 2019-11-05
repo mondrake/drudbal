@@ -113,7 +113,7 @@ global $xxx;
     // Add columns.
     foreach ($table['fields'] as $field_name => $field) {
       $dbal_type = $this->getDbalColumnType($field);
-if ($xxx) dump(['dbal_type' => $dbal_type, 'options' => $this->getDbalColumnOptions('createTable', $field_name, $dbal_type, $field)]);
+if ($xxx) dump(['dbal_type' => $dbal_type, 'name' => $field_name, 'spec' => $field, 'options' => $this->getDbalColumnOptions('createTable', $field_name, $dbal_type, $field)]);
       $new_table->addColumn($this->dbalExtension->getDbFieldName($field_name), $dbal_type, $this->getDbalColumnOptions('createTable', $field_name, $dbal_type, $field));
     }
 
