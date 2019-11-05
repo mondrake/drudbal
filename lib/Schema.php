@@ -108,10 +108,12 @@ class Schema extends DatabaseSchema {
 
     // Let DBAL extension alter the table options if required.
     $this->dbalExtension->alterCreateTableOptions($new_table, $to_schema, $table, $name);
+global $xxx;
 
     // Add columns.
     foreach ($table['fields'] as $field_name => $field) {
       $dbal_type = $this->getDbalColumnType($field);
+if ($xxx) dump(['dbal_type' => $dbal_type, 'options' => $this->getDbalColumnOptions('createTable', $field_name, $dbal_type, $field)]);
       $new_table->addColumn($this->dbalExtension->getDbFieldName($field_name), $dbal_type, $this->getDbalColumnOptions('createTable', $field_name, $dbal_type, $field));
     }
 
@@ -123,7 +125,6 @@ class Schema extends DatabaseSchema {
       // autoincrement column.
       $new_table->setPrimaryKey($this->dbalGetFieldList($table['primary key']));
     }
-global $xxx;
 if ($xxx) dump(['spec' => $table, 'dbal' => $new_table]);
     // Execute the table creation.
     $this->dbalExecuteSchemaChange($to_schema);
