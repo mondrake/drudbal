@@ -1171,7 +1171,7 @@ class PDOSqliteExtension extends AbstractExtension {
 global $xxx;
 if ($xxx)
 {
-  $this->connection->schema()->->dbalSchemaForceReload();
+  $this->connection->schema()->dbalSchemaForceReload();
   dump($this->connection->schema()->dbalSchema()->getTable($this->connection->schema()->tableName($new_table)));
 }
       $this->connection->schema()->renameTable($new_table, $table);
