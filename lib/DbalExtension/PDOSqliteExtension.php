@@ -1168,6 +1168,12 @@ class PDOSqliteExtension extends AbstractExtension {
     $new_count = $this->connection->query('SELECT COUNT(*) FROM {' . $new_table . '}')->fetchField();
     if ($old_count == $new_count) {
       $this->connection->schema()->dropTable($table);
+global $xxx;
+if ($xxx)
+{
+  $this->connection->schema()->->dbalSchemaForceReload();
+  dump($this->connection->schema()->dbalSchema()->getTable($this->connection->schema()->tableName($new_table)));
+}
       $this->connection->schema()->renameTable($new_table, $table);
     }
   }
