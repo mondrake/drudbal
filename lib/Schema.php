@@ -125,7 +125,7 @@ class Schema extends DatabaseSchema {
     }
 global $xxx;
 if ($xxx) dump(['spec' => $table, 'dbal' => $new_table]);
-$this->dbalExtension->setDebugging(TRUE);
+if ($xxx) $this->dbalExtension->setDebugging(TRUE);
     // Execute the table creation.
     $this->dbalExecuteSchemaChange($to_schema);
 
