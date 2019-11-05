@@ -125,10 +125,10 @@ class Schema extends DatabaseSchema {
     }
 global $xxx;
 //if ($xxx) dump(['spec' => $table, 'dbal' => $new_table]);
-//if ($xxx) $this->dbalExtension->setDebugging(TRUE);
+if ($xxx) $this->dbalExtension->setDebugging(TRUE);
     // Execute the table creation.
     $this->dbalExecuteSchemaChange($to_schema);
-//if ($xxx) $this->dbalExtension->setDebugging(FALSE);
+if ($xxx) $this->dbalExtension->setDebugging(FALSE);
 
     // Add unique keys.
     if (!empty($table['unique keys'])) {
