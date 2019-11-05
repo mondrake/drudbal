@@ -125,6 +125,7 @@ class Schema extends DatabaseSchema {
     }
 global $xxx;
 if ($xxx) dump(['spec' => $table, 'dbal' => $new_table]);
+$this->dbalExtension->setDebugging(TRUE);
     // Execute the table creation.
     $this->dbalExecuteSchemaChange($to_schema);
 
@@ -940,7 +941,7 @@ if ($xxx) dump(['spec' => $table, 'dbal' => $new_table]);
   protected function dbalExecuteSchemaChange(DbalSchema $to_schema) {
     foreach ($this->dbalSchema()->getMigrateToSql($to_schema, $this->dbalPlatform) as $sql) {
       if ($this->dbalExtension->getDebugging()) {
-        error_log($sql);
+        dump($sql);
       }
       $this->connection->getDbalConnection()->exec($sql);
     }
