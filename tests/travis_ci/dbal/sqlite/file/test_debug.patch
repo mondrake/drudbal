@@ -1,12 +1,13 @@
 diff --git a/core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php b/core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php
-index 2a86e3470f..d4784c11c9 100644
+index 2a86e3470f..f71c5f7b6f 100644
 --- a/core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php
 +++ b/core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php
-@@ -153,8 +153,15 @@ public function testSchema() {
+@@ -153,8 +153,16 @@ public function testSchema() {
  
      // Recreate the table.
      $this->schema->createTable('test_table', $table_specification);
-+dump($this->schema->dbalSchema()->getTable($this->schema->tableName('test_table')));
++global $xxx;
++$xxx = true;
 +dump("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
      $this->schema->changeField('test_table', 'test_field', 'test_field', ['type' => 'int', 'not null' => TRUE, 'default' => 0]);
 +dump($this->schema->dbalSchema()->getTable($this->schema->tableName('test_table')));

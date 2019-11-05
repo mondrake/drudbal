@@ -123,7 +123,8 @@ class Schema extends DatabaseSchema {
       // autoincrement column.
       $new_table->setPrimaryKey($this->dbalGetFieldList($table['primary key']));
     }
-
+global $xxx;
+if ($xxx) dump(['spec' => $table, 'dbal' => $new_table]);
     // Execute the table creation.
     $this->dbalExecuteSchemaChange($to_schema);
 
