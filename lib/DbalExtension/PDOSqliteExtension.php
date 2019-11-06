@@ -1172,7 +1172,7 @@ class PDOSqliteExtension extends AbstractExtension {
    *       that will be used as an expression field.
    */
   protected function copyTableData(string $from_table, string $to_table, array $schema, array $mapping = []): bool {
-    // Build a SQL query to migrate the data from the from-table.
+    // Build a SQL query to select data from the from-table.
     $select = $this->connection->select($from_table);
 
     // Complete the mapping.
