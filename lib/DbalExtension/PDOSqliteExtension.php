@@ -1153,8 +1153,26 @@ class PDOSqliteExtension extends AbstractExtension {
     }
   }
 
+  /**
+   * Copy data between two tables.
+   *
+   * @param string $from_table
+   *   Name of the table to be copied from.
+   * @param string $to_table
+   *   Name of the table to be copied to.
+   * @param array $schema
+   *   The schema array for the table.
+   * @param array $mapping
+   *   An optional mapping between the fields of the from-table and the
+   *   fields of to-table. An associative array, whose keys are the fields of
+   *   the to-table, and values can take two possible forms:
+   *     - a simple string, which is interpreted as the name of a field of the
+   *       from-table,
+   *     - an associative array with two keys 'expression' and 'arguments',
+   *       that will be used as an expression field.
+   */
   protected function copyTableData(string $from_table, string $to_table, array $schema, array $mapping = []): bool {
-    // Build a SQL query to migrate the data from the old table to the new.
+    // Build a SQL query to migrate the data from the from-table.
     $select = $this->connection->select($from_table);
 
     // Complete the mapping.

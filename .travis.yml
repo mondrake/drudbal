@@ -68,7 +68,7 @@ matrix:
 
 cache:
   directories:
-    - $DRUPAL_STAGING_DIR
+    #- $DRUPAL_STAGING_DIR
     - $ORACLE_DOWNLOAD_DIR
 
 services:
@@ -155,7 +155,6 @@ before_install:
         # Get Doctrine DBAL
         composer require "mondrake/drudbal:dev-master" --no-progress --no-suggest
       fi
-  #- composer require doctrine/dbal:dev-master --no-progress
 
   # Copy staged Drupal core to running path.
   - mkdir -p $DRUPAL_PATH
@@ -188,8 +187,6 @@ install:
         cd $DRUPAL_PATH/vendor/doctrine/dbal
         patch -p1 < $DRUPAL_PATH/libraries/drudbal/tests/travis_ci/$DRUDBAL_ENV/dbal.patch
       fi
-  #- cd $DRUPAL_PATH/vendor/doctrine/dbal
-  #- patch -p1 < $DRUPAL_PATH/libraries/drudbal/tests/travis_ci/dbal.patch
 
   # Create a directory for the driver, and symlink it to the module's one.
   - mkdir -p $DRUPAL_PATH/drivers/lib/Drupal/Driver/Database/
