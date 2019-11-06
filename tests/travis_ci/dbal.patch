@@ -1,21 +1,20 @@
 diff --git a/lib/Doctrine/DBAL/Schema/SqliteSchemaManager.php b/lib/Doctrine/DBAL/Schema/SqliteSchemaManager.php
-index 0c2f4be..b94e769 100644
+index ac758015..c8986b46 100644
 --- a/lib/Doctrine/DBAL/Schema/SqliteSchemaManager.php
 +++ b/lib/Doctrine/DBAL/Schema/SqliteSchemaManager.php
-@@ -301,6 +301,8 @@ class SqliteSchemaManager extends AbstractSchemaManager
+@@ -304,6 +304,8 @@ class SqliteSchemaManager extends AbstractSchemaManager
       */
-     protected function _getPortableTableColumnDefinition(array $tableColumn) : Column
+     protected function _getPortableTableColumnDefinition($tableColumn)
      {
 +global $xxx;
 +if ($xxx) dump(['IN', $tableColumn]);
-         preg_match('/^([^()]*)\\s*(\\(((\\d+)(,\\s*(\\d+))?)\\))?/', $tableColumn['type'], $matches);
-
-         $dbType = trim(strtolower($matches[1]));
-@@ -354,7 +356,7 @@ class SqliteSchemaManager extends AbstractSchemaManager
-             'scale'     => $scale,
+         $parts               = explode('(', $tableColumn['type']);
+         $tableColumn['type'] = trim($parts[0]);
+         if (isset($parts[1])) {
+@@ -373,6 +375,7 @@ class SqliteSchemaManager extends AbstractSchemaManager
              'autoincrement' => false,
          ];
--
+
 +if ($xxx) dump(['OUT', $options, new Column($tableColumn['name'], Type::getType($type), $options)]);
          return new Column($tableColumn['name'], Type::getType($type), $options);
      }

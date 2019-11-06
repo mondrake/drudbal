@@ -155,7 +155,7 @@ before_install:
         # Get Doctrine DBAL
         composer require "mondrake/drudbal:dev-master" --no-progress --no-suggest
       fi
-  - composer require doctrine/dbal:dev-master --no-progress
+  #- composer require doctrine/dbal:dev-master --no-progress
 
   # Copy staged Drupal core to running path.
   - mkdir -p $DRUPAL_PATH
