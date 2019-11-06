@@ -35,12 +35,14 @@ env:
     - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Installer,Cache,Config"
     - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group field"
     - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group file"
-    - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group views"
+    - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group views --testsuite=kernel"
+    - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group views --testsuite=functional"
     - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Database,Entity,Field"
     - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Installer,Cache,Config"
     - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group field"
     - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group file"
-    - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group views"
+    - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group views --testsuite=kernel"
+    - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group views --testsuite=functional"
     - DRUDBAL_ENV="sqlite" TEST_ARGS="--group Database"
     - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database,Entity,Field"
     - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Installer,Cache,Config"
@@ -141,7 +143,7 @@ before_install:
   # Stage Drupal core to get dependencies.
   - |
       if [[ ! -f $DRUPAL_STAGING_DIR/index.php ]]; then
-        git clone http://git.drupal.org/project/drupal.git $DRUPAL_STAGING_DIR
+        git clone --depth=5 --branch=8.9.x http://git.drupal.org/project/drupal.git $DRUPAL_STAGING_DIR
         cd $DRUPAL_STAGING_DIR
         composer install --no-progress --no-suggest
         # Get Drupal Console
@@ -163,8 +165,6 @@ before_install:
   - curl https://www.drupal.org/files/issues/2018-07-25/2871374-6.patch | git apply
   # [#2874499] Test failures when db driver is set to not support transactions
   #- curl https://www.drupal.org/files/issues/2018-08-23/2874499-12-transaction-enabled.patch | git apply
-  # [#2879677] Decouple getting table vs column comments in Schema
-  - curl https://www.drupal.org/files/issues/2019-06-12/2879677-10.patch | git apply
   # [#2657888] Add Date function support in DTBNG
   - curl https://www.drupal.org/files/issues/2657888-18.patch | git apply
   # [#2912973] Mismatching call to databaseType() in LangcodeToAsciiUpdateTest
@@ -172,7 +172,7 @@ before_install:
   # [#2992274] Installer tests fail if contrib driver hides database credentials form fields
   - curl https://www.drupal.org/files/issues/2019-04-02/2992274-5.patch | git apply
   # PHP 7.4 patch
-  - curl https://www.drupal.org/files/issues/2019-10-23/3086374-3-79.patch | git apply -v
+  - curl https://www.drupal.org/files/issues/2019-11-05/3086374-139.patch | git apply -v
 
 install:
   # Copy the cloned repo to the libraries/drudbal directory, overriding the
@@ -195,7 +195,6 @@ install:
   # Patch tests for debugging if necessary.
   - cd $DRUPAL_PATH
   - if [[ -f $DRUPAL_PATH/libraries/drudbal/tests/travis_ci/$DRUDBAL_ENV/test_debug.patch ]]; then git apply -v $DRUPAL_PATH/libraries/drudbal/tests/travis_ci/$DRUDBAL_ENV/test_debug.patch; fi
-  #- composer update phpunit/phpunit symfony/phpunit-bridge phpspec/prophecy symfony/yaml --with-dependencies --no-progress
 
   # Install Drupal.
   - cd $DRUPAL_PATH/core

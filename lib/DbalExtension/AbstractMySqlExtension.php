@@ -634,11 +634,6 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
    * {@inheritdoc}
    */
   public function alterDbalColumnDefinition($context, &$dbal_column_definition, array &$dbal_column_options, $dbal_type, array $drupal_field_specs, $field_name) {
-    // DBAL does not support per-column charset.
-    // @see https://github.com/doctrine/dbal/pull/881
-    if (isset($drupal_field_specs['type']) && $drupal_field_specs['type'] == 'varchar_ascii') {
-      $dbal_column_definition = preg_replace('/CHAR\(([0-9]+)\)/', '$0 CHARACTER SET ascii', $dbal_column_definition);
-    }
     // DBAL does not support BINARY option for char/varchar columns.
     if (isset($drupal_field_specs['binary']) && $drupal_field_specs['binary']) {
       $dbal_column_definition = preg_replace('/CHAR\(([0-9]+)\)/', '$0 BINARY', $dbal_column_definition);
@@ -718,28 +713,6 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
     // We need to normalize the index columns length in MySql.
     $indexes_spec['indexes'][$drupal_index_name] = $drupal_field_specs;
     return $this->getNormalizedIndexes($indexes_spec)[$drupal_index_name];
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function delegateGetTableComment(DbalSchema $dbal_schema, $drupal_table_name) {
-    // DBAL cannot retrieve table comments from introspected schema.
-    // @see https://github.com/doctrine/dbal/issues/1335
-    $dbal_query = $this->dbalConnection->createQueryBuilder();
-    $dbal_query
-      ->select('table_comment')
-      ->from('information_schema.tables')
-      ->where(
-          $dbal_query->expr()->andX(
-            $dbal_query->expr()->eq('table_schema', '?'),
-            $dbal_query->expr()->eq('table_name', '?')
-          )
-        )
-      ->setParameter(0, $this->dbalConnection->getDatabase())
-      ->setParameter(1, $this->tableName($drupal_table_name));
-    $comment = $dbal_query->execute()->fetchColumn();
-    return $comment;
   }
 
   /**

@@ -85,13 +85,10 @@ Issue | Description   | Info          |
 https://github.com/doctrine/dbal/issues/1349     | DBAL-182: Insert and Merge Query Objects | |
 https://github.com/doctrine/dbal/issues/1320     | DBAL-163: Upsert support in DBAL | |
 https://github.com/doctrine/dbal/pull/682        | [WIP] [DBAL-218] Add bulk insert query | |
-https://github.com/doctrine/dbal/pull/2717       | Introspect table comments in Doctrine\DBAL\Schema\Table when generating schema | |
-https://github.com/doctrine/dbal/pull/3512       | Support for comments on table in all databases | |
 https://github.com/doctrine/dbal/issues/1033     | DBAL-1096: schema-tool:update does not understand columnDefinition correctly | |
-https://github.com/doctrine/dbal/pull/881        | Add Mysql per-column charset support | |
 https://github.com/doctrine/migrations/issues/17 | Data loss on table renaming. | |
 https://github.com/doctrine/dbal/issues/2676     | Optimize Oracle SchemaManager | |
-https://github.com/doctrine/dbal/pull/2415 .     | Add some MySQL platform data in Tables | fixed in 2.9.0 |
+https://github.com/doctrine/dbal/pull/2415       | Add some MySQL platform data in Tables | fixed in 2.9.0 |
 
 ## Related Drupal issues
 Issue | Description   |
@@ -100,7 +97,6 @@ Issue | Description   |
 [2871374](https://www.drupal.org/node/2871374) | SelectTest::testVulnerableComment fails when driver overrides Select::\_\_toString |
 tbd | Add tests for Upsert with default values |
 [2874499](https://www.drupal.org/node/2874499) | Test failures when db driver is set to not support transactions |
-[2879677](https://www.drupal.org/node/2879677) | Decouple getting table vs column comments in Schema |
 [2657888](https://www.drupal.org/node/2657888) | Add Date function support in DTBNG |
 [2912973](https://www.drupal.org/node/2912973) | Mismatching call to databaseType() in LangcodeToAsciiUpdateTest |
 tbd | Ensure that when INSERTing a NULL value in a database column, SELECTing it back returns NULL and not empty string - for all fetch modes |
