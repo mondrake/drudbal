@@ -756,8 +756,7 @@ class PDOSqliteExtension extends AbstractExtension {
     $definition = str_replace(self::SINGLE_QUOTE_IDENTIFIER_REPLACEMENT, '\'\'', $definition);
 
     $dbal_column_definition = $definition . $comment . "\n";
-global $xxx;
-if ($xxx) dump([$dbal_column_definition, $dbal_column_options, $drupal_field_specs]);
+
     return $this;
   }
 
@@ -1145,18 +1144,10 @@ if ($xxx) dump([$dbal_column_definition, $dbal_column_options, $drupal_field_spe
 
     if ($this->copyTableData($table, $new_table, $new_schema, $mapping)) {
       $this->connection->schema()->dropTable($table);
-global $xxx;
-if ($xxx)
-{
-  $this->connection->schema()->dbalSchemaForceReload();
-  dump('POST DROP', $this->connection->schema()->dbalSchema()->getTable($this->connection->schema()->tableName($new_table)));
-}
-      $this->connection->schema()->renameTable($new_table, $table);
-if ($xxx)
-{
-  $this->connection->schema()->dbalSchemaForceReload();
-  dump('POST RENAME', $this->connection->schema()->dbalSchema()->getTable($this->connection->schema()->tableName($table)));
-}
+      //$this->connection->schema()->renameTable($new_table, $table);
+      $this->connection->schema()->createTable($table, $new_schema);
+      $this->copyTableData($new_table, $table, $new_schema);
+      $this->connection->schema()->dropTable($new_table);
     }
   }
 
