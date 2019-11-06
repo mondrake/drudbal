@@ -57,7 +57,6 @@ env:
 matrix:
   fast_finish: true
   allow_failures:
-    - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database,Entity,Field"
     - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group file"
     - env: DRUDBAL_ENV="dbal/sqlite/memory" TEST_ARGS="--group Database,Installer,Cache,Config,Entity,Field"
     - env: DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group Database"
@@ -194,7 +193,6 @@ install:
   # Patch tests for debugging if necessary.
   - cd $DRUPAL_PATH
   - if [[ -f $DRUPAL_PATH/libraries/drudbal/tests/travis_ci/$DRUDBAL_ENV/test_debug.patch ]]; then git apply -v $DRUPAL_PATH/libraries/drudbal/tests/travis_ci/$DRUDBAL_ENV/test_debug.patch; fi
-  #- composer update phpunit/phpunit symfony/phpunit-bridge phpspec/prophecy symfony/yaml --with-dependencies --no-progress
 
   # Install Drupal.
   - cd $DRUPAL_PATH/core
