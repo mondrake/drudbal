@@ -1,30 +1,13 @@
-diff --git a/core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php b/core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php
-index 2a86e3470f..85528f451d 100644
---- a/core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php
-+++ b/core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php
-@@ -154,7 +154,16 @@ public function testSchema() {
-     // Recreate the table.
-     $this->schema->createTable('test_table', $table_specification);
-     $this->schema->changeField('test_table', 'test_field', 'test_field', ['type' => 'int', 'not null' => TRUE, 'default' => 0]);
-+    $this->checkSchemaComment($table_specification['fields']['test_field_string']['description'], 'test_table', 'test_field_string');
-+    $this->checkSchemaComment($table_specification['fields']['test_field_string_ascii']['description'], 'test_table', 'test_field_string_ascii');
-+    $this->checkSchemaComment($table_specification['description'], 'test_table');
-+//global $xxx;
-+//$xxx = true;
-+//dump("****************************************************");
-     $this->schema->addField('test_table', 'test_serial', ['type' => 'int', 'not null' => TRUE, 'default' => 0, 'description' => 'Added column description.']);
-+    $this->checkSchemaComment($table_specification['description'], 'test_table');
-+//dump($this->schema->dbalSchema()->getTable($this->schema->tableName('test_table')));
-+//dump("****************************************************");
-
-     // Assert that the column comment has been set.
-     $this->checkSchemaComment('Added column description.', 'test_table', 'test_serial');
-@@ -553,6 +562,7 @@ public function testUnsignedColumns() {
-       $this->schema->addField($table_name, $column_name, $column_spec);
+diff --git a/core/tests/Drupal/FunctionalTests/Update/UpdatePathTestBase.php b/core/tests/Drupal/FunctionalTests/Update/UpdatePathTestBase.php
+index 19598407bd..117e1f6a77 100644
+--- a/core/tests/Drupal/FunctionalTests/Update/UpdatePathTestBase.php
++++ b/core/tests/Drupal/FunctionalTests/Update/UpdatePathTestBase.php
+@@ -387,6 +387,8 @@ protected function runUpdates() {
+         $this->assertFalse($needs_updates, 'After all updates ran, entity schema is up to date.');
+       }
      }
-
-+//dump($this->schema->dbalSchema()->getTable($this->schema->tableName('unsigned_table')));
-     // Finally, check each column and try to insert invalid values into them.
-     foreach ($table_spec['fields'] as $column_name => $column_spec) {
-       $this->assertTrue($this->schema->fieldExists($table_name, $column_name), new FormattableMarkup('Unsigned @type column was created.', ['@type' => $column_spec['type']]));
-
++
++    Database::getConnection()->schema()->dbalSchemaForceReload();
+   }
+ 
+   /**

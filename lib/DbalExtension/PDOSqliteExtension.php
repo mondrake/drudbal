@@ -1185,4 +1185,5 @@ class PDOSqliteExtension extends AbstractExtension {
     $new_count = $this->connection->query('SELECT COUNT(*) FROM {' . $to_table . '}')->fetchField();
     return $old_count == $new_count;
   }
+
 }

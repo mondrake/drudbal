@@ -77,7 +77,7 @@ class Schema extends DatabaseSchema {
    * @return string
    *   The fully prefixed table name to be used in the DBMS.
    */
-  public function tableName($drupal_table) {
+  protected function tableName($drupal_table) {
     return $this->connection->getPrefixedTableName($drupal_table);
   }
 
@@ -123,12 +123,9 @@ class Schema extends DatabaseSchema {
       // autoincrement column.
       $new_table->setPrimaryKey($this->dbalGetFieldList($table['primary key']));
     }
-global $xxx;
-//if ($xxx) dump(['spec' => $table, 'dbal' => $new_table]);
-if ($xxx) $this->dbalExtension->setDebugging(TRUE);
+
     // Execute the table creation.
     $this->dbalExecuteSchemaChange($to_schema);
-if ($xxx) $this->dbalExtension->setDebugging(FALSE);
 
     // Add unique keys.
     if (!empty($table['unique keys'])) {
@@ -901,7 +898,7 @@ if ($xxx) $this->dbalExtension->setDebugging(FALSE);
    * @return \Doctrine\DBAL\Schema\Schema
    *   The DBAL schema of the database.
    */
-  public function dbalSchema() {
+  protected function dbalSchema() {
     if ($this->dbalCurrentSchema === NULL) {
       $this->dbalSetCurrentSchema($this->dbalSchemaManager->createSchema());
     }
@@ -942,7 +939,7 @@ if ($xxx) $this->dbalExtension->setDebugging(FALSE);
   protected function dbalExecuteSchemaChange(DbalSchema $to_schema) {
     foreach ($this->dbalSchema()->getMigrateToSql($to_schema, $this->dbalPlatform) as $sql) {
       if ($this->dbalExtension->getDebugging()) {
-        dump($sql);
+        error_log($sql);
       }
       $this->connection->getDbalConnection()->exec($sql);
     }
