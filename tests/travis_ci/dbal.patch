@@ -1,20 +1,13 @@
-diff --git a/lib/Doctrine/DBAL/Schema/SqliteSchemaManager.php b/lib/Doctrine/DBAL/Schema/SqliteSchemaManager.php
-index ac758015..c8986b46 100644
---- a/lib/Doctrine/DBAL/Schema/SqliteSchemaManager.php
-+++ b/lib/Doctrine/DBAL/Schema/SqliteSchemaManager.php
-@@ -304,6 +304,8 @@ class SqliteSchemaManager extends AbstractSchemaManager
-      */
-     protected function _getPortableTableColumnDefinition($tableColumn)
-     {
-+global $xxx;
-+if ($xxx) dump(['IN', $tableColumn]);
-         $parts               = explode('(', $tableColumn['type']);
-         $tableColumn['type'] = trim($parts[0]);
-         if (isset($parts[1])) {
-@@ -373,6 +375,7 @@ class SqliteSchemaManager extends AbstractSchemaManager
-             'autoincrement' => false,
-         ];
+diff --git a/lib/Doctrine/DBAL/Schema/AbstractSchemaManager.php b/lib/Doctrine/DBAL/Schema/AbstractSchemaManager.php
+index 8e4ffa5f..57fadf90 100644
+--- a/lib/Doctrine/DBAL/Schema/AbstractSchemaManager.php
++++ b/lib/Doctrine/DBAL/Schema/AbstractSchemaManager.php
+@@ -163,6 +163,8 @@ abstract class AbstractSchemaManager
+         $sql = $this->_platform->getListTableColumnsSQL($table, $database);
 
-+if ($xxx) dump(['OUT', $options, new Column($tableColumn['name'], Type::getType($type), $options)]);
-         return new Column($tableColumn['name'], Type::getType($type), $options);
+         $tableColumns = $this->_conn->fetchAll($sql);
++global $xxx;
++if ($xxx) dump(['COLS', $tableColumns]);
+
+         return $this->_getPortableTableColumnList($table, $database, $tableColumns);
      }
