@@ -776,7 +776,7 @@ class PDOSqliteExtension extends AbstractExtension {
     // SQLite doesn't have a full-featured ALTER TABLE statement. It only
     // supports adding new fields to a table, in some simple cases. In most
     // cases, we have to create a new table and copy the data over.
-    if (empty($keys_new_specs) && (empty($drupal_field_specs['not null']) || isset($drupal_field_specs['default']))) {
+/*    if (empty($keys_new_specs) && (empty($drupal_field_specs['not null']) || isset($drupal_field_specs['default']))) {
       // When we don't have to create new keys and we are not creating a
       // NOT NULL column without a default value, we can use the quicker
       // version.
@@ -785,7 +785,7 @@ class PDOSqliteExtension extends AbstractExtension {
       $query = 'ALTER TABLE {' . $drupal_table_name . '} ADD ' . $field_name . ' ' . $dbal_column_options['columnDefinition'];
       $this->connection->query($query);
     }
-    else {
+    else {*/
       // We cannot add the field directly. Use the slower table alteration
       // method, starting from the old schema.
       $old_schema = $this->buildTableSpecFromDbalSchema($dbal_schema, $drupal_table_name);
@@ -817,7 +817,7 @@ class PDOSqliteExtension extends AbstractExtension {
         }
       }
       $this->alterTable($drupal_table_name, $old_schema, $new_schema, $mapping);
-    }
+//    }
     return TRUE;
   }
 
