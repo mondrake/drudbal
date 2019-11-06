@@ -1146,7 +1146,6 @@ class PDOSqliteExtension extends AbstractExtension {
 
     if ($this->copyTableData($table, $new_table, $new_schema, $mapping)) {
       $this->connection->schema()->dropTable($table);
-      //$this->connection->schema()->renameTable($new_table, $table);
       $this->connection->schema()->createTable($table, $new_schema);
       $this->copyTableData($new_table, $table, $new_schema);
       $this->connection->schema()->dropTable($new_table);
