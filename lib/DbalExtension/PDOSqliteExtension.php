@@ -1038,8 +1038,13 @@ if ($xxx) dump([$dbal_column_definition, $dbal_column_options, $drupal_field_spe
       $schema['fields'][$column->getName()] = [
         'size' => $size,
         'not null' => $column->getNotNull() || in_array($column->getName(), $primary_key_columns),
-        'default' => ($column->getDefault() === NULL && $column->getNotNull() === FALSE) ? NULL : $column->getDefault(),
       ];
+      if (($column->getDefault() === NULL || strpos($column->getDefault(), 'NULL --') === 0) && $column->getNotNull() === FALSE) {
+        $schema['fields'][$column->getName()]['default'] = NULL;
+      }
+      else {
+        $schema['fields'][$column->getName()]['default'] = $column->getDefault();
+      }
       if ($column->getAutoincrement() === TRUE && in_array($dbal_type, [
         'smallint', 'integer', 'bigint',
       ])) {
