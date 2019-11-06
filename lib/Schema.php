@@ -13,8 +13,6 @@ use Doctrine\DBAL\Schema\Schema as DbalSchema;
 use Doctrine\DBAL\Schema\SchemaException as DbalSchemaException;
 use Doctrine\DBAL\Types\Type as DbalType;
 
-// @todo DBAL 2.6.0:
-// Added support for column inline comments in SQLite, check status (the declaration of support + the fact that on add/change field it does not work)
 // @todo DBAL 2.7:
 // implemented mysql column-level collation, check
 
@@ -849,7 +847,7 @@ class Schema extends DatabaseSchema {
   public function getComment($table, $column = NULL) {
     if ($column === NULL) {
       try {
-        return $this->getTableComment($table);
+        return $this->dbalExtension->delegateGetTableComment($this->dbalSchema(), $table);
       }
       catch (\RuntimeException $e) {
         return NULL;
@@ -857,58 +855,12 @@ class Schema extends DatabaseSchema {
     }
     else {
       try {
-        return $this->getColumnComment($table, $column);
+        return $this->dbalExtension->delegateGetColumnComment($this->dbalSchema(), $table, $column);
       }
       catch (\RuntimeException$e) {
         return NULL;
       }
     }
-  }
-
-  /**
-   * Retrieves a table comment.
-   *
-   * By default this is not supported. Drivers implementations should override
-   * this method if returning comments is supported.
-   *
-   * @param string $table
-   *   The name of the table.
-   *
-   * @return string|null
-   *   The comment string.
-   *
-   * @throws \RuntimeExceptions
-   *   When table comments are not supported.
-   *
-   * @todo remove docblock once https://www.drupal.org/node/2879677
-   *   (Decouple getting table vs column comments in Schema) is in.
-   */
-  public function getTableComment($table) {
-    return $this->dbalExtension->delegateGetTableComment($this->dbalSchema(), $table);
-  }
-
-  /**
-   * Retrieves a column comment.
-   *
-   * By default this is not supported. Drivers implementations should override
-   * this method if returning comments is supported.
-   *
-   * @param string $table
-   *   The name of the table.
-   * @param string $column
-   *   The name of the column.
-   *
-   * @return string|null
-   *   The comment string.
-   *
-   * @throws \RuntimeExceptions
-   *   When table comments are not supported.
-   *
-   * @todo remove docblock once https://www.drupal.org/node/2879677
-   *   (Decouple getting table vs column comments in Schema) is in.
-   */
-  public function getColumnComment($table, $column) {
-    return $this->dbalExtension->delegateGetColumnComment($this->dbalSchema(), $table, $column);
   }
 
   /**

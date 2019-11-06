@@ -4,11 +4,9 @@
     "description": "Drupal driver for Doctrine DBAL.",
     "license": "LGPL-3.0-or-later",
     "require": {
-        "php": ">=7.3",
-        "drupal/core": "~8.8@dev",
-        "doctrine/dbal": "^2.9.2",
-        "symfony/filesystem": "*",
-        "webflo/drupal-finder": "*"
+        "php": "^7.3",
+        "drupal/core": "^8.8 || ^9",
+        "doctrine/dbal": "^2.10"
     },
     "minimum-stability": "dev"
 }
