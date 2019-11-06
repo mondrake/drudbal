@@ -1179,7 +1179,7 @@ if ($xxx)
         $select->addExpression($field_source['expression'], $field_alias, $field_source['arguments']);
       }
       else {
-        $select->addField($table, $field_source, $field_alias);
+        $select->addField($from_table, $field_source, $field_alias);
       }
     }
 
