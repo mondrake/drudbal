@@ -1143,11 +1143,29 @@ if ($xxx) dump([$dbal_column_definition, $dbal_column_options, $drupal_field_spe
 
     $this->connection->schema()->createTable($new_table, $new_schema);
 
+    if ($this->copyTableData($table, $new_table, $new_schema, $mapping)) {
+      $this->connection->schema()->dropTable($table);
+global $xxx;
+if ($xxx)
+{
+  $this->connection->schema()->dbalSchemaForceReload();
+  dump('POST DROP', $this->connection->schema()->dbalSchema()->getTable($this->connection->schema()->tableName($new_table)));
+}
+      $this->connection->schema()->renameTable($new_table, $table);
+if ($xxx)
+{
+  $this->connection->schema()->dbalSchemaForceReload();
+  dump('POST RENAME', $this->connection->schema()->dbalSchema()->getTable($this->connection->schema()->tableName($table)));
+}
+    }
+  }
+
+  protected function copyTableData(string $from_table, string $to_table, array $schema, array $mapping = []): bool {
     // Build a SQL query to migrate the data from the old table to the new.
-    $select = $this->connection->select($table);
+    $select = $this->connection->select($from_table);
 
     // Complete the mapping.
-    $possible_keys = array_keys($new_schema['fields']);
+    $possible_keys = array_keys($schema['fields']);
     $mapping += array_combine($possible_keys, $possible_keys);
 
     // Now add the fields.
@@ -1166,22 +1184,12 @@ if ($xxx) dump([$dbal_column_definition, $dbal_column_options, $drupal_field_spe
     }
 
     // Execute the data migration query.
-    $this->connection->insert($new_table)
+    $this->connection->insert($to_table)
       ->from($select)
       ->execute();
 
-    $old_count = $this->connection->query('SELECT COUNT(*) FROM {' . $table . '}')->fetchField();
-    $new_count = $this->connection->query('SELECT COUNT(*) FROM {' . $new_table . '}')->fetchField();
-    if ($old_count == $new_count) {
-      $this->connection->schema()->dropTable($table);
-global $xxx;
-if ($xxx)
-{
-  $this->connection->schema()->dbalSchemaForceReload();
-  dump($this->connection->schema()->dbalSchema()->getTable($this->connection->schema()->tableName($new_table)));
-}
-      $this->connection->schema()->renameTable($new_table, $table);
-    }
+    $old_count = $this->connection->query('SELECT COUNT(*) FROM {' . $from_table . '}')->fetchField();
+    $new_count = $this->connection->query('SELECT COUNT(*) FROM {' . $to_table . '}')->fetchField();
+    return $old_count == $new_count;
   }
-
 }
