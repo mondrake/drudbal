@@ -1,25 +1,21 @@
 diff --git a/core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php b/core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php
-index 2a86e3470f..392fbb4ed9 100644
+index 2a86e3470f..42e5004894 100644
 --- a/core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php
 +++ b/core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php
-@@ -152,9 +152,20 @@ public function testSchema() {
-     $this->assertFalse($this->schema->tableExists('test_table2'), 'The dropped table does not exist.');
- 
+@@ -154,7 +154,15 @@ public function testSchema() {
      // Recreate the table.
-+global $xxx;
-+$xxx = true;
      $this->schema->createTable('test_table', $table_specification);
-+dump("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
      $this->schema->changeField('test_table', 'test_field', 'test_field', ['type' => 'int', 'not null' => TRUE, 'default' => 0]);
-+dump("*** POST CHANGE", $this->schema->dbalSchema()->getTable($this->schema->tableName('test_table')));
 +    $this->checkSchemaComment($table_specification['fields']['test_field_string']['description'], 'test_table', 'test_field_string');
 +    $this->checkSchemaComment($table_specification['fields']['test_field_string_ascii']['description'], 'test_table', 'test_field_string_ascii');
 +    $this->checkSchemaComment($table_specification['description'], 'test_table');
-+dump("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
++global $xxx;
++$xxx = true;
 +dump("****************************************************");
      $this->schema->addField('test_table', 'test_serial', ['type' => 'int', 'not null' => TRUE, 'default' => 0, 'description' => 'Added column description.']);
 +dump($this->schema->dbalSchema()->getTable($this->schema->tableName('test_table')));
 +dump("****************************************************");
- 
+
      // Assert that the column comment has been set.
      $this->checkSchemaComment('Added column description.', 'test_table', 'test_serial');
+
