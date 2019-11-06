@@ -756,7 +756,8 @@ class PDOSqliteExtension extends AbstractExtension {
     $definition = str_replace(self::SINGLE_QUOTE_IDENTIFIER_REPLACEMENT, '\'\'', $definition);
 
     $dbal_column_definition = $definition . $comment . "\n";
-
+global $xxx;
+if ($xxx) dump([$dbal_column_definition, $dbal_column_options, $drupal_field_specs]);
     return $this;
   }
 
