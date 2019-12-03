@@ -14,9 +14,6 @@ branches:
 
 env:
   global:
-    # Oracle variables.
-    - ORACLE_DOWNLOAD_DIR="$HOME/oracle_download"
-    - ORACLE_BASEFILE=oracle-xe-11.2.0-1.0.x86_64.rpm.zip
     # Drupal paths.
     - DRUPAL_STAGING_DIR="$HOME/drupal_staging"
     - DRUPAL_PATH="$HOME/drupal8"
@@ -50,23 +47,18 @@ env:
     - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group file"
     - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group views"
     - DRUDBAL_ENV="dbal/sqlite/memory" TEST_ARGS="--group Database,Installer,Cache,Config,Entity,Field"
-    ##- DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group Database"
-    ##- DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group Installer,Cache,Config"
-    ##- DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group views --testsuite kernel"
 
 matrix:
   fast_finish: true
   allow_failures:
     - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group file"
     - env: DRUDBAL_ENV="dbal/sqlite/memory" TEST_ARGS="--group Database,Installer,Cache,Config,Entity,Field"
-    - env: DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group Database"
-    - env: DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group Installer,Cache,Config"
-    - env: DRUDBAL_ENV="dbal/oci8" TEST_ARGS="--group views --testsuite kernel"
 
 cache:
   directories:
     #- $DRUPAL_STAGING_DIR
     - $ORACLE_DOWNLOAD_DIR
+    - $HOME/.composer/cache
 
 services:
   - mysql
@@ -105,30 +97,6 @@ before_install:
         export DBAL_URL="oci8://ORAROOT:DRUDBAL@$HOST_ADDR:1521/XE"
         export SIMPLETEST_DB="dbal://ORAROOT:DRUDBAL@$HOST_ADDR:1521/XE?dbal_driver=oci8"
 
-      fi
-
-  # Get Oracle XE.
-  - |
-      if [[ "$DRUDBAL_ENV" == "dbal/oci8" ]]; then
-        export ORACLE_COOKIE=sqldev
-        export ORACLE_FILE=oracle11g/xe/$ORACLE_BASEFILE
-        export ORACLE_HOME=/u01/app/oracle/product/11.2.0/xe
-        export ORACLE_SID=XE
-        wget 'https://github.com/cbandy/travis-oracle/archive/v2.0.3.tar.gz'
-        mkdir -p .travis/oracle
-        tar x -C .travis/oracle --strip-components=1 -f v2.0.3.tar.gz
-        if [[ ! -f $ORACLE_DOWNLOAD_DIR/$ORACLE_BASEFILE ]]; then
-          .travis/oracle/download.sh
-          cp .travis/oracle/$ORACLE_BASEFILE $ORACLE_DOWNLOAD_DIR
-        fi
-        if [[ ! -f .travis/oracle/$ORACLE_BASEFILE ]]; then
-          cp $ORACLE_DOWNLOAD_DIR/$ORACLE_BASEFILE .travis/oracle/
-        fi
-        .travis/oracle/install.sh
-        chmod 777 $HOME/build/mondrake/drudbal/tests/travis_ci/$DRUDBAL_ENV/oracle_user.sh
-        $HOME/build/mondrake/drudbal/tests/travis_ci/$DRUDBAL_ENV/oracle_user.sh
-        # Install Oci8 extension for PHP.
-        echo $ORACLE_HOME | pecl install oci8
       fi
 
   # Remove XDebug.
@@ -171,19 +139,14 @@ before_install:
   - curl https://www.drupal.org/files/issues/2912973-2.patch | git apply
   # [#2992274] Installer tests fail if contrib driver hides database credentials form fields
   - curl https://www.drupal.org/files/issues/2019-04-02/2992274-5.patch | git apply
+  # [#3098426] EntityQueryTest::testToString fails with non-core db drivers
+  - curl https://www.drupal.org/files/issues/2019-12-03/3098426-2.patch | git apply
 
 install:
   # Copy the cloned repo to the libraries/drudbal directory, overriding the
   # composer install.
   - rm -rf $DRUPAL_PATH/libraries/drudbal
   - cp -r $HOME/build/mondrake/drudbal $DRUPAL_PATH/libraries/drudbal
-
-  # Patch DBAL for Oracle createSchema fixes https://github.com/doctrine/dbal/pull/2766
-  - |
-      if [[ "$DRUDBAL_ENV" == "dbal/oci8" ]]; then
-        cd $DRUPAL_PATH/vendor/doctrine/dbal
-        patch -p1 < $DRUPAL_PATH/libraries/drudbal/tests/travis_ci/$DRUDBAL_ENV/dbal.patch
-      fi
 
   # Create a directory for the driver, and symlink it to the module's one.
   - mkdir -p $DRUPAL_PATH/drivers/lib/Drupal/Driver/Database/
