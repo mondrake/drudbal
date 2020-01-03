@@ -146,8 +146,8 @@ before_install:
         git clone --depth=5 --branch=9.0.x http://git.drupal.org/project/drupal.git $DRUPAL_STAGING_DIR
         cd $DRUPAL_STAGING_DIR
         composer install --no-progress --no-suggest
-        # Get Drupal Console
-        composer require "drupal/console:^1.9.2" --no-progress --no-suggest
+        # Get Drush
+        composer require drush/drush --no-progress --no-suggest
         composer update doctrine/common phpunit/phpunit phpspec/prophecy --with-dependencies --no-progress --no-suggest
         # Get Doctrine DBAL
         composer require "mondrake/drudbal:dev-master" --no-progress --no-suggest
@@ -196,14 +196,14 @@ install:
 
   # Install Drupal.
   - cd $DRUPAL_PATH/core
-  - drupal site:install minimal $SIMPLETEST_DB --no-interaction
+  - drush site-install standard --db-url=$SIMPLETEST_DB -y
 
   # Get a webserver running.
-  - drupal server $HOST_ADDR:$HTTP_PORT &
-  - sleep 4s
+  - drush runserver $HOST_ADDR:$HTTP_PORT &
+  - sleep 2s
 
   # Post install tasks.
-  - drupal site:status || true
+  - drush core:status || true
 
 script:
   # Only run selected tests to avoid Travis timeout.
