@@ -761,26 +761,4 @@ if ($this->getDebugging()) error_log($query . ' : ' . var_export($args, TRUE));
     return TRUE;
   }
 
-  /**
-   * {@inheritdoc}
-   */
-  public function delegateFieldSetDefault(DbalSchema $dbal_schema, $drupal_table_name, $field_name, $default) {
-    if (is_null($default)) {
-      $default = 'NULL';
-    }
-    else {
-      $default = is_string($default) ? "'$default'" : $default;   // @todo proper quoting
-    }
-    $this->connection->query('ALTER TABLE {' . $drupal_table_name . '} MODIFY (' . $this->getDbFieldName($field_name) . ' DEFAULT ' . $default . ')');
-    return TRUE;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function delegateFieldSetNoDefault(DbalSchema $dbal_schema, $drupal_table_name, $field_name) {
-    $this->connection->query('ALTER TABLE {' . $drupal_table_name . '} MODIFY (' . $this->getDbFieldName($field_name) . ' DEFAULT NULL)');
-    return TRUE;
-  }
-
 }
