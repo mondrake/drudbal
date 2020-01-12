@@ -202,7 +202,7 @@ install:
   - php scripts/test-site.php install
 
   # Get a webserver running.
-  - drush runserver $HOST_ADDR:$HTTP_PORT &
+  - drush runserver $HOST_ADDR:$HTTP_PORT -vvv &
   - sleep 2s
 
   # Post install tasks.
