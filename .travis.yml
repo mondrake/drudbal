@@ -197,8 +197,9 @@ install:
   # Install Drupal.
   - cd $DRUPAL_PATH/core
   #- drush site-install standard --db-url=$SIMPLETEST_DB -y
-  - cp $DRUPAL_PATH/libraries/drudbal/tests/travis_ci/install_cli.php install_cli.php
-  - php install_cli.php
+  #- cp $DRUPAL_PATH/libraries/drudbal/tests/travis_ci/install_cli.php install_cli.php
+  #- php install_cli.php
+  - php scripts/test-site.php install
 
   # Get a webserver running.
   - drush runserver $HOST_ADDR:$HTTP_PORT &
