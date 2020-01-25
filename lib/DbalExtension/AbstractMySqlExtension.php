@@ -676,28 +676,6 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateFieldSetDefault(DbalSchema $dbal_schema, $drupal_table_name, $field_name, $default) {
-    // DBAL would use an ALTER TABLE ... CHANGE statement that would not
-    // preserve non-DBAL managed column attributes. Use MySql syntax here
-    // instead.
-    $this->connection->query('ALTER TABLE {' . $drupal_table_name . '} ALTER COLUMN `' . $field_name . '` SET DEFAULT ' . $default);
-    return TRUE;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function delegateFieldSetNoDefault(DbalSchema $dbal_schema, $drupal_table_name, $field_name) {
-    // DBAL would use an ALTER TABLE ... CHANGE statement that would not
-    // preserve non-DBAL managed column attributes. Use MySql syntax here
-    // instead.
-    $this->connection->query('ALTER TABLE {' . $drupal_table_name . '} ALTER COLUMN `' . $field_name . '` DROP DEFAULT');
-    return TRUE;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function delegateIndexExists(&$result, DbalSchema $dbal_schema, $table_full_name, $drupal_table_name, $drupal_index_name) {
     if ($drupal_index_name == 'PRIMARY') {
       $result = $dbal_schema->getTable($table_full_name)->hasPrimaryKey();

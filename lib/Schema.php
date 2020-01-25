@@ -492,52 +492,6 @@ class Schema extends DatabaseSchema {
   /**
    * {@inheritdoc}
    */
-  public function fieldSetDefault($table, $field, $default) {
-    if (!$this->fieldExists($table, $field)) {
-      throw new SchemaObjectDoesNotExistException(t("Cannot set default value of field @table.@field: field doesn't exist.", ['@table' => $table, '@field' => $field]));
-    }
-
-    // Delegate to DBAL extension.
-    if ($this->dbalExtension->delegateFieldSetDefault($this->dbalSchema(), $table, $field, $this->escapeDefaultValue($default))) {
-      $this->dbalSchemaForceReload();
-      return;
-    }
-
-    // DBAL extension did not pick up, proceed with DBAL.
-    $current_schema = $this->dbalSchema();
-    $to_schema = clone $current_schema;
-    // @todo this may not work - need to see if ::escapeDefaultValue
-    // provides a sensible output.
-    $to_schema->getTable($this->tableName($table))->getColumn($this->dbalExtension->getDbFieldName($field))->setDefault($this->escapeDefaultValue($default));
-    $this->dbalExecuteSchemaChange($to_schema);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function fieldSetNoDefault($table, $field) {
-    if (!$this->fieldExists($table, $field)) {
-      throw new SchemaObjectDoesNotExistException(t("Cannot remove default value of field @table.@field: field doesn't exist.", ['@table' => $table, '@field' => $field]));
-    }
-
-    // Delegate to DBAL extension.
-    if ($this->dbalExtension->delegateFieldSetNoDefault($this->dbalSchema(), $table, $field)) {
-      $this->dbalSchemaForceReload();
-      return;
-    }
-
-    // DBAL extension did not pick up, proceed with DBAL.
-    $current_schema = $this->dbalSchema();
-    $to_schema = clone $current_schema;
-    // @todo this may not work - we need to 'DROP' the default, not set it
-    // to null.
-    $to_schema->getTable($this->tableName($table))->getColumn($this->dbalExtension->getDbFieldName($field))->setDefault(NULL);
-    $this->dbalExecuteSchemaChange($to_schema);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function indexExists($table, $name) {
     if (!$this->tableExists($table)) {
       return FALSE;

@@ -898,30 +898,6 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateFieldSetDefault(DbalSchema $dbal_schema, $drupal_table_name, $field_name, $default) {
-    $old_schema = $this->buildTableSpecFromDbalSchema($dbal_schema, $drupal_table_name);
-    $new_schema = $old_schema;
-
-    $new_schema['fields'][$field_name]['default'] = $default;
-    $this->alterTable($drupal_table_name, $old_schema, $new_schema);
-    return TRUE;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function delegateFieldSetNoDefault(DbalSchema $dbal_schema, $drupal_table_name, $field_name) {
-    $old_schema = $this->buildTableSpecFromDbalSchema($dbal_schema, $drupal_table_name);
-    $new_schema = $old_schema;
-
-    unset($new_schema['fields'][$field_name]['default']);
-    $this->alterTable($drupal_table_name, $old_schema, $new_schema);
-    return TRUE;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function delegateAddUniqueKey(DbalSchema $dbal_schema, $table_full_name, $index_full_name, $drupal_table_name, $drupal_index_name, array $drupal_field_specs) {
     // Avoid DBAL managing of this that would go through table re-creation.
     $index_columns = $this->connection->schema()->dbalGetFieldList($drupal_field_specs);
