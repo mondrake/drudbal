@@ -1,5 +1,5 @@
 diff --git a/core/lib/Drupal/Core/Database/Log.php b/core/lib/Drupal/Core/Database/Log.php
-index c0768fbb..efe41cf3 100644
+index c0768fbb..ea519518 100644
 --- a/core/lib/Drupal/Core/Database/Log.php
 +++ b/core/lib/Drupal/Core/Database/Log.php
 @@ -145,13 +145,23 @@ public function log(StatementInterface $statement, $args, $time) {
@@ -15,7 +15,7 @@ index c0768fbb..efe41cf3 100644
    public function findCaller() {
      $stack = $this->getDebugBacktrace();
 -
-+$xxx = [];
++/*$xxx = [];
 +foreach ($stack as $x) {
 +  if (isset($x['args'])) {
 +    $x['args'] = ['test'];
@@ -25,7 +25,7 @@ index c0768fbb..efe41cf3 100644
 +  }
 +  $xxx[] = $x;
 +}
-+dump($xxx);
++dump($xxx);*/
      // Starting from the very first entry processed during the request, find
      // the first function call that can be identified as a call to a
      // method/function in the database layer.
@@ -38,3 +38,175 @@ index c0768fbb..efe41cf3 100644
            'type' => $stack[$i + 1]['type'] ?? NULL,
            'args' => $stack[$i + 1]['args'] ?? [],
          ];
+diff --git a/core/tests/Drupal/KernelTests/Core/Database/LoggingTest.php b/core/tests/Drupal/KernelTests/Core/Database/LoggingTest.php
+index de100195..58560204 100644
+--- a/core/tests/Drupal/KernelTests/Core/Database/LoggingTest.php
++++ b/core/tests/Drupal/KernelTests/Core/Database/LoggingTest.php
+@@ -183,107 +183,110 @@ public function providerContribDriverLog() {
+     $stack = [
+       [
+         'file' => '/var/www/core/lib/Drupal/Core/Database/Log.php',
+-        'line' => 118,
++        'line' => 125,
+         'function' => 'findCaller',
+         'class' => 'Drupal\\Core\\Database\\Log',
++        'object' => 'test',
+         'type' => '->',
+-        'args' => [],
++        'args' => [
++          0 => 'test',
++        ],
+       ],
+       [
+-        'file' => '/var/www/core/lib/Drupal/Core/Database/Statement.php',
+-        'line' => 63,
++        'file' => '/var/www/libraries/drudbal/lib/Statement.php',
++        'line' => 264,
+         'function' => 'log',
+         'class' => 'Drupal\\Core\\Database\\Log',
++        'object' => 'test',
+         'type' => '->',
+-        'args' => [],
+-      ],
+-      [
+-        'file' => '/var/www/vendor/doctrine/dbal/lib/Doctrine/DBAL/Statement.php',
+-        'line' => 168,
+-        'function' => 'execute',
+-        'class' => 'Drupal\\Core\\Database\\Statement',
+-        'type' => '->',
+-        'args' => [],
++        'args' => [
++          0 => 'test',
++        ],
+       ],
+       [
+-        'file' => '/var/www/modules/contrib/drudbal/drivers/lib/Drupal/Driver/Database/dbal/Connection.php',
+-        'line' => 183,
++        'file' => '/var/www/libraries/drudbal/lib/Connection.php',
++        'line' => 213,
+         'function' => 'execute',
+-        'class' => 'Doctrine\\DBAL\\Statement',
++        'class' => 'Drupal\\Driver\\Database\\dbal\\Statement',
++        'object' => 'test',
+         'type' => '->',
+-        'args' => [],
++        'args' => [
++          0 => 'test',
++        ],
+       ],
+       [
+-        'file' => '/var/www/core/includes/database.inc',
+-        'line' => 61,
++        'file' => '/var/www/core/tests/Drupal/KernelTests/Core/Database/LoggingTest.php',
++        'line' => 23,
+         'function' => 'query',
+         'class' => 'Drupal\\Driver\\Database\\dbal\\Connection',
+-        'object' => NULL,
++        'object' => 'test',
+         'type' => '->',
+-        'args' => [],
+-      ],
+-      [
+-        'file' => '/var/www/tests/Drupal/KernelTests/Core/Database/LoggingTest.php',
+-        'line' => 20,
+-        'function' => 'db_query',
+-        'args' => [],
+-      ],
+-      [
+-        'class' => 'Drupal\\KernelTests\\Core\\Database\\LoggingTest',
+-        'function' => 'testEnableLogging',
+-        'type' => '->',
+-        'args' => [],
++        'args' => [
++          0 => 'test',
++        ],
+       ],
+       [
+         'file' => '/var/www/vendor/phpunit/phpunit/src/Framework/TestCase.php',
+-        'line' => 908,
+-        'function' => 'invokeArgs',
+-        'class' => 'ReflectionMethod',
+-        'object' => NULL,
++        'line' => 1154,
++        'function' => 'testEnableLogging',
++        'class' => 'Drupal\\KernelTests\\Core\\Database\\LoggingTest',
++        'object' => 'test',
+         'type' => '->',
+-        'args' => [],
++        'args' => [
++          0 => 'test',
++        ],
+       ],
+       [
+         'file' => '/var/www/vendor/phpunit/phpunit/src/Framework/TestCase.php',
+-        'line' => 768,
++        'line' => 842,
+         'function' => 'runTest',
+-        'class' => 'PHPUnit_Framework_TestCase',
+-        'object' => NULL,
++        'class' => 'PHPUnit\\Framework\\TestCase',
++        'object' => 'test',
+         'type' => '->',
+-        'args' => [],
++        'args' => [
++          0 => 'test',
++        ],
+       ],
+       [
+         'file' => '/var/www/vendor/phpunit/phpunit/src/Framework/TestResult.php',
+-        'line' => 612,
++        'line' => 693,
+         'function' => 'runBare',
+-        'class' => 'PHPUnit_Framework_TestCase',
+-        'object' => NULL,
++        'class' => 'PHPUnit\\Framework\\TestCase',
++        'object' => 'test',
+         'type' => '->',
+-        'args' => [],
++        'args' => [
++          0 => 'test',
++        ],
+       ],
+       [
+         'file' => '/var/www/vendor/phpunit/phpunit/src/Framework/TestCase.php',
+-        'line' => 724,
++        'line' => 796,
+         'function' => 'run',
+-        'class' => 'PHPUnit_Framework_TestResult',
+-        'object' => NULL,
++        'class' => 'PHPUnit\\Framework\\TestResult',
++        'object' => 'test',
+         'type' => '->',
+-        'args' => [],
++        'args' => [
++          0 => 'test',
++        ],
+       ],
+       [
+-        'file' => '-',
+-        'line' => 52,
++        'file' => 'Standard input code',
++        'line' => 57,
+         'function' => 'run',
+-        'class' => 'PHPUnit_Framework_TestCase',
+-        'object' => NULL,
++        'class' => 'PHPUnit\\Framework\\TestCase',
++        'object' => 'test',
+         'type' => '->',
+-        'args' => [],
++        'args' => [
++          0 => 'test',
++        ],
+       ],
+       [
+-        'file' => '-',
+-        'line' => 1574,
++        'file' => 'Standard input code',
++        'line' => 111,
+         'function' => '__phpunit_run_isolated_test',
+-        'args' => [],
++        'args' => [
++          0 => 'test',
++        ],
+       ],
+     ];
