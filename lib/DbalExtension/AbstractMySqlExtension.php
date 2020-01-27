@@ -260,7 +260,6 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
    * {@inheritdoc}
    */
   public function delegateQueryExceptionProcess($query, array $args, array $options, $message, \Exception $e) {
-throw $e;
     if ($e instanceof DatabaseExceptionWrapper) {
       $e = $e->getPrevious();
     }

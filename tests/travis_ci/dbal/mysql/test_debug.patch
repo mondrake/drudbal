@@ -1,5 +1,5 @@
 diff --git a/core/lib/Drupal/Core/Database/Log.php b/core/lib/Drupal/Core/Database/Log.php
-index c0768fbb..495b5f85 100644
+index c0768fbb..5c803c6e 100644
 --- a/core/lib/Drupal/Core/Database/Log.php
 +++ b/core/lib/Drupal/Core/Database/Log.php
 @@ -145,13 +145,20 @@ public function log(StatementInterface $statement, $args, $time) {
@@ -22,7 +22,7 @@ index c0768fbb..495b5f85 100644
 +  }
 +  $xxx[] = $x;
 +}
-+throw new \Exception(var_export($xxx, TRUE));
++dump($xxx);
      // Starting from the very first entry processed during the request, find
      // the first function call that can be identified as a call to a
      // method/function in the database layer.
