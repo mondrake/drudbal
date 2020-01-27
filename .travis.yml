@@ -3,8 +3,6 @@
 
 language: php
 
-sudo: required
-
 php:
   - 7.3
 
@@ -27,26 +25,26 @@ env:
     #- SYMFONY_DEPRECATIONS_HELPER=disabled
 
   matrix:
-    - DRUDBAL_ENV="mysql" TEST_ARGS="--group Database"
+    #- DRUDBAL_ENV="mysql" TEST_ARGS="--group Database"
     - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Database,Entity,Field"
-    - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Installer,Cache,Config"
-    - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group field"
-    - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group file"
-    - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group views --testsuite=kernel"
-    - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group views --testsuite=functional"
-    - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Database,Entity,Field"
-    - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Installer,Cache,Config"
-    - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group field"
-    - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group file"
-    - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group views --testsuite=kernel"
-    - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group views --testsuite=functional"
-    - DRUDBAL_ENV="sqlite" TEST_ARGS="--group Database"
-    - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database,Entity,Field"
-    - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Installer,Cache,Config"
-    - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group field"
-    - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group file"
-    - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group views"
-    - DRUDBAL_ENV="dbal/sqlite/memory" TEST_ARGS="--group Database,Installer,Cache,Config,Entity,Field"
+    #- DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Installer,Cache,Config"
+    #- DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group field"
+    #- DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group file"
+    #- DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group views --testsuite=kernel"
+    #- DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group views --testsuite=functional"
+    #- DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Database,Entity,Field"
+    #- DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Installer,Cache,Config"
+    #- DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group field"
+    #- DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group file"
+    #- DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group views --testsuite=kernel"
+    #- DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group views --testsuite=functional"
+    #- DRUDBAL_ENV="sqlite" TEST_ARGS="--group Database"
+    #- DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database,Entity,Field"
+    #- DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Installer,Cache,Config"
+    #- DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group field"
+    #- DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group file"
+    #- DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group views"
+    #- DRUDBAL_ENV="dbal/sqlite/memory" TEST_ARGS="--group Database,Installer,Cache,Config,Entity,Field"
 
 matrix:
   fast_finish: true
@@ -56,7 +54,7 @@ matrix:
 
 cache:
   directories:
-    #- $DRUPAL_STAGING_DIR
+    - $DRUPAL_STAGING_DIR
     - $ORACLE_DOWNLOAD_DIR
     - $HOME/.composer/cache
 
@@ -135,7 +133,7 @@ before_install:
 
   # Apply Drupal core patches.
   # [#2867788] Log::findCaller fails to report the correct caller function with non-core drivers.
-  - curl https://www.drupal.org/files/issues/2019-05-28/2867788-53.patch | git apply
+  - curl https://www.drupal.org/files/issues/2020-01-27/2867788-58.patch | git apply
   # [#2871374] SelectTest::testVulnerableComment fails when driver overrides Select::__toString
   - curl https://www.drupal.org/files/issues/2018-07-25/2871374-6.patch | git apply
   # [#2874499] Test failures when db driver is set to not support transactions
@@ -176,7 +174,7 @@ install:
   #- php scripts/test-site.php install
 
   # Get a webserver running.
-  - drush runserver $HOST_ADDR:$HTTP_PORT -vvv &
+  - drush runserver $HOST_ADDR:$HTTP_PORT &
   - sleep 2s
 
   # Post install tasks.
@@ -184,7 +182,8 @@ install:
 
 script:
   # Only run selected tests to avoid Travis timeout.
-  - $DRUPAL_PATH/vendor/bin/phpunit $TEST_ARGS
+  #- $DRUPAL_PATH/vendor/bin/phpunit $TEST_ARGS
+  - $DRUPAL_PATH/vendor/bin/phpunit tests/Drupal/KernelTests/Core/Database/LoggingTest.php
 
 after_script:
   - cd $DRUPAL_PATH/libraries/drudbal
