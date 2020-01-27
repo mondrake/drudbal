@@ -3,8 +3,6 @@
 
 language: php
 
-sudo: required
-
 php:
   - 7.3
 
@@ -123,7 +121,7 @@ before_install:
         composer install --no-progress --no-suggest
         # Get Drush
         composer require drush/drush --no-progress --no-suggest
-        composer update phpunit/phpunit --with-dependencies --no-progress --no-suggest
+        composer update phpunit/phpunit symfony/var-dumper --with-dependencies --no-progress --no-suggest
         # Get Doctrine DBAL
         composer require "mondrake/drudbal:dev-master" --no-progress --no-suggest
       fi
@@ -135,7 +133,7 @@ before_install:
 
   # Apply Drupal core patches.
   # [#2867788] Log::findCaller fails to report the correct caller function with non-core drivers.
-  - curl https://www.drupal.org/files/issues/2019-05-28/2867788-53.patch | git apply
+  - curl https://www.drupal.org/files/issues/2020-01-27/2867788-62.patch | git apply
   # [#2871374] SelectTest::testVulnerableComment fails when driver overrides Select::__toString
   - curl https://www.drupal.org/files/issues/2018-07-25/2871374-6.patch | git apply
   # [#2874499] Test failures when db driver is set to not support transactions
@@ -176,7 +174,7 @@ install:
   #- php scripts/test-site.php install
 
   # Get a webserver running.
-  - drush runserver $HOST_ADDR:$HTTP_PORT -vvv &
+  - drush runserver $HOST_ADDR:$HTTP_PORT &
   - sleep 2s
 
   # Post install tasks.
