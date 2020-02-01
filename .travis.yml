@@ -136,14 +136,10 @@ before_install:
   - curl https://www.drupal.org/files/issues/2020-01-27/2867788-62.patch | git apply
   # [#2871374] SelectTest::testVulnerableComment fails when driver overrides Select::__toString
   - curl https://www.drupal.org/files/issues/2018-07-25/2871374-6.patch | git apply
-  # [#2874499] Test failures when db driver is set to not support transactions
-  #- curl https://www.drupal.org/files/issues/2018-08-23/2874499-12-transaction-enabled.patch | git apply
   # [#2657888] Add Date function support in DTBNG
   - curl https://www.drupal.org/files/issues/2657888-18.patch | git apply
   # [#2992274] Installer tests fail if contrib driver hides database credentials form fields
   - curl https://www.drupal.org/files/issues/2019-04-02/2992274-5.patch | git apply
-  # [#3098426] EntityQueryTest::testToString fails with non-core db drivers
-  - curl https://www.drupal.org/files/issues/2019-12-03/3098426-2.patch | git apply
 
 install:
   # Copy the cloned repo to the libraries/drudbal directory, overriding the
