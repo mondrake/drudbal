@@ -96,9 +96,7 @@ Issue | Description   |
 [2867788](https://www.drupal.org/node/2867788) | Log::findCaller fails to report the correct caller function with non-core drivers |
 [2871374](https://www.drupal.org/node/2871374) | SelectTest::testVulnerableComment fails when driver overrides Select::\_\_toString |
 tbd | Add tests for Upsert with default values |
-[2874499](https://www.drupal.org/node/2874499) | Test failures when db driver is set to not support transactions |
 [2657888](https://www.drupal.org/node/2657888) | Add Date function support in DTBNG |
 tbd | Ensure that when INSERTing a NULL value in a database column, SELECTing it back returns NULL and not empty string - for all fetch modes |
 tbd | UpdateTestBase::runUpdate should reset database schema after updating |
 [2992274](https://www.drupal.org/project/drupal/issues/2992274) | Installer tests fail if contrib driver hides database credentials form fields |
-[3098426](https://www.drupal.org/files/issues/2019-12-03/3098426-2.patch) | EntityQueryTest::testToString fails with non-core db drivers |
