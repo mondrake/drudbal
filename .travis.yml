@@ -120,7 +120,7 @@ before_install:
         composer install --no-progress --no-suggest
         # Get Drush
         composer require drush/drush --no-progress --no-suggest
-        composer update phpunit/phpunit --with-dependencies --no-progress --no-suggest
+        composer update phpunit/phpunit symfony/var-dumper --with-dependencies --no-progress --no-suggest
         # Get Doctrine DBAL
         composer require "mondrake/drudbal:dev-master" --no-progress --no-suggest
       fi
@@ -132,17 +132,13 @@ before_install:
 
   # Apply Drupal core patches.
   # [#2867788] Log::findCaller fails to report the correct caller function with non-core drivers.
-  - curl https://www.drupal.org/files/issues/2019-05-28/2867788-53.patch | git apply
+  - curl https://www.drupal.org/files/issues/2020-01-27/2867788-62.patch | git apply
   # [#2871374] SelectTest::testVulnerableComment fails when driver overrides Select::__toString
   - curl https://www.drupal.org/files/issues/2018-07-25/2871374-6.patch | git apply
-  # [#2874499] Test failures when db driver is set to not support transactions
-  #- curl https://www.drupal.org/files/issues/2018-08-23/2874499-12-transaction-enabled.patch | git apply
   # [#2657888] Add Date function support in DTBNG
   - curl https://www.drupal.org/files/issues/2657888-18.patch | git apply
   # [#2992274] Installer tests fail if contrib driver hides database credentials form fields
   - curl https://www.drupal.org/files/issues/2019-04-02/2992274-5.patch | git apply
-  # [#3098426] EntityQueryTest::testToString fails with non-core db drivers
-  - curl https://www.drupal.org/files/issues/2019-12-03/3098426-2.patch | git apply
 
 install:
   # Copy the cloned repo to the libraries/drudbal directory, overriding the
@@ -173,7 +169,7 @@ install:
   #- php scripts/test-site.php install
 
   # Get a webserver running.
-  - drush runserver $HOST_ADDR:$HTTP_PORT -vvv &
+  - drush runserver $HOST_ADDR:$HTTP_PORT &
   - sleep 2s
 
   # Post install tasks.
