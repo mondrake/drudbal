@@ -4,7 +4,7 @@
 language: php
 
 php:
-  - 7.3
+  - 7.4
 
 branches:
   except:
@@ -46,7 +46,7 @@ env:
     - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group views"
     - DRUDBAL_ENV="dbal/sqlite/memory" TEST_ARGS="--group Database,Installer,Cache,Config,Entity,Field"
 
-matrix:
+jobs:
   fast_finish: true
   allow_failures:
     - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group file"
@@ -61,10 +61,6 @@ cache:
 services:
   - mysql
 
-mysql:
-  database: drudbal
-  username: root
-  encoding: utf8
 
 before_install:
   # Set variables.
