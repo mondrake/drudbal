@@ -1,6 +1,8 @@
 # @file
 # .travis.yml - Drupal driver for Doctrine DBAL.
 
+os: linux
+
 language: php
 
 php:
@@ -24,27 +26,27 @@ env:
     # Suppress deprecation handling.
     #- SYMFONY_DEPRECATIONS_HELPER=disabled
 
-  matrix:
+  jobs:
     - DRUDBAL_ENV="mysql" TEST_ARGS="--group Database"
-    - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Database,Entity,Field"
-    - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Installer,Cache,Config"
-    - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group field"
-    - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group file"
-    - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group views --testsuite=kernel"
-    - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group views --testsuite=functional"
-    - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Database,Entity,Field"
-    - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Installer,Cache,Config"
-    - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group field"
-    - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group file"
-    - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group views --testsuite=kernel"
-    - DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group views --testsuite=functional"
+    #- DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Database,Entity,Field"
+    #- DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Installer,Cache,Config"
+    #- DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group field"
+    #- DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group file"
+    #- DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group views --testsuite=kernel"
+    #- DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group views --testsuite=functional"
+    #- DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Database,Entity,Field"
+    #- DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Installer,Cache,Config"
+    #- DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group field"
+    #- DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group file"
+    #- DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group views --testsuite=kernel"
+    #- DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group views --testsuite=functional"
     - DRUDBAL_ENV="sqlite" TEST_ARGS="--group Database"
     - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database,Entity,Field"
-    - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Installer,Cache,Config"
-    - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group field"
-    - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group file"
-    - DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group views"
-    - DRUDBAL_ENV="dbal/sqlite/memory" TEST_ARGS="--group Database,Installer,Cache,Config,Entity,Field"
+    #- DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Installer,Cache,Config"
+    #- DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group field"
+    #- DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group file"
+    #- DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group views"
+    #- DRUDBAL_ENV="dbal/sqlite/memory" TEST_ARGS="--group Database,Installer,Cache,Config,Entity,Field"
 
 jobs:
   fast_finish: true
@@ -136,6 +138,8 @@ before_install:
   - curl https://www.drupal.org/files/issues/2657888-18.patch | git apply
   # [#2992274] Installer tests fail if contrib driver hides database credentials form fields
   - curl https://www.drupal.org/files/issues/2019-04-02/2992274-5.patch | git apply
+  # [#3106531] Remove per-table prefixing from core
+  - curl https://www.drupal.org/files/issues/2020-02-07/3106531-29.patch | git apply -v
 
 install:
   # Copy the cloned repo to the libraries/drudbal directory, overriding the
