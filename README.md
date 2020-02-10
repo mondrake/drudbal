@@ -94,7 +94,6 @@ https://github.com/doctrine/dbal/pull/2415       | Add some MySQL platform data 
 Issue | Description   |
 ------|---------------|
 [2867788](https://www.drupal.org/node/2867788) | Log::findCaller fails to report the correct caller function with non-core drivers |
-[2871374](https://www.drupal.org/node/2871374) | SelectTest::testVulnerableComment fails when driver overrides Select::\_\_toString |
 tbd | Add tests for Upsert with default values |
 [2657888](https://www.drupal.org/node/2657888) | Add Date function support in DTBNG |
 tbd | Ensure that when INSERTing a NULL value in a database column, SELECTing it back returns NULL and not empty string - for all fetch modes |
