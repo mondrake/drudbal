@@ -132,14 +132,12 @@ before_install:
   # Apply Drupal core patches.
   # [#2867788] Log::findCaller fails to report the correct caller function with non-core drivers.
   - curl https://www.drupal.org/files/issues/2020-01-27/2867788-62.patch | git apply
-  # [#2871374] SelectTest::testVulnerableComment fails when driver overrides Select::__toString
-  - curl https://www.drupal.org/files/issues/2018-07-25/2871374-6.patch | git apply
   # [#2657888] Add Date function support in DTBNG
   - curl https://www.drupal.org/files/issues/2657888-18.patch | git apply
   # [#2992274] Installer tests fail if contrib driver hides database credentials form fields
   - curl https://www.drupal.org/files/issues/2019-04-02/2992274-5.patch | git apply
   # [#3106531] Remove per-table prefixing from core
-  - curl https://www.drupal.org/files/issues/2020-02-07/3106531-34.patch | git apply -v
+  - curl https://www.drupal.org/files/issues/2020-02-11/3106531-38_0.patch | git apply -v
 
 install:
   # Copy the cloned repo to the libraries/drudbal directory, overriding the
