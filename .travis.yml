@@ -137,7 +137,7 @@ before_install:
   # [#2992274] Installer tests fail if contrib driver hides database credentials form fields
   - curl https://www.drupal.org/files/issues/2019-04-02/2992274-5.patch | git apply
   # [#3106531] Remove per-table prefixing from core
-  - curl https://www.drupal.org/files/issues/2020-02-11/3106531-38_0.patch | git apply -v
+  - curl https://www.drupal.org/files/issues/2020-02-13/3106531-45.patch | git apply -v
 
 install:
   # Copy the cloned repo to the libraries/drudbal directory, overriding the
