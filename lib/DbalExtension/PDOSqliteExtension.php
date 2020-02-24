@@ -24,7 +24,7 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * Minimum required Sqlite version.
    */
-  const SQLITE_MINIMUM_VERSION = '3.7.11';
+  const SQLITE_MINIMUM_VERSION = '3.26';
 
   /**
    * Error code for "Unable to open database file" error.
