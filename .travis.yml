@@ -52,7 +52,8 @@ env:
 
 jobs:
   include:
-    - addons:
+    - stage: Test
+      addons:
         mariadb: '10.0'
       env: DRUDBAL_ENV="dbal/mariadb" TEST_ARGS="--group Database"
   fast_finish: true
