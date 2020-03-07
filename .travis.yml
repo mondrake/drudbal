@@ -56,7 +56,7 @@ jobs:
       env: DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Database"
     - stage: Allow Failures
       addons:
-        mariadb: '10.0'
+        mariadb: '10.2'
       env: DRUDBAL_ENV="dbal/mariadb" TEST_ARGS="--group Database"
   fast_finish: true
   allow_failures:
