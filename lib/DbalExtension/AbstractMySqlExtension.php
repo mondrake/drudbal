@@ -288,6 +288,27 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
+  public function getDbServerPlatform(): string {
+    $dbal_server_version = $this->getDbalConnection()->getWrappedConnection()->getServerVersion();
+    $regex = '/^(?:5\.5\.5-)?(\d+\.\d+\.\d+.*-mariadb.*)/i';
+    preg_match($regex, $dbal_server_version, $matches);
+    return (empty($matches[1])) ? 'mysql' : 'mariadb';
+
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getDbServerVersion(): string {
+    $dbal_server_version = $this->getDbalConnection()->getWrappedConnection()->getServerVersion();
+    $regex = '/^(?:5\.5\.5-)?(\d+\.\d+\.\d+.*-mariadb.*)/i';
+    preg_match($regex, $dbal_server_version, $matches);
+    return $matches[1] ?? $dbal_server_version;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function delegateQueryRange($query, $from, $count, array $args = [], array $options = []) {
     return $this->connection->query($query . ' LIMIT ' . (int) $from . ', ' . (int) $count, $args, $options);
   }
@@ -503,12 +524,14 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
       'pass' => [],
     ];
 
-    // Ensure that MySql has the right minimum version.
-    $db_server_version = $this->dbalConnection->getWrappedConnection()->getServerVersion();
-    if (version_compare($db_server_version, self::MYSQL_MINIMUM_VERSION, '<')) {
-      $results['fail'][] = t("The MySQL server version %version is less than the minimum required version %minimum_version.", [
+    // Ensure that the database server has the right minimum version.
+    $db_server_platform = $this->getDbServerPlatform();
+    $db_server_version = $this->getDbServerVersion();
+    $db_server_min_version = $db_server_platform === 'mysql' ? self::MYSQL_MINIMUM_VERSION : self::MARIADB_MINIMUM_VERSION;
+    if (version_compare($db_server_version, $db_server_min_version, '<')) {
+      $results['fail'][] = t("The database server version %version is less than the minimum required version %minimum_version.", [
         '%version' => $db_server_version,
-        '%minimum_version' => self::MYSQL_MINIMUM_VERSION,
+        '%minimum_version' => $db_server_min_version,
       ]);
     }
 
