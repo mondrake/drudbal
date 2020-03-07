@@ -35,7 +35,7 @@ interface DbalExtensionInterface {
    * @return string
    *   The database server platform.
    */
-  public function getDbServerPlatform();
+  public function getDbServerPlatform(): string;
 
   /**
    * Gets the database server version.
@@ -43,7 +43,7 @@ interface DbalExtensionInterface {
    * @return string
    *   The database server version.
    */
-  public function getDbServerVersion();
+  public function getDbServerVersion(): string;
 
   /**
    * Database asset name resolution methods.

@@ -120,14 +120,14 @@ class AbstractExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function getDbServerPlatform() {
+  public function getDbServerPlatform(): string {
     return $this->getDbalConnection()->getDriver()->getDatabasePlatform()->getName();
   }
 
   /**
    * {@inheritdoc}
    */
-  public function getDbServerVersion() {
+  public function getDbServerVersion(): string {
     return $this->getDbalConnection()->getWrappedConnection()->getServerVersion();
   }
 
