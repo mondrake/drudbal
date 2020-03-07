@@ -702,16 +702,6 @@ class Connection extends DatabaseConnection {
   }
 
   /**
-   * Gets the database server version.
-   *
-   * @return string
-   *   The database server version string.
-   */
-  public function getDbServerVersion() {
-    return $this->getDbalConnection()->getWrappedConnection()->getServerVersion();
-  }
-
-  /**
    * {@inheritdoc}
    */
   public static function createUrlFromConnectionOptions(array $connection_options) {

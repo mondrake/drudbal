@@ -118,6 +118,20 @@ class AbstractExtension implements DbalExtensionInterface {
   }
 
   /**
+   * {@inheritdoc}
+   */
+  public function getDbServerPlatform() {
+    return $this->getDbalConnection()->getDriver()->getDatabasePlatform()->getName();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getDbServerVersion() {
+    return $this->getDbalConnection()->getWrappedConnection()->getServerVersion();
+  }
+
+  /**
    * Database asset name resolution methods.
    */
 

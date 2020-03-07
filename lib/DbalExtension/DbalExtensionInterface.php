@@ -30,6 +30,22 @@ interface DbalExtensionInterface {
   public function getDbalConnection();
 
   /**
+   * Gets the database server platform.
+   *
+   * @return string
+   *   The database server platform.
+   */
+  public function getDbServerPlatform();
+
+  /**
+   * Gets the database server version.
+   *
+   * @return string
+   *   The database server version.
+   */
+  public function getDbServerVersion();
+
+  /**
    * Database asset name resolution methods.
    */
 
