@@ -28,7 +28,7 @@ env:
     #- SYMFONY_DEPRECATIONS_HELPER=disabled
 
   jobs:
-    - DRUDBAL_ENV="mysql" TEST_ARGS="--group Database"
+    #- DRUDBAL_ENV="mysql" TEST_ARGS="--group Database"
     #- DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Database,Entity,Field"
     - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Database"
     #- DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Installer,Cache,Config"
@@ -52,8 +52,7 @@ env:
 
 jobs:
   include:
-    - stage: Allow failures
-      addons:
+    - addons:
         mariadb: '10.0'
       env: DRUDBAL_ENV="dbal/mariadb" TEST_ARGS="--group Database"
   fast_finish: true
@@ -64,7 +63,7 @@ jobs:
 
 cache:
   directories:
-    #- $DRUPAL_STAGING_DIR
+    - $DRUPAL_STAGING_DIR
     - $ORACLE_DOWNLOAD_DIR
     - $HOME/.composer/cache
 
