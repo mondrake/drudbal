@@ -165,6 +165,7 @@ before_install:
   - curl https://www.drupal.org/files/issues/2657888-18.patch | git apply
   # [#2992274] Installer tests fail if contrib driver hides database credentials form fields
   - curl https://www.drupal.org/files/issues/2019-04-02/2992274-5.patch | git apply
+  - curl https://www.drupal.org/files/issues/2020-03-07/3118477_4.patch | git apply
 
 install:
   # Copy the cloned repo to the libraries/drudbal directory, overriding the
@@ -205,8 +206,7 @@ install:
 
 script:
   # Only run selected tests to avoid Travis timeout.
-  - drush core:status || true
-  #- $DRUPAL_PATH/vendor/bin/phpunit $TEST_ARGS
+  - $DRUPAL_PATH/vendor/bin/phpunit $TEST_ARGS
 
 after_script:
   - cd $DRUPAL_PATH/libraries/drudbal
