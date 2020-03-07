@@ -15,22 +15,11 @@ branches:
 
 env:
   global:
-    # Drupal paths.
-    - DRUPAL_STAGING_DIR="$HOME/drupal_staging"
-    - DRUPAL_PATH="$HOME/drupal8"
-    - PATH="$PATH:$DRUPAL_PATH/vendor/bin:$HOME/.composer/vendor/bin"
-    # Installation variables.
-    - HOST_ADDR="127.0.0.1"
-    - HTTP_PORT="8080"
-    # Drupal PHPUnit test variables.
-    - SIMPLETEST_BASE_URL="http://$HOST_ADDR:$HTTP_PORT"
-    # Suppress deprecation handling.
-    #- SYMFONY_DEPRECATIONS_HELPER=disabled
 
   jobs:
     #- DRUDBAL_ENV="mysql" TEST_ARGS="--group Database"
     #- DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Database,Entity,Field"
-    - DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Database"
+    #- DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Database"
     #- DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Installer,Cache,Config"
     #- DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group field"
     #- DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group file"
@@ -53,7 +42,13 @@ env:
 jobs:
   include:
     - stage: Test
-      env: DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Database"
+      services:
+        - mysql
+      env: DRUDBAL_ENV="mysql" TEST_ARGS="--group Database"
+    - stage: Test
+      services:
+        - mysql
+      env: DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Database,Entity,Field"
     - stage: Allow Failures
       addons:
         mariadb: '10.2'
@@ -70,11 +65,22 @@ cache:
     - $ORACLE_DOWNLOAD_DIR
     - $HOME/.composer/cache
 
-services:
-  - mysql
-
 before_install:
   # Set variables.
+
+  # Drupal paths.
+  - export DRUPAL_STAGING_DIR="$HOME/drupal_staging"
+  - export DRUPAL_PATH="$HOME/drupal8"
+  - export PATH="$PATH:$DRUPAL_PATH/vendor/bin:$HOME/.composer/vendor/bin"
+  # Installation variables.
+  - export HOST_ADDR="127.0.0.1"
+  - export HTTP_PORT="8080"
+  # Drupal PHPUnit test variables.
+  - export SIMPLETEST_BASE_URL="http://$HOST_ADDR:$HTTP_PORT"
+  # Suppress deprecation handling.
+  #- export SYMFONY_DEPRECATIONS_HELPER=disabled
+
+  # Expand environment-dependent variables.
   - |
       if [[ "$DRUDBAL_ENV" == "mysql" ]]; then
         export SIMPLETEST_DB="mysql://root:@$HOST_ADDR/drudbal#drudbal_"
