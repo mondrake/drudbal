@@ -134,7 +134,7 @@ before_install:
   - echo "apc.enable_cli=1" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
 
   # Create the test db.
-#  - mysql -e 'CREATE DATABASE IF NOT EXISTS drudbal;'
+  - mysql -e 'CREATE DATABASE IF NOT EXISTS drudbal;'
 
   # Stage Drupal core to get dependencies.
   - |
