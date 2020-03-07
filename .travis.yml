@@ -7,8 +7,7 @@ language: php
 
 dist: bionic
 
-php:
-  - 7.4
+php: 7.4
 
 branches:
   except:
@@ -52,8 +51,14 @@ env:
     #- DRUDBAL_ENV="dbal/sqlite/memory" TEST_ARGS="--group Database,Installer,Cache,Config,Entity,Field"
 
 jobs:
+  include:
+    - stage: Allow failures
+      addons:
+        mariadb: '10.0'
+      env: DRUDBAL_ENV="dbal/mariadb" TEST_ARGS="--group Database"
   fast_finish: true
   allow_failures:
+    - stage: Allow failures
     - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group file"
     - env: DRUDBAL_ENV="dbal/sqlite/memory" TEST_ARGS="--group Database,Installer,Cache,Config,Entity,Field"
 
@@ -66,7 +71,6 @@ cache:
 services:
   - mysql
 
-
 before_install:
   # Set variables.
   - |
@@ -75,6 +79,11 @@ before_install:
         export INSTALL_VIA="drush"
 
       elif [[ "$DRUDBAL_ENV" == "dbal/mysql" ]]; then
+        export DBAL_URL="mysql://root:@$HOST_ADDR/drudbal"
+        export SIMPLETEST_DB="dbal://root:@$HOST_ADDR/drudbal?dbal_driver=pdo_mysql"
+        export INSTALL_VIA="dbal"
+
+      elif [[ "$DRUDBAL_ENV" == "dbal/mariadb" ]]; then
         export DBAL_URL="mysql://root:@$HOST_ADDR/drudbal"
         export SIMPLETEST_DB="dbal://root:@$HOST_ADDR/drudbal?dbal_driver=pdo_mysql"
         export INSTALL_VIA="dbal"
