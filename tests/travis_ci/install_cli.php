@@ -54,7 +54,7 @@ Timer::start('drudbal:setup');
 install_drupal($class_loader, $settings);
 
 // Report installation.
-$installer = db_installer_object('dbal')
+$installer = db_installer_object('dbal');
 print("Installation OK\n");
 print("Database: " . $installer->name() . "\n");
 print("Version : " . Database->getConnection()->version() . "\n");
