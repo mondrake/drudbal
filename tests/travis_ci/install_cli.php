@@ -57,4 +57,4 @@ install_drupal($class_loader, $settings);
 $installer = db_installer_object('dbal');
 print("Installation OK\n");
 print("Database: " . $installer->name() . "\n");
-print("Version : " . Database->getConnection()->version() . "\n");
+print("Version : " . Database::getConnection()->version() . "\n");
