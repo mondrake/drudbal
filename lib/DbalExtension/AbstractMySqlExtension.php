@@ -24,14 +24,20 @@ use Doctrine\DBAL\Schema\Table as DbalTable;
 abstract class AbstractMySqlExtension extends AbstractExtension {
 
   /**
-   * Minimum required mysql version.
+   * Minimum required MySQL version.
    *
-   * This can not be increased above '5.5.5' without dropping support for all
-   * MariaDB versions. MariaDB prefixes its version string with '5.5.5-'. For
-   * more information, see
-   * https://github.com/MariaDB/server/blob/f6633bf058802ad7da8196d01fd19d75c53f7274/include/mysql_com.h#L42.
+   * 5.7.8 is the minimum version that supports the JSON datatype.
+   * @see https://dev.mysql.com/doc/refman/5.7/en/json.html
    */
-  const MYSQLSERVER_MINIMUM_VERSION = '5.5.3';
+  const MYSQL_MINIMUM_VERSION = '5.7.8';
+
+  /**
+   * Minimum required MariaDB version.
+   *
+   * 10.2.7 is the minimum version that supports the JSON datatype (alias).
+   * @see https://mariadb.com/kb/en/json-data-type/
+   */
+  const MARIADB_MINIMUM_VERSION = '10.2.7';
 
   /**
    * Minimum required MySQLnd version.
@@ -282,6 +288,27 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
+  public function getDbServerPlatform(): string {
+    $dbal_server_version = $this->getDbalConnection()->getWrappedConnection()->getServerVersion();
+    $regex = '/^(?:5\.5\.5-)?(\d+\.\d+\.\d+.*-mariadb.*)/i';
+    preg_match($regex, $dbal_server_version, $matches);
+    return (empty($matches[1])) ? 'mysql' : 'mariadb';
+
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getDbServerVersion(): string {
+    $dbal_server_version = $this->getDbalConnection()->getWrappedConnection()->getServerVersion();
+    $regex = '/^(?:5\.5\.5-)?(\d+\.\d+\.\d+.*-mariadb.*)/i';
+    preg_match($regex, $dbal_server_version, $matches);
+    return $matches[1] ?? $dbal_server_version;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function delegateQueryRange($query, $from, $count, array $args = [], array $options = []) {
     return $this->connection->query($query . ' LIMIT ' . (int) $from . ', ' . (int) $count, $args, $options);
   }
@@ -497,12 +524,14 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
       'pass' => [],
     ];
 
-    // Ensure that MySql has the right minimum version.
-    $db_server_version = $this->dbalConnection->getWrappedConnection()->getServerVersion();
-    if (version_compare($db_server_version, self::MYSQLSERVER_MINIMUM_VERSION, '<')) {
-      $results['fail'][] = t("The MySQL server version %version is less than the minimum required version %minimum_version.", [
+    // Ensure that the database server has the right minimum version.
+    $db_server_platform = $this->getDbServerPlatform();
+    $db_server_version = $this->getDbServerVersion();
+    $db_server_min_version = $db_server_platform === 'mysql' ? self::MYSQL_MINIMUM_VERSION : self::MARIADB_MINIMUM_VERSION;
+    if (version_compare($db_server_version, $db_server_min_version, '<')) {
+      $results['fail'][] = t("The database server version %version is less than the minimum required version %minimum_version.", [
         '%version' => $db_server_version,
-        '%minimum_version' => self::MYSQLSERVER_MINIMUM_VERSION,
+        '%minimum_version' => $db_server_min_version,
       ]);
     }
 
