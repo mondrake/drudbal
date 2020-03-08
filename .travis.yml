@@ -27,9 +27,9 @@ jobs:
     - env: DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Installer,Cache,Config"
       services:
         - mysql
-    - services:
+    - env: DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group field"
+      services:
         - mysql
-      env: DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group field"
     - env: DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group file"
       services:
         - mysql
@@ -64,9 +64,9 @@ jobs:
     - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database,Entity,Field"
     - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Installer,Cache,Config"
     - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group field"
+    - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group views"
     - stage: Allow Failures
       env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group file"
-    - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group views"
     - stage: Allow Failures
       env: DRUDBAL_ENV="dbal/sqlite/memory" TEST_ARGS="--group Database,Installer,Cache,Config,Entity,Field"
   fast_finish: true
