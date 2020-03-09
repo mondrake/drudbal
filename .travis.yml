@@ -17,12 +17,12 @@ jobs:
   include:
     - env:
         - DRUDBAL_ENV=mysql
-        - TEST_ARGS=--group Database
+        - TEST_ARGS='--group Database'
       services:
         - mysql
     - env:
         - DRUDBAL_ENV=dbal/mariadb
-        - TEST_ARGS=--group Database
+        - TEST_ARGS='--group Database'
       addons:
         mariadb: '10.2'
     - env: DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Database,Entity,Field"
