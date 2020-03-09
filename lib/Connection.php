@@ -477,27 +477,34 @@ class Connection extends DatabaseConnection {
    * @param array $driver_options
    *   (optional) This array holds one or more key=>value pairs to set
    *   attribute values for the Statement object that this method returns.
+   * @param bool $quote_identifiers
+   *   (optional) Quote any identifiers enclosed in square brackets. Defaults to
+   *   TRUE.
    *
    * @return \Drupal\Core\Database\StatementInterface|false
    *   If the database server successfully prepares the statement, returns a
    *   StatementInterface object.
-   *   If the database server cannot successfully prepare the statement  returns
+   *   If the database server cannot successfully prepare the statement returns
    *   FALSE or emits an Exception (depending on error handling).
    */
-  public function prepareQueryWithParams(&$query, array &$args = [], array $driver_options = []) {
+  public function prepareQueryWithParams(string &$query, array &$args = [], array $driver_options = [], bool $quote_identifiers = TRUE) {
     $query = $this->prefixTables($query);
+    if ($quote_identifiers) {
+      $query = $this->quoteIdentifiers($query);
+    }
     return new $this->statementClass($this, $query, $args, $driver_options);
   }
 
   /**
    * {@inheritdoc}
    */
-  public function prepareQuery($query) {
+  public function prepareQuery($query, $quote_identifiers = TRUE) {
     // Should not be used, because it fails to execute properly in case the
     // driver is not able to process named placeholders. Use
     // ::prepareQueryWithParams instead.
     // @todo raise an exception and fail hard??
-    return $this->prepareQueryWithParams($query);
+    $args = [];
+    return $this->prepareQueryWithParams($query, $args, [], $quote_identifiers);
   }
 
   /**
