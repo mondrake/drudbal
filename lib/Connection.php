@@ -816,4 +816,11 @@ class Connection extends DatabaseConnection {
     return $this->setPrefix($prefix);
   }
 
+  /**
+   * {@inheritdoc}
+   */
+  protected function identifierQuote() {
+    return $this->dbalPlatform->getIdentifierQuoteCharacter();
+  }
+
 }
