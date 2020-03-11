@@ -179,6 +179,7 @@ before_install:
   - curl https://www.drupal.org/files/issues/2019-04-02/2992274-5.patch | git apply
   # [#3118477] RegistryTest, RegistryLegacyTest both define the same class, use mock instead
   - curl https://www.drupal.org/files/issues/2020-03-07/3118477_4.patch | git apply
+  - curl https://www.drupal.org/files/issues/2020-02-23/3112476-2-22.patch | git apply
 
 install:
   # Copy the cloned repo to the libraries/drudbal directory, overriding the
