@@ -126,7 +126,7 @@ class Schema extends DatabaseSchema {
 
     // Execute the table creation.
     $this->dbalExecuteSchemaChange($to_schema);
-dump($to_schema);
+
     // Add unique keys.
     if (!empty($table['unique keys'])) {
       foreach ($table['unique keys'] as $key => $fields) {
@@ -892,6 +892,8 @@ dump($to_schema);
    */
   protected function dbalExecuteSchemaChange(DbalSchema $to_schema) {
     foreach ($this->dbalSchema()->getMigrateToSql($to_schema, $this->dbalPlatform) as $sql) {
+dump('-----------------------------------------------');
+dump($sql);
       if ($this->dbalExtension->getDebugging()) {
         error_log($sql);
       }
