@@ -77,7 +77,7 @@ jobs:
 
 cache:
   directories:
-    #- $DRUPAL_STAGING_DIR
+    - $DRUPAL_STAGING_DIR
     #- $ORACLE_DOWNLOAD_DIR
     - $HOME/.composer/cache
 

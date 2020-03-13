@@ -782,7 +782,7 @@ class PDOSqliteExtension extends AbstractExtension {
       // version.
       $dbal_type = $this->connection->schema()->getDbalColumnType($drupal_field_specs);
       $dbal_column_options = $this->connection->schema()->getDbalColumnOptions('addField', $field_name, $dbal_type, $drupal_field_specs);
-      $query = 'ALTER TABLE {' . $drupal_table_name . '} ADD ' . $field_name . ' ' . $dbal_column_options['columnDefinition'];
+      $query = 'ALTER TABLE {' . $drupal_table_name . '} ADD "' . $field_name . '" ' . $dbal_column_options['columnDefinition'];
       $this->connection->query($query);
     }
     else {
