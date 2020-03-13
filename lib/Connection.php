@@ -209,7 +209,7 @@ class Connection extends DatabaseConnection {
         if (strpos($query, ';') !== FALSE && empty($options['allow_delimiter_in_query'])) {
           throw new \InvalidArgumentException('; is not supported in SQL strings. Use only one statement at a time.');
         }
-        $stmt = $this->prepareQueryWithParams($query, $args, !$options['allow_square_brackets']);
+        $stmt = $this->prepareQueryWithParams($query, $args, [], !$options['allow_square_brackets']);
         $stmt->execute($args, $options);
       }
 
