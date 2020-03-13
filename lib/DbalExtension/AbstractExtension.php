@@ -180,7 +180,7 @@ class AbstractExtension implements DbalExtensionInterface {
    * {@inheritdoc}
    */
   public function getDbFieldName($field_name) {
-    return $field_name;
+    return $this->connection->escapeField($field_name);
   }
 
   /**
