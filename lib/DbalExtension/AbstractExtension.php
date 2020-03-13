@@ -221,7 +221,7 @@ class AbstractExtension implements DbalExtensionInterface {
    *   The fully prefixed table name to be used in the DBMS.
    */
   protected function tableName($drupal_table) {
-    return '"' . $this->connection->getPrefixedTableName($drupal_table) . '"';
+    return $this->connection->getPrefixedTableName($drupal_table);
   }
 
   /**
