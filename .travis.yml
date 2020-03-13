@@ -148,6 +148,7 @@ before_install:
         sudo echo "deb http://archive.ubuntu.com/ubuntu focal main restricted universe multiverse" > /etc/apt/sources.list
         sudo apt-get update
         sudo apt-get -y install sqlite3/focal
+        dpkg -L sqlite3 || true
       fi
 
   # Remove XDebug.
@@ -162,13 +163,11 @@ before_install:
   # Stage Drupal core to get dependencies.
   - |
       if [[ ! -f $DRUPAL_STAGING_DIR/index.php ]]; then
+        list -al $DRUPAL_STAGING_DIR
         git clone --depth=5 --branch=9.0.x http://git.drupal.org/project/drupal.git $DRUPAL_STAGING_DIR
         cd $DRUPAL_STAGING_DIR
         composer install --no-progress --no-suggest
-        # Get Drush
-        # composer require drush/drush --no-progress --no-suggest
-        # composer update phpunit/phpunit symfony/var-dumper --with-dependencies --no-progress --no-suggest
-        # Get Doctrine DBAL
+        # Get Drush and Doctrine DBAL
         composer require drush/drush "mondrake/drudbal:dev-master" --no-progress --no-suggest
       fi
 

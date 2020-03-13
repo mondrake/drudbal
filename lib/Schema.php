@@ -892,8 +892,8 @@ class Schema extends DatabaseSchema {
    */
   protected function dbalExecuteSchemaChange(DbalSchema $to_schema) {
     foreach ($this->dbalSchema()->getMigrateToSql($to_schema, $this->dbalPlatform) as $sql) {
-dump('-----------------------------------------------');
-dump($sql);
+//dump('-----------------------------------------------');
+//dump($sql);
       if ($this->dbalExtension->getDebugging()) {
         error_log($sql);
       }
