@@ -166,7 +166,8 @@ class Connection extends DatabaseConnection {
       // prefix.
       $this->dbTables['{' . $table . '}'] = $this->dbalExtension->getDbTableName($this->prefixes['default'], $table);
     }
-dump([$this->prefixSearch, $this->prefixReplace, $sql, $matches, str_replace($this->prefixSearch, $this->prefixReplace, $sql), $this->dbTables]);
+//dump([$this->prefixSearch, $this->prefixReplace, $sql, $matches, str_replace($this->prefixSearch, $this->prefixReplace, $sql), $this->dbTables]);
+dump([$sql, $matches, $this->dbTables, $this->escapedTables]);
     return str_replace(array_keys($this->dbTables), array_values($this->dbTables), $sql);
   }
 
