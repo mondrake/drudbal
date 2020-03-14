@@ -205,7 +205,7 @@ class PDOSqliteExtension extends AbstractExtension {
         $matches = [];
         if (preg_match('/.*____(.+)/', $index_full_name, $matches)) {
           if ($matches[1] === $index_name) {
-            return $index_full_name;
+            return '"' . $index_full_name . '"';
           }
         }
       }
@@ -216,7 +216,7 @@ class PDOSqliteExtension extends AbstractExtension {
       // dependent (otherwise indexes need to be recreated if the table gets
       // renamed).
       $uuid = new Uuid();
-      return 'idx_' . str_replace('-', '', $uuid->generate()) . '____' . $index_name;
+      return '"' . 'idx_' . str_replace('-', '', $uuid->generate()) . '____' . $index_name . '"';
     }
   }
 
