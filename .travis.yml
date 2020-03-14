@@ -21,9 +21,9 @@ jobs:
 #    - env: DRUDBAL_ENV="dbal/mariadb" TEST_ARGS="--group Database"
 #      addons:
 #        mariadb: '10.2'
-#    - env: DRUDBAL_ENV="dbal/mysql" TEST_ARGS="tests/Drupal/KernelTests/Core/Database/MergeTest.php"
-#      services:
-#        - mysql
+    - env: DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Database"
+      services:
+        - mysql
 #    - env: DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Database,Entity,Field"
 #      services:
 #        - mysql
@@ -62,8 +62,8 @@ jobs:
 #        - mysql
 #    - env: DRUDBAL_ENV="sqlite" TEST_ARGS="--group Database"
 #    - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database,Entity,Field"
-#    - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database"
-    - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="tests/Drupal/KernelTests/Core/Database/MergeTest.php"
+    - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database"
+    #- env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="tests/Drupal/KernelTests/Core/Database/MergeTest.php"
 #    - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Installer,Cache,Config"
 #    - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group field"
 #    - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group views"
