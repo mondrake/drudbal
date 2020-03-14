@@ -112,7 +112,7 @@ class Insert extends QueryInsert {
     }
 
     // Use DBAL query builder to prepare the INSERT query.
-    $prefixed_table = $this->connection->getPrefixedTableName($this->table);
+    $prefixed_table = $this->connection->getPrefixedTableName($this->table, FALSE);
     $dbal_query = $dbal_connection->createQueryBuilder()->insert($prefixed_table);
 
     // If we're selecting from a SelectQuery, and no fields are specified in
