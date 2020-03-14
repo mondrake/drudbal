@@ -622,16 +622,16 @@ class Schema extends DatabaseSchema {
    * {@inheritdoc}
    */
   public function addUniqueKey($table, $name, $fields) {
-/*    if (!$this->tableExists($table)) {
+    if (!$this->tableExists($table)) {
       throw new SchemaObjectDoesNotExistException(t("Cannot add unique key @name to table @table: table doesn't exist.", ['@table' => $table, '@name' => $name]));
     }
     if ($this->indexExists($table, $name)) {
       throw new SchemaObjectExistsException(t("Cannot add unique key @name to table @table: unique key already exists.", ['@table' => $table, '@name' => $name]));
     }
-*/
+
     $table_full_name = $this->tableName($table);
     $index_full_name = $this->dbalExtension->getDbIndexName('addUniqueKey', $this->dbalSchema(), $table, $name, $this->getPrefixInfo($table));
-//dump($table, $name, $table_full_name, $index_full_name);
+
     // Delegate to DBAL extension.
     if ($this->dbalExtension->delegateAddUniqueKey($this->dbalSchema(), $table_full_name, $index_full_name, $table, $name, $fields)) {
       return;
@@ -655,13 +655,13 @@ class Schema extends DatabaseSchema {
    * {@inheritdoc}
    */
   public function addIndex($table, $name, $fields, array $spec) {
-/*    if (!$this->tableExists($table)) {
+    if (!$this->tableExists($table)) {
       throw new SchemaObjectDoesNotExistException(t("Cannot add index @name to table @table: table doesn't exist.", ['@table' => $table, '@name' => $name]));
     }
     if ($this->indexExists($table, $name)) {
       throw new SchemaObjectExistsException(t("Cannot add index @name to table @table: index already exists.", ['@table' => $table, '@name' => $name]));
     }
-*/
+
     $table_full_name = $this->tableName($table);
     $index_full_name = $this->dbalExtension->getDbIndexName('addIndex', $this->dbalSchema(), $table, $name, $this->getPrefixInfo($table));
 
