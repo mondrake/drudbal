@@ -111,7 +111,8 @@ class Insert extends QueryInsert {
       return $comments . $sql;
     }
 
-    // Use DBAL query builder to prepare the INSERT query.
+    // Use DBAL query builder to prepare the INSERT query. The table name has to
+    // be quoted in DBAL.
     $prefixed_table = $this->connection->getPrefixedTableName($this->table, FALSE);
     $dbal_query = $dbal_connection->createQueryBuilder()->insert($prefixed_table);
 

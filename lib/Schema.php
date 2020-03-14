@@ -69,16 +69,19 @@ class Schema extends DatabaseSchema {
   }
 
   /**
+   * @todo remove, duplicate of Connection::getPrefixedTableName
+   *
    * Returns a fully prefixed table name from Drupal's {table} syntax.
    *
    * @param string $drupal_table
    *   The table name in Drupal's syntax.
+   * @todo
    *
    * @return string
    *   The fully prefixed table name to be used in the DBMS.
    */
-  protected function tableName($drupal_table) {
-    return $this->connection->getPrefixedTableName($drupal_table);
+  protected function tableName(string $drupal_table, bool $strip_quotes = TRUE): string {
+    return $this->connection->getPrefixedTableName($drupal_table, $strip_quotes);
   }
 
   /**
@@ -341,7 +344,8 @@ class Schema extends DatabaseSchema {
     // a broader set of capabilities.
     $table_full_name = $this->tableName($table);
     $current_schema = $this->dbalSchema();
-    $this->dbalSchemaManager->dropTable($table_full_name);
+    // Need to pass the quoted table name here.
+    $this->dbalSchemaManager->dropTable($this->tableName($table, FALSE));
 
     // After dropping the table physically, still need to reflect it in the
     // DBAL schema.
