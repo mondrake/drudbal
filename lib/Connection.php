@@ -92,11 +92,6 @@ class Connection extends DatabaseConnection {
    */
   protected $platformSql;
 
-  public function prefixTables($sql) {
-dump([$this->prefixSearch, $this->prefixReplace, $sql, str_replace($this->prefixSearch, $this->prefixReplace, $sql)]);
-    return str_replace($this->prefixSearch, $this->prefixReplace, $sql);
-  }
-
   /**
    * Constructs a Connection object.
    */
@@ -171,6 +166,7 @@ dump([$this->prefixSearch, $this->prefixReplace, $sql, str_replace($this->prefix
       // prefix.
       $this->dbTables['{' . $table . '}'] = $this->dbalExtension->getDbTableName($this->prefixes['default'], $table);
     }
+dump([$this->prefixSearch, $this->prefixReplace, $sql, $matches, str_replace($this->prefixSearch, $this->prefixReplace, $sql), $this->dbTables]);
     return str_replace(array_keys($this->dbTables), array_values($this->dbTables), $sql);
   }
 
