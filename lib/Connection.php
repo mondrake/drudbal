@@ -92,6 +92,11 @@ class Connection extends DatabaseConnection {
    */
   protected $platformSql;
 
+  public function prefixTables($sql) {
+dump([$this->prefixSearch, $this->prefixReplace, $sql, str_replace($this->prefixSearch, $this->prefixReplace, $sql)]);
+    return str_replace($this->prefixSearch, $this->prefixReplace, $sql);
+  }
+
   /**
    * Constructs a Connection object.
    */
