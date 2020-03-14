@@ -78,11 +78,9 @@ jobs:
 
 cache:
   directories:
-    - $DRUPAL_STAGING_DIR
+    - $HOME/drupal_staging
     #- $ORACLE_DOWNLOAD_DIR
     - $HOME/.composer/cache
-    - /usr/bin/sqldiff
-    - /usr/bin/sqlite3
 
 before_install:
   # Set variables.
