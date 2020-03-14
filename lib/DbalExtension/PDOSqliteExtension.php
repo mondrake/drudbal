@@ -680,10 +680,10 @@ class PDOSqliteExtension extends AbstractExtension {
    */
   public function delegateTableExists(&$result, $drupal_table_name) {
     try {
+dump([$drupal_table_name, $this->tableName($drupal_table_name), $this->getDbalConnection()->getSchemaManager()->listTables()]);
       $result = $this->getDbalConnection()->getSchemaManager()->tablesExist([$this->tableName($drupal_table_name)]);
     }
     catch (DbalDriverException $e) {
-dump([$drupal_table_name, $this->tableName($drupal_table_name), $this->getDbalConnection()->getSchemaManager()->listTables()]);
       if ($e->getErrorCode() === 17) {
         $result = $this->getDbalConnection()->getSchemaManager()->tablesExist([$this->tableName($drupal_table_name)]);
       }
