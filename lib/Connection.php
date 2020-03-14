@@ -176,10 +176,11 @@ class Connection extends DatabaseConnection {
    *   A Drupal table name.
    *
    * @return string
-   *   A fully prefixed table name, suitable for direct usage in db queries.
+   *   A fully prefixed table name, unquoted, suitable for direct usage in db
+   *   queries.
    */
-  public function getPrefixedTableName($table_name) {
-    return $this->prefixTables('{' . $table_name . '}');
+  public function getPrefixedTableName(string $table_name) {
+    return str_replace($this->identifierQuote(), '', $this->prefixTables('{' . $table_name . '}'));
   }
 
   /**
