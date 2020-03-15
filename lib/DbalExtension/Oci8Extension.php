@@ -186,7 +186,7 @@ class Oci8Extension extends AbstractExtension {
     // with the Drupal name, regardless of prefix. It may be a table was
     // renamed so the prefix is no longer relevant.
     if (in_array($context, ['indexExists', 'dropIndex'])) {
-      $dbal_table = $dbal_schema->getTable($this->tableName($drupal_table_name));
+      $dbal_table = $dbal_schema->getTable($this->connection->getPrefixedTableName($drupal_table_name));
       foreach ($dbal_table->getIndexes() as $index) {
         $index_full_name = $index->getName();
         $matches = [];
@@ -546,7 +546,7 @@ if ($this->getDebugging()) error_log($query . ' : ' . var_export($args, TRUE));
    * {@inheritdoc}
    */
   public function getSequenceNameForInsert($drupal_table_name) {
-    $table_name = $this->tableName($drupal_table_name);
+    $table_name = $this->connection->getPrefixedTableName($drupal_table_name);
     if (substr($table_name, 0, 1) === '"') {
       return '"' . rtrim(ltrim($table_name, '"'), '"') . '_SEQ"';
     }
@@ -595,7 +595,7 @@ if ($this->getDebugging()) error_log($query . ' : ' . var_export($args, TRUE));
     // Instead, we try to select from the table in question.  If it fails,
     // the most likely reason is that it does not exist.
     try {
-      $this->getDbalConnection()->query("SELECT 1 FROM " . $this->tableName($drupal_table_name) . " WHERE ROWNUM <= 1");
+      $this->getDbalConnection()->query("SELECT 1 FROM " . $this->connection->getPrefixedTableName($drupal_table_name) . " WHERE ROWNUM <= 1");
       $result = TRUE;
     }
     catch (\Exception $e) {
@@ -612,7 +612,7 @@ if ($this->getDebugging()) error_log($query . ' : ' . var_export($args, TRUE));
     // Instead, we try to select from the table and field in question. If it
     // fails, the most likely reason is that it does not exist.
     try {
-      $this->getDbalConnection()->query("SELECT $field_name FROM " . $this->tableName($drupal_table_name) . " WHERE ROWNUM <= 1");
+      $this->getDbalConnection()->query("SELECT $field_name FROM " . $this->connection->getPrefixedTableName($drupal_table_name) . " WHERE ROWNUM <= 1");
       $result = TRUE;
     }
     catch (\Exception $e) {
@@ -704,7 +704,7 @@ if ($this->getDebugging()) error_log($query . ' : ' . var_export($args, TRUE));
   public function delegateChangeField(&$primary_key_processed_by_extension, DbalSchema $dbal_schema, $drupal_table_name, $field_name, $field_new_name, array $drupal_field_new_specs, array $keys_new_specs, array $dbal_column_options) {
     $current_schema = $dbal_schema;
     $to_schema = clone $current_schema;
-    $dbal_table = $to_schema->getTable($this->tableName($drupal_table_name));
+    $dbal_table = $to_schema->getTable($this->connection->getPrefixedTableName($drupal_table_name));
     $dbal_column = $dbal_table->getColumn($field_name); // @todo getdbfieldname
 
     $change_nullability = TRUE;
@@ -712,7 +712,7 @@ if ($this->getDebugging()) error_log($query . ' : ' . var_export($args, TRUE));
       $change_nullability = FALSE;
     }
 
-    $sql = "ALTER TABLE " . $this->tableName($drupal_table_name) . " MODIFY ($field_name NUMBER(10) ";
+    $sql = "ALTER TABLE " . $this->connection->getPrefixedTableName($drupal_table_name) . " MODIFY ($field_name NUMBER(10) ";
     if ($change_nullability) {
       $sql .= array_key_exists('not null', $drupal_field_new_specs) && $drupal_field_new_specs['not null'] ? 'NOT NULL' : 'NULL';
     }

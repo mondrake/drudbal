@@ -212,22 +212,6 @@ class AbstractExtension implements DbalExtensionInterface {
   }
 
   /**
-   * @todo remove, duplicate of Connection::getPrefixedTableName
-   *
-   * Returns a fully prefixed table name from Drupal's {table} syntax.
-   *
-   * @param string $drupal_table
-   *   The table name in Drupal's syntax.
-   * @todo
-   *
-   * @return string
-   *   The fully prefixed table name to be used in the DBMS.
-   */
-  protected function tableName(string $drupal_table, bool $strip_quotes = TRUE): string {
-    return $this->connection->getPrefixedTableName($drupal_table, $strip_quotes);
-  }
-
-  /**
    * Connection delegated methods.
    */
 
@@ -620,7 +604,7 @@ class AbstractExtension implements DbalExtensionInterface {
    * {@inheritdoc}
    */
   public function delegateGetTableComment(DbalSchema $dbal_schema, $drupal_table_name) {
-    return $dbal_schema->getTable($this->tableName($drupal_table_name))->getComment();
+    return $dbal_schema->getTable($this->connection->getPrefixedTableName($drupal_table_name))->getComment();
   }
 
   /**
@@ -628,7 +612,7 @@ class AbstractExtension implements DbalExtensionInterface {
    */
   public function delegateGetColumnComment(DbalSchema $dbal_schema, $drupal_table_name, $column) {
     if ($this->getDbalConnection()->getDatabasePlatform()->supportsInlineColumnComments()) {
-      return $dbal_schema->getTable($this->tableName($drupal_table_name))->getColumn($column)->getComment();
+      return $dbal_schema->getTable($this->connection->getPrefixedTableName($drupal_table_name))->getColumn($column)->getComment();
     }
     else {
       throw new \RuntimeException("Column comments are not supported for '" . $this->dbalConnection->getDriver()->getName() . "'");
