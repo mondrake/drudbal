@@ -48,10 +48,7 @@ jobs:
     - env: DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group file"
       services:
         - mysql
-    - env: DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group views --testsuite=kernel"
-      services:
-        - mysql
-    - env: DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group views --testsuite=functional"
+    - env: DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group views"
       services:
         - mysql
     - env: DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Database,Entity,Field"
@@ -70,6 +67,9 @@ jobs:
   allow_failures:
     - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group file"
     - env: DRUDBAL_ENV="dbal/sqlite/memory" TEST_ARGS="--group Database,Installer,Cache,Config,Entity,Field"
+    - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group views"
+    - env: DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group views"
+    - env: DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group views"
 
 cache:
   directories:
