@@ -64,7 +64,7 @@ jobs:
 #    - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database,Entity,Field"
     #- env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database"
     - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="tests/Drupal/KernelTests/Core/Database/RegressionTest.php"
-    - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="tests/Drupal/KernelTests/Core/Database/SchemaTest.php"
+#    - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="tests/Drupal/KernelTests/Core/Database/SchemaTest.php"
 #    - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Installer,Cache,Config"
 #    - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group field"
 #    - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group views"
