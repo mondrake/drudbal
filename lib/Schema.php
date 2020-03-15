@@ -847,8 +847,8 @@ class Schema extends DatabaseSchema {
     if (!$this->tableExists($table)) {
       return FALSE;
     }
-dump([$this->dbalExtension->getDbFieldName($column), array_keys($this->dbalSchemaManager->listTableColumns($this->tableName($table)))]);
-    return in_array($this->dbalExtension->getDbFieldName($column), array_keys($this->dbalSchemaManager->listTableColumns($this->tableName($table))));
+    // Column name must not be quoted here.
+    return in_array($this->dbalExtension->getDbFieldName($column, FALSE), array_keys($this->dbalSchemaManager->listTableColumns($this->tableName($table))));
   }
 
   /**
