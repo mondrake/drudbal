@@ -184,7 +184,7 @@ class AbstractExtension implements DbalExtensionInterface {
   }
 
   /**
-   * {@inheritdoc}
+   * {@inheritdoc} 
    */
   public function getDbAlias($alias) {
     return $this->connection->escapeField($alias);

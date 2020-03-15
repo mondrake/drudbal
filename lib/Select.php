@@ -73,7 +73,7 @@ class Select extends QuerySelect {
       else {
         // Do not attempt prefixing cross database / schema queries.
         if (strpos($table['table'], '.') === FALSE) {
-          $escaped_table = $this->connection->getPrefixedTableName($this->connection->escapeTable($table['table']));
+          $escaped_table = $this->connection->getPrefixedTableName($table['table'], FALSE);
         }
         else {
           $escaped_table = $dbal_extension->alterFullQualifiedTableName($table['table']);
