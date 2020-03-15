@@ -96,12 +96,12 @@ class Connection extends DatabaseConnection {
    * Constructs a Connection object.
    */
   public function __construct(DbalConnection $dbal_connection, array $connection_options = []) {
+    $this->dbalPlatform = $dbal_connection->getDatabasePlatform();
     $this->connectionOptions = $connection_options;
     $this->setPrefix(isset($connection_options['prefix']) ? $connection_options['prefix'] : '');
     $dbal_extension_class = static::getDbalExtensionClass($connection_options);
     $this->statementClass = static::getStatementClass($connection_options);
     $this->dbalExtension = new $dbal_extension_class($this, $dbal_connection, $this->statementClass);
-    $this->dbalPlatform = $dbal_connection->getDatabasePlatform();
     $this->transactionSupport = $this->dbalExtension->delegateTransactionSupport($connection_options);
     $this->transactionalDDLSupport = $this->dbalExtension->delegateTransactionalDdlSupport($connection_options);
     // Unset $this->connection so that __get() can return the wrapped
@@ -164,7 +164,7 @@ class Connection extends DatabaseConnection {
       // Per-table prefixes are deprecated as of Drupal 8.2 so let's not get
       // in the complexity of trying to manage that. Assume a single default
       // prefix.
-      $this->dbTables['{' . $table . '}'] = $this->dbalExtension->getDbTableName($this->prefixes['default'], $table);
+      $this->dbTables['{' . $table . '}'] = $this->identifierQuote() . $this->dbalExtension->getDbTableName($this->prefixes['default'], $table) . $this->identifierQuote();
     }
     return str_replace(array_keys($this->dbTables), array_values($this->dbTables), $sql);
   }
@@ -174,12 +174,14 @@ class Connection extends DatabaseConnection {
    *
    * @param string $table_name
    *   A Drupal table name.
+   * @todo
    *
    * @return string
    *   A fully prefixed table name, suitable for direct usage in db queries.
    */
-  public function getPrefixedTableName($table_name) {
-    return $this->prefixTables('{' . $table_name . '}');
+  public function getPrefixedTableName(string $table_name, bool $strip_quotes = TRUE): string {
+    $quoted_table_name = $this->prefixTables('{' . $table_name . '}');
+    return $strip_quotes ? str_replace($this->identifierQuote(), '', $quoted_table_name) : $quoted_table_name;
   }
 
   /**
@@ -209,7 +211,7 @@ class Connection extends DatabaseConnection {
         if (strpos($query, ';') !== FALSE && empty($options['allow_delimiter_in_query'])) {
           throw new \InvalidArgumentException('; is not supported in SQL strings. Use only one statement at a time.');
         }
-        $stmt = $this->prepareQueryWithParams($query, $args);
+        $stmt = $this->prepareQueryWithParams($query, $args, [], !$options['allow_square_brackets']);
         $stmt->execute($args, $options);
       }
 
@@ -477,27 +479,34 @@ class Connection extends DatabaseConnection {
    * @param array $driver_options
    *   (optional) This array holds one or more key=>value pairs to set
    *   attribute values for the Statement object that this method returns.
+   * @param bool $quote_identifiers
+   *   (optional) Quote any identifiers enclosed in square brackets. Defaults to
+   *   TRUE.
    *
    * @return \Drupal\Core\Database\StatementInterface|false
    *   If the database server successfully prepares the statement, returns a
    *   StatementInterface object.
-   *   If the database server cannot successfully prepare the statement  returns
+   *   If the database server cannot successfully prepare the statement returns
    *   FALSE or emits an Exception (depending on error handling).
    */
-  public function prepareQueryWithParams(&$query, array &$args = [], array $driver_options = []) {
+  public function prepareQueryWithParams(string &$query, array &$args = [], array $driver_options = [], bool $quote_identifiers = TRUE) {
     $query = $this->prefixTables($query);
+    if ($quote_identifiers) {
+      $query = $this->quoteIdentifiers($query);
+    }
     return new $this->statementClass($this, $query, $args, $driver_options);
   }
 
   /**
    * {@inheritdoc}
    */
-  public function prepareQuery($query) {
+  public function prepareQuery($query, $quote_identifiers = TRUE) {
     // Should not be used, because it fails to execute properly in case the
     // driver is not able to process named placeholders. Use
     // ::prepareQueryWithParams instead.
     // @todo raise an exception and fail hard??
-    return $this->prepareQueryWithParams($query);
+    $args = [];
+    return $this->prepareQueryWithParams($query, $args, [], $quote_identifiers);
   }
 
   /**
@@ -807,6 +816,13 @@ class Connection extends DatabaseConnection {
    */
   public function setPrefixPublic($prefix) {
     return $this->setPrefix($prefix);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function identifierQuote() {
+    return $this->dbalPlatform->getIdentifierQuoteCharacter();
   }
 
 }

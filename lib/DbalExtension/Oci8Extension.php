@@ -140,7 +140,7 @@ class Oci8Extension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function getDbFieldName($field_name) {
+  public function getDbFieldName($field_name, bool $quoted = TRUE) {
     $field_name_short = $this->getLimitedIdentifier($field_name);
     if ($field_name !== $field_name_short) {
       $this->dbIdentifiersMap[$field_name_short] = $field_name;
@@ -157,7 +157,7 @@ class Oci8Extension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function getDbAlias($alias) {
+  public function getDbAlias($alias, bool $quoted = TRUE) {
     $alias_short = $this->getLimitedIdentifier($alias);
     if ($alias !== $alias_short) {
       $this->dbIdentifiersMap[$alias_short] = $alias;

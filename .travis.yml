@@ -18,7 +18,7 @@ jobs:
     - env: DRUDBAL_ENV="mysql" TEST_ARGS="--group Database"
       services:
         - mysql
-    - env: DRUDBAL_ENV="dbal/mariadb" TEST_ARGS="--group Database"
+    - env: DRUDBAL_ENV="dbal/mariadb" TEST_ARGS="--group Database,Entity,Field"
       addons:
         mariadb: '10.2'
     - env: DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Database,Entity,Field"
@@ -48,10 +48,7 @@ jobs:
     - env: DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group file"
       services:
         - mysql
-    - env: DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group views --testsuite=kernel"
-      services:
-        - mysql
-    - env: DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group views --testsuite=functional"
+    - env: DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group views"
       services:
         - mysql
     - env: DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Database,Entity,Field"
@@ -70,10 +67,13 @@ jobs:
   allow_failures:
     - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group file"
     - env: DRUDBAL_ENV="dbal/sqlite/memory" TEST_ARGS="--group Database,Installer,Cache,Config,Entity,Field"
+    - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group views"
+    - env: DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group views"
+    - env: DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group views"
 
 cache:
   directories:
-    #- $DRUPAL_STAGING_DIR
+    #- $HOME/drupal_staging
     #- $ORACLE_DOWNLOAD_DIR
     - $HOME/.composer/cache
 
@@ -160,10 +160,7 @@ before_install:
         git clone --depth=5 --branch=9.0.x http://git.drupal.org/project/drupal.git $DRUPAL_STAGING_DIR
         cd $DRUPAL_STAGING_DIR
         composer install --no-progress --no-suggest
-        # Get Drush
-        # composer require drush/drush --no-progress --no-suggest
-        # composer update phpunit/phpunit symfony/var-dumper --with-dependencies --no-progress --no-suggest
-        # Get Doctrine DBAL
+        # Get Drush and Doctrine DBAL
         composer require drush/drush "mondrake/drudbal:dev-master" --no-progress --no-suggest
       fi
 
@@ -177,6 +174,8 @@ before_install:
   - curl https://www.drupal.org/files/issues/2657888-18.patch | git apply
   # [#2992274] Installer tests fail if contrib driver hides database credentials form fields
   - curl https://www.drupal.org/files/issues/2019-04-02/2992274-5.patch | git apply
+  # [#3119910] Change hardcoded quote identifier in EntityQueryTest to square brackets
+  - curl https://www.drupal.org/files/issues/2020-03-15/3119910-2.patch | git apply
 
 install:
   # Copy the cloned repo to the libraries/drudbal directory, overriding the
@@ -198,7 +197,6 @@ install:
   - |
       if [[ "$INSTALL_VIA" == "drush" ]]; then
         drush site-install standard --db-url=$SIMPLETEST_DB -y
-
       elif [[ "$INSTALL_VIA" == "dbal" ]]; then
         cp $DRUPAL_PATH/libraries/drudbal/tests/travis_ci/install_cli.php install_cli.php
         php install_cli.php
@@ -215,11 +213,11 @@ script:
   # Only run selected tests to avoid Travis timeout.
   - $DRUPAL_PATH/vendor/bin/phpunit $TEST_ARGS
 
-after_script:
-  - cd $DRUPAL_PATH/libraries/drudbal
-  - $DRUPAL_PATH/vendor/bin/phpcs
+#after_script:
+#  - cd $DRUPAL_PATH/libraries/drudbal
+#  - $DRUPAL_PATH/vendor/bin/phpcs
 
 notifications:
   email:
     on_success: never
-    on_failure: always
+    on_failure: never

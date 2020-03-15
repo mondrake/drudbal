@@ -54,7 +54,7 @@ Install/Tasks	                | Implemented. |
 
 Very rough instructions to install Drupal from scratch with this db driver under the hood:
 
-1. Requirements: build a Drupal code base via Composer, using latest Drupal development branch code and PHP 7.3+.
+1. Requirements: build a Drupal code base via Composer, using latest Drupal development branch code and PHP 7.4+.
 
 2. Get the library via Composer, it will install Doctrine DBAL as well:
   ```

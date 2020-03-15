@@ -44,9 +44,10 @@ class Update extends QueryUpdate {
   protected function compileDbalQuery() {
     $dbal_extension = $this->connection->getDbalExtension();
 
+    // Need to pass the quoted table name here.
     $this->dbalQuery = $this->connection->getDbalConnection()
       ->createQueryBuilder()
-      ->update($this->connection->getPrefixedTableName($this->table));
+      ->update($this->connection->getPrefixedTableName($this->table, FALSE));
 
     // Expressions take priority over literal fields, so we process those first
     // and remove any literal fields that conflict.

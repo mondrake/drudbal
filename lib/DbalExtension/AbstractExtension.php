@@ -179,15 +179,15 @@ class AbstractExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function getDbFieldName($field_name) {
-    return $field_name;
+  public function getDbFieldName($field_name, bool $quoted = TRUE) {
+    return $quoted ? $this->connection->escapeField($field_name) : $field_name;
   }
 
   /**
    * {@inheritdoc}
    */
-  public function getDbAlias($alias) {
-    return $alias;
+  public function getDbAlias($alias, bool $quoted = TRUE) {
+    return $quoted ? $this->connection->escapeField($alias) : $alias;
   }
 
   /**
@@ -212,16 +212,19 @@ class AbstractExtension implements DbalExtensionInterface {
   }
 
   /**
+   * @todo remove, duplicate of Connection::getPrefixedTableName
+   *
    * Returns a fully prefixed table name from Drupal's {table} syntax.
    *
    * @param string $drupal_table
    *   The table name in Drupal's syntax.
+   * @todo
    *
    * @return string
    *   The fully prefixed table name to be used in the DBMS.
    */
-  protected function tableName($drupal_table) {
-    return $this->connection->getPrefixedTableName($drupal_table);
+  protected function tableName(string $drupal_table, bool $strip_quotes = TRUE): string {
+    return $this->connection->getPrefixedTableName($drupal_table, $strip_quotes);
   }
 
   /**

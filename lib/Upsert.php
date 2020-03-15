@@ -82,10 +82,10 @@ class Upsert extends QueryUpsert {
 
     $comments = $this->connection->makeComment($this->comments);
     $dbal_connection = $this->connection->getDbalConnection();
-    $prefixed_table = $this->connection->getPrefixedTableName($this->table);
 
-    // Use DBAL query builder to prepare an INSERT query.
-    $dbal_query = $dbal_connection->createQueryBuilder()->insert($prefixed_table);
+    // Use DBAL query builder to prepare an INSERT query. Need to pass the
+    // quoted table name here.
+    $dbal_query = $dbal_connection->createQueryBuilder()->insert($this->connection->getPrefixedTableName($this->table, FALSE));
 
     foreach ($this->defaultFields as $field) {
       $dbal_query->setValue($dbal_extension->getDbFieldName($field), 'DEFAULT');
@@ -111,10 +111,9 @@ class Upsert extends QueryUpsert {
     $dbal_connection = $this->connection->getDbalConnection();
     $dbal_extension = $this->connection->getDbalExtension();
 
-    $prefixed_table = $this->connection->getPrefixedTableName($this->table);
-
-    // Use the DBAL query builder for the UPDATE.
-    $dbal_query = $dbal_connection->createQueryBuilder()->update($prefixed_table);
+    // Use the DBAL query builder for the UPDATE. Need to pass the quoted table
+    // name here.
+    $dbal_query = $dbal_connection->createQueryBuilder()->update($this->connection->getPrefixedTableName($this->table, FALSE));
 
     // Set default fields first.
     foreach ($this->defaultFields as $field) {
