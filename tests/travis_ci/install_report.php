@@ -16,8 +16,10 @@ $root_path = realpath('');
 // Initialize the autoloader.
 $class_loader = require_once $root_path . '/autoload.php';
 
-require_once $root_path . '/core/includes/install.core.inc';
+require_once $root_path . '/core/includes/install.inc';
 $installer = db_installer_object('dbal');
-print("Installation OK\n");
-print("Database: " . $installer->name() . "\n");
-print("Version : " . Database::getConnection()->version() . "\n");
+print("-----------------------------------------------------------\n");
+print("Installation: OK\n");
+print("Database    : " . $installer->name() . "\n");
+print("Version     : " . Database::getConnection()->version() . "\n");
+print("-----------------------------------------------------------\n");

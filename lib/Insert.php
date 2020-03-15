@@ -113,7 +113,7 @@ class Insert extends QueryInsert {
 
     // Use DBAL query builder to prepare the INSERT query. The table name has to
     // be quoted in DBAL.
-    $dbal_query = $dbal_connection->createQueryBuilder()->insert($this->connection->getPrefixedTableName($this->table, FALSE));
+    $dbal_query = $dbal_connection->createQueryBuilder()->insert($this->connection->getPrefixedTableName($this->table, TRUE));
 
     // If we're selecting from a SelectQuery, and no fields are specified in
     // select (i.e. we have a SELECT * FROM ...), then we have to fetch the
