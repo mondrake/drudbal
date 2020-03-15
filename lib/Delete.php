@@ -41,9 +41,10 @@ class Delete extends QueryDelete {
    * Builds the query via DBAL Query Builder.
    */
   protected function compileDbalQuery() {
+    // Need to pass the quoted table name here.
     $this->dbalQuery = $this->connection->getDbalConnection()
       ->createQueryBuilder()
-      ->delete($this->connection->getPrefixedTableName($this->table));
+      ->delete($this->connection->getPrefixedTableName($this->table, FALSE));
 
     // Adds a WHERE clause if necessary.
     // @todo this uses Drupal Condition API. Use DBAL expressions instead?
