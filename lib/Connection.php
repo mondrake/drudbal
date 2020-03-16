@@ -182,10 +182,12 @@ class Connection extends DatabaseConnection {
    *   A fully prefixed table name, suitable for direct usage in db queries.
    */
   public function getPrefixedTableName(string $table_name, bool $quoted = FALSE): string {
+    // If the table name is enclosed in curly braces, remove them first.
     $matches = [];
     if (preg_match('/^{(\S*)}/', $table_name, $matches) === 1) {
       $table_name = $matches[1];
     }
+
     $prefixed_table_name = $this->prefixTables('{' . $table_name . '}');
     // @todo use substr  instead
     return $quoted ? $prefixed_table_name : str_replace($this->identifierQuote(), '', $prefixed_table_name);
