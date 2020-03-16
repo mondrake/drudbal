@@ -1,3 +1,15 @@
+diff --git a/core/modules/views/src/Plugin/views/query/Sql.php b/core/modules/views/src/Plugin/views/query/Sql.php
+index 59b9eb7e..7299a0b5 100644
+--- a/core/modules/views/src/Plugin/views/query/Sql.php
++++ b/core/modules/views/src/Plugin/views/query/Sql.php
+@@ -1502,6 +1502,7 @@ public function execute(ViewExecutable $view) {
+       $start = microtime(TRUE);
+ 
+       try {
++dump([(string) $query, (string) $count_query]);
+         if ($view->pager->useCountQuery() || !empty($view->get_total_rows)) {
+           $view->pager->executeCountQuery($count_query);
+         }
 diff --git a/core/modules/views/tests/src/Kernel/Plugin/CacheTest.php b/core/modules/views/tests/src/Kernel/Plugin/CacheTest.php
 index c8793bc8..015f1d99 100644
 --- a/core/modules/views/tests/src/Kernel/Plugin/CacheTest.php
