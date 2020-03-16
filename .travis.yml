@@ -62,10 +62,10 @@ jobs:
 #    - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Installer,Cache,Config"
 #    - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group field"
     - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group views"
-#    - stage: Allow Failures
-#      env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group file"
-#    - stage: Allow Failures
-#      env: DRUDBAL_ENV="dbal/sqlite/memory" TEST_ARGS="--group Database,Installer,Cache,Config,Entity,Field"
+    - stage: Allow Failures
+      env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group file"
+    - stage: Allow Failures
+      env: DRUDBAL_ENV="dbal/sqlite/memory" TEST_ARGS="--group Database,Installer,Cache,Config,Entity,Field"
   fast_finish: true
   allow_failures:
     - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group file"
@@ -192,11 +192,11 @@ install:
 
   # Install Drupal.
   - cd $DRUPAL_PATH/core
+  - cp $DRUPAL_PATH/libraries/drudbal/tests/travis_ci/install_* .
   - |
       if [[ "$INSTALL_VIA" == "drush" ]]; then
         drush site-install standard --db-url=$SIMPLETEST_DB -y
       elif [[ "$INSTALL_VIA" == "dbal" ]]; then
-        cp $DRUPAL_PATH/libraries/drudbal/tests/travis_ci/install_* .
         php install_cli.php
       fi
 
