@@ -26,9 +26,10 @@ $kernel->boot();
 
 require_once $root_path . '/core/includes/install.inc';
 
-$installer = db_installer_object('dbal');
+$connection = Database::getConnection();
+$installer = db_installer_object($connection->driver());
 print("------------------------------------------------------------------------------------------------\n");
 print("Installation: OK\n");
 print("Database    : " . $installer->name() . "\n");
-print("Version     : " . Database::getConnection()->version() . "\n");
+print("Version     : " . $connection->version() . "\n");
 print("------------------------------------------------------------------------------------------------\n");
