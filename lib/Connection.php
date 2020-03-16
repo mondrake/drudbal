@@ -166,6 +166,7 @@ class Connection extends DatabaseConnection {
       // in the complexity of trying to manage that. Assume a single default
       // prefix.
       $this->dbTables['{' . $table . '}'] = $this->identifierQuote() . $this->dbalExtension->getDbTableName($this->prefixes['default'], $table) . $this->identifierQuote();
+dump($this->dbTables);
     }
     return str_replace(array_keys($this->dbTables), array_values($this->dbTables), $sql);
   }
