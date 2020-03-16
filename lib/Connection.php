@@ -158,12 +158,12 @@ class Connection extends DatabaseConnection {
     preg_match_all('/{(\S*)}/', $sql, $matches, PREG_SET_ORDER, 0);
     foreach ($matches as $match) {
       $table = $match[1];
-      $mx = [];
-      if (preg_match('/{(\S*)}/', $table, $mx) === 1) {
+      //$mx = [];
+      //if (preg_match('/{(\S*)}/', $table, $mx) === 1) {
         //dump(['ahia', $table, $sql]);
-        $table = $mx[1];
+        //$table = $mx[1];
         //throw new \Exception(var_export(['ahia', $table, $sql], TRUE));
-      }
+      //}
       if (isset($this->dbTables['{' . $table . '}'])) {
         continue;
       }
