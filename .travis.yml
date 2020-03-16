@@ -174,8 +174,6 @@ before_install:
   - curl https://www.drupal.org/files/issues/2657888-18.patch | git apply
   # [#2992274] Installer tests fail if contrib driver hides database credentials form fields
   - curl https://www.drupal.org/files/issues/2019-04-02/2992274-5.patch | git apply
-  # [#3119910] Change hardcoded quote identifier in EntityQueryTest to square brackets
-  - curl https://www.drupal.org/files/issues/2020-03-15/3119910-2.patch | git apply
 
 install:
   # Copy the cloned repo to the libraries/drudbal directory, overriding the
