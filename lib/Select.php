@@ -67,13 +67,13 @@ class Select extends QuerySelect {
       if ($table['table'] instanceof SelectInterface) {
         // Run preparation steps on this sub-query before converting to string.
         $subquery = $table['table'];
-//dump($subquery);
         $subquery->preExecute();
         $escaped_table = '(' . (string) $subquery . ')';
       }
       else {
         // Do not attempt prefixing cross database / schema queries.
         if (strpos($table['table'], '.') === FALSE) {
+dump([$table]);
           $escaped_table = $this->connection->getPrefixedTableName($table['table'], TRUE);
         }
         else {
