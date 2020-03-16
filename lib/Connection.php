@@ -158,12 +158,6 @@ class Connection extends DatabaseConnection {
     preg_match_all('/{(\S*)}/', $sql, $matches, PREG_SET_ORDER, 0);
     foreach ($matches as $match) {
       $table = $match[1];
-      //$mx = [];
-      //if (preg_match('/{(\S*)}/', $table, $mx) === 1) {
-        //dump(['ahia', $table, $sql]);
-        //$table = $mx[1];
-        //throw new \Exception(var_export(['ahia', $table, $sql], TRUE));
-      //}
       if (isset($this->dbTables['{' . $table . '}'])) {
         continue;
       }
@@ -171,7 +165,6 @@ class Connection extends DatabaseConnection {
       // in the complexity of trying to manage that. Assume a single default
       // prefix.
       $this->dbTables['{' . $table . '}'] = $this->identifierQuote() . $this->dbalExtension->getDbTableName($this->prefixes['default'], $table) . $this->identifierQuote();
-//dump($this->dbTables);
     }
     return str_replace(array_keys($this->dbTables), array_values($this->dbTables), $sql);
   }
@@ -189,9 +182,13 @@ class Connection extends DatabaseConnection {
    *   A fully prefixed table name, suitable for direct usage in db queries.
    */
   public function getPrefixedTableName(string $table_name, bool $quoted = FALSE): string {
-    $quoted_table_name = $this->prefixTables('{' . $table_name . '}');
+    $matches = [];
+    if (preg_match('/^{(\S*)}/', $table_name, $matches) === 1) {
+      $table_name = $matches[1];
+    }
+    $prefixed_table_name = $this->prefixTables('{' . $table_name . '}');
     // @todo use substr instead
-    return $quoted ? $quoted_table_name : str_replace($this->identifierQuote(), '', $quoted_table_name);
+    return $quoted ? $prefixed_table_name : str_replace($this->identifierQuote(), '', $prefixed_table_name);
   }
 
   /**
