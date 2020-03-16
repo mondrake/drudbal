@@ -19,6 +19,7 @@ $autoloader = require_once $root_path . '/autoload.php';
 
 DrupalKernel::bootEnvironment($root_path);
 $kernel = new DrupalKernel('prod', $autoloader);
+$kernel->setSitePath('sites/default');
 $kernel->boot();
 
 require_once $root_path . '/core/includes/install.inc';
