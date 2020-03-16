@@ -6,6 +6,7 @@
  */
 
 use Drupal\Core\Database\Database;
+use Drupal\Core\DrupalKernel;
 
 // Change the directory to the Drupal root.
 chdir('..');
@@ -14,9 +15,14 @@ chdir('..');
 $root_path = realpath('');
 
 // Initialize the autoloader.
-$class_loader = require_once $root_path . '/autoload.php';
+$autoloader = require_once $root_path . '/autoload.php';
+
+DrupalKernel::bootEnvironment($root_path);
+$kernel = new DrupalKernel('prod', $autoloader);
+$kernel->boot();
 
 require_once $root_path . '/core/includes/install.inc';
+
 $installer = db_installer_object('dbal');
 print("-----------------------------------------------------------\n");
 print("Installation: OK\n");
