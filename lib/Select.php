@@ -67,7 +67,7 @@ class Select extends QuerySelect {
       if ($table['table'] instanceof SelectInterface) {
         // Run preparation steps on this sub-query before converting to string.
         $subquery = $table['table'];
-dump($subquery);
+//dump($subquery);
         $subquery->preExecute();
         $escaped_table = '(' . (string) $subquery . ')';
       }
