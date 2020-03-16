@@ -161,8 +161,8 @@ class Connection extends DatabaseConnection {
       $mx = [];
       if (preg_match('/{(\S*)}/', $table, $mx) === 1) {
         //dump(['ahia', $table, $sql]);
-        //$table = $mx[1];
-        throw new \Exception(var_export(['ahia', $table, $sql], TRUE));
+        $table = $mx[1];
+        //throw new \Exception(var_export(['ahia', $table, $sql], TRUE));
       }
       if (isset($this->dbTables['{' . $table . '}'])) {
         continue;

@@ -73,7 +73,6 @@ class Select extends QuerySelect {
       else {
         // Do not attempt prefixing cross database / schema queries.
         if (strpos($table['table'], '.') === FALSE) {
-dump([$table]);
           $escaped_table = $this->connection->getPrefixedTableName($table['table'], TRUE);
         }
         else {
@@ -93,6 +92,7 @@ dump([$table]);
 
           case 'LEFT OUTER':
           case 'LEFT':
+dump([$root_alias, $escaped_table, $escaped_alias, (string) $table['condition']]);
             $dbal_query->leftJoin($root_alias, $escaped_table, $escaped_alias, $dbal_extension->resolveAliases((string) $table['condition']));
             break;
 
