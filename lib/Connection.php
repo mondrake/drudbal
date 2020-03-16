@@ -157,7 +157,10 @@ class Connection extends DatabaseConnection {
     $matches = [];
     preg_match_all('/{(\S*)}/', $sql, $matches, PREG_SET_ORDER, 0);
     foreach ($matches as $match) {
-      $table = str_replace(['{', '}', '{`', '`}'], ['', '', '', ''], $match[1]); // @todo
+      $table = $match[1];
+      if (preg_match('/{(\S*)}/', $table) === 1) {
+        dump(['ahia', $table, $sql]);
+      }
       if (isset($this->dbTables['{' . $table . '}'])) {
         continue;
       }
