@@ -7,6 +7,7 @@
 
 use Drupal\Core\Database\Database;
 use Drupal\Core\DrupalKernel;
+use Drupal\Core\Site\Settings;
 
 // Change the directory to the Drupal root.
 chdir('..');
@@ -20,6 +21,7 @@ $autoloader = require_once $root_path . '/autoload.php';
 DrupalKernel::bootEnvironment($root_path);
 $kernel = new DrupalKernel('prod', $autoloader);
 $kernel->setSitePath('sites/default');
+Settings::initialize($root_path, 'sites/default', $autoloader);
 $kernel->boot();
 
 require_once $root_path . '/core/includes/install.inc';
