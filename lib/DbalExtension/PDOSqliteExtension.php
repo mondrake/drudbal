@@ -199,7 +199,7 @@ class PDOSqliteExtension extends AbstractExtension {
     // with the Drupal name, regardless of prefix. A table can be renamed so
     // that the prefix is no longer relevant.
     if (in_array($context, ['indexExists', 'dropIndex'])) {
-      $dbal_table = $dbal_schema->getTable($this->tableName($drupal_table_name));
+      $dbal_table = $dbal_schema->getTable($this->connection->getPrefixedTableName($drupal_table_name));
       foreach ($dbal_table->getIndexes() as $index) {
         $index_full_name = $index->getName();
         $matches = [];
@@ -597,7 +597,7 @@ class PDOSqliteExtension extends AbstractExtension {
    * {@inheritdoc}
    */
   public function delegateDefaultsOnlyInsertSql(&$sql, $drupal_table_name) {
-    $sql = 'INSERT INTO ' . $this->tableName($drupal_table_name) . ' DEFAULT VALUES';
+    $sql = 'INSERT INTO ' . $this->connection->getPrefixedTableName($drupal_table_name) . ' DEFAULT VALUES';
     return TRUE;
   }
 
@@ -680,11 +680,11 @@ class PDOSqliteExtension extends AbstractExtension {
    */
   public function delegateTableExists(&$result, $drupal_table_name) {
     try {
-      $result = $this->getDbalConnection()->getSchemaManager()->tablesExist([$this->tableName($drupal_table_name)]);
+      $result = $this->getDbalConnection()->getSchemaManager()->tablesExist([$this->connection->getPrefixedTableName($drupal_table_name)]);
     }
     catch (DbalDriverException $e) {
       if ($e->getErrorCode() === 17) {
-        $result = $this->getDbalConnection()->getSchemaManager()->tablesExist([$this->tableName($drupal_table_name)]);
+        $result = $this->getDbalConnection()->getSchemaManager()->tablesExist([$this->connection->getPrefixedTableName($drupal_table_name)]);
       }
       else {
         throw $e;
@@ -990,7 +990,7 @@ class PDOSqliteExtension extends AbstractExtension {
     ];
 
     // Table.
-    $dbal_table = $dbal_schema->getTable($this->tableName($table));
+    $dbal_table = $dbal_schema->getTable($this->connection->getPrefixedTableName($table));
 
     // Description.
     if ($dbal_table->getComment() !== NULL) {
