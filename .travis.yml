@@ -15,62 +15,62 @@ branches:
 
 jobs:
   include:
-    - env: DRUDBAL_ENV="mysql" TEST_ARGS="--group Database"
-      services:
-        - mysql
-    - env: DRUDBAL_ENV="dbal/mariadb" TEST_ARGS="--group Database,Entity,Field"
-      addons:
-        mariadb: '10.3'
-    - env: DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Database,Entity,Field"
-      services:
-        - mysql
-    - env: DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Installer,Cache,Config"
-      services:
-        - mysql
-    - env: DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group field"
-      services:
-        - mysql
-    - env: DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group file"
-      services:
-        - mysql
-    - env: DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group views"
-      services:
-        - mysql
-    - env: DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Database,Entity,Field"
-      services:
-        - mysql
-    - env: DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Installer,Cache,Config"
-      services:
-        - mysql
-    - env: DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group field"
-      services:
-        - mysql
-    - env: DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group file"
-      services:
-        - mysql
-    - env: DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group views"
-      services:
-        - mysql
-    - env: DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Database,Entity,Field"
-      services:
-        - mysql
-    - env: DRUDBAL_ENV="sqlite" TEST_ARGS="--group Database"
-    - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database,Entity,Field"
-    - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Installer,Cache,Config"
-    - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group field"
-    - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group views"
+#    - env: DRUDBAL_ENV="mysql" TEST_ARGS="--group Database"
+#      services:
+#        - mysql
+#    - env: DRUDBAL_ENV="dbal/mariadb" TEST_ARGS="--group Database,Entity,Field"
+#      addons:
+#        mariadb: '10.3'
+#    - env: DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Database,Entity,Field"
+#      services:
+#        - mysql
+#    - env: DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Installer,Cache,Config"
+#      services:
+#        - mysql
+#    - env: DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group field"
+#      services:
+#        - mysql
+#    - env: DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group file"
+#      services:
+#        - mysql
+#    - env: DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group views"
+#      services:
+#        - mysql
+#    - env: DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Database,Entity,Field"
+#      services:
+#        - mysql
+#    - env: DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Installer,Cache,Config"
+#      services:
+#        - mysql
+#    - env: DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group field"
+#      services:
+#        - mysql
+#    - env: DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group file"
+#      services:
+#        - mysql
+#    - env: DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group views"
+#      services:
+#        - mysql
+#    - env: DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Database,Entity,Field"
+#      services:
+#        - mysql
+#    - env: DRUDBAL_ENV="sqlite" TEST_ARGS="--group Database"
+#    - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database,Entity,Field"
+#    - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Installer,Cache,Config"
+#    - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group field"
+#    - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group views"
     - stage: Allow Failures
       env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group file"
-    - stage: Allow Failures
-      env: DRUDBAL_ENV="dbal/sqlite/memory" TEST_ARGS="--group Database,Installer,Cache,Config,Entity,Field"
+#    - stage: Allow Failures
+#      env: DRUDBAL_ENV="dbal/sqlite/memory" TEST_ARGS="--group Database,Installer,Cache,Config,Entity,Field"
   fast_finish: true
-  allow_failures:
-    - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group file"
-    - env: DRUDBAL_ENV="dbal/sqlite/memory" TEST_ARGS="--group Database,Installer,Cache,Config,Entity,Field"
+#  allow_failures:
+#    - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group file"
+#    - env: DRUDBAL_ENV="dbal/sqlite/memory" TEST_ARGS="--group Database,Installer,Cache,Config,Entity,Field"
 
 cache:
   directories:
-    #- $HOME/drupal_staging
+    - $HOME/drupal_staging
     #- $ORACLE_DOWNLOAD_DIR
     - $HOME/.composer/cache
 
@@ -118,6 +118,8 @@ before_install:
       elif [[ "$DRUDBAL_ENV" == "dbal/sqlite/file" ]]; then
         export DBAL_URL="sqlite:///$DRUPAL_PATH/sqlite-drudbal"
         export SIMPLETEST_DB="dbal://localhost/$DRUPAL_PATH/sqlite-drudbal?dbal_driver=pdo_sqlite"
+        export DRUPAL_TEST_RESULTS_DIR="$HOME/drupal_test_results"
+        export DRUPAL_TEST_RESULTS_DB="$DRUPAL_TEST_RESULTS_DIR/test_results.sqlite"
         export INSTALL_VIA="dbal"
         export SQLITE_UPDATE="true"
 
@@ -205,7 +207,9 @@ script:
   # Report installed database.
   - php install_report.php
   # Only run selected tests to avoid Travis timeout.
-  - $DRUPAL_PATH/vendor/bin/phpunit $TEST_ARGS
+  #- $DRUPAL_PATH/vendor/bin/phpunit $TEST_ARGS
+  - cd $DRUPAL_PATH
+  - php core/scripts/run-tests.sh --concurrency $(nproc) --dburl $SIMPLETEST_DB --sqlite $DRUPAL_TEST_RESULTS_DB --verbose --color --php $(which php) --url http://127.0.0.1:8080 file
 
 #after_script:
 #  - cd $DRUPAL_PATH/libraries/drudbal
