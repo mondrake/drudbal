@@ -154,7 +154,7 @@ before_install:
   # Stage Drupal core to get dependencies.
   - |
       if [[ ! -f $DRUPAL_STAGING_DIR/index.php ]]; then
-        git clone --depth=5 --branch=9.0.x http://git.drupal.org/project/drupal.git $DRUPAL_STAGING_DIR
+        git clone --depth=5 --branch=9.1.x http://git.drupal.org/project/drupal.git $DRUPAL_STAGING_DIR
         cd $DRUPAL_STAGING_DIR
         composer install --no-progress --no-suggest
         # Get Drush and Doctrine DBAL
