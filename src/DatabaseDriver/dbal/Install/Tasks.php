@@ -1,12 +1,12 @@
 <?php
 
-namespace Drupal\Driver\Database\dbal\Install;
+namespace Drupal\drudbal\DatabaseDriver\dbal\Install;
 
 use Drupal\Core\Database\ConnectionNotDefinedException;
 use Drupal\Core\Database\Database;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Database\Install\Tasks as InstallTasks;
-use Drupal\Driver\Database\dbal\Connection as DruDbalConnection;
+use Drupal\drudbal\DatabaseDriver\dbal\Connection as DruDbalConnection;
 
 use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\Exception\ConnectionException as DbalExceptionConnectionException;
@@ -18,13 +18,13 @@ use Doctrine\DBAL\DriverManager as DbalDriverManager;
  *
  * Note: there should not be db platform specific code here. Any tasks that
  * cannot be managed by Doctrine DBAL should be added to extension specific
- * code in Drupal\Driver\Database\dbal\DbalExtension\[dbal_driver_name]
+ * code in Drupal\drudbal\DatabaseDriver\dbal\DbalExtension\[dbal_driver_name]
  * classes and execution handed over to there.
  */
 class Tasks extends InstallTasks {
 
   /**
-   * Constructs a \Drupal\Driver\Database\dbal\Install\Tasks object.
+   * Constructs a \Drupal\drudbal\DatabaseDriver\dbal\Install\Tasks object.
    */
   public function __construct() {
     // The DBAL driver delegates the installation tasks to the Dbal extension.
@@ -68,7 +68,7 @@ class Tasks extends InstallTasks {
   public function minimumVersion() {
     // Note: This is the minimum version of Doctrine DBAL; the minimum version
     // of the db server should be managed in
-    // Drupal\Driver\Database\dbal\DbalExtension\[dbal_driver_name]::runInstallTasks.
+    // Drupal\drudbal\DatabaseDriver\dbal\DbalExtension\[dbal_driver_name]::runInstallTasks.
     return '2.10.0';
   }
 

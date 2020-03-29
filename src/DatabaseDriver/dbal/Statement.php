@@ -1,12 +1,12 @@
 <?php
 
-namespace Drupal\Driver\Database\dbal;
+namespace Drupal\drudbal\DatabaseDriver\dbal;
 
 use Drupal\Core\Database\Database;
 use Drupal\Core\Database\DatabaseExceptionWrapper;
 use Drupal\Core\Database\StatementInterface;
 use Drupal\Core\Database\RowCountException;
-use Drupal\Driver\Database\dbal\Connection as DruDbalConnection;
+use Drupal\drudbal\DatabaseDriver\dbal\Connection as DruDbalConnection;
 use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\FetchMode;
 use Doctrine\DBAL\SQLParserUtils;
@@ -21,7 +21,7 @@ use Doctrine\DBAL\SQLParserUtils;
  *
  * Note: there should not be db platform specific code here. Any tasks that
  * cannot be managed by Doctrine DBAL should be added to extension specific
- * code in Drupal\Driver\Database\dbal\DbalExtension\[dbal_driver_name]
+ * code in Drupal\drudbal\DatabaseDriver\dbal\DbalExtension\[dbal_driver_name]
  * classes and execution handed over to there.
  */
 class Statement implements \IteratorAggregate, StatementInterface {
@@ -31,7 +31,7 @@ class Statement implements \IteratorAggregate, StatementInterface {
    *
    * The name $dbh is inherited from \PDOStatement.
    *
-   * @var \Drupal\Driver\Database\dbal\Connection
+   * @var \Drupal\drudbal\DatabaseDriver\dbal\Connection
    */
   public $dbh;
 
@@ -179,7 +179,7 @@ class Statement implements \IteratorAggregate, StatementInterface {
   /**
    * Constructs a Statement object.
    *
-   * @param \Drupal\Driver\Database\dbal\Connection $dbh
+   * @param \Drupal\drudbal\DatabaseDriver\dbal\Connection $dbh
    *   The database connection object for this statement.
    * @param string $statement
    *   A string containing an SQL query. Passed by reference.

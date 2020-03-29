@@ -1,8 +1,8 @@
 <?php
 
-namespace Drupal\Driver\Database\dbal\DbalExtension;
+namespace Drupal\drudbal\DatabaseDriver\dbal\DbalExtension;
 
-use Drupal\Driver\Database\dbal\Connection as DruDbalConnection;
+use Drupal\drudbal\DatabaseDriver\dbal\Connection as DruDbalConnection;
 
 use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
@@ -19,7 +19,7 @@ class AbstractExtension implements DbalExtensionInterface {
   /**
    * The DruDbal connection.
    *
-   * @var \Drupal\Driver\Database\dbal\Connection
+   * @var \Drupal\drudbal\DatabaseDriver\dbal\Connection
    */
   protected $connection;
 
@@ -54,7 +54,7 @@ class AbstractExtension implements DbalExtensionInterface {
   /**
    * Constructs a DBAL extension object.
    *
-   * @param \Drupal\Driver\Database\dbal\Connection $drudbal_connection
+   * @param \Drupal\drudbal\DatabaseDriver\dbal\Connection $drudbal_connection
    *   The Drupal database connection object for this extension.
    * @param \Doctrine\DBAL\Connection $dbal_connection
    *   The DBAL connection.
