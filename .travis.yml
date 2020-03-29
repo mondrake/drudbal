@@ -76,9 +76,8 @@ cache:
     - $HOME/.composer/cache
 
 before_install:
-  - sudo apt-get install tree
-
   # Set variables.
+
   # Drupal paths.
   - export DRUPAL_STAGING_DIR="$HOME/drupal_staging"
   - export DRUPAL_PATH="$HOME/drupal8"
@@ -184,7 +183,6 @@ before_install:
   - |
       composer config repositories.travisci-run '{"type": "path", "url": "$TRAVIS_BUILD_DIR", "options": {"symlink": false}}'
   - composer require "mondrake/drudbal:dev-travisci-run-branch" --no-progress --no-suggest
-  - tree $DRUPAL_PATH/modules
 
 install:
 
