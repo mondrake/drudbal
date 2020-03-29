@@ -99,7 +99,7 @@ before_install:
 
       elif [[ "$DRUDBAL_ENV" == "dbal/mysql" ]]; then
         export DBAL_URL="mysql://root:@$HOST_ADDR/drudbal"
-        export SIMPLETEST_DB="dbal://root:@$HOST_ADDR/drudbal?dbal_driver=pdo_mysql"
+        export SIMPLETEST_DB="dbal://root:@$HOST_ADDR/drudbal?module=drudbal&dbal_driver=pdo_mysql"
         export INSTALL_VIA="dbal"
 
       elif [[ "$DRUDBAL_ENV" == "dbal/mariadb" ]]; then
