@@ -15,54 +15,55 @@ branches:
 
 jobs:
   include:
-    - env: DRUDBAL_ENV="mysql" TEST_ARGS="--group Database"
+#    - env: DRUDBAL_ENV="mysql" TEST_ARGS="--group Database"
+#      services:
+#        - mysql
+#    - env: DRUDBAL_ENV="dbal/mariadb" TEST_ARGS="--group Database,Entity,Field"
+#      addons:
+#        mariadb: '10.3'
+    - env: DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Database"
+#    - env: DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Database,Entity,Field"
       services:
         - mysql
-    - env: DRUDBAL_ENV="dbal/mariadb" TEST_ARGS="--group Database,Entity,Field"
-      addons:
-        mariadb: '10.3'
-    - env: DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Database,Entity,Field"
-      services:
-        - mysql
-    - env: DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Installer,Cache,Config"
-      services:
-        - mysql
-    - env: DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group field"
-      services:
-        - mysql
-    - env: DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group file"
-      services:
-        - mysql
-    - env: DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group views"
-      services:
-        - mysql
-    - env: DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Database,Entity,Field"
-      services:
-        - mysql
-    - env: DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Installer,Cache,Config"
-      services:
-        - mysql
-    - env: DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group field"
-      services:
-        - mysql
-    - env: DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group file"
-      services:
-        - mysql
-    - env: DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group views"
-      services:
-        - mysql
-    - env: DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Database,Entity,Field"
-      services:
-        - mysql
-    - env: DRUDBAL_ENV="sqlite" TEST_ARGS="--group Database"
-    - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database,Entity,Field"
-    - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Installer,Cache,Config"
-    - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group field"
-    - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group views"
-    - stage: Allow Failures
-      env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group file"
-    - stage: Allow Failures
-      env: DRUDBAL_ENV="dbal/sqlite/memory" TEST_ARGS="--group Database,Installer,Cache,Config,Entity,Field"
+#    - env: DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Installer,Cache,Config"
+#      services:
+#        - mysql
+#    - env: DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group field"
+#      services:
+#        - mysql
+#    - env: DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group file"
+#      services:
+#        - mysql
+#    - env: DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group views"
+#      services:
+#        - mysql
+#    - env: DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Database,Entity,Field"
+#      services:
+#        - mysql
+#    - env: DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Installer,Cache,Config"
+#      services:
+#        - mysql
+#    - env: DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group field"
+#      services:
+#        - mysql
+#    - env: DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group file"
+#      services:
+#        - mysql
+#    - env: DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group views"
+#      services:
+#        - mysql
+#    - env: DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Database,Entity,Field"
+#      services:
+#        - mysql
+#    - env: DRUDBAL_ENV="sqlite" TEST_ARGS="--group Database"
+#    - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database,Entity,Field"
+#    - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Installer,Cache,Config"
+#    - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group field"
+#    - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group views"
+#    - stage: Allow Failures
+#      env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group file"
+#    - stage: Allow Failures
+#      env: DRUDBAL_ENV="dbal/sqlite/memory" TEST_ARGS="--group Database,Installer,Cache,Config,Entity,Field"
   fast_finish: true
   allow_failures:
     - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group file"
@@ -70,7 +71,7 @@ jobs:
 
 cache:
   directories:
-    #- $HOME/drupal_staging
+    - $HOME/drupal_staging
     #- $ORACLE_DOWNLOAD_DIR
     - $HOME/.composer/cache
 
@@ -158,7 +159,7 @@ before_install:
         cd $DRUPAL_STAGING_DIR
         composer install --no-progress --no-suggest
         # Get Drush and Doctrine DBAL
-        composer require drush/drush "mondrake/drudbal:dev-master" --no-progress --no-suggest
+        composer require drush/drush --no-progress --no-suggest
       fi
 
   # Copy staged Drupal core to running path.
@@ -171,17 +172,27 @@ before_install:
   - curl https://www.drupal.org/files/issues/2657888-18.patch | git apply
   # [#2992274] Installer tests fail if contrib driver hides database credentials form fields
   - curl https://www.drupal.org/files/issues/2019-04-02/2992274-5.patch | git apply
+  # [#3120096] Support contrib database driver directories in a fixed location in a module
+  - curl https://www.drupal.org/files/issues/2020-03-29/3120096-70.patch | git apply
+
+  # Require mondrake/drudbal from the source just cloned from GitHub.
+  - cd $TRAVIS_BUILD_DIR
+  - git checkout -b travisci-run-branch
+  - cd $DRUPAL_PATH
+  - |
+      composer config repositories.travisci-run '{"type": "path", "url": "$TRAVIS_BUILD_DIR", "options": {"symlink": false}}'
+  - composer require "mondrake/drudbal:dev-travisci-run-branch" --no-progress --no-suggest
 
 install:
   # Copy the cloned repo to the libraries/drudbal directory, overriding the
   # composer install.
-  - rm -rf $DRUPAL_PATH/libraries/drudbal
-  - cp -r $HOME/build/mondrake/drudbal $DRUPAL_PATH/libraries/drudbal
+  #- rm -rf $DRUPAL_PATH/libraries/drudbal
+  #- cp -r $HOME/build/mondrake/drudbal $DRUPAL_PATH/libraries/drudbal
 
   # Create a directory for the driver, and symlink it to the module's one.
-  - mkdir -p $DRUPAL_PATH/drivers/lib/Drupal/Driver/Database/
-  - cd $DRUPAL_PATH/drivers/lib/Drupal/Driver/Database/
-  - ln -s $DRUPAL_PATH/libraries/drudbal/lib dbal
+  #- mkdir -p $DRUPAL_PATH/drivers/lib/Drupal/Driver/Database/
+  #- cd $DRUPAL_PATH/drivers/lib/Drupal/Driver/Database/
+  #- ln -s $DRUPAL_PATH/libraries/drudbal/lib dbal
 
   # Patch tests for debugging if necessary.
   - cd $DRUPAL_PATH
