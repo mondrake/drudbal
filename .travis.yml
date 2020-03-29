@@ -15,9 +15,9 @@ branches:
 
 jobs:
   include:
-#    - env: DRUDBAL_ENV="mysql" TEST_ARGS="--group Database"
-#      services:
-#        - mysql
+    - env: DRUDBAL_ENV="mysql" TEST_ARGS="--group Database"
+      services:
+        - mysql
 #    - env: DRUDBAL_ENV="dbal/mariadb" TEST_ARGS="--group Database,Entity,Field"
 #      addons:
 #        mariadb: '10.3'
@@ -146,6 +146,7 @@ before_install:
 
   # Remove XDebug.
   - phpenv config-rm xdebug.ini || true
+
   # Add APCu extension.
   - echo "extension = apcu.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
   - echo "apc.enable_cli=1" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
@@ -186,15 +187,6 @@ before_install:
   - tree $DRUPAL_PATH/modules
 
 install:
-  # Copy the cloned repo to the libraries/drudbal directory, overriding the
-  # composer install.
-  #- rm -rf $DRUPAL_PATH/libraries/drudbal
-  #- cp -r $HOME/build/mondrake/drudbal $DRUPAL_PATH/libraries/drudbal
-
-  # Create a directory for the driver, and symlink it to the module's one.
-  #- mkdir -p $DRUPAL_PATH/drivers/lib/Drupal/Driver/Database/
-  #- cd $DRUPAL_PATH/drivers/lib/Drupal/Driver/Database/
-  #- ln -s $DRUPAL_PATH/libraries/drudbal/lib dbal
 
   # Patch tests for debugging if necessary.
   - cd $DRUPAL_PATH
@@ -215,8 +207,10 @@ install:
   - sleep 2s
 
 script:
+
   # Report installed database.
   - php install_report.php
+
   # Only run selected tests to avoid Travis timeout.
   - $DRUPAL_PATH/vendor/bin/phpunit $TEST_ARGS
 
