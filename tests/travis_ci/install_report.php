@@ -30,7 +30,7 @@ print("-------------------------------------------------------------------------
 dump(Database::getAllConnectionInfo());
 print("------------------------------------------------------------------------------------------------\n");
 $connection = Database::getConnection();
-$installer = db_installer_object($connection->driver(), 'drudbal');
+$installer = db_installer_object($connection->driver(), 'Drupal\\drudbal\\DatabaseDriver\\dbal');
 print("------------------------------------------------------------------------------------------------\n");
 print("Installation: OK\n");
 print("Database    : " . $installer->name() . "\n");
