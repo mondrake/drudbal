@@ -174,7 +174,7 @@ before_install:
   # [#2992274] Installer tests fail if contrib driver hides database credentials form fields
   - curl https://www.drupal.org/files/issues/2019-04-02/2992274-5.patch | git apply
   # [#3120096] Support contrib database driver directories in a fixed location in a module
-  - curl https://www.drupal.org/files/issues/2020-03-29/3120096-70.patch | git apply
+  - curl https://www.drupal.org/files/issues/2020-03-30/3120096-72.patch | git apply
 
   # Require mondrake/drudbal from the source just cloned from GitHub.
   - cd $TRAVIS_BUILD_DIR
