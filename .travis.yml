@@ -15,14 +15,13 @@ branches:
 
 jobs:
   include:
-#    - env: DRUDBAL_ENV="mysql" TEST_ARGS="--group Database"
-#      services:
-#        - mysql
-#    - env: DRUDBAL_ENV="dbal/mariadb" TEST_ARGS="--group Database,Entity,Field"
-#      addons:
-#        mariadb: '10.3'
-    - env: DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Database"
-#    - env: DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Database,Entity,Field"
+    - env: DRUDBAL_ENV="mysql" TEST_ARGS="--group Database"
+      services:
+        - mysql
+    - env: DRUDBAL_ENV="dbal/mariadb" TEST_ARGS="--group Database,Entity,Field"
+      addons:
+        mariadb: '10.3'
+    - env: DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Database,Entity,Field"
       services:
         - mysql
 #    - env: DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Installer,Cache,Config"
@@ -37,9 +36,9 @@ jobs:
 #    - env: DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group views"
 #      services:
 #        - mysql
-#    - env: DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Database,Entity,Field"
-#      services:
-#        - mysql
+    - env: DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Database,Entity,Field"
+      services:
+        - mysql
 #    - env: DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Installer,Cache,Config"
 #      services:
 #        - mysql
@@ -55,8 +54,8 @@ jobs:
 #    - env: DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Database,Entity,Field"
 #      services:
 #        - mysql
-#    - env: DRUDBAL_ENV="sqlite" TEST_ARGS="--group Database"
-#    - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database,Entity,Field"
+    - env: DRUDBAL_ENV="sqlite" TEST_ARGS="--group Database"
+    - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database,Entity,Field"
 #    - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Installer,Cache,Config"
 #    - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group field"
 #    - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group views"
@@ -103,12 +102,12 @@ before_install:
 
       elif [[ "$DRUDBAL_ENV" == "dbal/mariadb" ]]; then
         export DBAL_URL="mysql://root:@$HOST_ADDR/drudbal"
-        export SIMPLETEST_DB="dbal://root:@$HOST_ADDR/drudbal?dbal_driver=pdo_mysql"
+        export SIMPLETEST_DB="dbal://root:@$HOST_ADDR/drudbal?module=drudbal&dbal_driver=pdo_mysql"
         export INSTALL_VIA="dbal"
 
       elif [[ "$DRUDBAL_ENV" == "dbal/mysqli" ]]; then
         export DBAL_URL="mysqli://root:@$HOST_ADDR/drudbal"
-        export SIMPLETEST_DB="dbal://root:@$HOST_ADDR/drudbal?dbal_driver=mysqli"
+        export SIMPLETEST_DB="dbal://root:@$HOST_ADDR/drudbal?module=drudbal&dbal_driver=mysqli"
         export INSTALL_VIA="dbal"
 
       elif [[ "$DRUDBAL_ENV" == "sqlite" ]]; then
@@ -118,19 +117,19 @@ before_install:
 
       elif [[ "$DRUDBAL_ENV" == "dbal/sqlite/file" ]]; then
         export DBAL_URL="sqlite:///$DRUPAL_PATH/sqlite-drudbal"
-        export SIMPLETEST_DB="dbal://localhost/$DRUPAL_PATH/sqlite-drudbal?dbal_driver=pdo_sqlite"
+        export SIMPLETEST_DB="dbal://localhost/$DRUPAL_PATH/sqlite-drudbal?module=drudbal&dbal_driver=pdo_sqlite"
         export INSTALL_VIA="dbal"
         export SQLITE_UPDATE="true"
 
       elif [[ "$DRUDBAL_ENV" == "dbal/sqlite/memory" ]]; then
         export DBAL_URL="sqlite:///:memory:"
-        export SIMPLETEST_DB="dbal://localhost/:memory:?dbal_driver=pdo_sqlite"
+        export SIMPLETEST_DB="dbal://localhost/:memory:?module=drudbal&dbal_driver=pdo_sqlite"
         export INSTALL_VIA="dbal"
         export SQLITE_UPDATE="true"
 
       elif [[ "$DRUDBAL_ENV" == "dbal/oci8" ]]; then
         export DBAL_URL="oci8://ORAROOT:DRUDBAL@$HOST_ADDR:1521/XE"
-        export SIMPLETEST_DB="dbal://ORAROOT:DRUDBAL@$HOST_ADDR:1521/XE?dbal_driver=oci8"
+        export SIMPLETEST_DB="dbal://ORAROOT:DRUDBAL@$HOST_ADDR:1521/XE?module=drudbal&dbal_driver=oci8"
         export INSTALL_VIA="dbal"
 
       fi
