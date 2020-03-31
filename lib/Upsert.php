@@ -31,10 +31,8 @@ class Upsert extends QueryUpsert {
 
     $sql = (string) $this;
 
-    if ($this->connection->supportsTransactions()) {
-      // @codingStandardsIgnoreLine
-      $trn = $this->connection->startTransaction();
-    }
+    // @codingStandardsIgnoreLine
+    $trn = $this->connection->startTransaction();
 
     // Loop through the values to be UPSERTed.
     $last_insert_id = NULL;
