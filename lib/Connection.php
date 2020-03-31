@@ -98,7 +98,7 @@ class Connection extends DatabaseConnection {
   public function __construct(DbalConnection $dbal_connection, array $connection_options = []) {
     // The 'transactions' option is deprecated.
     if (isset($connection_options['transactions'])) {
-      @trigger_error('Passing a \'transactions\' connection option to ' . __METHOD__ . ' is deprecated in drupal:9.1.0 and is removed in drupal:10.0.0. All database drivers must support transactions. See https://www.drupal.org/node/2278745', E_USER_DEPRECATED);
+      @trigger_error('Passing a \'transactions\' connection option to Drupal\\Core\\Database\\Connection::__construct is deprecated in drupal:9.1.0 and is removed in drupal:10.0.0. All database drivers must support transactions. See https://www.drupal.org/node/2278745', E_USER_DEPRECATED);
       unset($connection_options['transactions']);
     }
 
