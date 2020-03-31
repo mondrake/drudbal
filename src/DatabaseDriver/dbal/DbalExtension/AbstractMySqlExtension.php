@@ -192,15 +192,7 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateTransactionSupport(array &$connection_options = []) {
-    // MySQL defaults to transaction support, except if explicitly passed FALSE.
-    return !isset($connection_options['transactions']) || ($connection_options['transactions'] !== FALSE);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function delegateTransactionalDdlSupport(array &$connection_options = []) {
+  public function delegateTransactionalDdlSupport(array &$connection_options = []): bool {
     // MySQL never supports transactional DDL.
     return FALSE;
   }

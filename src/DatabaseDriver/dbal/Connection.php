@@ -96,14 +96,20 @@ class Connection extends DatabaseConnection {
    * Constructs a Connection object.
    */
   public function __construct(DbalConnection $dbal_connection, array $connection_options = []) {
+    // The 'transactions' option is deprecated.
+    if (isset($connection_options['transactions'])) {
+      @trigger_error('Passing a \'transactions\' connection option to Drupal\\Core\\Database\\Connection::__construct is deprecated in drupal:9.1.0 and is removed in drupal:10.0.0. All database drivers must support transactions. See https://www.drupal.org/node/2278745', E_USER_DEPRECATED);
+      unset($connection_options['transactions']);
+    }
+
     $this->dbalPlatform = $dbal_connection->getDatabasePlatform();
     $this->connectionOptions = $connection_options;
     $this->setPrefix(isset($connection_options['prefix']) ? $connection_options['prefix'] : '');
     $dbal_extension_class = static::getDbalExtensionClass($connection_options);
     $this->statementClass = static::getStatementClass($connection_options);
     $this->dbalExtension = new $dbal_extension_class($this, $dbal_connection, $this->statementClass);
-    $this->transactionSupport = $this->dbalExtension->delegateTransactionSupport($connection_options);
     $this->transactionalDDLSupport = $this->dbalExtension->delegateTransactionalDdlSupport($connection_options);
+
     // Unset $this->connection so that __get() can return the wrapped
     // DbalConnection on the extension instead.
     unset($this->connection);
@@ -534,9 +540,6 @@ class Connection extends DatabaseConnection {
    * {@inheritdoc}
    */
   public function rollBack($savepoint_name = 'drupal_transaction') {
-    if (!$this->supportsTransactions()) {
-      return;
-    }
     if (!$this->inTransaction()) {
       throw new TransactionNoActiveException();
     }
@@ -587,9 +590,6 @@ class Connection extends DatabaseConnection {
    * {@inheritdoc}
    */
   public function pushTransaction($name) {
-    if (!$this->supportsTransactions()) {
-      return;
-    }
     if (isset($this->transactionLayers[$name])) {
       throw new TransactionNameNonUniqueException($name . " is already in use.");
     }

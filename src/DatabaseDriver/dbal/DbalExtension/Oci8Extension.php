@@ -228,14 +228,7 @@ class Oci8Extension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateTransactionSupport(array &$connection_options = []) {
-    return !isset($connection_options['transactions']) || ($connection_options['transactions'] !== FALSE);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function delegateTransactionalDdlSupport(array &$connection_options = []) {
+  public function delegateTransactionalDdlSupport(array &$connection_options = []): bool {
     // Transactional DDL is not available in Oracle.
     return FALSE;
   }
