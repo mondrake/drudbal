@@ -204,17 +204,6 @@ interface DbalExtensionInterface {
   public function delegateClientVersion();
 
   /**
-   * Informs the Connection on whether transactions are supported.
-   *
-   * @param array $connection_options
-   *   An array of connection options, valid for Drupal database connections.
-   *
-   * @return bool
-   *   TRUE if transactions are supported, FALSE otherwise.
-   */
-  public function delegateTransactionSupport(array &$connection_options = []);
-
-  /**
    * Informs the Connection on whether DDL transactions are supported.
    *
    * @param array $connection_options
@@ -223,7 +212,7 @@ interface DbalExtensionInterface {
    * @return bool
    *   TRUE if DDL transactions are supported, FALSE otherwise.
    */
-  public function delegateTransactionalDdlSupport(array &$connection_options = []);
+  public function delegateTransactionalDdlSupport(array &$connection_options = []): bool;
 
   /**
    * Prepares creating a database.

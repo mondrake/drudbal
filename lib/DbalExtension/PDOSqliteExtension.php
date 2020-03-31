@@ -307,15 +307,8 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateTransactionSupport(array &$connection_options = []) {
-    return !isset($connection_options['transactions']) || ($connection_options['transactions'] !== FALSE);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function delegateTransactionalDdlSupport(array &$connection_options = []) {
-    return !isset($connection_options['transactions']) || ($connection_options['transactions'] !== FALSE);
+  public function delegateTransactionalDdlSupport(array &$connection_options = []): bool {
+    return TRUE;
   }
 
   /**
