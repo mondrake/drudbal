@@ -27,9 +27,15 @@ $kernel->boot();
 require_once $root_path . '/core/includes/install.inc';
 
 $connection = Database::getConnection();
-$installer = db_installer_object($connection->driver());
+$connection_info = Database::getConnectionInfo();
+$installer = db_installer_object($connection->driver(), $connection_info['default']['namespace']);
 print("------------------------------------------------------------------------------------------------\n");
 print("Installation: OK\n");
+print("PHP         : " . phpversion() . "\n");
+print("Drupal      : " . \Drupal::VERSION . "\n");
 print("Database    : " . $installer->name() . "\n");
 print("Version     : " . $connection->version() . "\n");
+print("------------------------------------------------------------------------------------------------\n");
+print("Connection options:\n");
+dump($connection_info['default']);
 print("------------------------------------------------------------------------------------------------\n");

@@ -24,9 +24,6 @@ jobs:
     - env: DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Database,Entity,Field"
       services:
         - mysql
-    - env: DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Installer,Cache,Config"
-      services:
-        - mysql
     - env: DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group field"
       services:
         - mysql
@@ -37,9 +34,6 @@ jobs:
       services:
         - mysql
     - env: DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Database,Entity,Field"
-      services:
-        - mysql
-    - env: DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Installer,Cache,Config"
       services:
         - mysql
     - env: DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group field"
@@ -56,9 +50,20 @@ jobs:
         - mysql
     - env: DRUDBAL_ENV="sqlite" TEST_ARGS="--group Database"
     - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database,Entity,Field"
-    - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Installer,Cache,Config"
     - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group field"
     - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group views"
+    - php: 7.3
+      env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database"
+    - stage: Allow Failures
+      env: DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Installer,Cache,Config"
+      services:
+        - mysql
+    - stage: Allow Failures
+      env: DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Installer,Cache,Config"
+      services:
+        - mysql
+    - stage: Allow Failures
+      env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Installer,Cache,Config"
     - stage: Allow Failures
       env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group file"
     - stage: Allow Failures
@@ -67,6 +72,9 @@ jobs:
   allow_failures:
     - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group file"
     - env: DRUDBAL_ENV="dbal/sqlite/memory" TEST_ARGS="--group Database,Installer,Cache,Config,Entity,Field"
+    - env: DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Installer,Cache,Config"
+    - env: DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Installer,Cache,Config"
+    - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Installer,Cache,Config"
 
 cache:
   directories:
@@ -97,17 +105,17 @@ before_install:
 
       elif [[ "$DRUDBAL_ENV" == "dbal/mysql" ]]; then
         export DBAL_URL="mysql://root:@$HOST_ADDR/drudbal"
-        export SIMPLETEST_DB="dbal://root:@$HOST_ADDR/drudbal?dbal_driver=pdo_mysql"
+        export SIMPLETEST_DB="dbal://root:@$HOST_ADDR/drudbal?module=drudbal&dbal_driver=pdo_mysql"
         export INSTALL_VIA="dbal"
 
       elif [[ "$DRUDBAL_ENV" == "dbal/mariadb" ]]; then
         export DBAL_URL="mysql://root:@$HOST_ADDR/drudbal"
-        export SIMPLETEST_DB="dbal://root:@$HOST_ADDR/drudbal?dbal_driver=pdo_mysql"
+        export SIMPLETEST_DB="dbal://root:@$HOST_ADDR/drudbal?module=drudbal&dbal_driver=pdo_mysql"
         export INSTALL_VIA="dbal"
 
       elif [[ "$DRUDBAL_ENV" == "dbal/mysqli" ]]; then
         export DBAL_URL="mysqli://root:@$HOST_ADDR/drudbal"
-        export SIMPLETEST_DB="dbal://root:@$HOST_ADDR/drudbal?dbal_driver=mysqli"
+        export SIMPLETEST_DB="dbal://root:@$HOST_ADDR/drudbal?module=drudbal&dbal_driver=mysqli"
         export INSTALL_VIA="dbal"
 
       elif [[ "$DRUDBAL_ENV" == "sqlite" ]]; then
@@ -117,19 +125,19 @@ before_install:
 
       elif [[ "$DRUDBAL_ENV" == "dbal/sqlite/file" ]]; then
         export DBAL_URL="sqlite:///$DRUPAL_PATH/sqlite-drudbal"
-        export SIMPLETEST_DB="dbal://localhost/$DRUPAL_PATH/sqlite-drudbal?dbal_driver=pdo_sqlite"
+        export SIMPLETEST_DB="dbal://localhost/$DRUPAL_PATH/sqlite-drudbal?module=drudbal&dbal_driver=pdo_sqlite"
         export INSTALL_VIA="dbal"
         export SQLITE_UPDATE="true"
 
       elif [[ "$DRUDBAL_ENV" == "dbal/sqlite/memory" ]]; then
         export DBAL_URL="sqlite:///:memory:"
-        export SIMPLETEST_DB="dbal://localhost/:memory:?dbal_driver=pdo_sqlite"
+        export SIMPLETEST_DB="dbal://localhost/:memory:?module=drudbal&dbal_driver=pdo_sqlite"
         export INSTALL_VIA="dbal"
         export SQLITE_UPDATE="true"
 
       elif [[ "$DRUDBAL_ENV" == "dbal/oci8" ]]; then
         export DBAL_URL="oci8://ORAROOT:DRUDBAL@$HOST_ADDR:1521/XE"
-        export SIMPLETEST_DB="dbal://ORAROOT:DRUDBAL@$HOST_ADDR:1521/XE?dbal_driver=oci8"
+        export SIMPLETEST_DB="dbal://ORAROOT:DRUDBAL@$HOST_ADDR:1521/XE?module=drudbal&dbal_driver=oci8"
         export INSTALL_VIA="dbal"
 
       fi
@@ -144,6 +152,7 @@ before_install:
 
   # Remove XDebug.
   - phpenv config-rm xdebug.ini || true
+
   # Add APCu extension.
   - echo "extension = apcu.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
   - echo "apc.enable_cli=1" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
@@ -158,7 +167,7 @@ before_install:
         cd $DRUPAL_STAGING_DIR
         composer install --no-progress --no-suggest
         # Get Drush and Doctrine DBAL
-        composer require drush/drush "mondrake/drudbal:dev-master" --no-progress --no-suggest
+        composer require drush/drush --no-progress --no-suggest
       fi
 
   # Copy staged Drupal core to running path.
@@ -172,16 +181,15 @@ before_install:
   # [#2992274] Installer tests fail if contrib driver hides database credentials form fields
   - curl https://www.drupal.org/files/issues/2019-04-02/2992274-5.patch | git apply
 
-install:
-  # Copy the cloned repo to the libraries/drudbal directory, overriding the
-  # composer install.
-  - rm -rf $DRUPAL_PATH/libraries/drudbal
-  - cp -r $HOME/build/mondrake/drudbal $DRUPAL_PATH/libraries/drudbal
+  # Require mondrake/drudbal from the source just cloned from GitHub.
+  - cd $TRAVIS_BUILD_DIR
+  - git checkout -b travisci-run-branch
+  - cd $DRUPAL_PATH
+  - |
+      composer config repositories.travisci-run '{"type": "path", "url": "$TRAVIS_BUILD_DIR", "options": {"symlink": false}}'
+  - composer require "mondrake/drudbal:dev-travisci-run-branch" --no-progress --no-suggest
 
-  # Create a directory for the driver, and symlink it to the module's one.
-  - mkdir -p $DRUPAL_PATH/drivers/lib/Drupal/Driver/Database/
-  - cd $DRUPAL_PATH/drivers/lib/Drupal/Driver/Database/
-  - ln -s $DRUPAL_PATH/libraries/drudbal/lib dbal
+install:
 
   # Patch tests for debugging if necessary.
   - cd $DRUPAL_PATH
@@ -189,7 +197,7 @@ install:
 
   # Install Drupal.
   - cd $DRUPAL_PATH/core
-  - cp $DRUPAL_PATH/libraries/drudbal/tests/travis_ci/install_* .
+  - cp $DRUPAL_PATH/modules/contrib/drudbal/tests/travis_ci/install_* .
   - |
       if [[ "$INSTALL_VIA" == "drush" ]]; then
         drush site-install standard --db-url=$SIMPLETEST_DB -y
@@ -202,8 +210,10 @@ install:
   - sleep 2s
 
 script:
+
   # Report installed database.
   - php install_report.php
+
   # Only run selected tests to avoid Travis timeout.
   - $DRUPAL_PATH/vendor/bin/phpunit $TEST_ARGS
 

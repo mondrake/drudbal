@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\Driver\Database\dbal;
+namespace Drupal\drudbal\Driver\Database\dbal;
 
 use Drupal\Core\Database\Connection as DatabaseConnection;
 use Drupal\Core\Database\ConnectionNotDefinedException;
@@ -13,10 +13,10 @@ use Drupal\Core\Database\TransactionNameNonUniqueException;
 use Drupal\Core\Database\TransactionNoActiveException;
 use Drupal\Core\Database\TransactionOutOfOrderException;
 
-use Drupal\Driver\Database\dbal\DbalExtension\MysqliExtension;
-use Drupal\Driver\Database\dbal\DbalExtension\Oci8Extension;
-use Drupal\Driver\Database\dbal\DbalExtension\PDOMySqlExtension;
-use Drupal\Driver\Database\dbal\DbalExtension\PDOSqliteExtension;
+use Drupal\drudbal\Driver\Database\dbal\DbalExtension\MysqliExtension;
+use Drupal\drudbal\Driver\Database\dbal\DbalExtension\Oci8Extension;
+use Drupal\drudbal\Driver\Database\dbal\DbalExtension\PDOMySqlExtension;
+use Drupal\drudbal\Driver\Database\dbal\DbalExtension\PDOSqliteExtension;
 
 use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\ConnectionException as DbalConnectionException;
@@ -31,7 +31,7 @@ use GuzzleHttp\Psr7\Uri;
  *
  * Note: there should not be db platform specific code here. Any tasks that
  * cannot be managed by Doctrine DBAL should be added to extension specific
- * code in Drupal\Driver\Database\dbal\DbalExtension\[dbal_driver_name]
+ * code in Drupal\drudbal\Driver\Database\dbal\DbalExtension\[dbal_driver_name]
  * classes and execution handed over to there.
  */
 class Connection extends DatabaseConnection {
@@ -74,7 +74,7 @@ class Connection extends DatabaseConnection {
   /**
    * The DruDbal extension for the DBAL driver.
    *
-   * @var \Drupal\Driver\Database\dbal\DbalExtension\DbalExtensionInterface
+   * @var \Drupal\drudbal\Driver\Database\dbal\DbalExtension\DbalExtensionInterface
    */
   protected $dbalExtension;
 
@@ -676,7 +676,7 @@ class Connection extends DatabaseConnection {
   /**
    * Gets the DBAL extension.
    *
-   * @return \Drupal\Driver\Database\dbal\DbalExtension\DbalExtensionInterface
+   * @return \Drupal\drudbal\Driver\Database\dbal\DbalExtension\DbalExtensionInterface
    *   The DBAL extension for this connection.
    */
   public function getDbalExtension() {

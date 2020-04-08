@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\Driver\Database\dbal;
+namespace Drupal\drudbal\Driver\Database\dbal;
 
 use Drupal\Core\Database\SchemaObjectExistsException;
 use Drupal\Core\Database\SchemaObjectDoesNotExistException;
@@ -21,7 +21,7 @@ use Doctrine\DBAL\Types\Type as DbalType;
  *
  * Note: there should not be db platform specific code here. Any tasks that
  * cannot be managed by Doctrine DBAL should be added to extension specific
- * code in Drupal\Driver\Database\dbal\DbalExtension\[dbal_driver_name]
+ * code in Drupal\drudbal\Driver\Database\dbal\DbalExtension\[dbal_driver_name]
  * classes and execution handed over to there.
  */
 class Schema extends DatabaseSchema {
@@ -50,14 +50,14 @@ class Schema extends DatabaseSchema {
   /**
    * The Dbal extension for the DBAL driver.
    *
-   * @var \Drupal\Driver\Database\dbal\DbalExtension\DbalExtensionInterface
+   * @var \Drupal\drudbal\Driver\Database\dbal\DbalExtension\DbalExtensionInterface
    */
   protected $dbalExtension;
 
   /**
    * Constructs a Schema object.
    *
-   * @var \Drupal\Driver\Database\dbal\Connection
+   * @var \Drupal\drudbal\Driver\Database\dbal\Connection
    *   The DBAL driver Drupal database connection.
    */
   public function __construct(Connection $connection) {
