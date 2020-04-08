@@ -36,5 +36,6 @@ print("Drupal      : " . \Drupal::VERSION . "\n");
 print("Database    : " . $installer->name() . "\n");
 print("Version     : " . $connection->version() . "\n");
 print("------------------------------------------------------------------------------------------------\n");
+print("Connection options:\n");
 dump($connection_info['default']);
 print("------------------------------------------------------------------------------------------------\n");
