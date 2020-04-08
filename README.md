@@ -49,7 +49,7 @@ Very rough instructions to install Drupal from scratch with this db driver
 under the hood:
 
 1. Requirements:
-    * PHP 7.4+
+    * PHP 7.3+
     * latest Drupal development branch code, 9.1.x
     * codebase built via Composer
 
@@ -73,21 +73,21 @@ under the hood:
 ![status_report](https://user-images.githubusercontent.com/1174864/29685128-ca25375c-8914-11e7-8305-9ba369f68067.png)
 
 ## Related DBAL issues/PRs
-Issue                                            | Description                                | Info           |
--------------------------------------------------|--------------------------------------------|----------------|
-https://github.com/doctrine/dbal/issues/1349     | DBAL-182: Insert and Merge Query Objects   |                |
-https://github.com/doctrine/dbal/issues/1320     | DBAL-163: Upsert support in DBAL           |                |
-https://github.com/doctrine/dbal/pull/682        | [WIP] [DBAL-218] Add bulk insert query     |                |
-https://github.com/doctrine/dbal/issues/1033     | DBAL-1096: schema-tool:update does not understand columnDefinition correctly | |
-https://github.com/doctrine/migrations/issues/17 | Data loss on table renaming.               |                |
-https://github.com/doctrine/dbal/issues/2676     | Optimize Oracle SchemaManager              |                |
-https://github.com/doctrine/dbal/pull/2415       | Add some MySQL platform data in Tables     | fixed in 2.9.0 |
+Issue                                            | Description                                                                  | Info           |
+-------------------------------------------------|------------------------------------------------------------------------------|----------------|
+https://github.com/doctrine/dbal/issues/1349     | DBAL-182: Insert and Merge Query Objects                                     |                |
+https://github.com/doctrine/dbal/issues/1320     | DBAL-163: Upsert support in DBAL                                             |                |
+https://github.com/doctrine/dbal/pull/682        | [WIP] [DBAL-218] Add bulk insert query                                       |                |
+https://github.com/doctrine/dbal/issues/1033     | DBAL-1096: schema-tool:update does not understand columnDefinition correctly |                |
+https://github.com/doctrine/migrations/issues/17 | Data loss on table renaming.                                                 |                |
+https://github.com/doctrine/dbal/issues/2676     | Optimize Oracle SchemaManager                                                |                |
+https://github.com/doctrine/dbal/pull/2415       | Add some MySQL platform data in Tables                                       | fixed in 2.9.0 |
 
 ## Related Drupal issues
-Issue                                                           | Description                                                    |
-----------------------------------------------------------------|----------------------------------------------------------------|
-tbd                                                             | Add tests for Upsert with default values                       |
-[2657888](https://www.drupal.org/node/2657888)                  | Add Date function support in DTBNG |
+Issue                                                           | Description                                                                                                                             |
+----------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------|
+tbd                                                             | Add tests for Upsert with default values                                                                                                |
+[2657888](https://www.drupal.org/node/2657888)                  | Add Date function support in DTBNG                                                                                                      |
 tbd                                                             | Ensure that when INSERTing a NULL value in a database column, SELECTing it back returns NULL and not empty string - for all fetch modes |
-tbd                                                             | UpdateTestBase::runUpdate should reset database schema after updating |
-[2992274](https://www.drupal.org/project/drupal/issues/2992274) | Installer tests fail if contrib driver hides database credentials form fields |
+tbd                                                             | UpdateTestBase::runUpdate should reset database schema after updating                                                                   |
+[2992274](https://www.drupal.org/project/drupal/issues/2992274) | Installer tests fail if contrib driver hides database credentials form fields                                                           |

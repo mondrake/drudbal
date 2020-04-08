@@ -24,7 +24,8 @@ jobs:
     - env: DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Database,Entity,Field"
       services:
         - mysql
-    - env: DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Installer,Cache,Config"
+    - stage: Allow Failures
+      env: DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Installer,Cache,Config"
       services:
         - mysql
     - env: DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group field"
@@ -39,7 +40,8 @@ jobs:
     - env: DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Database,Entity,Field"
       services:
         - mysql
-    - env: DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Installer,Cache,Config"
+    - stage: Allow Failures
+      env: DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Installer,Cache,Config"
       services:
         - mysql
     - env: DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group field"
@@ -56,11 +58,11 @@ jobs:
         - mysql
     - env: DRUDBAL_ENV="sqlite" TEST_ARGS="--group Database"
     - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database,Entity,Field"
-    - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Installer,Cache,Config"
+    - stage: Allow Failures
+      env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Installer,Cache,Config"
     - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group field"
     - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group views"
-    - stage: Allow Failures
-      php: 7.3
+    - php: 7.3
       env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database"
     - stage: Allow Failures
       env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group file"
@@ -68,9 +70,11 @@ jobs:
       env: DRUDBAL_ENV="dbal/sqlite/memory" TEST_ARGS="--group Database,Installer,Cache,Config,Entity,Field"
   fast_finish: true
   allow_failures:
-    - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database"
     - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group file"
     - env: DRUDBAL_ENV="dbal/sqlite/memory" TEST_ARGS="--group Database,Installer,Cache,Config,Entity,Field"
+    - env: DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Installer,Cache,Config"
+    - env: DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Installer,Cache,Config"
+    - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Installer,Cache,Config"
 
 cache:
   directories:
