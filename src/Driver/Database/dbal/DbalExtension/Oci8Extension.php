@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\drudbal\DatabaseDriver\dbal\DbalExtension;
+namespace Drupal\drudbal\Driver\Database\dbal\DbalExtension;
 
 use Drupal\Component\Utility\Timer;
 use Drupal\Component\Uuid\Php as Uuid;
@@ -9,7 +9,7 @@ use Drupal\Core\Database\DatabaseExceptionWrapper;
 use Drupal\Core\Database\DatabaseNotFoundException;
 use Drupal\Core\Database\IntegrityConstraintViolationException;
 
-use Drupal\drudbal\DatabaseDriver\dbal\Connection as DruDbalConnection;
+use Drupal\drudbal\Driver\Database\dbal\Connection as DruDbalConnection;
 
 use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
@@ -89,7 +89,7 @@ class Oci8Extension extends AbstractExtension {
   /**
    * Constructs an Oci8Extension object.
    *
-   * @param \Drupal\drudbal\DatabaseDriver\dbal\Connection $drudbal_connection
+   * @param \Drupal\drudbal\Driver\Database\dbal\Connection $drudbal_connection
    *   The Drupal database connection object for this extension.
    * @param \Doctrine\DBAL\Connection $dbal_connection
    *   The DBAL connection.

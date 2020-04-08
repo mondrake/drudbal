@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\drudbal\DatabaseDriver\dbal\DbalExtension;
+namespace Drupal\drudbal\Driver\Database\dbal\DbalExtension;
 
 use Drupal\Component\Utility\Unicode;
 use Drupal\Core\Database\Database;

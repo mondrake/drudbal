@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\drudbal\DatabaseDriver\dbal\DbalExtension;
+namespace Drupal\drudbal\Driver\Database\dbal\DbalExtension;
 
 use Drupal\Component\Uuid\Php as Uuid;
 use Drupal\Core\Database\Database;
@@ -8,7 +8,7 @@ use Drupal\Core\Database\DatabaseExceptionWrapper;
 use Drupal\Core\Database\DatabaseNotFoundException;
 use Drupal\Core\Database\IntegrityConstraintViolationException;
 use Drupal\Core\Database\Driver\sqlite\Connection as SqliteConnectionBase;
-use Drupal\drudbal\DatabaseDriver\dbal\Connection as DruDbalConnection;
+use Drupal\drudbal\Driver\Database\dbal\Connection as DruDbalConnection;
 
 use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\DBALException;

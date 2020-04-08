@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\drudbal\DatabaseDriver\dbal;
+namespace Drupal\drudbal\Driver\Database\dbal;
 
 use Drupal\Core\Database\Connection as DatabaseConnection;
 
@@ -9,7 +9,7 @@ use Drupal\Core\Database\Connection as DatabaseConnection;
  *
  * Note: there should not be db platform specific code here. Any tasks that
  * cannot be managed by Doctrine DBAL should be added to extension specific
- * code in Drupal\drudbal\DatabaseDriver\dbal\DbalExtension\[dbal_driver_name]
+ * code in Drupal\drudbal\Driver\Database\dbal\DbalExtension\[dbal_driver_name]
  * classes and execution handed over to there.
  */
 class PlatformSql {
