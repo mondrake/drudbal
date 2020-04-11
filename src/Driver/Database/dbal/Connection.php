@@ -113,6 +113,9 @@ class Connection extends DatabaseConnection {
     // Unset $this->connection so that __get() can return the wrapped
     // DbalConnection on the extension instead.
     unset($this->connection);
+
+    $quote_identifier = $this->dbalPlatform->getIdentifierQuoteCharacter();
+    $this->identifierQuotes = [$quote_identifier, $quote_identifier];
   }
 
   /**
@@ -170,7 +173,7 @@ class Connection extends DatabaseConnection {
       // Per-table prefixes are deprecated as of Drupal 8.2 so let's not get
       // in the complexity of trying to manage that. Assume a single default
       // prefix.
-      $this->dbTables['{' . $table . '}'] = $this->identifierQuote() . $this->dbalExtension->getDbTableName($this->prefixes['default'], $table) . $this->identifierQuote();
+      $this->dbTables['{' . $table . '}'] = $this->identifierQuotes[0] . $this->dbalExtension->getDbTableName($this->prefixes['default'], $table) . $this->identifierQuotes[1];
     }
     return str_replace(array_keys($this->dbTables), array_values($this->dbTables), $sql);
   }
@@ -196,7 +199,7 @@ class Connection extends DatabaseConnection {
 
     $prefixed_table_name = $this->prefixTables('{' . $table_name . '}');
     // @todo use substr  instead
-    return $quoted ? $prefixed_table_name : str_replace($this->identifierQuote(), '', $prefixed_table_name);
+      return $quoted ? $prefixed_table_name : str_replace($this->identifierQuotes, ['', ''], $prefixed_table_name);
   }
 
   /**
@@ -825,13 +828,6 @@ class Connection extends DatabaseConnection {
    */
   public function setPrefixPublic($prefix) {
     return $this->setPrefix($prefix);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  protected function identifierQuote() {
-    return $this->dbalPlatform->getIdentifierQuoteCharacter();
   }
 
 }
