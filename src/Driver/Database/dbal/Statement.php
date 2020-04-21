@@ -557,7 +557,7 @@ class Statement implements \IteratorAggregate, StatementInterface {
   /**
    * {@inheritdoc}
    */
-  public function fetchObject() {
+  public function fetchObject($class_name = NULL, $constructor_args = []) {
     // Handle via prefetched data if needed.
     if ($this->dbh->getDbalExtension()->onSelectPrefetchAllData()) {
       if (isset($this->currentRow)) {
@@ -567,7 +567,10 @@ class Statement implements \IteratorAggregate, StatementInterface {
         }
         else {
           $this->fetchStyle = \PDO::FETCH_CLASS;
-          $this->fetchOptions = ['constructor_args' => $constructor_args];
+          $this->fetchOptions = [
+            'class' => $class_name,
+            'constructor_args' => $constructor_args,
+          ];
           // Grab the row in the format specified above.
           $result = $this->current();
           // Reset the fetch parameters to the value stored using setFetchMode().
@@ -584,7 +587,7 @@ class Statement implements \IteratorAggregate, StatementInterface {
       }
     }
     else {
-      return $this->fetch(\PDO::FETCH_OBJ);
+      return $this->fetch($class_name ?? \PDO::FETCH_OBJ);
     }
   }
 
