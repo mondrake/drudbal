@@ -85,9 +85,10 @@ https://github.com/doctrine/dbal/pull/2415       | Add some MySQL platform data 
 
 ## Related Drupal issues
 Issue                                                           | Description                                                                                                                             |
-----------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------|
-tbd                                                             | Add tests for Upsert with default values                                                                                                |
-[2657888](https://www.drupal.org/node/2657888)                  | Add Date function support in DTBNG                                                                                                      |
+----------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------|
+tbd                                                             | Add tests for Upsert with default values                                                                                     |
+[2657888](https://www.drupal.org/node/2657888)                  | Add Date function support in DTBNG                                                                                      |
 tbd                                                             | Ensure that when INSERTing a NULL value in a database column, SELECTing it back returns NULL and not empty string - for all fetch modes |
-tbd                                                             | UpdateTestBase::runUpdate should reset database schema after updating                                                                   |
+tbd                                                             | UpdateTestBase::runUpdate should reset database schema after updating                                                             |
 [2992274](https://www.drupal.org/project/drupal/issues/2992274) | Installer tests fail if contrib driver hides database credentials form fields                                                           |
+[3125987](https://www.drupal.org/project/drupal/issues/3125987) | EndOfTransactionQueriesTest fails with contrib db driver                                                                                  |

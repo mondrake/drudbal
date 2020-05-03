@@ -176,7 +176,7 @@ before_install:
   - curl https://www.drupal.org/files/issues/2019-04-02/2992274-5.patch | git apply
   # [#3125987] EndOfTransactionQueriesTest fails with contrib db driver
   - curl https://www.drupal.org/files/issues/2020-04-16/3125987-20.patch | git apply
-
+  
   # Require mondrake/drudbal from the source just cloned from GitHub.
   - cd $TRAVIS_BUILD_DIR
   - git checkout -b travisci-run-branch
