@@ -5,9 +5,6 @@ namespace Drupal\drudbal\Driver\Database\dbal;
 use Drupal\Core\Database\Query\Select as QuerySelect;
 use Drupal\Core\Database\Query\SelectInterface;
 
-// @todo DBAL 2.6.0:
-// Is there a way to specify SELECT DISTINCT??
-
 /**
  * DruDbal implementation of \Drupal\Core\Database\Query\Select.
  *
@@ -104,6 +101,11 @@ class Select extends QuerySelect {
       }
     }
 
+    // DISTINCT
+    if ($this->distinct) {
+      $dbal_query->distinct();
+    }
+
     // WHERE
     // @todo this uses Drupal Condition API. Use DBAL expressions instead?
     if (count($this->condition)) {
@@ -146,11 +148,6 @@ class Select extends QuerySelect {
     }
 
     $sql = $dbal_query->getSQL();
-
-    // DISTINCT @todo move to extension
-    if ($this->distinct) {
-      $sql = preg_replace('/SELECT /', '$0DISTINCT ', $sql);  // @todo enforce only at the beginning of the string
-    }
 
     // UNION @todo move to extension
     // There can be an 'ORDER BY' or a 'LIMIT' clause at the end of the SQL
