@@ -42,4 +42,11 @@ class PDOMySqlExtension extends AbstractMySqlExtension {
     return $this->dbalConnection->getWrappedConnection()->getAttribute(\PDO::ATTR_CLIENT_VERSION);
   }
 
+  /**
+   * {@inheritdoc}
+   */
+  public function destroy() {
+    $this->dbalConnection->getWrappedConnection()->setAttribute(\PDO::ATTR_STATEMENT_CLASS, ['PDOStatement', []]);
+  }
+
 }
