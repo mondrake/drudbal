@@ -94,6 +94,8 @@ class AbstractExtension implements DbalExtensionInterface {
    * {@inheritdoc}
    */
   public function destroy() {
+    $this->dbalConnection = NULL;
+    $this->connection = NULL;
   }
 
   /**
