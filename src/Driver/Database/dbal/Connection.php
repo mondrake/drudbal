@@ -133,9 +133,9 @@ class Connection extends DatabaseConnection {
    * {@inheritdoc}
    */
   public function destroy() {
+    $this->schema = NULL;
     $this->dbalExtension->destroy();
     $this->dbalExtension = NULL;
-    $this->schema = NULL;
   }
 
   /**
@@ -226,7 +226,7 @@ class Connection extends DatabaseConnection {
         // semicolons should only be needed for special cases like defining a
         // function or stored procedure in SQL. Trim any trailing delimiter to
         // minimize false positives unless delimiter is allowed.
-        $trim_chars = "  \t\n\r\0\x0B";
+        $trim_chars = " \xA0\t\n\r\0\x0B";
         if (empty($options['allow_delimiter_in_query'])) {
           $trim_chars .= ';';
         }
