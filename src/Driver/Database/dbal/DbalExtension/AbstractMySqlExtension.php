@@ -124,13 +124,12 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
   protected $needsCleanup = FALSE;
 
   /**
-   * {@inheritdoc}
+   * @todo remove
    */
-  public function __destruct() {
+  public function destroyTodoRemove() {
     if ($this->needsCleanup) {
       $this->nextIdDelete();
     }
-    parent::__destruct();
   }
 
   /**

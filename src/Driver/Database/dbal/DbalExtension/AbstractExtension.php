@@ -80,6 +80,12 @@ class AbstractExtension implements DbalExtensionInterface {
   }
 
   /**
+   * @todo remove
+   */
+  public function destroyTodoRemove() {
+  }
+
+  /**
    * Sets debugging mode.
    *
    * @param bool $value

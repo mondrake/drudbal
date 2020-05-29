@@ -140,6 +140,7 @@ class Connection extends DatabaseConnection {
    * {@inheritdoc}
    */
   public function destroy() {
+    $this->dbalExtension->destroyTodoRemove();
     $this->schema = NULL;
     $this->dbalExtension = NULL;
   }
