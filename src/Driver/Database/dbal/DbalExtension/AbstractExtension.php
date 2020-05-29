@@ -80,12 +80,6 @@ class AbstractExtension implements DbalExtensionInterface {
   }
 
   /**
-   * @todo remove
-   */
-  public function destroyTodoRemove() {
-  }
-
-  /**
    * Sets debugging mode.
    *
    * @param bool $value
@@ -93,6 +87,12 @@ class AbstractExtension implements DbalExtensionInterface {
    */
   public function setDebugging(bool $value): void {
     static::$isDebugging = $value;
+  }
+
+  /**
+   * @todo remove
+   */
+  public function destroyTodoRemove() {
   }
 
   /**

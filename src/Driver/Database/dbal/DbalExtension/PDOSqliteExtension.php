@@ -128,7 +128,6 @@ class PDOSqliteExtension extends AbstractExtension {
         }
       }
     }
-    parent::__destruct();
   }
 
   /**

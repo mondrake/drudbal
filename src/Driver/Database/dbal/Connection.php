@@ -122,7 +122,7 @@ class Connection extends DatabaseConnection {
    * Destructs a Connection object.
    */
   public function __destruct() {
-    // $this->dbalExtension = NULL;
+    $this->dbalExtension = NULL;
   }
 
   /**
@@ -142,7 +142,7 @@ class Connection extends DatabaseConnection {
   public function destroy() {
     $this->dbalExtension->destroyTodoRemove();
     $this->schema = NULL;
-    $this->dbalExtension = NULL;
+//    $this->dbalExtension = NULL;
   }
 
   /**
@@ -232,12 +232,8 @@ class Connection extends DatabaseConnection {
         // semicolon) is not allowed unless the option is set.  Allowing
         // semicolons should only be needed for special cases like defining a
         // function or stored procedure in SQL. Trim any trailing delimiter to
-        // minimize false positives unless delimiter is allowed.
-        $trim_chars = " \xA0\t\n\r\0\x0B";
-        if (empty($options['allow_delimiter_in_query'])) {
-          $trim_chars .= ';';
-        }
-        $query = rtrim($query, $trim_chars);
+        // minimize false positives.
+        $query = rtrim($query, ";  \t\n\r\0\x0B");
         if (strpos($query, ';') !== FALSE && empty($options['allow_delimiter_in_query'])) {
           throw new \InvalidArgumentException('; is not supported in SQL strings. Use only one statement at a time.');
         }
