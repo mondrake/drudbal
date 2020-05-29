@@ -74,6 +74,7 @@ class AbstractExtension implements DbalExtensionInterface {
    * Destructs a DBAL extension object.
    */
   public function __destruct() {
+    $this->dbalConnection->close();
     $this->dbalConnection = NULL;
     $this->connection = NULL;
   }
