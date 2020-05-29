@@ -194,12 +194,12 @@ install:
   # Install Drupal.
   - cd $DRUPAL_PATH/core
   - cp $DRUPAL_PATH/modules/contrib/drudbal/tests/travis_ci/install_* .
-  - |
-      if [[ "$INSTALL_VIA" == "drush" ]]; then
-        drush site-install standard --db-url=$SIMPLETEST_DB -y
-      elif [[ "$INSTALL_VIA" == "dbal" ]]; then
-        php install_cli.php
-      fi
+#  - |
+#      if [[ "$INSTALL_VIA" == "drush" ]]; then
+#        drush site-install standard --db-url=$SIMPLETEST_DB -y
+#      elif [[ "$INSTALL_VIA" == "dbal" ]]; then
+#        php install_cli.php
+#      fi
 
   # Get a webserver running.
   - drush runserver $HOST_ADDR:$HTTP_PORT &
@@ -208,7 +208,7 @@ install:
 script:
 
   # Report installed database.
-  - php install_report.php
+#  - php install_report.php
 
   # Only run selected tests to avoid Travis timeout.
   - $DRUPAL_PATH/vendor/bin/phpunit $TEST_ARGS
