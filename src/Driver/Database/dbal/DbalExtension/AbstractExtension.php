@@ -90,12 +90,6 @@ class AbstractExtension implements DbalExtensionInterface {
   }
 
   /**
-   * @todo remove
-   */
-  public function destroyTodoRemove() {
-  }
-
-  /**
    * Gets debugging mode.
    *
    * @return bool
@@ -103,6 +97,12 @@ class AbstractExtension implements DbalExtensionInterface {
    */
   public function getDebugging(): bool {
     return static::$isDebugging;
+  }
+
+  /**
+   * @todo remove
+   */
+  public function destroyTodoRemove() {
   }
 
   /**

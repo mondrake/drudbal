@@ -142,7 +142,7 @@ class Connection extends DatabaseConnection {
   public function destroy() {
     $this->dbalExtension->destroyTodoRemove();
     $this->schema = NULL;
-//    $this->dbalExtension = NULL;
+    $this->dbalExtension = NULL;
   }
 
   /**
