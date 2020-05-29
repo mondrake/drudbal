@@ -130,6 +130,7 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
     if ($this->needsCleanup) {
       $this->nextIdDelete();
     }
+    parent::__destruct();
   }
 
   /**

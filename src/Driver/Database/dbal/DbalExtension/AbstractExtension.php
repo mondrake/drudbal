@@ -71,6 +71,14 @@ class AbstractExtension implements DbalExtensionInterface {
   }
 
   /**
+   * Destructs a DBAL extension object.
+   */
+  public function __destruct() {
+    $this->dbalConnection = NULL;
+    $this->connection = NULL;
+  }
+
+  /**
    * Sets debugging mode.
    *
    * @param bool $value
@@ -88,14 +96,6 @@ class AbstractExtension implements DbalExtensionInterface {
    */
   public function getDebugging(): bool {
     return static::$isDebugging;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function destroy() {
-    $this->dbalConnection = NULL;
-    $this->connection = NULL;
   }
 
   /**
