@@ -108,7 +108,7 @@ class PDOSqliteExtension extends AbstractExtension {
    * creates and destroy databases several times in a row.
    */
   public function __destruct() {
-    if ($this->dbalConnection->isConnected() && $this->tableDropped && !empty($this->attachedDatabases)) {
+    if ($this->tableDropped && !empty($this->attachedDatabases)) {
       foreach ($this->attachedDatabases as $prefix => $db_file) {
         // Check if the database is now empty, ignore the internal SQLite tables.
         try {
