@@ -122,7 +122,8 @@ class Connection extends DatabaseConnection {
    * Destructs a Connection object.
    */
   public function __destruct() {
-    $this->dbalExtension = NULL;
+    $this->schema = NULL;
+    // $this->dbalExtension = NULL;
   }
 
   /**
