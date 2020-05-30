@@ -75,8 +75,8 @@ class AbstractExtension implements DbalExtensionInterface {
    */
   public function __destruct() {
     $this->dbalConnection->close();
-    // $this->dbalConnection = NULL;
-    // $this->connection = NULL;
+    $this->dbalConnection = NULL;
+    $this->connection = NULL;
   }
 
   /**
@@ -97,12 +97,6 @@ class AbstractExtension implements DbalExtensionInterface {
    */
   public function getDebugging(): bool {
     return static::$isDebugging;
-  }
-
-  /**
-   * @todo remove
-   */
-  public function destroyTodoRemove() {
   }
 
   /**

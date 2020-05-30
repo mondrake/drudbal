@@ -140,9 +140,8 @@ class Connection extends DatabaseConnection {
    * {@inheritdoc}
    */
   public function destroy() {
-    $this->dbalExtension->destroyTodoRemove();
-    $this->schema = NULL;
-    $this->dbalExtension = NULL;
+    @trigger_error('destroy is deprecated', E_USER_DEPRECATED);
+    return;
   }
 
   /**
