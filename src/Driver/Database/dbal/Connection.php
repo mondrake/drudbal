@@ -119,6 +119,13 @@ class Connection extends DatabaseConnection {
   }
 
   /**
+   * Destructs a Connection object.
+   */
+  public function __destruct() {
+    $this->schema = NULL;
+  }
+
+  /**
    * Implements the magic __get() method.
    */
   public function __get($name) {
@@ -133,8 +140,8 @@ class Connection extends DatabaseConnection {
    * {@inheritdoc}
    */
   public function destroy() {
-    $this->dbalExtension->destroy();
-    $this->schema = NULL;
+    @trigger_error(__METHOD__ . '() is deprecated in drupal:9.1.0 and is removed from drupal:10.0.0. Move custom database destruction logic to __destruct(). See https://www.drupal.org/node/3142866', E_USER_DEPRECATED);
+    return;
   }
 
   /**

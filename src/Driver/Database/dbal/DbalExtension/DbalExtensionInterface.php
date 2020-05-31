@@ -15,13 +15,6 @@ use Doctrine\DBAL\Statement as DbalStatement;
 interface DbalExtensionInterface {
 
   /**
-   * Destroys this Extension object.
-   *
-   * Handed over from the Connection object when it gets destroyed too.
-   */
-  public function destroy();
-
-  /**
    * Gets the DBAL connection.
    *
    * @return \Doctrine\DBAL\Connection
