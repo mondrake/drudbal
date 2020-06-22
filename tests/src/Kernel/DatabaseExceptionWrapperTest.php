@@ -33,8 +33,8 @@ class DatabaseExceptionWrapperTest extends DatabaseExceptionWrapperTestBase {
    * Tests Connection::prepareStatement exceptions.
    */
   public function testPrepareStatement() {
-    if (in_array(Database::getConnection()->driver(), ['mysql', 'sqlite']))) {
-      $this->expectException(\PDOException::class);      
+    if (in_array(Database::getConnection()->driver(), ['mysql', 'sqlite'])) {
+      $this->expectException(\PDOException::class);
     }
     else {
       $this->expectException(DatabaseExceptionWrapper::class);
