@@ -261,6 +261,7 @@ class Statement implements \IteratorAggregate, StatementInterface {
       // Destroy the statement as soon as possible. See the documentation of
       // \Drupal\Core\Database\Driver\sqlite\Statement for an explanation.
       unset($this->dbalStatement);
+      $this->dbalStatement = NULL;
 
       $this->resultRowCount = count($this->data);
 
