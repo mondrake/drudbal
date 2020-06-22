@@ -200,14 +200,14 @@ class Statement implements \IteratorAggregate, StatementInterface {
    * {@inheritdoc}
    */
   public function execute($args = [], $options = []) {
-if (strpos($this->queryString, 'test` ') !== FALSE) { $xx = true; dump(['a', $this->queryString, $args, $options]); }
+//if (strpos($this->queryString, 'test` ') !== FALSE) { $xx = true; dump(['a', $this->queryString, $args, $options]); }
     if (!$this->dbalStatement) {
       // Replace named placeholders with positional ones if needed.
       if (!$this->dbh->getDbalExtension()->delegateNamedPlaceholdersSupport()) {
         $this->paramsPositions = array_flip(array_keys($args));
         list($query, $args) = SQLParserUtils::expandListParameters($this->queryString, $args, []);
         $this->queryString = $query;
-if (isset($xx)) dump(['b', $query, $args, $this->paramsPositions]);
+//if (isset($xx)) dump(['b', $query, $args, $this->paramsPositions]);
       }
 
       try {
@@ -219,13 +219,13 @@ if (isset($xx)) dump(['b', $query, $args, $this->paramsPositions]);
       }
     }
     elseif (!$this->dbh->getDbalExtension()->delegateNamedPlaceholdersSupport()) {
-if (isset($xx)) dump(['c', $args]);
+//if (isset($xx)) dump(['c', $args]);
       $tmp = [];
       foreach ($this->paramsPositions as $param => $pos) {
         $tmp[$pos] = $args[$param];
       }
       $args = $tmp;
-if (isset($xx)) dump(['d', $args]);
+//if (isset($xx)) dump(['d', $args]);
     }
 
     if (isset($options['fetch'])) {
