@@ -4,6 +4,7 @@ namespace Drupal\Tests\drudbal\Kernel;
 
 use Drupal\Core\Database\DatabaseExceptionWrapper;
 use Drupal\Core\Database\Database;
+use Drupal\KernelTests\Core\Database\DatabaseExceptionWrapperTest as DatabaseExceptionWrapperTestBase;
 use Drupal\KernelTests\KernelTestBase;
 use Doctrine\DBAL\DBALException;
 
@@ -13,7 +14,7 @@ use Doctrine\DBAL\DBALException;
  * @overridesTestClass \Drupal\KernelTests\Core\Database\DatabaseExceptionWrapperTest
  * @group Database
  */
-class DatabaseExceptionWrapperTest extends KernelTestBase {
+class DatabaseExceptionWrapperTest extends DatabaseExceptionWrapperTestBase {
 
   /**
    * Tests deprecation of Connection::prepare.
