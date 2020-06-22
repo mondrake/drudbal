@@ -50,6 +50,22 @@ class Statement implements \IteratorAggregate, StatementInterface {
   protected $dbalStatement = NULL;
 
   /**
+   * Holds supplementary driver options.
+   *
+   * @var array
+   */
+  protected $driverOpts;
+
+  /**
+   * Holds the index position of named parameters.
+   *
+   * Used in positional-only parameters binding drivers.
+   *
+   * @var array
+   */
+  protected $paramsPositions;
+
+  /**
    * The default fetch mode.
    *
    * See http://php.net/manual/pdo.constants.php for the definition of the
@@ -167,7 +183,7 @@ class Statement implements \IteratorAggregate, StatementInterface {
    *
    * Used when prefetching all data.
    *
-   * @var Array
+   * @var array
    */
   protected $defaultFetchOptions = [
     'class' => 'stdClass',
@@ -176,11 +192,12 @@ class Statement implements \IteratorAggregate, StatementInterface {
     'column' => 0,
   ];
   
-  protected $driverOpts;
-  protected $paramsPositions;
-
   /**
    * Constructs a Statement object.
+   *
+   * Preparation of the actual lower-level statement is deferred to the first
+   * call of the execute method, to allow replacing named parameters with
+   * positional ones if needed.
    *
    * @param \Drupal\drudbal\Driver\Database\dbal\Connection $dbh
    *   The database connection object for this statement.
@@ -189,7 +206,7 @@ class Statement implements \IteratorAggregate, StatementInterface {
    * @param array $driver_options
    *   (optional) An array of driver options for this query.
    */
-  public function __construct(DruDbalConnection $dbh, $query, array $driver_options = []) {
+  public function __construct(DruDbalConnection $dbh, string $query, array $driver_options = []) {
     $this->queryString = $query;
     $this->dbh = $dbh;
     $this->setFetchMode(\PDO::FETCH_OBJ);
@@ -200,14 +217,13 @@ class Statement implements \IteratorAggregate, StatementInterface {
    * {@inheritdoc}
    */
   public function execute($args = [], $options = []) {
-//if (strpos($this->queryString, 'test` ') !== FALSE) { $xx = true; dump(['a', $this->queryString, $args, $options]); }
+    // Prepare the lower-level statement if it's not been prepared already.
     if (!$this->dbalStatement) {
       // Replace named placeholders with positional ones if needed.
       if (!$this->dbh->getDbalExtension()->delegateNamedPlaceholdersSupport()) {
         $this->paramsPositions = array_flip(array_keys($args));
         list($query, $args) = SQLParserUtils::expandListParameters($this->queryString, $args, []);
         $this->queryString = $query;
-//if (isset($xx)) dump(['b', $query, $args, $this->paramsPositions]);
       }
 
       try {
@@ -219,13 +235,12 @@ class Statement implements \IteratorAggregate, StatementInterface {
       }
     }
     elseif (!$this->dbh->getDbalExtension()->delegateNamedPlaceholdersSupport()) {
-//if (isset($xx)) dump(['c', $args]);
+      // Transform the $args to positional if needed.
       $tmp = [];
       foreach ($this->paramsPositions as $param => $pos) {
         $tmp[$pos] = $args[$param];
       }
       $args = $tmp;
-//if (isset($xx)) dump(['d', $args]);
     }
 
     if (isset($options['fetch'])) {
