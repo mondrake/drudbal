@@ -222,7 +222,7 @@ class Statement implements \IteratorAggregate, StatementInterface {
 
       try {
         $this->dbh->getDbalExtension()->alterStatement($this->queryString, $args);
-        $this->dbalStatement = $dbh->getDbalConnection()->prepare($this->queryString);
+        $this->dbalStatement = $this->dbh->getDbalConnection()->prepare($this->queryString);
       }
       catch (DBALException $e) {
         throw new DatabaseExceptionWrapper($e->getMessage(), $e->getCode(), $e);
