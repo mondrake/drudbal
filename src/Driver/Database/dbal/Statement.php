@@ -193,29 +193,18 @@ class Statement implements \IteratorAggregate, StatementInterface {
     $this->dbh = $dbh;
     $this->setFetchMode(\PDO::FETCH_OBJ);
     $this->driverOpts = $driver_options;
-
-    // Replace named placeholders with positional ones if needed.
-//    if (!$this->dbh->getDbalExtension()->delegateNamedPlaceholdersSupport()) {
-//      list($query, $params) = SQLParserUtils::expandListParameters($query, $params, []);
-//    }
-
-//    try {
-//      $this->dbh->getDbalExtension()->alterStatement($query, $params);
-//      $this->dbalStatement = $dbh->getDbalConnection()->prepare($query);
-//    }
-//    catch (DBALException $e) {
-//      throw new DatabaseExceptionWrapper($e->getMessage(), $e->getCode(), $e);
-//    }
   }
 
   /**
    * {@inheritdoc}
    */
   public function execute($args = [], $options = []) {
+dump(['a', $args, $options]);
     if (!$this->dbalStatement) {
       // Replace named placeholders with positional ones if needed.
       if (!$this->dbh->getDbalExtension()->delegateNamedPlaceholdersSupport()) {
         list($query, $args) = SQLParserUtils::expandListParameters($this->queryString, $args, []);
+dump(['b', $query, $args]);
         $this->queryString = $query;
       }
 
@@ -231,6 +220,7 @@ class Statement implements \IteratorAggregate, StatementInterface {
     // Replace named placeholders with positional ones if needed.
     if (!$this->dbh->getDbalExtension()->delegateNamedPlaceholdersSupport()) {
       list(, $args) = SQLParserUtils::expandListParameters($this->queryString, $args, []);
+dump(['c', $args]);
     }
 
     if (isset($options['fetch'])) {
