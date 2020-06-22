@@ -257,7 +257,12 @@ class Statement implements \IteratorAggregate, StatementInterface {
       $query_start = microtime(TRUE);
     }
 
-    $this->dbalStatement->execute($args);
+    try {
+      $this->dbalStatement->execute($args);
+    }
+    catch (DBALException $e) {
+      throw new DatabaseExceptionWrapper($e->getMessage(), $e->getCode(), $e);
+    }
 
     // Handle via prefetched data if needed.
     if ($this->dbh->getDbalExtension()->onSelectPrefetchAllData()) {
