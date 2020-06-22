@@ -15,7 +15,7 @@ branches:
 
 jobs:
   include:
-    - env: DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Database,Entity,Field"
+    - env: DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Database"
       services:
         - mysql
 #    - env: DRUDBAL_ENV="mysql" TEST_ARGS="--group Database"
