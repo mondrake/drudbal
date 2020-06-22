@@ -199,7 +199,7 @@ class Statement implements \IteratorAggregate, StatementInterface {
    * {@inheritdoc}
    */
   public function execute($args = [], $options = []) {
-if ($this->queryString == "INSERT INTO {test} ([name], [age]) VALUES (:name, :age)") { $xx = true; dump(['a', $args, $options]); }
+if (strpos($this->queryString, 'INSERT INTO `test') !== FALSE) { $xx = true; dump(['a', $args, $options]); }
     if (!$this->dbalStatement) {
       // Replace named placeholders with positional ones if needed.
       if (!$this->dbh->getDbalExtension()->delegateNamedPlaceholdersSupport()) {
