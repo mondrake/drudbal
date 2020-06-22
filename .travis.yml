@@ -184,6 +184,9 @@ before_install:
   # [#3110546] Find a proper way to manage including/excluding database-driver-specific tests
   - curl https://www.drupal.org/files/issues/2020-05-17/3110546-4.patch | git apply
 
+  # Other general patches.
+  - git apply -v $DRUPAL_PATH/libraries/drudbal/tests/travis_ci/2345451-fix.patch
+
   # Require mondrake/drudbal from the source just cloned from GitHub.
   - cd $TRAVIS_BUILD_DIR
   - git checkout -b travisci-run-branch

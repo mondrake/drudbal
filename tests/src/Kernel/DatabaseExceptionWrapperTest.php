@@ -6,7 +6,6 @@ use Drupal\Core\Database\DatabaseExceptionWrapper;
 use Drupal\Core\Database\Database;
 use Drupal\KernelTests\Core\Database\DatabaseExceptionWrapperTest as DatabaseExceptionWrapperTestBase;
 use Drupal\KernelTests\KernelTestBase;
-use Doctrine\DBAL\DBALException;
 
 /**
  * Tests exceptions thrown by queries.
@@ -34,7 +33,7 @@ class DatabaseExceptionWrapperTest extends DatabaseExceptionWrapperTestBase {
    * Tests Connection::prepareStatement exceptions.
    */
   public function testPrepareStatement() {
-    $this->expectException(DBALException::class);
+    $this->expectException(DatabaseExceptionWrapper::class);
     $stmt = Database::getConnection()->prepareStatement('bananas', []);
     $stmt->execute();
   }
