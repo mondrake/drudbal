@@ -218,7 +218,7 @@ script:
   - php install_report.php
 
   # Only run selected tests to avoid Travis timeout.
-  - $DRUPAL_PATH/vendor/bin/phpunit $TEST_ARGS
+  - $DRUPAL_PATH/vendor/bin/phpunit -v $TEST_ARGS
 
 #after_script:
 #  - cd $DRUPAL_PATH/libraries/drudbal
