@@ -199,12 +199,12 @@ class Statement implements \IteratorAggregate, StatementInterface {
    * {@inheritdoc}
    */
   public function execute($args = [], $options = []) {
-dump(['a', $args, $options]);
+if ($this->queryString == "INSERT INTO {test} ([name], [age]) VALUES (:name, :age)") dump(['a', $args, $options]);
     if (!$this->dbalStatement) {
       // Replace named placeholders with positional ones if needed.
       if (!$this->dbh->getDbalExtension()->delegateNamedPlaceholdersSupport()) {
         list($query, $args) = SQLParserUtils::expandListParameters($this->queryString, $args, []);
-dump(['b', $query, $args]);
+if ($this->queryString == "INSERT INTO {test} ([name], [age]) VALUES (:name, :age)") dump(['b', $query, $args]);
         $this->queryString = $query;
       }
 
@@ -220,7 +220,7 @@ dump(['b', $query, $args]);
     // Replace named placeholders with positional ones if needed.
     if (!$this->dbh->getDbalExtension()->delegateNamedPlaceholdersSupport()) {
       list(, $args) = SQLParserUtils::expandListParameters($this->queryString, $args, []);
-dump(['c', $args]);
+if ($this->queryString == "INSERT INTO {test} ([name], [age]) VALUES (:name, :age)") dump(['c', $args]);
     }
 
     if (isset($options['fetch'])) {
