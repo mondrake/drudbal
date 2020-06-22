@@ -1,0 +1,127 @@
+diff --git a/core/lib/Drupal/Core/Test/TestDiscovery.php b/core/lib/Drupal/Core/Test/TestDiscovery.php
+index 1c319dfcab..ad385616e2 100644
+--- a/core/lib/Drupal/Core/Test/TestDiscovery.php
++++ b/core/lib/Drupal/Core/Test/TestDiscovery.php
+@@ -157,6 +157,7 @@ public function getTestClasses($extension = NULL, array $types = []) {
+       }
+     }
+     $list = [];
++    $overridden_test_classes = [];
+ 
+     $classmap = $this->findAllClassFiles($extension);
+ 
+@@ -195,11 +196,26 @@ public function getTestClasses($extension = NULL, array $types = []) {
+         }
+       }
+ 
++      // Create a list of overridden test classes.
++      if (!empty($info['overrides_test_class'])) {
++        $overridden_test_classes[] = $info['overrides_test_class'];
++      }
++
+       foreach ($info['groups'] as $group) {
+         $list[$group][$classname] = $info;
+       }
+     }
+ 
++dump([$list, $overridden_test_classes]);
++    // Remove the overridden test classes from the list of tests to be run.
++    foreach ($list as &$tests) {
++      foreach ($tests as $classname => $test) {
++        if (in_array($classname, $overridden_test_classes, TRUE)) {
++          unset($tests[$classname]);
++        }
++      }
++    }
++
+     // Sort the groups and tests within the groups by name.
+     uksort($list, 'strnatcasecmp');
+     foreach ($list as &$tests) {
+@@ -216,6 +232,7 @@ public function getTestClasses($extension = NULL, array $types = []) {
+       });
+     }
+ 
++dump($list);
+     return $list;
+   }
+ 
+@@ -324,6 +341,10 @@ public static function scanDirectory($namespace_prefix, $path) {
+    *   - requires: An associative array containing test requirements parsed from
+    *     PHPDoc annotations:
+    *     - module: List of Drupal module extension names the test depends on.
++   *   - overrides_test_class: The test class that this test class overrides.
++   *     The overridden test class will be removed from the list of test classes
++   *     that will run. This option will be used by contributed database drivers
++   *     to override the tests in core.
+    *
+    * @throws \Drupal\simpletest\Exception\MissingGroupException
+    *   If the class does not have a @group annotation.
+@@ -381,6 +402,11 @@ public static function getTestInfo($classname, $doc_comment = NULL) {
+       $info['requires']['module'] = array_map('trim', explode(',', $annotations['dependencies']));
+     }
+ 
++    if (!empty($annotations['overridesTestClass'])) {
++      // Remove the leading backslash as class names are without one.
++      $info['overrides_test_class'] = ltrim($annotations['overridesTestClass'], '\\');
++    }
++
+     return $info;
+   }
+ 
+diff --git a/core/tests/Drupal/Tests/Core/Test/OverriddenTestClassTest.php b/core/tests/Drupal/Tests/Core/Test/OverriddenTestClassTest.php
+new file mode 100644
+index 0000000000..8a89f1ea50
+--- /dev/null
++++ b/core/tests/Drupal/Tests/Core/Test/OverriddenTestClassTest.php
+@@ -0,0 +1,23 @@
++<?php
++
++namespace Drupal\Tests\Core\Test;
++
++use Drupal\Tests\UnitTestCase;
++
++/**
++ * This test class should be overridden with the annotation @overridesTestClass.
++ *
++ * @coversDefaultClass \Drupal\Core\Test\TestDiscovery
++ * @group Test
++ */
++class OverriddenTestClassTest extends UnitTestCase {
++
++  /**
++   * @covers ::getTestClasses
++   * @covers ::getTestInfo
++   */
++  public function testToBeOverriddenTest() {
++    $this->assertTrue(FALSE);
++  }
++
++}
+diff --git a/core/tests/Drupal/Tests/Core/Test/OverridesTestClassTest.php b/core/tests/Drupal/Tests/Core/Test/OverridesTestClassTest.php
+new file mode 100644
+index 0000000000..87f9404844
+--- /dev/null
++++ b/core/tests/Drupal/Tests/Core/Test/OverridesTestClassTest.php
+@@ -0,0 +1,22 @@
++<?php
++
++namespace Drupal\Tests\Core\Test;
++
++/**
++ * This test should override the tests in the class OverriddenTestClassTest.
++ *
++ * @overridesTestClass \Drupal\Tests\Core\Test\OverriddenTestClassTest
++ * @coversDefaultClass \Drupal\Core\Test\TestDiscovery
++ * @group Test
++ */
++class OverridesTestClassTest extends OverriddenTestClassTest {
++
++  /**
++   * @covers ::getTestClasses
++   * @covers ::getTestInfo
++   */
++  public function testToBeOverriddenTest() {
++    $this->assertTrue(TRUE);
++  }
++
++}
