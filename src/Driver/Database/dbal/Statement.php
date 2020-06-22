@@ -175,43 +175,62 @@ class Statement implements \IteratorAggregate, StatementInterface {
     'object' => NULL,
     'column' => 0,
   ];
+  
+  protected $isPrepared = FALSE;
+  protected $driverOpts;
 
   /**
    * Constructs a Statement object.
    *
    * @param \Drupal\drudbal\Driver\Database\dbal\Connection $dbh
    *   The database connection object for this statement.
-   * @param string $statement
-   *   A string containing an SQL query. Passed by reference.
-   * @param array $params
-   *   (optional) An array of values to substitute into the query at placeholder
-   *   markers. Passed by reference.
+   * @param string $query
+   *   A string containing an SQL query.
    * @param array $driver_options
    *   (optional) An array of driver options for this query.
    */
-  public function __construct(DruDbalConnection $dbh, &$statement, array &$params, array $driver_options = []) {
-    $this->queryString = $statement;
+  public function __construct(DruDbalConnection $dbh, &$query, array $driver_options = []) {
+    $this->queryString = $query;
     $this->dbh = $dbh;
     $this->setFetchMode(\PDO::FETCH_OBJ);
+    $this->driverOpts = $driver_options;
 
     // Replace named placeholders with positional ones if needed.
-    if (!$this->dbh->getDbalExtension()->delegateNamedPlaceholdersSupport()) {
-      list($statement, $params) = SQLParserUtils::expandListParameters($statement, $params, []);
-    }
+//    if (!$this->dbh->getDbalExtension()->delegateNamedPlaceholdersSupport()) {
+//      list($query, $params) = SQLParserUtils::expandListParameters($query, $params, []);
+//    }
 
-    try {
-      $this->dbh->getDbalExtension()->alterStatement($statement, $params);
-      $this->dbalStatement = $dbh->getDbalConnection()->prepare($statement);
-    }
-    catch (DBALException $e) {
-      throw new DatabaseExceptionWrapper($e->getMessage(), $e->getCode(), $e);
-    }
+//    try {
+//      $this->dbh->getDbalExtension()->alterStatement($query, $params);
+//      $this->dbalStatement = $dbh->getDbalConnection()->prepare($query);
+//    }
+//    catch (DBALException $e) {
+//      throw new DatabaseExceptionWrapper($e->getMessage(), $e->getCode(), $e);
+//    }
   }
 
   /**
    * {@inheritdoc}
    */
   public function execute($args = [], $options = []) {
+    if (!$this->isPrepared) {
+      // Replace named placeholders with positional ones if needed.
+      if (!$this->dbh->getDbalExtension()->delegateNamedPlaceholdersSupport()) {
+        list($query, $args) = SQLParserUtils::expandListParameters($this->queryString, $args, []);
+        $this->queryString = $query;
+      }
+
+      try {
+        $this->dbh->getDbalExtension()->alterStatement($this->queryString, $args);
+        $this->dbalStatement = $dbh->getDbalConnection()->prepare($this->queryString);
+      }
+      catch (DBALException $e) {
+        throw new DatabaseExceptionWrapper($e->getMessage(), $e->getCode(), $e);
+      }
+      
+      $this->isPrepared = TRUE;
+    }
+
     // Replace named placeholders with positional ones if needed.
     if (!$this->dbh->getDbalExtension()->delegateNamedPlaceholdersSupport()) {
       list(, $args) = SQLParserUtils::expandListParameters($this->queryString, $args, []);

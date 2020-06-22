@@ -497,7 +497,7 @@ class Connection extends DatabaseConnection {
     if (!($options['allow_square_brackets'] ?? FALSE)) {
       $query = $this->quoteIdentifiers($query);
     }
-    return new $this->statementClass($this, $query, [], $options['pdo'] ?? []);
+    return new $this->statementClass($this, $query, $options['pdo'] ?? []);
   }
 
   /**
