@@ -221,7 +221,8 @@ script:
   - php install_report.php
 
   # Only run selected tests to avoid Travis timeout.
-  - $DRUPAL_PATH/vendor/bin/phpunit -v ../modules/contrib/drudbal/tests/src/Kernel/DatabaseExceptionWrapperTest.php
+  #- $DRUPAL_PATH/vendor/bin/phpunit -v ../modules/contrib/drudbal/tests/src/Kernel/DatabaseExceptionWrapperTest.php
+  - $DRUPAL_PATH/vendor/bin/phpunit -v ../tests/Drupal/KernelTests/Core/Database/StatementTest.php
   #$TEST_ARGS
 
 #after_script:

@@ -188,7 +188,7 @@ class Statement implements \IteratorAggregate, StatementInterface {
    * @param array $driver_options
    *   (optional) An array of driver options for this query.
    */
-  public function __construct(DruDbalConnection $dbh, &$query, array $driver_options = []) {
+  public function __construct(DruDbalConnection $dbh, $query, array $driver_options = []) {
     $this->queryString = $query;
     $this->dbh = $dbh;
     $this->setFetchMode(\PDO::FETCH_OBJ);
@@ -199,12 +199,12 @@ class Statement implements \IteratorAggregate, StatementInterface {
    * {@inheritdoc}
    */
   public function execute($args = [], $options = []) {
-if ($this->queryString == "INSERT INTO {test} ([name], [age]) VALUES (:name, :age)") dump(['a', $args, $options]);
+if ($this->queryString == "INSERT INTO {test} ([name], [age]) VALUES (:name, :age)") { $xx = true; dump(['a', $args, $options]); }
     if (!$this->dbalStatement) {
       // Replace named placeholders with positional ones if needed.
       if (!$this->dbh->getDbalExtension()->delegateNamedPlaceholdersSupport()) {
         list($query, $args) = SQLParserUtils::expandListParameters($this->queryString, $args, []);
-if ($this->queryString == "INSERT INTO {test} ([name], [age]) VALUES (:name, :age)") dump(['b', $query, $args]);
+if (isset($xx)) dump(['b', $query, $args]);
         $this->queryString = $query;
       }
 
@@ -220,7 +220,7 @@ if ($this->queryString == "INSERT INTO {test} ([name], [age]) VALUES (:name, :ag
     // Replace named placeholders with positional ones if needed.
     if (!$this->dbh->getDbalExtension()->delegateNamedPlaceholdersSupport()) {
       list(, $args) = SQLParserUtils::expandListParameters($this->queryString, $args, []);
-if ($this->queryString == "INSERT INTO {test} ([name], [age]) VALUES (:name, :age)") dump(['c', $args]);
+if (isset($xx)) dump(['c', $args]);
     }
 
     if (isset($options['fetch'])) {
