@@ -47,7 +47,7 @@ class Statement implements \IteratorAggregate, StatementInterface {
    *
    * @var \Doctrine\DBAL\Statement
    */
-  protected $dbalStatement;
+  protected $dbalStatement = NULL;
 
   /**
    * The default fetch mode.
