@@ -177,6 +177,7 @@ class Statement implements \IteratorAggregate, StatementInterface {
   ];
   
   protected $driverOpts;
+  protected $paramsPositions;
 
   /**
    * Constructs a Statement object.
@@ -204,8 +205,9 @@ if (strpos($this->queryString, 'test` ') !== FALSE) { $xx = true; dump(['a', $th
       // Replace named placeholders with positional ones if needed.
       if (!$this->dbh->getDbalExtension()->delegateNamedPlaceholdersSupport()) {
         list($query, $args) = SQLParserUtils::expandListParameters($this->queryString, $args, []);
-if (isset($xx)) dump(['b', $query, $args]);
         $this->queryString = $query;
+        $this->paramsPositions = array_flip(array_keys($args));
+if (isset($xx)) dump(['b', $query, $args, $this->paramsPositions]);
       }
 
       try {
@@ -216,11 +218,14 @@ if (isset($xx)) dump(['b', $query, $args]);
         throw new DatabaseExceptionWrapper($e->getMessage(), $e->getCode(), $e);
       }
     }
-
-    // Replace named placeholders with positional ones if needed.
-    if (!$this->dbh->getDbalExtension()->delegateNamedPlaceholdersSupport()) {
-      list(, $args) = SQLParserUtils::expandListParameters($this->queryString, $args, []);
+    elseif (!$this->dbh->getDbalExtension()->delegateNamedPlaceholdersSupport()) {
 if (isset($xx)) dump(['c', $args]);
+      $tmp = [];
+      foreach ($this->paramsPositions as $param => $pos) {
+        $tmp[$pos] = $args[$param];
+      }
+      $args = $tmp;
+if (isset($xx)) dump(['d', $args]);
     }
 
     if (isset($options['fetch'])) {
