@@ -177,7 +177,7 @@ before_install:
   # [#3125987] EndOfTransactionQueriesTest fails with contrib db driver
   - curl https://www.drupal.org/files/issues/2020-04-16/3125987-20.patch | git apply
   # [#3128616] Replace \Drupal\Core\Database\Connection::destroy() with a proper destructor
-  - curl https://www.drupal.org/files/issues/2020-05-26/3128616-26.patch | git apply
+  - curl https://www.drupal.org/files/issues/2020-06-20/3128616-48.patch | git apply
   # [#3110546] Find a proper way to manage including/excluding database-driver-specific tests
   - curl https://www.drupal.org/files/issues/2020-05-17/3110546-4.patch | git apply
 
