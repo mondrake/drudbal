@@ -204,9 +204,9 @@ if (strpos($this->queryString, 'test` ') !== FALSE) { $xx = true; dump(['a', $th
     if (!$this->dbalStatement) {
       // Replace named placeholders with positional ones if needed.
       if (!$this->dbh->getDbalExtension()->delegateNamedPlaceholdersSupport()) {
+        $this->paramsPositions = array_flip(array_keys($args));
         list($query, $args) = SQLParserUtils::expandListParameters($this->queryString, $args, []);
         $this->queryString = $query;
-        $this->paramsPositions = array_flip(array_keys($args));
 if (isset($xx)) dump(['b', $query, $args, $this->paramsPositions]);
       }
 
