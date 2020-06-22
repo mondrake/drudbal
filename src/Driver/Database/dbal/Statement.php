@@ -176,7 +176,6 @@ class Statement implements \IteratorAggregate, StatementInterface {
     'column' => 0,
   ];
   
-  protected $isPrepared = FALSE;
   protected $driverOpts;
 
   /**
@@ -213,7 +212,7 @@ class Statement implements \IteratorAggregate, StatementInterface {
    * {@inheritdoc}
    */
   public function execute($args = [], $options = []) {
-    if (!$this->isPrepared) {
+    if (!$this->dbalStatement) {
       // Replace named placeholders with positional ones if needed.
       if (!$this->dbh->getDbalExtension()->delegateNamedPlaceholdersSupport()) {
         list($query, $args) = SQLParserUtils::expandListParameters($this->queryString, $args, []);
@@ -227,8 +226,6 @@ class Statement implements \IteratorAggregate, StatementInterface {
       catch (DBALException $e) {
         throw new DatabaseExceptionWrapper($e->getMessage(), $e->getCode(), $e);
       }
-      
-      $this->isPrepared = TRUE;
     }
 
     // Replace named placeholders with positional ones if needed.
