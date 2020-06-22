@@ -191,7 +191,7 @@ class Statement implements \IteratorAggregate, StatementInterface {
     'object' => NULL,
     'column' => 0,
   ];
-  
+
   /**
    * Constructs a Statement object.
    *
