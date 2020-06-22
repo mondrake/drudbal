@@ -490,6 +490,17 @@ class Connection extends DatabaseConnection {
   }
 
   /**
+   * {@inheritdoc}
+   */
+  public function prepareStatement(string $query, array $options): StatementInterface {
+    $query = $this->prefixTables($query);
+    if (!($options['allow_square_brackets'] ?? FALSE)) {
+      $query = $this->quoteIdentifiers($query);
+    }
+    return new $this->statementClass($this, $query, [], $options['pdo'] ?? []);
+  }
+
+  /**
    * Prepares a query string and returns the prepared statement.
    *
    * This method caches prepared statements, reusing them when possible. It also
@@ -524,30 +535,6 @@ class Connection extends DatabaseConnection {
       $query = $this->quoteIdentifiers($query);
     }
     return new $this->statementClass($this, $query, $args, $driver_options);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function prepareQuery($query, $quote_identifiers = TRUE) {
-    // Should not be used, because it fails to execute properly in case the
-    // driver is not able to process named placeholders. Use
-    // ::prepareQueryWithParams instead.
-    // @todo raise an exception and fail hard??
-    $args = [];
-    return $this->prepareQueryWithParams($query, $args, [], $quote_identifiers);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function prepare($statement, array $driver_options = []) {
-    // Should not be used, because it fails to execute properly in case the
-    // driver is not able to process named placeholders. Use
-    // ::prepareQueryWithParams instead.
-    // @todo raise an exception and fail hard??
-    $params = [];
-    return new $this->statementClass($this, $statement, $params, $driver_options);
   }
 
   /**
