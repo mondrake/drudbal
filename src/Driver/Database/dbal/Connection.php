@@ -240,7 +240,7 @@ class Connection extends DatabaseConnection {
         if (strpos($query, ';') !== FALSE && empty($options['allow_delimiter_in_query'])) {
           throw new \InvalidArgumentException('; is not supported in SQL strings. Use only one statement at a time.');
         }
-        $stmt = $this->prepareQueryWithParams($query, $args, [], !$options['allow_square_brackets']);
+        $stmt = $this->prepareStatement($query, $options);
         $stmt->execute($args, $options);
       }
 
@@ -498,43 +498,6 @@ class Connection extends DatabaseConnection {
       $query = $this->quoteIdentifiers($query);
     }
     return new $this->statementClass($this, $query, $options['pdo'] ?? []);
-  }
-
-  /**
-   * Prepares a query string and returns the prepared statement.
-   *
-   * This method caches prepared statements, reusing them when possible. It also
-   * prefixes tables names enclosed in curly-braces.
-   * Emulated prepared statements does not communicate with the database server
-   * so this method does not check the statement.
-   *
-   * @param string $query
-   *   The query string as SQL, with curly-braces surrounding the
-   *   table names. Passed by reference to allow altering by DBAL extensions.
-   * @param array $args
-   *   An array of arguments for the prepared statement. If the prepared
-   *   statement uses ? placeholders, this array must be an indexed array.
-   *   If it contains named placeholders, it must be an associative array.
-   *   Passed by reference to allow altering by DBAL extensions.
-   * @param array $driver_options
-   *   (optional) This array holds one or more key=>value pairs to set
-   *   attribute values for the Statement object that this method returns.
-   * @param bool $quote_identifiers
-   *   (optional) Quote any identifiers enclosed in square brackets. Defaults to
-   *   TRUE.
-   *
-   * @return \Drupal\Core\Database\StatementInterface|false
-   *   If the database server successfully prepares the statement, returns a
-   *   StatementInterface object.
-   *   If the database server cannot successfully prepare the statement returns
-   *   FALSE or emits an Exception (depending on error handling).
-   */
-  public function prepareQueryWithParams(string &$query, array &$args = [], array $driver_options = [], bool $quote_identifiers = TRUE) {
-    $query = $this->prefixTables($query);
-    if ($quote_identifiers) {
-      $query = $this->quoteIdentifiers($query);
-    }
-    return new $this->statementClass($this, $query, $args, $driver_options);
   }
 
   /**
