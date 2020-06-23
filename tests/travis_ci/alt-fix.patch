@@ -1,13 +1,30 @@
 diff --git a/core/tests/Drupal/Tests/Listeners/DrupalListener.php b/core/tests/Drupal/Tests/Listeners/DrupalListener.php
-index 9edf1342..318414b9 100644
+index 83105089..318414b9 100644
 --- a/core/tests/Drupal/Tests/Listeners/DrupalListener.php
 +++ b/core/tests/Drupal/Tests/Listeners/DrupalListener.php
-@@ -56,7 +56,7 @@ public function startTest(Test $test): void {
-     }
+@@ -39,10 +39,11 @@ class DrupalListener implements TestListener {
+   public function startTest(Test $test): void {
+     $this->deprecationStartTest($test);
  
-     // Skip tests that are forced to be skipped by the environment
--    // 'PHPUNIT_SKIP_CLASS' variable that can be set in phpunit.xml.
-+    // 'PHPUNIT_SKIP_CLASS' variable.
-     if (in_array(get_class($test), json_decode($_ENV['PHPUNIT_SKIP_CLASS']))) {
-       $this->markTestSkipped(get_class($test) . ' is skipped by the "PHPUNIT_SKIP_CLASS" environment variable.');
++    $class = new \ReflectionClass($test);
++
+     // Check for missing void return typehints in concrete test classes'
+     // methods. If the method is inherited from a base test class, do
+     // nothing.
+-    $class = new \ReflectionClass($test);
+     foreach ($this->methodsWithVoidReturn as $method) {
+       if ($class->hasMethod($method)) {
+         $reflected_method = $class->getMethod($method);
+@@ -53,6 +54,12 @@ public function startTest(Test $test): void {
+         }
+       }
      }
++
++    // Skip tests that are forced to be skipped by the environment
++    // 'PHPUNIT_SKIP_CLASS' variable.
++    if (in_array(get_class($test), json_decode($_ENV['PHPUNIT_SKIP_CLASS']))) {
++      $this->markTestSkipped(get_class($test) . ' is skipped by the "PHPUNIT_SKIP_CLASS" environment variable.');
++    }
+   }
+ 
+   /**
