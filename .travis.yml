@@ -181,8 +181,6 @@ before_install:
   - curl https://www.drupal.org/files/issues/2020-04-16/3125987-20.patch | git apply
   # [#3128616] Replace \Drupal\Core\Database\Connection::destroy() with a proper destructor
   - curl https://www.drupal.org/files/issues/2020-06-20/3128616-48.patch | git apply
-  # [#3110546] Find a proper way to manage including/excluding database-driver-specific tests
-  #- curl https://www.drupal.org/files/issues/2020-05-17/3110546-4.patch | git apply
 
   # Require mondrake/drudbal from the source just cloned from GitHub.
   - cd $TRAVIS_BUILD_DIR
@@ -193,7 +191,7 @@ before_install:
   - composer require "mondrake/drudbal:dev-travisci-run-branch" --no-progress --no-suggest
 
   # Other general patches.
-  - git apply $DRUPAL_PATH/modules/contrib/drudbal/tests/travis_ci/3110546-fix.patch
+  # [#2345451] Introduce a Connection::prepareStatement method allowing to pass options to the Statement
   - git apply $DRUPAL_PATH/modules/contrib/drudbal/tests/travis_ci/2345451-fix.patch
 
 install:
