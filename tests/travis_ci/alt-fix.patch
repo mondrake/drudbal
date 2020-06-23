@@ -1,5 +1,5 @@
 diff --git a/core/lib/Drupal/Core/Test/TestDiscovery.php b/core/lib/Drupal/Core/Test/TestDiscovery.php
-index 1c319dfc..00233f0f 100644
+index 1c319dfc..a43763ee 100644
 --- a/core/lib/Drupal/Core/Test/TestDiscovery.php
 +++ b/core/lib/Drupal/Core/Test/TestDiscovery.php
 @@ -151,6 +151,18 @@ public function registerTestNamespaces() {
@@ -16,7 +16,7 @@ index 1c319dfc..00233f0f 100644
 +        $skipped_classes = [];
 +      }
 +    }
-+dump([$_ENV, $skipped_classes]);
++dump([getenv(), $_ENV, $skipped_classes]);
 +
      if (!isset($extension) && empty($types)) {
        if (!empty($this->testClasses)) {
