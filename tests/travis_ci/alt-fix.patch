@@ -1,17 +1,17 @@
 diff --git a/core/phpunit.xml.dist b/core/phpunit.xml.dist
-index 42f44191..c6478d16 100644
+index 42f44191..84d14ed7 100644
 --- a/core/phpunit.xml.dist
 +++ b/core/phpunit.xml.dist
 @@ -36,6 +36,7 @@
      <env name="MINK_DRIVER_ARGS" value=''/>
      <!-- Example for changing the driver args to webdriver tests MINK_DRIVER_ARGS_WEBDRIVER value: '["chrome", { "chromeOptions": { "w3c": false } }, "http://localhost:4444/wd/hub"]' For using the Firefox browser, replace "chrome" with "firefox" -->
      <env name="MINK_DRIVER_ARGS_WEBDRIVER" value=''/>
-+    <env name="PHPUNIT_SKIP_CLASS" value='["Drupal\KernelTests\Core\Database\DatabaseExceptionWrapperTest"]'/>
++    <env name="PHPUNIT_SKIP_CLASS" value='["Drupal\\KernelTests\\Core\\Database\\DatabaseExceptionWrapperTest"]'/>
    </php>
    <testsuites>
      <testsuite name="unit">
 diff --git a/core/tests/Drupal/Tests/Listeners/DrupalListener.php b/core/tests/Drupal/Tests/Listeners/DrupalListener.php
-index 83105089..fea3de46 100644
+index 83105089..450e589e 100644
 --- a/core/tests/Drupal/Tests/Listeners/DrupalListener.php
 +++ b/core/tests/Drupal/Tests/Listeners/DrupalListener.php
 @@ -39,10 +39,11 @@ class DrupalListener implements TestListener {
@@ -41,7 +41,7 @@ index 83105089..fea3de46 100644
 +dump($x);
 +dump(json_encode($x));
 +    if (in_array(get_class($test), $x)) {
-+      $this->markTestSkipped(get_class($test) . ' is skipped by the "PHPUNIT_SKIP_CLASS" environment variable.');
++      $test->markTestSkipped(get_class($test) . ' is skipped by the "PHPUNIT_SKIP_CLASS" environment variable.');
 +    }
    }
  
