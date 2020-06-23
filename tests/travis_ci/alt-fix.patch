@@ -1,12 +1,12 @@
 diff --git a/core/phpunit.xml.dist b/core/phpunit.xml.dist
-index 42f44191..8eb63298 100644
+index 42f44191..c6478d16 100644
 --- a/core/phpunit.xml.dist
 +++ b/core/phpunit.xml.dist
 @@ -36,6 +36,7 @@
      <env name="MINK_DRIVER_ARGS" value=''/>
      <!-- Example for changing the driver args to webdriver tests MINK_DRIVER_ARGS_WEBDRIVER value: '["chrome", { "chromeOptions": { "w3c": false } }, "http://localhost:4444/wd/hub"]' For using the Firefox browser, replace "chrome" with "firefox" -->
      <env name="MINK_DRIVER_ARGS_WEBDRIVER" value=''/>
-+    <env name="PHPUNIT_SKIP_CLASS" value="['Drupal\KernelTests\Core\Database\DatabaseExceptionWrapperTest']"/>
++    <env name="PHPUNIT_SKIP_CLASS" value='["Drupal\KernelTests\Core\Database\DatabaseExceptionWrapperTest"]'/>
    </php>
    <testsuites>
      <testsuite name="unit">
