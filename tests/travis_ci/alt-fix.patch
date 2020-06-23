@@ -1,8 +1,8 @@
 diff --git a/core/lib/Drupal/Core/Test/TestDiscovery.php b/core/lib/Drupal/Core/Test/TestDiscovery.php
-index 1c319dfc..fbd49a62 100644
+index 1c319dfc..00233f0f 100644
 --- a/core/lib/Drupal/Core/Test/TestDiscovery.php
 +++ b/core/lib/Drupal/Core/Test/TestDiscovery.php
-@@ -151,6 +151,17 @@ public function registerTestNamespaces() {
+@@ -151,6 +151,18 @@ public function registerTestNamespaces() {
     * @see https://www.drupal.org/node/2296615
     */
    public function getTestClasses($extension = NULL, array $types = []) {
@@ -16,11 +16,12 @@ index 1c319dfc..fbd49a62 100644
 +        $skipped_classes = [];
 +      }
 +    }
++dump([$_ENV, $skipped_classes]);
 +
      if (!isset($extension) && empty($types)) {
        if (!empty($this->testClasses)) {
          return $this->testClasses;
-@@ -159,6 +170,9 @@ public function getTestClasses($extension = NULL, array $types = []) {
+@@ -159,6 +171,9 @@ public function getTestClasses($extension = NULL, array $types = []) {
      $list = [];
  
      $classmap = $this->findAllClassFiles($extension);
@@ -30,7 +31,7 @@ index 1c319dfc..fbd49a62 100644
  
      // Prevent expensive class loader lookups for each reflected test class by
      // registering the complete classmap of test classes to the class loader.
-@@ -216,6 +230,13 @@ public function getTestClasses($extension = NULL, array $types = []) {
+@@ -216,6 +231,13 @@ public function getTestClasses($extension = NULL, array $types = []) {
        });
      }
  
@@ -44,7 +45,7 @@ index 1c319dfc..fbd49a62 100644
      return $list;
    }
  
-@@ -270,6 +291,17 @@ public function findAllClassFiles($extension = NULL) {
+@@ -270,6 +292,17 @@ public function findAllClassFiles($extension = NULL) {
     * @see https://www.drupal.org/node/2296635
     */
    public static function scanDirectory($namespace_prefix, $path) {
@@ -62,7 +63,7 @@ index 1c319dfc..fbd49a62 100644
      if (substr($namespace_prefix, -1) !== '\\') {
        throw new \InvalidArgumentException("Namespace prefix for $path must contain a trailing namespace separator.");
      }
-@@ -300,6 +332,9 @@ public static function scanDirectory($namespace_prefix, $path) {
+@@ -300,6 +333,9 @@ public static function scanDirectory($namespace_prefix, $path) {
          $class .= strtr($subpath, '/', '\\') . '\\';
        }
        $class .= $fileinfo->getBasename('.php');
