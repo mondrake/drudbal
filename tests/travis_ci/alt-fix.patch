@@ -1,5 +1,5 @@
 diff --git a/core/lib/Drupal/Core/Test/TestDiscovery.php b/core/lib/Drupal/Core/Test/TestDiscovery.php
-index 1c319dfc..06fb86b2 100644
+index 1c319dfc..55042302 100644
 --- a/core/lib/Drupal/Core/Test/TestDiscovery.php
 +++ b/core/lib/Drupal/Core/Test/TestDiscovery.php
 @@ -151,6 +151,17 @@ public function registerTestNamespaces() {
@@ -20,20 +20,22 @@ index 1c319dfc..06fb86b2 100644
      if (!isset($extension) && empty($types)) {
        if (!empty($this->testClasses)) {
          return $this->testClasses;
-@@ -216,6 +227,12 @@ public function getTestClasses($extension = NULL, array $types = []) {
+@@ -216,6 +227,14 @@ public function getTestClasses($extension = NULL, array $types = []) {
        });
      }
  
 +    // Remove the overridden test classes from the list of tests to be run.
-+dump($list);
-+    foreach ($skipped_classes as $class) {
-+      unset($list[$class]);
++    foreach ($list as &$tests) {
++      foreach ($skipped_classes as $class) {
++        unset($tests[$class]);
++      }
 +    }
++dump($list);
 +
      return $list;
    }
  
-@@ -270,6 +287,17 @@ public function findAllClassFiles($extension = NULL) {
+@@ -270,6 +289,17 @@ public function findAllClassFiles($extension = NULL) {
     * @see https://www.drupal.org/node/2296635
     */
    public static function scanDirectory($namespace_prefix, $path) {
@@ -51,7 +53,7 @@ index 1c319dfc..06fb86b2 100644
      if (substr($namespace_prefix, -1) !== '\\') {
        throw new \InvalidArgumentException("Namespace prefix for $path must contain a trailing namespace separator.");
      }
-@@ -300,6 +328,9 @@ public static function scanDirectory($namespace_prefix, $path) {
+@@ -300,6 +330,9 @@ public static function scanDirectory($namespace_prefix, $path) {
          $class .= strtr($subpath, '/', '\\') . '\\';
        }
        $class .= $fileinfo->getBasename('.php');
