@@ -1,15 +1,15 @@
 diff --git a/core/lib/Drupal/Core/Test/TestDiscovery.php b/core/lib/Drupal/Core/Test/TestDiscovery.php
-index 1c319dfc..bea82304 100644
+index 1c319dfc..63049f16 100644
 --- a/core/lib/Drupal/Core/Test/TestDiscovery.php
 +++ b/core/lib/Drupal/Core/Test/TestDiscovery.php
 @@ -300,6 +300,10 @@ public static function scanDirectory($namespace_prefix, $path) {
          $class .= strtr($subpath, '/', '\\') . '\\';
        }
        $class .= $fileinfo->getBasename('.php');
-+      if (in_array($class, json_decode($_ENV['PHPUNIT_SKIP_CLASS']))) {
++/*      if (in_array($class, json_decode($_ENV['PHPUNIT_SKIP_CLASS']))) {
 +        //$test->markTestSkipped(get_class($test) . ' tests are skipped by the "PHPUNIT_SKIP_CLASS" environment variable.');
 +        continue;
-+      }
++      }*/
        $classes[$class] = $fileinfo->getPathname();
      }
      return $classes;
