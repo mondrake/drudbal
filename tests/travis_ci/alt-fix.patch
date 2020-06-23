@@ -11,7 +11,7 @@ index 42f44191..c6478d16 100644
    <testsuites>
      <testsuite name="unit">
 diff --git a/core/tests/Drupal/Tests/Listeners/DrupalListener.php b/core/tests/Drupal/Tests/Listeners/DrupalListener.php
-index 83105089..318414b9 100644
+index 83105089..c756ce4f 100644
 --- a/core/tests/Drupal/Tests/Listeners/DrupalListener.php
 +++ b/core/tests/Drupal/Tests/Listeners/DrupalListener.php
 @@ -39,10 +39,11 @@ class DrupalListener implements TestListener {
@@ -27,13 +27,15 @@ index 83105089..318414b9 100644
      foreach ($this->methodsWithVoidReturn as $method) {
        if ($class->hasMethod($method)) {
          $reflected_method = $class->getMethod($method);
-@@ -53,6 +54,12 @@ public function startTest(Test $test): void {
+@@ -53,6 +54,14 @@ public function startTest(Test $test): void {
          }
        }
      }
 +
 +    // Skip tests that are forced to be skipped by the environment
 +    // 'PHPUNIT_SKIP_CLASS' variable.
++dump($_ENV);
++dump($_ENV['PHPUNIT_SKIP_CLASS']);
 +    if (in_array(get_class($test), json_decode($_ENV['PHPUNIT_SKIP_CLASS']))) {
 +      $this->markTestSkipped(get_class($test) . ' is skipped by the "PHPUNIT_SKIP_CLASS" environment variable.');
 +    }
