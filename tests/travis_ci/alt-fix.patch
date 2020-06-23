@@ -1,7 +1,16 @@
 diff --git a/core/lib/Drupal/Core/Test/TestDiscovery.php b/core/lib/Drupal/Core/Test/TestDiscovery.php
-index 1c319dfc..2c25ac49 100644
+index 1c319dfc..c344b4d4 100644
 --- a/core/lib/Drupal/Core/Test/TestDiscovery.php
 +++ b/core/lib/Drupal/Core/Test/TestDiscovery.php
+@@ -159,7 +159,7 @@ public function getTestClasses($extension = NULL, array $types = []) {
+     $list = [];
+ 
+     $classmap = $this->findAllClassFiles($extension);
+-
++dump($classmap);
+     // Prevent expensive class loader lookups for each reflected test class by
+     // registering the complete classmap of test classes to the class loader.
+     // This also ensures that test classes are loaded from the discovered
 @@ -270,6 +270,17 @@ public function findAllClassFiles($extension = NULL) {
     * @see https://www.drupal.org/node/2296635
     */
@@ -43,12 +52,24 @@ index 42f44191..e3114df0 100644
    </php>
    <testsuites>
      <testsuite name="unit">
+diff --git a/core/scripts/run-tests.sh b/core/scripts/run-tests.sh
+index 955eb5bf..3f5b7249 100755
+--- a/core/scripts/run-tests.sh
++++ b/core/scripts/run-tests.sh
+@@ -1023,6 +1023,7 @@ function simpletest_script_cleanup($test_id, $test_class, $exitcode) {
+ function simpletest_script_get_test_list() {
+   global $args;
+ 
++  putenv('PHPUNIT_SKIP_CLASS=["Drupal\\\\Tests\\\\Core\\\\Test\\\\DiscoverySkipTestClassTest", "Drupal\\\\KernelTests\\\\Core\\\\Database\\\\DatabaseExceptionWrapperTest"]');
+   $test_discovery = new TestDiscovery(
+     \Drupal::service('app.root'),
+     \Drupal::service('class_loader')
 diff --git a/core/tests/Drupal/Tests/Core/Test/DiscoverySkipTestClassTest.php b/core/tests/Drupal/Tests/Core/Test/DiscoverySkipTestClassTest.php
 new file mode 100644
-index 00000000..f18056da
+index 00000000..faeec6c0
 --- /dev/null
 +++ b/core/tests/Drupal/Tests/Core/Test/DiscoverySkipTestClassTest.php
-@@ -0,0 +1,22 @@
+@@ -0,0 +1,23 @@
 +<?php
 +
 +namespace Drupal\Tests\Core\Test;
@@ -67,6 +88,7 @@ index 00000000..f18056da
 +   * @covers ::scanDirectory
 +   */
 +  public function testToBeSkippedTest() {
++    $this->assertEquals([], json_decode(getenv('PHPUNIT_SKIP_CLASS')));
 +    $this->assertTrue(FALSE);
 +  }
 +
