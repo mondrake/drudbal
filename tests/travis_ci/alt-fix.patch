@@ -1,17 +1,39 @@
 diff --git a/core/lib/Drupal/Core/Test/TestDiscovery.php b/core/lib/Drupal/Core/Test/TestDiscovery.php
-index 1c319dfc..c344b4d4 100644
+index 1c319dfc..06fb86b2 100644
 --- a/core/lib/Drupal/Core/Test/TestDiscovery.php
 +++ b/core/lib/Drupal/Core/Test/TestDiscovery.php
-@@ -159,7 +159,7 @@ public function getTestClasses($extension = NULL, array $types = []) {
-     $list = [];
+@@ -151,6 +151,17 @@ public function registerTestNamespaces() {
+    * @see https://www.drupal.org/node/2296615
+    */
+   public function getTestClasses($extension = NULL, array $types = []) {
++    static $skipped_classes;
++
++    if (!isset($skipped_classes)) {
++      if (isset($_ENV['PHPUNIT_SKIP_CLASS'])) {
++        $skipped_classes = json_decode($_ENV['PHPUNIT_SKIP_CLASS']);
++      }
++      else {
++        $skipped_classes = [];
++      }
++    }
++
+     if (!isset($extension) && empty($types)) {
+       if (!empty($this->testClasses)) {
+         return $this->testClasses;
+@@ -216,6 +227,12 @@ public function getTestClasses($extension = NULL, array $types = []) {
+       });
+     }
  
-     $classmap = $this->findAllClassFiles($extension);
--
-+dump($classmap);
-     // Prevent expensive class loader lookups for each reflected test class by
-     // registering the complete classmap of test classes to the class loader.
-     // This also ensures that test classes are loaded from the discovered
-@@ -270,6 +270,17 @@ public function findAllClassFiles($extension = NULL) {
++    // Remove the overridden test classes from the list of tests to be run.
++dump($list);
++    foreach ($skipped_classes as $class) {
++      unset($list[$class]);
++    }
++
+     return $list;
+   }
+ 
+@@ -270,6 +287,17 @@ public function findAllClassFiles($extension = NULL) {
     * @see https://www.drupal.org/node/2296635
     */
    public static function scanDirectory($namespace_prefix, $path) {
@@ -29,7 +51,7 @@ index 1c319dfc..c344b4d4 100644
      if (substr($namespace_prefix, -1) !== '\\') {
        throw new \InvalidArgumentException("Namespace prefix for $path must contain a trailing namespace separator.");
      }
-@@ -300,6 +311,9 @@ public static function scanDirectory($namespace_prefix, $path) {
+@@ -300,6 +328,9 @@ public static function scanDirectory($namespace_prefix, $path) {
          $class .= strtr($subpath, '/', '\\') . '\\';
        }
        $class .= $fileinfo->getBasename('.php');
