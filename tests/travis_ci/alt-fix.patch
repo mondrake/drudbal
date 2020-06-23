@@ -11,7 +11,7 @@ index 42f44191..84d14ed7 100644
    <testsuites>
      <testsuite name="unit">
 diff --git a/core/tests/Drupal/Tests/Listeners/DrupalListener.php b/core/tests/Drupal/Tests/Listeners/DrupalListener.php
-index 83105089..450e589e 100644
+index 83105089..1a9abff2 100644
 --- a/core/tests/Drupal/Tests/Listeners/DrupalListener.php
 +++ b/core/tests/Drupal/Tests/Listeners/DrupalListener.php
 @@ -39,10 +39,11 @@ class DrupalListener implements TestListener {
@@ -34,14 +34,14 @@ index 83105089..450e589e 100644
 +
 +    // Skip tests that are forced to be skipped by the environment
 +    // 'PHPUNIT_SKIP_CLASS' variable.
-+dump($_ENV);
++/*dump($_ENV);
 +dump($_ENV['PHPUNIT_SKIP_CLASS']);
 +dump(json_decode($_ENV['PHPUNIT_SKIP_CLASS']));
 +$x = ['Drupal\KernelTests\Core\Database\DatabaseExceptionWrapperTest'];
 +dump($x);
-+dump(json_encode($x));
-+    if (in_array(get_class($test), $x)) {
-+      $test->markTestSkipped(get_class($test) . ' is skipped by the "PHPUNIT_SKIP_CLASS" environment variable.');
++dump(json_encode($x));*/
++    if (in_array(get_class($test), json_decode($_ENV['PHPUNIT_SKIP_CLASS']))) {
++      $test->markTestSkipped(get_class($test) . ' tests are skipped by the "PHPUNIT_SKIP_CLASS" environment variable.');
 +    }
    }
  
