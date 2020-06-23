@@ -1,0 +1,43 @@
+diff --git a/core/phpunit.xml.dist b/core/phpunit.xml.dist
+index 42f44191..820b6724 100644
+--- a/core/phpunit.xml.dist
++++ b/core/phpunit.xml.dist
+@@ -36,6 +36,7 @@
+     <env name="MINK_DRIVER_ARGS" value=''/>
+     <!-- Example for changing the driver args to webdriver tests MINK_DRIVER_ARGS_WEBDRIVER value: '["chrome", { "chromeOptions": { "w3c": false } }, "http://localhost:4444/wd/hub"]' For using the Firefox browser, replace "chrome" with "firefox" -->
+     <env name="MINK_DRIVER_ARGS_WEBDRIVER" value=''/>
++    <var name="phpunit_skip_class" value="['Drupal\KernelTests\Core\Database\DatabaseExceptionWrapperTest']"/>
+   </php>
+   <testsuites>
+     <testsuite name="unit">
+diff --git a/core/tests/Drupal/Tests/Listeners/DrupalListener.php b/core/tests/Drupal/Tests/Listeners/DrupalListener.php
+index 83105089..f07a309e 100644
+--- a/core/tests/Drupal/Tests/Listeners/DrupalListener.php
++++ b/core/tests/Drupal/Tests/Listeners/DrupalListener.php
+@@ -39,10 +39,11 @@ class DrupalListener implements TestListener {
+   public function startTest(Test $test): void {
+     $this->deprecationStartTest($test);
+ 
++    $class = new \ReflectionClass($test);
++
+     // Check for missing void return typehints in concrete test classes'
+     // methods. If the method is inherited from a base test class, do
+     // nothing.
+-    $class = new \ReflectionClass($test);
+     foreach ($this->methodsWithVoidReturn as $method) {
+       if ($class->hasMethod($method)) {
+         $reflected_method = $class->getMethod($method);
+@@ -53,6 +54,13 @@ public function startTest(Test $test): void {
+         }
+       }
+     }
++
++    // Skip tests that are forced to be skipped by the global
++    // 'phpunit_skip_class' variable that can be set in phpunit.xml.
++dump([$test, $GLOBALS['phpunit_skip_class']]);
++    if (in_array(get_class($test), $GLOBALS['phpunit_skip_class'])) {
++      $this->markTestSkipped(get_class($test) . ' is skipped by the "phpunit_skip_class" variable in phpunit.xml');
++    }
+   }
+ 
+   /**

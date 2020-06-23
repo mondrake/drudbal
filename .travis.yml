@@ -192,7 +192,8 @@ before_install:
 
   # Other general patches.
   # [#2345451] Introduce a Connection::prepareStatement method allowing to pass options to the Statement
-  - git apply $DRUPAL_PATH/modules/contrib/drudbal/tests/travis_ci/2345451-fix.patch
+  #- git apply $DRUPAL_PATH/modules/contrib/drudbal/tests/travis_ci/2345451-fix.patch
+  - git apply $DRUPAL_PATH/modules/contrib/drudbal/tests/travis_ci/alt-fix.patch
 
 install:
 
@@ -220,7 +221,8 @@ script:
   - php install_report.php
 
   # Only run selected tests to avoid Travis timeout.
-  - $DRUPAL_PATH/vendor/bin/phpunit $TEST_ARGS
+  - $DRUPAL_PATH/vendor/bin/phpunit -v tests/Drupal/KernelTest/Core/Database/DatabaseExceptionWrapperTest.php
+  #$TEST_ARGS
 
 #after_script:
 #  - cd $DRUPAL_PATH/libraries/drudbal
