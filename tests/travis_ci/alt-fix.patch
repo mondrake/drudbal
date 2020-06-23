@@ -1,12 +1,12 @@
 diff --git a/core/lib/Drupal/Core/Test/TestDiscovery.php b/core/lib/Drupal/Core/Test/TestDiscovery.php
-index 1c319dfc..a43763ee 100644
+index 1c319dfc..63bc6460 100644
 --- a/core/lib/Drupal/Core/Test/TestDiscovery.php
 +++ b/core/lib/Drupal/Core/Test/TestDiscovery.php
 @@ -151,6 +151,18 @@ public function registerTestNamespaces() {
     * @see https://www.drupal.org/node/2296615
     */
    public function getTestClasses($extension = NULL, array $types = []) {
-+    static $skipped_classes;
++/*    static $skipped_classes;
 +
 +    if (!isset($skipped_classes)) {
 +      if (isset($_ENV['PHPUNIT_SKIP_CLASS'])) {
@@ -17,7 +17,7 @@ index 1c319dfc..a43763ee 100644
 +      }
 +    }
 +dump([getenv(), $_ENV, $skipped_classes]);
-+
++*/
      if (!isset($extension) && empty($types)) {
        if (!empty($this->testClasses)) {
          return $this->testClasses;
@@ -25,9 +25,9 @@ index 1c319dfc..a43763ee 100644
      $list = [];
  
      $classmap = $this->findAllClassFiles($extension);
-+    foreach ($skipped_classes as $class) {
++/*    foreach ($skipped_classes as $class) {
 +dump([$class, $classmap[$class]]);
-+    }
++    }*/
  
      // Prevent expensive class loader lookups for each reflected test class by
      // registering the complete classmap of test classes to the class loader.
@@ -36,24 +36,25 @@ index 1c319dfc..a43763ee 100644
      }
  
 +    // Remove the overridden test classes from the list of tests to be run.
-+    foreach ($list as &$tests) {
++/*    foreach ($list as &$tests) {
 +      foreach ($skipped_classes as $class) {
 +        unset($tests[$class]);
 +      }
 +    }
-+
++*/
      return $list;
    }
  
-@@ -270,6 +292,17 @@ public function findAllClassFiles($extension = NULL) {
+@@ -270,6 +292,18 @@ public function findAllClassFiles($extension = NULL) {
     * @see https://www.drupal.org/node/2296635
     */
    public static function scanDirectory($namespace_prefix, $path) {
 +    static $skipped_classes;
 +
 +    if (!isset($skipped_classes)) {
-+      if (isset($_ENV['PHPUNIT_SKIP_CLASS'])) {
-+        $skipped_classes = json_decode($_ENV['PHPUNIT_SKIP_CLASS']);
++      $env = getenv();
++      if (isset($env['PHPUNIT_SKIP_CLASS'])) {
++        $skipped_classes = json_decode($env['PHPUNIT_SKIP_CLASS']);
 +      }
 +      else {
 +        $skipped_classes = [];
@@ -63,7 +64,7 @@ index 1c319dfc..a43763ee 100644
      if (substr($namespace_prefix, -1) !== '\\') {
        throw new \InvalidArgumentException("Namespace prefix for $path must contain a trailing namespace separator.");
      }
-@@ -300,6 +333,9 @@ public static function scanDirectory($namespace_prefix, $path) {
+@@ -300,6 +334,9 @@ public static function scanDirectory($namespace_prefix, $path) {
          $class .= strtr($subpath, '/', '\\') . '\\';
        }
        $class .= $fileinfo->getBasename('.php');
