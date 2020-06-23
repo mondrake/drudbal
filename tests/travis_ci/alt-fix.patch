@@ -1,75 +1,73 @@
 diff --git a/core/lib/Drupal/Core/Test/TestDiscovery.php b/core/lib/Drupal/Core/Test/TestDiscovery.php
-index 1c319dfc..63049f16 100644
+index 1c319dfc..2c25ac49 100644
 --- a/core/lib/Drupal/Core/Test/TestDiscovery.php
 +++ b/core/lib/Drupal/Core/Test/TestDiscovery.php
-@@ -300,6 +300,10 @@ public static function scanDirectory($namespace_prefix, $path) {
+@@ -270,6 +270,17 @@ public function findAllClassFiles($extension = NULL) {
+    * @see https://www.drupal.org/node/2296635
+    */
+   public static function scanDirectory($namespace_prefix, $path) {
++    static $skipped_classes;
++
++    if (!isset($skipped_classes)) {
++      if (isset($_ENV['PHPUNIT_SKIP_CLASS'])) {
++        $skipped_classes = json_decode($_ENV['PHPUNIT_SKIP_CLASS']);
++      }
++      else {
++        $skipped_classes = [];
++      }
++    }
++
+     if (substr($namespace_prefix, -1) !== '\\') {
+       throw new \InvalidArgumentException("Namespace prefix for $path must contain a trailing namespace separator.");
+     }
+@@ -300,6 +311,9 @@ public static function scanDirectory($namespace_prefix, $path) {
          $class .= strtr($subpath, '/', '\\') . '\\';
        }
        $class .= $fileinfo->getBasename('.php');
-+/*      if (in_array($class, json_decode($_ENV['PHPUNIT_SKIP_CLASS']))) {
-+        //$test->markTestSkipped(get_class($test) . ' tests are skipped by the "PHPUNIT_SKIP_CLASS" environment variable.');
++      if (in_array($class, $skipped_classes)) {
 +        continue;
-+      }*/
++      }
        $classes[$class] = $fileinfo->getPathname();
      }
      return $classes;
 diff --git a/core/phpunit.xml.dist b/core/phpunit.xml.dist
-index 42f44191..84d14ed7 100644
+index 42f44191..e3114df0 100644
 --- a/core/phpunit.xml.dist
 +++ b/core/phpunit.xml.dist
-@@ -36,6 +36,7 @@
+@@ -36,6 +36,8 @@
      <env name="MINK_DRIVER_ARGS" value=''/>
      <!-- Example for changing the driver args to webdriver tests MINK_DRIVER_ARGS_WEBDRIVER value: '["chrome", { "chromeOptions": { "w3c": false } }, "http://localhost:4444/wd/hub"]' For using the Firefox browser, replace "chrome" with "firefox" -->
      <env name="MINK_DRIVER_ARGS_WEBDRIVER" value=''/>
-+    <env name="PHPUNIT_SKIP_CLASS" value='["Drupal\\KernelTests\\Core\\Database\\DatabaseExceptionWrapperTest"]'/>
++    <!-- PHPUNIT_SKIP_CLASS allows specifying a list of test classes to be skipped from execution, in a JSON array format -->
++    <env name="PHPUNIT_SKIP_CLASS" value='["Drupal\\Tests\\Core\\Test\\DiscoverySkipTestClassTest", "Drupal\\KernelTests\\Core\\Database\\DatabaseExceptionWrapperTest"]'/>
    </php>
    <testsuites>
      <testsuite name="unit">
-diff --git a/core/tests/Drupal/KernelTests/Core/Database/DatabaseExceptionWrapperTest.php b/core/tests/Drupal/KernelTests/Core/Database/DatabaseExceptionWrapperTest.php
-index b371d968..f73207ef 100644
---- a/core/tests/Drupal/KernelTests/Core/Database/DatabaseExceptionWrapperTest.php
-+++ b/core/tests/Drupal/KernelTests/Core/Database/DatabaseExceptionWrapperTest.php
-@@ -20,6 +20,7 @@ class DatabaseExceptionWrapperTest extends KernelTestBase {
-    * @expectedDeprecation Connection::prepare() is deprecated in drupal:9.1.0 and is removed from drupal:10.0.0. Database drivers should instantiate \PDOStatement objects by calling \PDO::prepare in their Collection::prepareStatement method instead. \PDO::prepare should not be called outside of driver code. See https://www.drupal.org/node/3137786
-    */
-   public function testPrepare() {
-+    $this->fail('xxx');
-     $connection = Database::getConnection();
-     try {
-       // SQLite validates the syntax upon preparing a statement already.
-diff --git a/core/tests/Drupal/Tests/Listeners/DrupalListener.php b/core/tests/Drupal/Tests/Listeners/DrupalListener.php
-index 83105089..642d6973 100644
---- a/core/tests/Drupal/Tests/Listeners/DrupalListener.php
-+++ b/core/tests/Drupal/Tests/Listeners/DrupalListener.php
-@@ -39,10 +39,11 @@ class DrupalListener implements TestListener {
-   public function startTest(Test $test): void {
-     $this->deprecationStartTest($test);
- 
-+    $class = new \ReflectionClass($test);
+diff --git a/core/tests/Drupal/Tests/Core/Test/DiscoverySkipTestClassTest.php b/core/tests/Drupal/Tests/Core/Test/DiscoverySkipTestClassTest.php
+new file mode 100644
+index 00000000..f18056da
+--- /dev/null
++++ b/core/tests/Drupal/Tests/Core/Test/DiscoverySkipTestClassTest.php
+@@ -0,0 +1,22 @@
++<?php
 +
-     // Check for missing void return typehints in concrete test classes'
-     // methods. If the method is inherited from a base test class, do
-     // nothing.
--    $class = new \ReflectionClass($test);
-     foreach ($this->methodsWithVoidReturn as $method) {
-       if ($class->hasMethod($method)) {
-         $reflected_method = $class->getMethod($method);
-@@ -53,6 +54,18 @@ public function startTest(Test $test): void {
-         }
-       }
-     }
++namespace Drupal\Tests\Core\Test;
 +
-+    // Skip tests that are forced to be skipped by the environment
-+    // 'PHPUNIT_SKIP_CLASS' variable.
-+/*dump($_ENV);
-+dump($_ENV['PHPUNIT_SKIP_CLASS']);
-+dump(json_decode($_ENV['PHPUNIT_SKIP_CLASS']));
-+$x = ['Drupal\KernelTests\Core\Database\DatabaseExceptionWrapperTest'];
-+dump($x);
-+dump(json_encode($x));*/
-+/*    if (in_array(get_class($test), json_decode($_ENV['PHPUNIT_SKIP_CLASS']))) {
-+      $test->markTestSkipped(get_class($test) . ' tests are skipped by the "PHPUNIT_SKIP_CLASS" environment variable.');
-+    }*/
-   }
- 
-   /**
++use Drupal\Tests\UnitTestCase;
++
++/**
++ * This test class should be skipped with the PHPUNIT_SKIP_CLASS env variable.
++ *
++ * @coversDefaultClass \Drupal\Core\Test\TestDiscovery
++ * @group Test
++ */
++class DiscoverySkipTestClassTest extends UnitTestCase {
++
++  /**
++   * @covers ::scanDirectory
++   */
++  public function testToBeSkippedTest() {
++    $this->assertTrue(FALSE);
++  }
++
++}
