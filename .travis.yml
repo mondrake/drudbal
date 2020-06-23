@@ -222,8 +222,8 @@ script:
 
   # Only run selected tests to avoid Travis timeout.
   #- export PHPUNIT_SKIP_CLASS="['Drupal\KernelTests\Core\Database\DatabaseExceptionWrapperTest']"
-  - $DRUPAL_PATH/vendor/bin/phpunit -v tests/Drupal/KernelTests/Core/Database/DatabaseExceptionWrapperTest.php
-  #$TEST_ARGS
+  #- $DRUPAL_PATH/vendor/bin/phpunit -v tests/Drupal/KernelTests/Core/Database/DatabaseExceptionWrapperTest.php
+  - $DRUPAL_PATH/vendor/bin/phpunit -v $TEST_ARGS
 
 #after_script:
 #  - cd $DRUPAL_PATH/libraries/drudbal

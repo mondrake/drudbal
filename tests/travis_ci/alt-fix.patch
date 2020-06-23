@@ -1,3 +1,18 @@
+diff --git a/core/lib/Drupal/Core/Test/TestDiscovery.php b/core/lib/Drupal/Core/Test/TestDiscovery.php
+index 1c319dfc..bea82304 100644
+--- a/core/lib/Drupal/Core/Test/TestDiscovery.php
++++ b/core/lib/Drupal/Core/Test/TestDiscovery.php
+@@ -300,6 +300,10 @@ public static function scanDirectory($namespace_prefix, $path) {
+         $class .= strtr($subpath, '/', '\\') . '\\';
+       }
+       $class .= $fileinfo->getBasename('.php');
++      if (in_array($class, json_decode($_ENV['PHPUNIT_SKIP_CLASS']))) {
++        //$test->markTestSkipped(get_class($test) . ' tests are skipped by the "PHPUNIT_SKIP_CLASS" environment variable.');
++        continue;
++      }
+       $classes[$class] = $fileinfo->getPathname();
+     }
+     return $classes;
 diff --git a/core/phpunit.xml.dist b/core/phpunit.xml.dist
 index 42f44191..84d14ed7 100644
 --- a/core/phpunit.xml.dist
@@ -10,8 +25,20 @@ index 42f44191..84d14ed7 100644
    </php>
    <testsuites>
      <testsuite name="unit">
+diff --git a/core/tests/Drupal/KernelTests/Core/Database/DatabaseExceptionWrapperTest.php b/core/tests/Drupal/KernelTests/Core/Database/DatabaseExceptionWrapperTest.php
+index b371d968..f73207ef 100644
+--- a/core/tests/Drupal/KernelTests/Core/Database/DatabaseExceptionWrapperTest.php
++++ b/core/tests/Drupal/KernelTests/Core/Database/DatabaseExceptionWrapperTest.php
+@@ -20,6 +20,7 @@ class DatabaseExceptionWrapperTest extends KernelTestBase {
+    * @expectedDeprecation Connection::prepare() is deprecated in drupal:9.1.0 and is removed from drupal:10.0.0. Database drivers should instantiate \PDOStatement objects by calling \PDO::prepare in their Collection::prepareStatement method instead. \PDO::prepare should not be called outside of driver code. See https://www.drupal.org/node/3137786
+    */
+   public function testPrepare() {
++    $this->fail('xxx');
+     $connection = Database::getConnection();
+     try {
+       // SQLite validates the syntax upon preparing a statement already.
 diff --git a/core/tests/Drupal/Tests/Listeners/DrupalListener.php b/core/tests/Drupal/Tests/Listeners/DrupalListener.php
-index 83105089..1a9abff2 100644
+index 83105089..642d6973 100644
 --- a/core/tests/Drupal/Tests/Listeners/DrupalListener.php
 +++ b/core/tests/Drupal/Tests/Listeners/DrupalListener.php
 @@ -39,10 +39,11 @@ class DrupalListener implements TestListener {
@@ -40,9 +67,9 @@ index 83105089..1a9abff2 100644
 +$x = ['Drupal\KernelTests\Core\Database\DatabaseExceptionWrapperTest'];
 +dump($x);
 +dump(json_encode($x));*/
-+    if (in_array(get_class($test), json_decode($_ENV['PHPUNIT_SKIP_CLASS']))) {
++/*    if (in_array(get_class($test), json_decode($_ENV['PHPUNIT_SKIP_CLASS']))) {
 +      $test->markTestSkipped(get_class($test) . ' tests are skipped by the "PHPUNIT_SKIP_CLASS" environment variable.');
-+    }
++    }*/
    }
  
    /**
