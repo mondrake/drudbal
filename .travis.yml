@@ -93,6 +93,8 @@ before_install:
   - export SIMPLETEST_BASE_URL="http://$HOST_ADDR:$HTTP_PORT"
   # Suppress deprecation handling.
   #- export SYMFONY_DEPRECATIONS_HELPER=disabled
+  - export DRUPAL_TEST_RESULTS_DIR="$HOME/drupal_test_results"
+  - export DRUPAL_TEST_RESULTS_DB="$DRUPAL_TEST_RESULTS_DIR/test_results.sqlite"
 
   # Expand environment-dependent variables.
   - |
@@ -223,7 +225,9 @@ script:
   # Only run selected tests to avoid Travis timeout.
   #- export PHPUNIT_SKIP_CLASS="['Drupal\KernelTests\Core\Database\DatabaseExceptionWrapperTest']"
   #- $DRUPAL_PATH/vendor/bin/phpunit -v tests/Drupal/KernelTests/Core/Database/DatabaseExceptionWrapperTest.php
-  - $DRUPAL_PATH/vendor/bin/phpunit -v $TEST_ARGS
+  #- $DRUPAL_PATH/vendor/bin/phpunit -v $TEST_ARGS
+  - cd $DRUPAL_PATH
+  - php core/scripts/run-tests.sh --concurrency $(nproc) --dburl $SIMPLETEST_DB --sqlite $DRUPAL_TEST_RESULTS_DB --verbose --color --php $(which php) --url http://127.0.0.1:8080 Database
 
 #after_script:
 #  - cd $DRUPAL_PATH/libraries/drudbal
