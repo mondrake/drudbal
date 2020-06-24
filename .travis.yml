@@ -55,7 +55,7 @@ jobs:
     - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database,Entity,Field" PHPUNIT_SKIP_CLASS='["Drupal\\KernelTests\\Core\\Database\\DatabaseExceptionWrapperTest"]'
     - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Installer,Cache,Config"
     - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group field"
-      env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group file" PHPUNIT_SKIP_CLASS='["Drupal\\Tests\\file\\Functional\\DownloadTest"]'
+    - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group file" PHPUNIT_SKIP_CLASS='["Drupal\\Tests\\file\\Functional\\DownloadTest"]'
     - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group views"
     - php: 7.3
       env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database" PHPUNIT_SKIP_CLASS='["Drupal\\KernelTests\\Core\\Database\\DatabaseExceptionWrapperTest"]'
