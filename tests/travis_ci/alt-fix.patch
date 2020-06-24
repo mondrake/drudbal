@@ -1,51 +1,8 @@
 diff --git a/core/lib/Drupal/Core/Test/TestDiscovery.php b/core/lib/Drupal/Core/Test/TestDiscovery.php
-index 1c319dfc..63bc6460 100644
+index 1c319dfc..8b4f1325 100644
 --- a/core/lib/Drupal/Core/Test/TestDiscovery.php
 +++ b/core/lib/Drupal/Core/Test/TestDiscovery.php
-@@ -151,6 +151,18 @@ public function registerTestNamespaces() {
-    * @see https://www.drupal.org/node/2296615
-    */
-   public function getTestClasses($extension = NULL, array $types = []) {
-+/*    static $skipped_classes;
-+
-+    if (!isset($skipped_classes)) {
-+      if (isset($_ENV['PHPUNIT_SKIP_CLASS'])) {
-+        $skipped_classes = json_decode($_ENV['PHPUNIT_SKIP_CLASS']);
-+      }
-+      else {
-+        $skipped_classes = [];
-+      }
-+    }
-+dump([getenv(), $_ENV, $skipped_classes]);
-+*/
-     if (!isset($extension) && empty($types)) {
-       if (!empty($this->testClasses)) {
-         return $this->testClasses;
-@@ -159,6 +171,9 @@ public function getTestClasses($extension = NULL, array $types = []) {
-     $list = [];
- 
-     $classmap = $this->findAllClassFiles($extension);
-+/*    foreach ($skipped_classes as $class) {
-+dump([$class, $classmap[$class]]);
-+    }*/
- 
-     // Prevent expensive class loader lookups for each reflected test class by
-     // registering the complete classmap of test classes to the class loader.
-@@ -216,6 +231,13 @@ public function getTestClasses($extension = NULL, array $types = []) {
-       });
-     }
- 
-+    // Remove the overridden test classes from the list of tests to be run.
-+/*    foreach ($list as &$tests) {
-+      foreach ($skipped_classes as $class) {
-+        unset($tests[$class]);
-+      }
-+    }
-+*/
-     return $list;
-   }
- 
-@@ -270,6 +292,18 @@ public function findAllClassFiles($extension = NULL) {
+@@ -270,6 +270,18 @@ public function findAllClassFiles($extension = NULL) {
     * @see https://www.drupal.org/node/2296635
     */
    public static function scanDirectory($namespace_prefix, $path) {
@@ -64,7 +21,7 @@ index 1c319dfc..63bc6460 100644
      if (substr($namespace_prefix, -1) !== '\\') {
        throw new \InvalidArgumentException("Namespace prefix for $path must contain a trailing namespace separator.");
      }
-@@ -300,6 +334,9 @@ public static function scanDirectory($namespace_prefix, $path) {
+@@ -300,6 +312,9 @@ public static function scanDirectory($namespace_prefix, $path) {
          $class .= strtr($subpath, '/', '\\') . '\\';
        }
        $class .= $fileinfo->getBasename('.php');
@@ -74,57 +31,3 @@ index 1c319dfc..63bc6460 100644
        $classes[$class] = $fileinfo->getPathname();
      }
      return $classes;
-diff --git a/core/phpunit.xml.dist b/core/phpunit.xml.dist
-index 42f44191..e3114df0 100644
---- a/core/phpunit.xml.dist
-+++ b/core/phpunit.xml.dist
-@@ -36,6 +36,8 @@
-     <env name="MINK_DRIVER_ARGS" value=''/>
-     <!-- Example for changing the driver args to webdriver tests MINK_DRIVER_ARGS_WEBDRIVER value: '["chrome", { "chromeOptions": { "w3c": false } }, "http://localhost:4444/wd/hub"]' For using the Firefox browser, replace "chrome" with "firefox" -->
-     <env name="MINK_DRIVER_ARGS_WEBDRIVER" value=''/>
-+    <!-- PHPUNIT_SKIP_CLASS allows specifying a list of test classes to be skipped from execution, in a JSON array format -->
-+    <env name="PHPUNIT_SKIP_CLASS" value='["Drupal\\Tests\\Core\\Test\\DiscoverySkipTestClassTest", "Drupal\\KernelTests\\Core\\Database\\DatabaseExceptionWrapperTest"]'/>
-   </php>
-   <testsuites>
-     <testsuite name="unit">
-diff --git a/core/scripts/run-tests.sh b/core/scripts/run-tests.sh
-index 955eb5bf..3f5b7249 100755
---- a/core/scripts/run-tests.sh
-+++ b/core/scripts/run-tests.sh
-@@ -1023,6 +1023,7 @@ function simpletest_script_cleanup($test_id, $test_class, $exitcode) {
- function simpletest_script_get_test_list() {
-   global $args;
- 
-+  putenv('PHPUNIT_SKIP_CLASS=["Drupal\\\\Tests\\\\Core\\\\Test\\\\DiscoverySkipTestClassTest", "Drupal\\\\KernelTests\\\\Core\\\\Database\\\\DatabaseExceptionWrapperTest"]');
-   $test_discovery = new TestDiscovery(
-     \Drupal::service('app.root'),
-     \Drupal::service('class_loader')
-diff --git a/core/tests/Drupal/Tests/Core/Test/DiscoverySkipTestClassTest.php b/core/tests/Drupal/Tests/Core/Test/DiscoverySkipTestClassTest.php
-new file mode 100644
-index 00000000..faeec6c0
---- /dev/null
-+++ b/core/tests/Drupal/Tests/Core/Test/DiscoverySkipTestClassTest.php
-@@ -0,0 +1,23 @@
-+<?php
-+
-+namespace Drupal\Tests\Core\Test;
-+
-+use Drupal\Tests\UnitTestCase;
-+
-+/**
-+ * This test class should be skipped with the PHPUNIT_SKIP_CLASS env variable.
-+ *
-+ * @coversDefaultClass \Drupal\Core\Test\TestDiscovery
-+ * @group Test
-+ */
-+class DiscoverySkipTestClassTest extends UnitTestCase {
-+
-+  /**
-+   * @covers ::scanDirectory
-+   */
-+  public function testToBeSkippedTest() {
-+    $this->assertEquals([], json_decode(getenv('PHPUNIT_SKIP_CLASS')));
-+    $this->assertTrue(FALSE);
-+  }
-+
-+}

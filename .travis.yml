@@ -193,8 +193,6 @@ before_install:
   - composer require "mondrake/drudbal:dev-travisci-run-branch" --no-progress --no-suggest
 
   # Other general patches.
-  # [#2345451] Introduce a Connection::prepareStatement method allowing to pass options to the Statement
-  #- git apply $DRUPAL_PATH/modules/contrib/drudbal/tests/travis_ci/2345451-fix.patch
   - git apply $DRUPAL_PATH/modules/contrib/drudbal/tests/travis_ci/alt-fix.patch
 
 install:
@@ -223,11 +221,11 @@ script:
   - php install_report.php
 
   # Only run selected tests to avoid Travis timeout.
-  #- export PHPUNIT_SKIP_CLASS="['Drupal\KernelTests\Core\Database\DatabaseExceptionWrapperTest']"
+  - export PHPUNIT_SKIP_CLASS='["Drupal\\KernelTests\\Core\\Database\\DatabaseExceptionWrapperTest"]'
   #- $DRUPAL_PATH/vendor/bin/phpunit -v tests/Drupal/KernelTests/Core/Database/DatabaseExceptionWrapperTest.php
-  #- $DRUPAL_PATH/vendor/bin/phpunit -v $TEST_ARGS
-  - cd $DRUPAL_PATH
-  - php core/scripts/run-tests.sh --concurrency $(nproc) --dburl $SIMPLETEST_DB --sqlite $DRUPAL_TEST_RESULTS_DB --verbose --color --php $(which php) --url http://127.0.0.1:8080 Database
+  - $DRUPAL_PATH/vendor/bin/phpunit -v $TEST_ARGS
+  #- cd $DRUPAL_PATH
+  #- php core/scripts/run-tests.sh --concurrency $(nproc) --dburl $SIMPLETEST_DB --sqlite $DRUPAL_TEST_RESULTS_DB --verbose --color --php $(which php) --url http://127.0.0.1:8080 Database
 
 #after_script:
 #  - cd $DRUPAL_PATH/libraries/drudbal
