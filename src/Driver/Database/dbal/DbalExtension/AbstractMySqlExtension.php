@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\Driver\Database\dbal\DbalExtension;
+namespace Drupal\drudbal\Driver\Database\dbal\DbalExtension;
 
 use Drupal\Component\Utility\Unicode;
 use Drupal\Core\Database\Database;
@@ -24,14 +24,20 @@ use Doctrine\DBAL\Schema\Table as DbalTable;
 abstract class AbstractMySqlExtension extends AbstractExtension {
 
   /**
-   * Minimum required mysql version.
+   * Minimum required MySQL version.
    *
-   * This can not be increased above '5.5.5' without dropping support for all
-   * MariaDB versions. MariaDB prefixes its version string with '5.5.5-'. For
-   * more information, see
-   * https://github.com/MariaDB/server/blob/f6633bf058802ad7da8196d01fd19d75c53f7274/include/mysql_com.h#L42.
+   * 5.7.8 is the minimum version that supports the JSON datatype.
+   * @see https://dev.mysql.com/doc/refman/5.7/en/json.html
    */
-  const MYSQLSERVER_MINIMUM_VERSION = '5.5.3';
+  const MYSQL_MINIMUM_VERSION = '5.7.8';
+
+  /**
+   * Minimum required MariaDB version.
+   *
+   * 10.3.7 is the first stable (GA) release in the 10.3 series.
+   * @see https://mariadb.com/kb/en/changes-improvements-in-mariadb-103/#list-of-all-mariadb-103-releases
+   */
+  const MARIADB_MINIMUM_VERSION = '10.3.7';
 
   /**
    * Minimum required MySQLnd version.
@@ -124,6 +130,7 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
     if ($this->needsCleanup) {
       $this->nextIdDelete();
     }
+    parent::__destruct();
   }
 
   /**
@@ -186,15 +193,7 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateTransactionSupport(array &$connection_options = []) {
-    // MySQL defaults to transaction support, except if explicitly passed FALSE.
-    return !isset($connection_options['transactions']) || ($connection_options['transactions'] !== FALSE);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function delegateTransactionalDdlSupport(array &$connection_options = []) {
+  public function delegateTransactionalDdlSupport(array &$connection_options = []): bool {
     // MySQL never supports transactional DDL.
     return FALSE;
   }
@@ -277,6 +276,27 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
     else {
       throw new DatabaseExceptionWrapper($message, 0, $e);
     }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getDbServerPlatform(): string {
+    $dbal_server_version = $this->getDbalConnection()->getWrappedConnection()->getServerVersion();
+    $regex = '/^(?:5\.5\.5-)?(\d+\.\d+\.\d+.*-mariadb.*)/i';
+    preg_match($regex, $dbal_server_version, $matches);
+    return (empty($matches[1])) ? 'mysql' : 'mariadb';
+
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getDbServerVersion(): string {
+    $dbal_server_version = $this->getDbalConnection()->getWrappedConnection()->getServerVersion();
+    $regex = '/^(?:5\.5\.5-)?(\d+\.\d+\.\d+.*-mariadb.*)/i';
+    preg_match($regex, $dbal_server_version, $matches);
+    return $matches[1] ?? $dbal_server_version;
   }
 
   /**
@@ -497,12 +517,14 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
       'pass' => [],
     ];
 
-    // Ensure that MySql has the right minimum version.
-    $db_server_version = $this->dbalConnection->getWrappedConnection()->getServerVersion();
-    if (version_compare($db_server_version, self::MYSQLSERVER_MINIMUM_VERSION, '<')) {
-      $results['fail'][] = t("The MySQL server version %version is less than the minimum required version %minimum_version.", [
+    // Ensure that the database server has the right minimum version.
+    $db_server_platform = $this->getDbServerPlatform();
+    $db_server_version = $this->getDbServerVersion();
+    $db_server_min_version = $db_server_platform === 'mysql' ? self::MYSQL_MINIMUM_VERSION : self::MARIADB_MINIMUM_VERSION;
+    if (version_compare($db_server_version, $db_server_min_version, '<')) {
+      $results['fail'][] = t("The database server version %version is less than the minimum required version %minimum_version.", [
         '%version' => $db_server_version,
-        '%minimum_version' => self::MYSQLSERVER_MINIMUM_VERSION,
+        '%minimum_version' => $db_server_min_version,
       ]);
     }
 
@@ -551,7 +573,7 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
     // Instead, we try to select from the table in question.  If it fails,
     // the most likely reason is that it does not exist.
     try {
-      $this->getDbalConnection()->query("SELECT 1 FROM " . $this->tableName($drupal_table_name) . " LIMIT 1 OFFSET 0");
+      $this->getDbalConnection()->query("SELECT 1 FROM " . $this->connection->getPrefixedTableName($drupal_table_name) . " LIMIT 1 OFFSET 0");
       $result = TRUE;
     }
     catch (\Exception $e) {
@@ -568,7 +590,7 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
     // Instead, we try to select from the table and field in question. If it
     // fails, the most likely reason is that it does not exist.
     try {
-      $this->getDbalConnection()->query("SELECT $field_name FROM " . $this->tableName($drupal_table_name) . " LIMIT 1 OFFSET 0");
+      $this->getDbalConnection()->query("SELECT $field_name FROM " . $this->connection->getPrefixedTableName($drupal_table_name) . " LIMIT 1 OFFSET 0");
       $result = TRUE;
     }
     catch (\Exception $e) {
@@ -634,11 +656,6 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
    * {@inheritdoc}
    */
   public function alterDbalColumnDefinition($context, &$dbal_column_definition, array &$dbal_column_options, $dbal_type, array $drupal_field_specs, $field_name) {
-    // DBAL does not support per-column charset.
-    // @see https://github.com/doctrine/dbal/pull/881
-    if (isset($drupal_field_specs['type']) && $drupal_field_specs['type'] == 'varchar_ascii') {
-      $dbal_column_definition = preg_replace('/CHAR\(([0-9]+)\)/', '$0 CHARACTER SET ascii', $dbal_column_definition);
-    }
     // DBAL does not support BINARY option for char/varchar columns.
     if (isset($drupal_field_specs['binary']) && $drupal_field_specs['binary']) {
       $dbal_column_definition = preg_replace('/CHAR\(([0-9]+)\)/', '$0 BINARY', $dbal_column_definition);
@@ -681,28 +698,6 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateFieldSetDefault(DbalSchema $dbal_schema, $drupal_table_name, $field_name, $default) {
-    // DBAL would use an ALTER TABLE ... CHANGE statement that would not
-    // preserve non-DBAL managed column attributes. Use MySql syntax here
-    // instead.
-    $this->connection->query('ALTER TABLE {' . $drupal_table_name . '} ALTER COLUMN `' . $field_name . '` SET DEFAULT ' . $default);
-    return TRUE;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function delegateFieldSetNoDefault(DbalSchema $dbal_schema, $drupal_table_name, $field_name) {
-    // DBAL would use an ALTER TABLE ... CHANGE statement that would not
-    // preserve non-DBAL managed column attributes. Use MySql syntax here
-    // instead.
-    $this->connection->query('ALTER TABLE {' . $drupal_table_name . '} ALTER COLUMN `' . $field_name . '` DROP DEFAULT');
-    return TRUE;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function delegateIndexExists(&$result, DbalSchema $dbal_schema, $table_full_name, $drupal_table_name, $drupal_index_name) {
     if ($drupal_index_name == 'PRIMARY') {
       $result = $dbal_schema->getTable($table_full_name)->hasPrimaryKey();
@@ -714,76 +709,10 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateAddPrimaryKey(DbalSchema $dbal_schema, $table_full_name, $drupal_table_name, array $drupal_field_specs) {
-    // DBAL does not support creating indexes with column lenghts.
-    // @see https://github.com/doctrine/dbal/pull/2412
-    if ($this->dbalResolveIndexColumnNames($drupal_field_specs) === FALSE) {
-      $this->connection->query('ALTER TABLE ' . $table_full_name . ' ADD PRIMARY KEY (' . $this->createKeySql($drupal_field_specs) . ')');
-
-      // Update DBAL Schema.
-      $dbal_schema->getTable($table_full_name)->setPrimaryKey($this->connection->schema()->dbalGetFieldList($drupal_field_specs));
-
-      return TRUE;
-    }
-    return FALSE;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function delegateAddUniqueKey(DbalSchema $dbal_schema, $table_full_name, $index_full_name, $drupal_table_name, $drupal_index_name, array $drupal_field_specs) {
-    // DBAL does not support creating indexes with column lenghts.
-    // @see https://github.com/doctrine/dbal/pull/2412
-    if ($this->dbalResolveIndexColumnNames($drupal_field_specs) === FALSE) {
-      $this->connection->query('ALTER TABLE ' . $table_full_name . ' ADD UNIQUE KEY `' . $index_full_name . '` (' . $this->createKeySql($drupal_field_specs) . ')');
-
-      // Update DBAL Schema.
-      $dbal_schema->getTable($table_full_name)->addUniqueIndex($this->connection->schema()->dbalGetFieldList($drupal_field_specs), $index_full_name);
-
-      return TRUE;
-    }
-    return FALSE;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function delegateAddIndex(DbalSchema $dbal_schema, $table_full_name, $index_full_name, $drupal_table_name, $drupal_index_name, array $drupal_field_specs, array $indexes_spec) {
-    // DBAL does not support creating indexes with column lenghts.
-    // @see https://github.com/doctrine/dbal/pull/2412
+  public function preprocessIndexFields(DbalSchema $dbal_schema, string $table_full_name, string $index_full_name, string $drupal_table_name, string $drupal_index_name, array $drupal_field_specs, array $indexes_spec) : array {
+    // We need to normalize the index columns length in MySql.
     $indexes_spec['indexes'][$drupal_index_name] = $drupal_field_specs;
-    $indexes = $this->getNormalizedIndexes($indexes_spec);
-    if ($this->dbalResolveIndexColumnNames($indexes[$drupal_index_name]) === FALSE) {
-      $this->connection->query('ALTER TABLE ' . $table_full_name . ' ADD INDEX `' . $index_full_name . '` (' . $this->createKeySql($indexes[$drupal_index_name]) . ')');
-
-      // Update DBAL Schema.
-      $dbal_schema->getTable($table_full_name)->addIndex($this->connection->schema()->dbalGetFieldList($drupal_field_specs), $index_full_name);
-
-      return TRUE;
-    }
-    return FALSE;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function delegateGetTableComment(DbalSchema $dbal_schema, $drupal_table_name) {
-    // DBAL cannot retrieve table comments from introspected schema.
-    // @see https://github.com/doctrine/dbal/issues/1335
-    $dbal_query = $this->dbalConnection->createQueryBuilder();
-    $dbal_query
-      ->select('table_comment')
-      ->from('information_schema.tables')
-      ->where(
-          $dbal_query->expr()->andX(
-            $dbal_query->expr()->eq('table_schema', '?'),
-            $dbal_query->expr()->eq('table_name', '?')
-          )
-        )
-      ->setParameter(0, $this->dbalConnection->getDatabase())
-      ->setParameter(1, $this->tableName($drupal_table_name));
-    $comment = $dbal_query->execute()->fetchColumn();
-    return $comment;
+    return $this->getNormalizedIndexes($indexes_spec)[$drupal_index_name];
   }
 
   /**
@@ -885,31 +814,6 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
       }
     }
     return implode(', ', $return);
-  }
-
-  /**
-   * Determines if DBAL can process a list of fields.
-   *
-   * DBAL does not support creating indexes with column lenghts, so here we
-   * determine if the extension should process adding keys/indexes instead
-   * of DBAL natively.
-   *
-   * @param array $fields
-   *   The array of fields in Drupal format.
-   *
-   * @return bool
-   *   FALSE if there is at least a column with length spec, TRUE if all the
-   *   columns are to be indexed to full lenght.
-   *
-   * @see https://github.com/doctrine/dbal/pull/2412
-   */
-  protected function dbalResolveIndexColumnNames(array $fields) {
-    foreach ($fields as $field) {
-      if (is_array($field)) {
-        return FALSE;
-      }
-    }
-    return TRUE;
   }
 
   /**

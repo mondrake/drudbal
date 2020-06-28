@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\Driver\Database\dbal;
+namespace Drupal\drudbal\Driver\Database\dbal;
 
 use Drupal\Core\Database\DatabaseExceptionWrapper;
 use Drupal\Core\Database\IntegrityConstraintViolationException;
@@ -13,7 +13,7 @@ use Doctrine\DBAL\Exception\LockWaitTimeoutException as DBALLockWaitTimeoutExcep
  *
  * Note: there should not be db platform specific code here. Any tasks that
  * cannot be managed by Doctrine DBAL should be added to extension specific
- * code in Drupal\Driver\Database\dbal\DbalExtension\[dbal_driver_name]
+ * code in Drupal\drudbal\Driver\Database\dbal\DbalExtension\[dbal_driver_name]
  * classes and execution handed over to there.
  */
 class Upsert extends QueryUpsert {
@@ -33,10 +33,8 @@ class Upsert extends QueryUpsert {
 
     $sql = (string) $this;
 
-    if ($this->connection->supportsTransactions()) {
-      // @codingStandardsIgnoreLine
-      $trn = $this->connection->startTransaction();
-    }
+    // @codingStandardsIgnoreLine
+    $trn = $this->connection->startTransaction();
 
     // Loop through the values to be UPSERTed.
     $last_insert_id = NULL;
@@ -107,10 +105,10 @@ class Upsert extends QueryUpsert {
 
     $comments = $this->connection->makeComment($this->comments);
     $dbal_connection = $this->connection->getDbalConnection();
-    $prefixed_table = $this->connection->getPrefixedTableName($this->table);
 
-    // Use DBAL query builder to prepare an INSERT query.
-    $dbal_query = $dbal_connection->createQueryBuilder()->insert($prefixed_table);
+    // Use DBAL query builder to prepare an INSERT query. Need to pass the
+    // quoted table name here.
+    $dbal_query = $dbal_connection->createQueryBuilder()->insert($this->connection->getPrefixedTableName($this->table, TRUE));
 
     foreach ($this->defaultFields as $field) {
       $dbal_query->setValue($dbal_extension->getDbFieldName($field), 'DEFAULT');
@@ -136,10 +134,9 @@ class Upsert extends QueryUpsert {
     $dbal_connection = $this->connection->getDbalConnection();
     $dbal_extension = $this->connection->getDbalExtension();
 
-    $prefixed_table = $this->connection->getPrefixedTableName($this->table);
-
-    // Use the DBAL query builder for the UPDATE.
-    $dbal_query = $dbal_connection->createQueryBuilder()->update($prefixed_table);
+    // Use the DBAL query builder for the UPDATE. Need to pass the quoted table
+    // name here.
+    $dbal_query = $dbal_connection->createQueryBuilder()->update($this->connection->getPrefixedTableName($this->table, TRUE));
 
     // Set default fields first.
     foreach ($this->defaultFields as $field) {

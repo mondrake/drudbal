@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\Driver\Database\dbal\DbalExtension;
+namespace Drupal\drudbal\Driver\Database\dbal\DbalExtension;
 
 use Drupal\Component\Uuid\Php as Uuid;
 use Drupal\Core\Database\Database;
@@ -8,7 +8,7 @@ use Drupal\Core\Database\DatabaseExceptionWrapper;
 use Drupal\Core\Database\DatabaseNotFoundException;
 use Drupal\Core\Database\IntegrityConstraintViolationException;
 use Drupal\Core\Database\Driver\sqlite\Connection as SqliteConnectionBase;
-use Drupal\Driver\Database\dbal\Connection as DruDbalConnection;
+use Drupal\drudbal\Driver\Database\dbal\Connection as DruDbalConnection;
 
 use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\DBALException;
@@ -24,7 +24,7 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * Minimum required Sqlite version.
    */
-  const SQLITE_MINIMUM_VERSION = '3.7.11';
+  const SQLITE_MINIMUM_VERSION = '3.26';
 
   /**
    * Error code for "Unable to open database file" error.
@@ -128,6 +128,7 @@ class PDOSqliteExtension extends AbstractExtension {
         }
       }
     }
+    parent::__destruct();
   }
 
   /**
@@ -199,7 +200,7 @@ class PDOSqliteExtension extends AbstractExtension {
     // with the Drupal name, regardless of prefix. A table can be renamed so
     // that the prefix is no longer relevant.
     if (in_array($context, ['indexExists', 'dropIndex'])) {
-      $dbal_table = $dbal_schema->getTable($this->tableName($drupal_table_name));
+      $dbal_table = $dbal_schema->getTable($this->connection->getPrefixedTableName($drupal_table_name));
       foreach ($dbal_table->getIndexes() as $index) {
         $index_full_name = $index->getName();
         $matches = [];
@@ -218,6 +219,15 @@ class PDOSqliteExtension extends AbstractExtension {
       $uuid = new Uuid();
       return 'idx_' . str_replace('-', '', $uuid->generate()) . '____' . $index_name;
     }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getDrupalIndexName(string $drupal_table_name, string $db_index_name): string {
+    $matches = [];
+    preg_match('/.*____(.+)/', $db_index_name, $matches);
+    return $matches[1] ?: null;
   }
 
   /**
@@ -298,15 +308,8 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateTransactionSupport(array &$connection_options = []) {
-    return !isset($connection_options['transactions']) || ($connection_options['transactions'] !== FALSE);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function delegateTransactionalDdlSupport(array &$connection_options = []) {
-    return !isset($connection_options['transactions']) || ($connection_options['transactions'] !== FALSE);
+  public function delegateTransactionalDdlSupport(array &$connection_options = []): bool {
+    return TRUE;
   }
 
   /**
@@ -547,16 +550,6 @@ class PDOSqliteExtension extends AbstractExtension {
   }
 
   /**
-   * {@inheritdoc}
-   */
-  public function delegateFetch(DbalStatement $dbal_statement, $mode, $fetch_class) {
-    if ($mode === \PDO::FETCH_CLASS) {
-      $dbal_statement->setFetchMode($mode, $fetch_class);
-    }
-    return $dbal_statement->fetch($mode);
-  }
-
-  /**
    * Select delegated methods.
    */
 
@@ -598,7 +591,7 @@ class PDOSqliteExtension extends AbstractExtension {
    * {@inheritdoc}
    */
   public function delegateDefaultsOnlyInsertSql(&$sql, $drupal_table_name) {
-    $sql = 'INSERT INTO ' . $this->tableName($drupal_table_name) . ' DEFAULT VALUES';
+    $sql = 'INSERT INTO ' . $this->connection->getPrefixedTableName($drupal_table_name) . ' DEFAULT VALUES';
     return TRUE;
   }
 
@@ -681,11 +674,11 @@ class PDOSqliteExtension extends AbstractExtension {
    */
   public function delegateTableExists(&$result, $drupal_table_name) {
     try {
-      $result = $this->getDbalConnection()->getSchemaManager()->tablesExist([$this->tableName($drupal_table_name)]);
+      $result = $this->getDbalConnection()->getSchemaManager()->tablesExist([$this->connection->getPrefixedTableName($drupal_table_name)]);
     }
     catch (DbalDriverException $e) {
       if ($e->getErrorCode() === 17) {
-        $result = $this->getDbalConnection()->getSchemaManager()->tablesExist([$this->tableName($drupal_table_name)]);
+        $result = $this->getDbalConnection()->getSchemaManager()->tablesExist([$this->connection->getPrefixedTableName($drupal_table_name)]);
       }
       else {
         throw $e;
@@ -756,12 +749,6 @@ class PDOSqliteExtension extends AbstractExtension {
     }
     $definition = str_replace(self::SINGLE_QUOTE_IDENTIFIER_REPLACEMENT, '\'\'', $definition);
 
-    // Column comments do not work when adding/changing a field in SQLite.
-    // @todo check if it can be moved as unset of option in alterDbalColumnOptions
-    if (in_array($context, ['addField', 'changeField'])) {
-      $comment = '';
-    }
-
     $dbal_column_definition = $definition . $comment . "\n";
 
     return $this;
@@ -783,7 +770,7 @@ class PDOSqliteExtension extends AbstractExtension {
     // SQLite doesn't have a full-featured ALTER TABLE statement. It only
     // supports adding new fields to a table, in some simple cases. In most
     // cases, we have to create a new table and copy the data over.
-    if (empty($keys_new_specs) && (empty($drupal_field_specs['not null']) || isset($drupal_field_specs['default']))) {
+    if (empty($keys_new_specs) && (empty($drupal_field_specs['not null']) || isset($drupal_field_specs['default'])) && empty($drupal_field_specs['description'])) {
       // When we don't have to create new keys and we are not creating a
       // NOT NULL column without a default value, we can use the quicker
       // version.
@@ -809,17 +796,19 @@ class PDOSqliteExtension extends AbstractExtension {
 
       // Avoid serial fields in composite primary key or fields not in the
       // primary key.
-      if (count($keys_new_specs['primary key']) === 1) {
-        foreach ($new_schema['fields'] as $field_name => &$field_value) {
-          if ($field_value['type'] === 'serial' && !in_array($field_name, $keys_new_specs['primary key'])) {
-            $field_value['type'] = 'int';
+      if (isset($keys_new_specs['primary key'])) {
+        if (count($keys_new_specs['primary key']) === 1) {
+          foreach ($new_schema['fields'] as $field_name => &$field_value) {
+            if ($field_value['type'] === 'serial' && !in_array($field_name, $keys_new_specs['primary key'])) {
+              $field_value['type'] = 'int';
+            }
           }
         }
-      }
-      elseif (count($keys_new_specs['primary key']) > 1) {
-        foreach ($keys_new_specs['primary key'] as $key) {
-          if ($new_schema['fields'][$key]['type'] === 'serial') {
-            $new_schema['fields'][$key]['type'] = 'int';
+        elseif (count($keys_new_specs['primary key']) > 1) {
+          foreach ($keys_new_specs['primary key'] as $key) {
+            if ($new_schema['fields'][$key]['type'] === 'serial') {
+              $new_schema['fields'][$key]['type'] = 'int';
+            }
           }
         }
       }
@@ -903,30 +892,6 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateFieldSetDefault(DbalSchema $dbal_schema, $drupal_table_name, $field_name, $default) {
-    $old_schema = $this->buildTableSpecFromDbalSchema($dbal_schema, $drupal_table_name);
-    $new_schema = $old_schema;
-
-    $new_schema['fields'][$field_name]['default'] = $default;
-    $this->alterTable($drupal_table_name, $old_schema, $new_schema);
-    return TRUE;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function delegateFieldSetNoDefault(DbalSchema $dbal_schema, $drupal_table_name, $field_name) {
-    $old_schema = $this->buildTableSpecFromDbalSchema($dbal_schema, $drupal_table_name);
-    $new_schema = $old_schema;
-
-    unset($new_schema['fields'][$field_name]['default']);
-    $this->alterTable($drupal_table_name, $old_schema, $new_schema);
-    return TRUE;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function delegateAddUniqueKey(DbalSchema $dbal_schema, $table_full_name, $index_full_name, $drupal_table_name, $drupal_index_name, array $drupal_field_specs) {
     // Avoid DBAL managing of this that would go through table re-creation.
     $index_columns = $this->connection->schema()->dbalGetFieldList($drupal_field_specs);
@@ -991,13 +956,6 @@ class PDOSqliteExtension extends AbstractExtension {
   }
 
   /**
-   * {@inheritdoc}
-   */
-  public function delegateGetTableComment(DbalSchema $dbal_schema, $drupal_table_name) {
-    throw new \RuntimeException('Table comments are not supported in SQlite.');
-  }
-
-  /**
    * Find out the schema of a table.
    *
    * This function uses introspection methods provided by the database to
@@ -1026,7 +984,12 @@ class PDOSqliteExtension extends AbstractExtension {
     ];
 
     // Table.
-    $dbal_table = $dbal_schema->getTable($this->tableName($table));
+    $dbal_table = $dbal_schema->getTable($this->connection->getPrefixedTableName($table));
+
+    // Description.
+    if ($dbal_table->getComment() !== NULL) {
+      $schema['description'] = $dbal_table->getComment();
+    }
 
     // Primary key.
     try {
@@ -1046,8 +1009,13 @@ class PDOSqliteExtension extends AbstractExtension {
       $schema['fields'][$column->getName()] = [
         'size' => $size,
         'not null' => $column->getNotNull() || in_array($column->getName(), $primary_key_columns),
-        'default' => ($column->getDefault() === NULL && $column->getNotNull() === FALSE) ? 'NULL' : $column->getDefault(),
       ];
+      if (($column->getDefault() === NULL || strpos($column->getDefault(), 'NULL --') === 0) && $column->getNotNull() === FALSE) {
+        $schema['fields'][$column->getName()]['default'] = NULL;
+      }
+      else {
+        $schema['fields'][$column->getName()]['default'] = $column->getDefault();
+      }
       if ($column->getAutoincrement() === TRUE && in_array($dbal_type, [
         'smallint', 'integer', 'bigint',
       ])) {
@@ -1060,10 +1028,10 @@ class PDOSqliteExtension extends AbstractExtension {
         $schema['fields'][$column->getName()]['unsigned'] = $column->getUnsigned();
       }
       if ($column->getLength() !== NULL) {
-        $schema['fields'][$column->getName()]['lenght'] = $column->getLength();
+        $schema['fields'][$column->getName()]['length'] = $column->getLength();
       }
       if ($column->getComment() !== NULL) {
-        $schema['fields'][$column->getName()]['comment'] = $column->getComment();
+        $schema['fields'][$column->getName()]['description'] = $column->getComment();
       }
     }
 
@@ -1146,11 +1114,38 @@ class PDOSqliteExtension extends AbstractExtension {
 
     $this->connection->schema()->createTable($new_table, $new_schema);
 
-    // Build a SQL query to migrate the data from the old table to the new.
-    $select = $this->connection->select($table);
+    if ($this->copyTableData($table, $new_table, $new_schema, $mapping)) {
+      $this->connection->schema()->dropTable($table);
+      $this->connection->schema()->createTable($table, $new_schema);
+      $this->copyTableData($new_table, $table, $new_schema);
+      $this->connection->schema()->dropTable($new_table);
+    }
+  }
+
+  /**
+   * Copy data between two tables.
+   *
+   * @param string $from_table
+   *   Name of the table to be copied from.
+   * @param string $to_table
+   *   Name of the table to be copied to.
+   * @param array $schema
+   *   The schema array for the table.
+   * @param array $mapping
+   *   An optional mapping between the fields of the from-table and the
+   *   fields of to-table. An associative array, whose keys are the fields of
+   *   the to-table, and values can take two possible forms:
+   *     - a simple string, which is interpreted as the name of a field of the
+   *       from-table,
+   *     - an associative array with two keys 'expression' and 'arguments',
+   *       that will be used as an expression field.
+   */
+  protected function copyTableData(string $from_table, string $to_table, array $schema, array $mapping = []): bool {
+    // Build a SQL query to select data from the from-table.
+    $select = $this->connection->select($from_table);
 
     // Complete the mapping.
-    $possible_keys = array_keys($new_schema['fields']);
+    $possible_keys = array_keys($schema['fields']);
     $mapping += array_combine($possible_keys, $possible_keys);
 
     // Now add the fields.
@@ -1164,21 +1159,18 @@ class PDOSqliteExtension extends AbstractExtension {
         $select->addExpression($field_source['expression'], $field_alias, $field_source['arguments']);
       }
       else {
-        $select->addField($table, $field_source, $field_alias);
+        $select->addField($from_table, $field_source, $field_alias);
       }
     }
 
     // Execute the data migration query.
-    $this->connection->insert($new_table)
+    $this->connection->insert($to_table)
       ->from($select)
       ->execute();
 
-    $old_count = $this->connection->query('SELECT COUNT(*) FROM {' . $table . '}')->fetchField();
-    $new_count = $this->connection->query('SELECT COUNT(*) FROM {' . $new_table . '}')->fetchField();
-    if ($old_count == $new_count) {
-      $this->connection->schema()->dropTable($table);
-      $this->connection->schema()->renameTable($new_table, $table);
-    }
+    $old_count = $this->connection->query('SELECT COUNT(*) FROM {' . $from_table . '}')->fetchField();
+    $new_count = $this->connection->query('SELECT COUNT(*) FROM {' . $to_table . '}')->fetchField();
+    return $old_count == $new_count;
   }
 
 }

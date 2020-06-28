@@ -5,10 +5,9 @@
  * Initiates a command line installation of Drupal.
  */
 
-use Drupal\Component\Utility\Timer;
-
 // Change the directory to the Drupal root.
 chdir('..');
+
 // Store the Drupal root path.
 $root_path = realpath('');
 
@@ -48,5 +47,4 @@ $settings = [
 
 // Start the installer.
 require_once $root_path . '/core/includes/install.core.inc';
-Timer::start('drudbal:setup');
 install_drupal($class_loader, $settings);

@@ -1,12 +1,12 @@
 <?php
 
-namespace Drupal\Driver\Database\dbal\Install;
+namespace Drupal\drudbal\Driver\Database\dbal\Install;
 
 use Drupal\Core\Database\ConnectionNotDefinedException;
 use Drupal\Core\Database\Database;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Database\Install\Tasks as InstallTasks;
-use Drupal\Driver\Database\dbal\Connection as DruDbalConnection;
+use Drupal\drudbal\Driver\Database\dbal\Connection as DruDbalConnection;
 
 use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\Exception\ConnectionException as DbalExceptionConnectionException;
@@ -18,13 +18,13 @@ use Doctrine\DBAL\DriverManager as DbalDriverManager;
  *
  * Note: there should not be db platform specific code here. Any tasks that
  * cannot be managed by Doctrine DBAL should be added to extension specific
- * code in Drupal\Driver\Database\dbal\DbalExtension\[dbal_driver_name]
+ * code in Drupal\drudbal\Driver\Database\dbal\DbalExtension\[dbal_driver_name]
  * classes and execution handed over to there.
  */
 class Tasks extends InstallTasks {
 
   /**
-   * Constructs a \Drupal\Driver\Database\dbal\Install\Tasks object.
+   * Constructs a \Drupal\drudbal\Driver\Database\dbal\Install\Tasks object.
    */
   public function __construct() {
     // The DBAL driver delegates the installation tasks to the Dbal extension.
@@ -47,17 +47,15 @@ class Tasks extends InstallTasks {
    */
   public function name() {
     try {
+      if (!$this->isConnectionActive() || !$this->getConnection() instanceof DruDbalConnection) {
+        throw new ConnectionNotDefinedException('The database connection is not active or not a DruDbal connection');
+      }
       $connection = Database::getConnection();
-      if ($connection instanceof DruDbalConnection) {
-        return t('Doctrine DBAL on @database_type/@database_server_version via @dbal_driver', [
-          '@database_type' => $connection->databaseType(),
-          '@database_server_version' => $connection->getDbServerVersion(),
-          '@dbal_driver' => $connection->getDbalConnection()->getDriver()->getName(),
-        ]);
-      }
-      else {
-        return t('Doctrine DBAL');
-      }
+      return t('Doctrine DBAL on @database_type/@database_server_version via @dbal_driver', [
+        '@database_type' => $connection->getDbalExtension()->getDbServerPlatform(),
+        '@database_server_version' => $connection->getDbalExtension()->getDbServerVersion(),
+        '@dbal_driver' => $connection->getDbalConnection()->getDriver()->getName(),
+      ]);
     }
     catch (ConnectionNotDefinedException $e) {
       return t('Doctrine DBAL');
@@ -70,8 +68,8 @@ class Tasks extends InstallTasks {
   public function minimumVersion() {
     // Note: This is the minimum version of Doctrine DBAL; the minimum version
     // of the db server should be managed in
-    // Drupal\Driver\Database\dbal\DbalExtension\[dbal_driver_name]::runInstallTasks.
-    return '2.8.0';
+    // Drupal\drudbal\Driver\Database\dbal\DbalExtension\[dbal_driver_name]::runInstallTasks.
+    return '2.10.0';
   }
 
   /**

@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\Driver\Database\dbal\DbalExtension;
+namespace Drupal\drudbal\Driver\Database\dbal\DbalExtension;
 
 use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
@@ -15,19 +15,28 @@ use Doctrine\DBAL\Statement as DbalStatement;
 interface DbalExtensionInterface {
 
   /**
-   * Destroys this Extension object.
-   *
-   * Handed over from the Connection object when it gets destroyed too.
-   */
-  public function destroy();
-
-  /**
    * Gets the DBAL connection.
    *
    * @return \Doctrine\DBAL\Connection
    *   The DBAL connection.
    */
   public function getDbalConnection();
+
+  /**
+   * Gets the database server platform.
+   *
+   * @return string
+   *   The database server platform.
+   */
+  public function getDbServerPlatform(): string;
+
+  /**
+   * Gets the database server version.
+   *
+   * @return string
+   *   The database server version.
+   */
+  public function getDbServerVersion(): string;
 
   /**
    * Database asset name resolution methods.
@@ -75,22 +84,24 @@ interface DbalExtensionInterface {
    *
    * @param string $field_name
    *   The name of the field in question.
+   * @todo
    *
    * @return string
    *   The database field name.
    */
-  public function getDbFieldName($field_name);
+  public function getDbFieldName($field_name, bool $quoted = TRUE);
 
   /**
    * Get a valid alias, resolving platform specific constraints.
    *
    * @param string $alias
    *   An alias.
+   * @todo
    *
    * @return string
    *   The alias usable in the DBMS.
    */
-  public function getDbAlias($alias);
+  public function getDbAlias($alias, bool $quoted = TRUE);
 
   /**
    * Replaces unconstrained alias in a string.
@@ -122,6 +133,19 @@ interface DbalExtensionInterface {
    *   A string with the name of the index to be used in the DBMS.
    */
   public function getDbIndexName($context, DbalSchema $dbal_schema, $drupal_table_name, $index_name, array $table_prefix_info);
+
+  /**
+   * Get the Drupal index name, from a database-level index name.
+   *
+   * @param string $drupal_table_name
+   *   A string with the Drupal name of the table.
+   * @param string $db_index_name
+   *   A string with the database-level name of the index.
+   *
+   * @return string
+   *   The Drupal index name.
+   */
+  public function getDrupalIndexName(string $drupal_table_name, string $db_index_name): string;
 
   /**
    * Connection delegated methods.
@@ -173,17 +197,6 @@ interface DbalExtensionInterface {
   public function delegateClientVersion();
 
   /**
-   * Informs the Connection on whether transactions are supported.
-   *
-   * @param array $connection_options
-   *   An array of connection options, valid for Drupal database connections.
-   *
-   * @return bool
-   *   TRUE if transactions are supported, FALSE otherwise.
-   */
-  public function delegateTransactionSupport(array &$connection_options = []);
-
-  /**
    * Informs the Connection on whether DDL transactions are supported.
    *
    * @param array $connection_options
@@ -192,7 +205,7 @@ interface DbalExtensionInterface {
    * @return bool
    *   TRUE if DDL transactions are supported, FALSE otherwise.
    */
-  public function delegateTransactionalDdlSupport(array &$connection_options = []);
+  public function delegateTransactionalDdlSupport(array &$connection_options = []): bool;
 
   /**
    * Prepares creating a database.
@@ -408,23 +421,15 @@ interface DbalExtensionInterface {
   public function alterStatement(&$query, array &$args);
 
   /**
-   * Fetches the next row from a result set.
+   * Processes a record fetched by DBAL for ensuring compliance with Drupal.
    *
-   * See http://php.net/manual/pdo.constants.php for the definition of the
-   * constants used.
+   * @param array $record
+   *   The record as fetched with FetchMode::ASSOCIATIVE by DBAL.
    *
-   * @param \Doctrine\DBAL\Statement $dbal_statement
-   *   The DBAL statement.
-   * @param int $mode
-   *   One of the PDO::FETCH_* constants.
-   * @param string $fetch_class
-   *   The class to be used for returning row results if \PDO::FETCH_CLASS
-   *   is specified for $mode.
-   *
-   * @return mixed
-   *   A result, formatted according to $mode.
+   * @return array
+   *   The processed record.
    */
-  public function delegateFetch(DbalStatement $dbal_statement, $mode, $fetch_class);
+  public function processFetchedRecord(array $record) : array;
 
   /**
    * Returns the number of rows affected by the last SQL statement.
@@ -811,40 +816,6 @@ interface DbalExtensionInterface {
   public function delegateChangeField(&$primary_key_processed_by_extension, DbalSchema $dbal_schema, $drupal_table_name, $field_name, $field_new_name, array $drupal_field_new_specs, array $keys_new_specs, array $dbal_column_options);
 
   /**
-   * Sets the default value for a field.
-   *
-   * @param \Doctrine\DBAL\Schema\Schema $dbal_schema
-   *   The DBAL schema object.
-   * @param string $drupal_table_name
-   *   A string with the Drupal name of the table.
-   * @param string $field_name
-   *   The name of the field.
-   * @param string $default
-   *   Default value to be set.
-   *
-   * @return bool
-   *   TRUE if the extension changed the default, FALSE if it has to be handled
-   *   by DBAL.
-   */
-  public function delegateFieldSetDefault(DbalSchema $dbal_schema, $drupal_table_name, $field_name, $default);
-
-  /**
-   * Set a field to have no default value.
-   *
-   * @param \Doctrine\DBAL\Schema\Schema $dbal_schema
-   *   The DBAL schema object.
-   * @param string $drupal_table_name
-   *   A string with the Drupal name of the table.
-   * @param string $field_name
-   *   The name of the field.
-   *
-   * @return bool
-   *   TRUE if the extension changed the default, FALSE if it has to be handled
-   *   by DBAL.
-   */
-  public function delegateFieldSetNoDefault(DbalSchema $dbal_schema, $drupal_table_name, $field_name);
-
-  /**
    * Checks if an index exists.
    *
    * @param bool $result
@@ -928,6 +899,30 @@ interface DbalExtensionInterface {
    *   DBAL.
    */
   public function delegateAddIndex(DbalSchema $dbal_schema, $table_full_name, $index_full_name, $drupal_table_name, $drupal_index_name, array $drupal_field_specs, array $indexes_spec);
+
+  /**
+   * Normalizes the fields of an index before creation.
+   *
+   * @param \Doctrine\DBAL\Schema\Schema $dbal_schema
+   *   The DBAL schema object.
+   * @param string $table_full_name
+   *   The name of the table.
+   * @param string $index_full_name
+   *   The name of the index.
+   * @param string $drupal_table_name
+   *   The Drupal name of the table.
+   * @param string $drupal_index_name
+   *   The Drupal name of the index.
+   * @param array $drupal_field_specs
+   *   The field specification array, as taken from a schema definition.
+   * @param array $indexes_spec
+   *   The table specification for the table, containing the index
+   *   specification.
+   *
+   * @return array
+   *   An array of normalized fields.
+   */
+  public function preprocessIndexFields(DbalSchema $dbal_schema, string $table_full_name, string $index_full_name, string $drupal_table_name, string $drupal_index_name, array $drupal_field_specs, array $indexes_spec) : array;
 
   /**
    * Drops the primary key.

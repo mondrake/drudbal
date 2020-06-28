@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\Driver\Database\dbal\DbalExtension;
+namespace Drupal\drudbal\Driver\Database\dbal\DbalExtension;
 
 use Drupal\Component\Utility\Timer;
 use Drupal\Component\Uuid\Php as Uuid;
@@ -9,7 +9,7 @@ use Drupal\Core\Database\DatabaseExceptionWrapper;
 use Drupal\Core\Database\DatabaseNotFoundException;
 use Drupal\Core\Database\IntegrityConstraintViolationException;
 
-use Drupal\Driver\Database\dbal\Connection as DruDbalConnection;
+use Drupal\drudbal\Driver\Database\dbal\Connection as DruDbalConnection;
 
 use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
@@ -89,7 +89,7 @@ class Oci8Extension extends AbstractExtension {
   /**
    * Constructs an Oci8Extension object.
    *
-   * @param \Drupal\Driver\Database\dbal\Connection $drudbal_connection
+   * @param \Drupal\drudbal\Driver\Database\dbal\Connection $drudbal_connection
    *   The Drupal database connection object for this extension.
    * @param \Doctrine\DBAL\Connection $dbal_connection
    *   The DBAL connection.
@@ -118,7 +118,7 @@ class Oci8Extension extends AbstractExtension {
    */
   public function getDbTableName(string $drupal_prefix, string $drupal_table_name): string {
     $prefixed_table_name = $drupal_prefix . $drupal_table_name;
-    // Max lenght for Oracle is 30 chars, but should be even lower to allow
+    // Max length for Oracle is 30 chars, but should be even lower to allow
     // DBAL creating triggers/sequences with table name + suffix.
     if (strlen($prefixed_table_name) > 24) {
       $identifier_crc = hash('crc32b', $prefixed_table_name);
@@ -140,7 +140,7 @@ class Oci8Extension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function getDbFieldName($field_name) {
+  public function getDbFieldName($field_name, bool $quoted = TRUE) {
     $field_name_short = $this->getLimitedIdentifier($field_name);
     if ($field_name !== $field_name_short) {
       $this->dbIdentifiersMap[$field_name_short] = $field_name;
@@ -157,7 +157,7 @@ class Oci8Extension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function getDbAlias($alias) {
+  public function getDbAlias($alias, bool $quoted = TRUE) {
     $alias_short = $this->getLimitedIdentifier($alias);
     if ($alias !== $alias_short) {
       $this->dbIdentifiersMap[$alias_short] = $alias;
@@ -186,7 +186,7 @@ class Oci8Extension extends AbstractExtension {
     // with the Drupal name, regardless of prefix. It may be a table was
     // renamed so the prefix is no longer relevant.
     if (in_array($context, ['indexExists', 'dropIndex'])) {
-      $dbal_table = $dbal_schema->getTable($this->tableName($drupal_table_name));
+      $dbal_table = $dbal_schema->getTable($this->connection->getPrefixedTableName($drupal_table_name));
       foreach ($dbal_table->getIndexes() as $index) {
         $index_full_name = $index->getName();
         $matches = [];
@@ -228,14 +228,7 @@ class Oci8Extension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateTransactionSupport(array &$connection_options = []) {
-    return !isset($connection_options['transactions']) || ($connection_options['transactions'] !== FALSE);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function delegateTransactionalDdlSupport(array &$connection_options = []) {
+  public function delegateTransactionalDdlSupport(array &$connection_options = []): bool {
     // Transactional DDL is not available in Oracle.
     return FALSE;
   }
@@ -522,67 +515,20 @@ if ($this->getDebugging()) error_log($query . ' : ' . var_export($args, TRUE));
   /**
    * {@inheritdoc}
    */
-  public function delegateFetch(DbalStatement $dbal_statement, $mode, $fetch_class) {
-    if ($mode <= \PDO::FETCH_BOTH) {
-      $row = $dbal_statement->fetch($mode);
-      if (!$row) {
-        return FALSE;
+  public function processFetchedRecord(array $record) : array {
+    // Enforce all values are of type 'string'.
+    $result = [];
+    foreach ($record as $column => $value) {
+      $column = strtolower($column);
+      if ($column === 'doctrine_rownum') {
+        continue;
       }
-      // @todo stringify also FETCH_NUM and FETCH_BOTH
-      if ($mode === \PDO::FETCH_ASSOC) {
-        $adj_row = [];
-        foreach ($row as $column => $value) {
-          $column = strtolower($column);
-          if ($column === 'doctrine_rownum') {
-            continue;
-          }
-          if (isset($this->dbIdentifiersMap[$column])) {
-            $column = $this->dbIdentifiersMap[$column];
-          }
-          $adj_row[$column] = $value === self::ORACLE_EMPTY_STRING_REPLACEMENT ? '' : (string) $value;
-        }
-        $row = $adj_row;
+      if (isset($this->dbIdentifiersMap[$column])) {
+        $column = $this->dbIdentifiersMap[$column];
       }
-      return $row;
+      $result[$column] = $value === self::ORACLE_EMPTY_STRING_REPLACEMENT ? '' : (string) $value;
     }
-    else {
-      $row = $dbal_statement->fetch(\PDO::FETCH_ASSOC);
-      if (!$row) {
-        return FALSE;
-      }
-      switch ($mode) {
-        case \PDO::FETCH_OBJ:
-          $ret = new \stdClass();
-          foreach ($row as $column => $value) {
-            $column = strtolower($column);
-            if ($column === 'doctrine_rownum') {
-              continue;
-            }
-            if (isset($this->dbIdentifiersMap[$column])) {
-              $column = $this->dbIdentifiersMap[$column];
-            }
-            $ret->$column = $value === self::ORACLE_EMPTY_STRING_REPLACEMENT ? '' : (string) $value;
-          }
-          return $ret;
-
-        case \PDO::FETCH_CLASS:
-          $ret = new $fetch_class();
-          foreach ($row as $column => $value) {
-            $column = strtolower($column);
-            if ($column === 'doctrine_rownum') {
-              continue;
-            }
-            if (isset($this->dbIdentifiersMap[$column])) {
-              $column = $this->dbIdentifiersMap[$column];
-            }
-            $ret->$column = $value === self::ORACLE_EMPTY_STRING_REPLACEMENT ? '' : (string) $value;
-          }
-          return $ret;
-
-        default:
-          throw new MysqliException("Unknown fetch type '{$mode}'");
-      }
-    }
+    return $result;
   }
 
   /**
@@ -593,7 +539,7 @@ if ($this->getDebugging()) error_log($query . ' : ' . var_export($args, TRUE));
    * {@inheritdoc}
    */
   public function getSequenceNameForInsert($drupal_table_name) {
-    $table_name = $this->tableName($drupal_table_name);
+    $table_name = $this->connection->getPrefixedTableName($drupal_table_name);
     if (substr($table_name, 0, 1) === '"') {
       return '"' . rtrim(ltrim($table_name, '"'), '"') . '_SEQ"';
     }
@@ -642,7 +588,7 @@ if ($this->getDebugging()) error_log($query . ' : ' . var_export($args, TRUE));
     // Instead, we try to select from the table in question.  If it fails,
     // the most likely reason is that it does not exist.
     try {
-      $this->getDbalConnection()->query("SELECT 1 FROM " . $this->tableName($drupal_table_name) . " WHERE ROWNUM <= 1");
+      $this->getDbalConnection()->query("SELECT 1 FROM " . $this->connection->getPrefixedTableName($drupal_table_name) . " WHERE ROWNUM <= 1");
       $result = TRUE;
     }
     catch (\Exception $e) {
@@ -659,7 +605,7 @@ if ($this->getDebugging()) error_log($query . ' : ' . var_export($args, TRUE));
     // Instead, we try to select from the table and field in question. If it
     // fails, the most likely reason is that it does not exist.
     try {
-      $this->getDbalConnection()->query("SELECT $field_name FROM " . $this->tableName($drupal_table_name) . " WHERE ROWNUM <= 1");
+      $this->getDbalConnection()->query("SELECT $field_name FROM " . $this->connection->getPrefixedTableName($drupal_table_name) . " WHERE ROWNUM <= 1");
       $result = TRUE;
     }
     catch (\Exception $e) {
@@ -751,7 +697,7 @@ if ($this->getDebugging()) error_log($query . ' : ' . var_export($args, TRUE));
   public function delegateChangeField(&$primary_key_processed_by_extension, DbalSchema $dbal_schema, $drupal_table_name, $field_name, $field_new_name, array $drupal_field_new_specs, array $keys_new_specs, array $dbal_column_options) {
     $current_schema = $dbal_schema;
     $to_schema = clone $current_schema;
-    $dbal_table = $to_schema->getTable($this->tableName($drupal_table_name));
+    $dbal_table = $to_schema->getTable($this->connection->getPrefixedTableName($drupal_table_name));
     $dbal_column = $dbal_table->getColumn($field_name); // @todo getdbfieldname
 
     $change_nullability = TRUE;
@@ -759,7 +705,7 @@ if ($this->getDebugging()) error_log($query . ' : ' . var_export($args, TRUE));
       $change_nullability = FALSE;
     }
 
-    $sql = "ALTER TABLE " . $this->tableName($drupal_table_name) . " MODIFY ($field_name NUMBER(10) ";
+    $sql = "ALTER TABLE " . $this->connection->getPrefixedTableName($drupal_table_name) . " MODIFY ($field_name NUMBER(10) ";
     if ($change_nullability) {
       $sql .= array_key_exists('not null', $drupal_field_new_specs) && $drupal_field_new_specs['not null'] ? 'NOT NULL' : 'NULL';
     }
@@ -805,28 +751,6 @@ if ($this->getDebugging()) error_log($query . ' : ' . var_export($args, TRUE));
     }
 
     $this->cleanUpSchema($table);*/
-    return TRUE;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function delegateFieldSetDefault(DbalSchema $dbal_schema, $drupal_table_name, $field_name, $default) {
-    if (is_null($default)) {
-      $default = 'NULL';
-    }
-    else {
-      $default = is_string($default) ? "'$default'" : $default;   // @todo proper quoting
-    }
-    $this->connection->query('ALTER TABLE {' . $drupal_table_name . '} MODIFY (' . $this->getDbFieldName($field_name) . ' DEFAULT ' . $default . ')');
-    return TRUE;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function delegateFieldSetNoDefault(DbalSchema $dbal_schema, $drupal_table_name, $field_name) {
-    $this->connection->query('ALTER TABLE {' . $drupal_table_name . '} MODIFY (' . $this->getDbFieldName($field_name) . ' DEFAULT NULL)');
     return TRUE;
   }
 

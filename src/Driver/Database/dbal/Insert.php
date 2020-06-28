@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\Driver\Database\dbal;
+namespace Drupal\drudbal\Driver\Database\dbal;
 
 use Drupal\Core\Database\DatabaseExceptionWrapper;
 use Drupal\Core\Database\IntegrityConstraintViolationException;
@@ -12,7 +12,7 @@ use Doctrine\DBAL\Exception\LockWaitTimeoutException as DBALLockWaitTimeoutExcep
  *
  * Note: there should not be db platform specific code here. Any tasks that
  * cannot be managed by Doctrine DBAL should be added to extension specific
- * code in Drupal\Driver\Database\dbal\DbalExtension\[dbal_driver_name]
+ * code in Drupal\drudbal\Driver\Database\dbal\DbalExtension\[dbal_driver_name]
  * classes and execution handed over to there.
  */
 class Insert extends QueryInsert {
@@ -28,8 +28,8 @@ class Insert extends QueryInsert {
     $sql = (string) $this;
 
     // DBAL does not support multiple insert statements. In such case, open a
-    // transaction (if supported), and process separately each values set.
-    if ((count($this->insertValues) > 1 || !empty($this->fromQuery)) && $this->connection->supportsTransactions()) {
+    // transaction, and process separately each values set.
+    if ((count($this->insertValues) > 1 || !empty($this->fromQuery))) {
       // @codingStandardsIgnoreLine
       $trn = $this->connection->startTransaction();
     }
@@ -133,16 +133,16 @@ class Insert extends QueryInsert {
       return $comments . $sql;
     }
 
-    // Use DBAL query builder to prepare the INSERT query.
-    $prefixed_table = $this->connection->getPrefixedTableName($this->table);
-    $dbal_query = $dbal_connection->createQueryBuilder()->insert($prefixed_table);
+    // Use DBAL query builder to prepare the INSERT query. The table name has to
+    // be quoted in DBAL.
+    $dbal_query = $dbal_connection->createQueryBuilder()->insert($this->connection->getPrefixedTableName($this->table, TRUE));
 
     // If we're selecting from a SelectQuery, and no fields are specified in
     // select (i.e. we have a SELECT * FROM ...), then we have to fetch the
     // target column names from the table to be INSERTed to, since DBAL does
     // not support 'INSERT INTO ... SELECT * FROM' constructs.
     if (!empty($this->fromQuery) && empty($this->fromQuery->getFields())) {
-      $insert_fields = array_keys($dbal_connection->getSchemaManager()->listTableColumns($prefixed_table));
+      $insert_fields = array_keys($dbal_connection->getSchemaManager()->listTableColumns($this->connection->getPrefixedTableName($this->table)));
     }
     else {
       if ($this->connection->getDbalExtension()->getAddDefaultsExplicitlyOnInsert()) {

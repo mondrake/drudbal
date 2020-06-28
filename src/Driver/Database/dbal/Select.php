@@ -1,19 +1,16 @@
 <?php
 
-namespace Drupal\Driver\Database\dbal;
+namespace Drupal\drudbal\Driver\Database\dbal;
 
 use Drupal\Core\Database\Query\Select as QuerySelect;
 use Drupal\Core\Database\Query\SelectInterface;
-
-// @todo DBAL 2.6.0:
-// Is there a way to specify SELECT DISTINCT??
 
 /**
  * DruDbal implementation of \Drupal\Core\Database\Query\Select.
  *
  * Note: there should not be db platform specific code here. Any tasks that
  * cannot be managed by Doctrine DBAL should be added to extension specific
- * code in Drupal\Driver\Database\dbal\DbalExtension\[dbal_driver_name]
+ * code in Drupal\drudbal\Driver\Database\dbal\DbalExtension\[dbal_driver_name]
  * classes and execution handed over to there.
  */
 class Select extends QuerySelect {
@@ -73,7 +70,7 @@ class Select extends QuerySelect {
       else {
         // Do not attempt prefixing cross database / schema queries.
         if (strpos($table['table'], '.') === FALSE) {
-          $escaped_table = $this->connection->getPrefixedTableName($this->connection->escapeTable($table['table']));
+          $escaped_table = $this->connection->getPrefixedTableName($table['table'], TRUE);
         }
         else {
           $escaped_table = $dbal_extension->alterFullQualifiedTableName($table['table']);
@@ -102,6 +99,11 @@ class Select extends QuerySelect {
 
         }
       }
+    }
+
+    // DISTINCT
+    if ($this->distinct) {
+      $dbal_query->distinct();
     }
 
     // WHERE
@@ -146,11 +148,6 @@ class Select extends QuerySelect {
     }
 
     $sql = $dbal_query->getSQL();
-
-    // DISTINCT @todo move to extension
-    if ($this->distinct) {
-      $sql = preg_replace('/SELECT /', '$0DISTINCT ', $sql);  // @todo enforce only at the beginning of the string
-    }
 
     // UNION @todo move to extension
     // There can be an 'ORDER BY' or a 'LIMIT' clause at the end of the SQL

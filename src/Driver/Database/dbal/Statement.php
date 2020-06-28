@@ -1,29 +1,27 @@
 <?php
 
-namespace Drupal\Driver\Database\dbal;
+namespace Drupal\drudbal\Driver\Database\dbal;
 
 use Drupal\Core\Database\Database;
 use Drupal\Core\Database\DatabaseExceptionWrapper;
 use Drupal\Core\Database\StatementInterface;
 use Drupal\Core\Database\RowCountException;
-use Drupal\Driver\Database\dbal\Connection as DruDbalConnection;
+use Drupal\drudbal\Driver\Database\dbal\Connection as DruDbalConnection;
 use Doctrine\DBAL\DBALException;
+use Doctrine\DBAL\FetchMode;
 use Doctrine\DBAL\SQLParserUtils;
 
 // @todo organize better prefetch vs normal
 // @todo DBAL 2.6.0:
-// provides PDO::FETCH_OBJ emulation for mysqli and oci8 statements, check;
 // Normalize method signatures for `fetch()` and `fetchAll()`, ensuring compatibility with the `PDOStatement` signature
 // `ResultStatement#fetchAll()` must define 3 arguments in order to be compatible with `PDOStatement#fetchAll()`
-// @todo DBAL 2.7:
-// remove usage of PDO:: constants
 
 /**
  * DruDbal implementation of \Drupal\Core\Database\Statement.
  *
  * Note: there should not be db platform specific code here. Any tasks that
  * cannot be managed by Doctrine DBAL should be added to extension specific
- * code in Drupal\Driver\Database\dbal\DbalExtension\[dbal_driver_name]
+ * code in Drupal\drudbal\Driver\Database\dbal\DbalExtension\[dbal_driver_name]
  * classes and execution handed over to there.
  */
 class Statement implements \IteratorAggregate, StatementInterface {
@@ -33,7 +31,7 @@ class Statement implements \IteratorAggregate, StatementInterface {
    *
    * The name $dbh is inherited from \PDOStatement.
    *
-   * @var \Drupal\Driver\Database\dbal\Connection
+   * @var \Drupal\drudbal\Driver\Database\dbal\Connection
    */
   public $dbh;
 
@@ -49,7 +47,23 @@ class Statement implements \IteratorAggregate, StatementInterface {
    *
    * @var \Doctrine\DBAL\Statement
    */
-  protected $dbalStatement;
+  protected $dbalStatement = NULL;
+
+  /**
+   * Holds supplementary driver options.
+   *
+   * @var array
+   */
+  protected $driverOpts;
+
+  /**
+   * Holds the index position of named parameters.
+   *
+   * Used in positional-only parameters binding drivers.
+   *
+   * @var array
+   */
+  protected $paramsPositions;
 
   /**
    * The default fetch mode.
@@ -169,7 +183,7 @@ class Statement implements \IteratorAggregate, StatementInterface {
    *
    * Used when prefetching all data.
    *
-   * @var Array
+   * @var array
    */
   protected $defaultFetchOptions = [
     'class' => 'stdClass',
@@ -181,42 +195,52 @@ class Statement implements \IteratorAggregate, StatementInterface {
   /**
    * Constructs a Statement object.
    *
-   * @param \Drupal\Driver\Database\dbal\Connection $dbh
+   * Preparation of the actual lower-level statement is deferred to the first
+   * call of the execute method, to allow replacing named parameters with
+   * positional ones if needed.
+   *
+   * @param \Drupal\drudbal\Driver\Database\dbal\Connection $dbh
    *   The database connection object for this statement.
-   * @param string $statement
-   *   A string containing an SQL query. Passed by reference.
-   * @param array $params
-   *   (optional) An array of values to substitute into the query at placeholder
-   *   markers. Passed by reference.
+   * @param string $query
+   *   A string containing an SQL query.
    * @param array $driver_options
    *   (optional) An array of driver options for this query.
    */
-  public function __construct(DruDbalConnection $dbh, &$statement, array &$params, array $driver_options = []) {
-    $this->queryString = $statement;
+  public function __construct(DruDbalConnection $dbh, string $query, array $driver_options = []) {
+    $this->queryString = $query;
     $this->dbh = $dbh;
     $this->setFetchMode(\PDO::FETCH_OBJ);
-
-    // Replace named placeholders with positional ones if needed.
-    if (!$this->dbh->getDbalExtension()->delegateNamedPlaceholdersSupport()) {
-      list($statement, $params) = SQLParserUtils::expandListParameters($statement, $params, []);
-    }
-
-    try {
-      $this->dbh->getDbalExtension()->alterStatement($statement, $params);
-      $this->dbalStatement = $dbh->getDbalConnection()->prepare($statement);
-    }
-    catch (DBALException $e) {
-      throw new DatabaseExceptionWrapper($e->getMessage(), $e->getCode(), $e);
-    }
+    $this->driverOpts = $driver_options;
   }
 
   /**
    * {@inheritdoc}
    */
   public function execute($args = [], $options = []) {
-    // Replace named placeholders with positional ones if needed.
-    if (!$this->dbh->getDbalExtension()->delegateNamedPlaceholdersSupport()) {
-      list(, $args) = SQLParserUtils::expandListParameters($this->queryString, $args, []);
+    // Prepare the lower-level statement if it's not been prepared already.
+    if (!$this->dbalStatement) {
+      // Replace named placeholders with positional ones if needed.
+      if (!$this->dbh->getDbalExtension()->delegateNamedPlaceholdersSupport()) {
+        $this->paramsPositions = array_flip(array_keys($args));
+        list($query, $args) = SQLParserUtils::expandListParameters($this->queryString, $args, []);
+        $this->queryString = $query;
+      }
+
+      try {
+        $this->dbh->getDbalExtension()->alterStatement($this->queryString, $args);
+        $this->dbalStatement = $this->dbh->getDbalConnection()->prepare($this->queryString);
+      }
+      catch (DBALException $e) {
+        throw new DatabaseExceptionWrapper($e->getMessage(), $e->getCode(), $e);
+      }
+    }
+    elseif (!$this->dbh->getDbalExtension()->delegateNamedPlaceholdersSupport()) {
+      // Transform the $args to positional if needed.
+      $tmp = [];
+      foreach ($this->paramsPositions as $param => $pos) {
+        $tmp[$pos] = $args[$param];
+      }
+      $args = $tmp;
     }
 
     if (isset($options['fetch'])) {
@@ -233,7 +257,12 @@ class Statement implements \IteratorAggregate, StatementInterface {
       $query_start = microtime(TRUE);
     }
 
-    $this->dbalStatement->execute($args);
+    try {
+      $this->dbalStatement->execute($args);
+    }
+    catch (DBALException $e) {
+      throw new DatabaseExceptionWrapper($e->getMessage(), $e->getCode(), $e);
+    }
 
     // Handle via prefetched data if needed.
     if ($this->dbh->getDbalExtension()->onSelectPrefetchAllData()) {
@@ -243,10 +272,11 @@ class Statement implements \IteratorAggregate, StatementInterface {
 
       // Fetch all the data from the reply, in order to release any lock
       // as soon as possible.
-      $this->data = $this->dbalStatement->fetchAll(\PDO::FETCH_ASSOC);
+      $this->data = $this->dbalStatement->fetchAll(FetchMode::ASSOCIATIVE);
       // Destroy the statement as soon as possible. See the documentation of
       // \Drupal\Core\Database\Driver\sqlite\Statement for an explanation.
       unset($this->dbalStatement);
+      $this->dbalStatement = NULL;
 
       $this->resultRowCount = count($this->data);
 
@@ -303,7 +333,42 @@ class Statement implements \IteratorAggregate, StatementInterface {
         $mode = $mode ?: $this->defaultFetchMode;
       }
 
-      return $this->dbh->getDbalExtension()->delegateFetch($this->dbalStatement, $mode, $this->fetchClass);
+      $dbal_row = $this->dbalStatement->fetch(FetchMode::ASSOCIATIVE);
+      if (!$dbal_row) {
+        return FALSE;
+      }
+      $row = $this->dbh->getDbalExtension()->processFetchedRecord($dbal_row);
+      switch ($mode) {
+        case \PDO::FETCH_ASSOC:
+          return $row;
+
+        case \PDO::FETCH_NUM:
+          return array_values($row);
+
+        case \PDO::FETCH_BOTH:
+          return $row + array_values($row);
+
+        case \PDO::FETCH_OBJ:
+          return (object) $row;
+
+        case \PDO::FETCH_CLASS:
+          $class_obj = new $this->fetchClass();
+          foreach ($row as $column => $value) {
+            $class_obj->$column = $value;
+          }
+          return $class_obj;
+
+        case \PDO::FETCH_CLASS | \PDO::FETCH_CLASSTYPE:
+          $class = array_shift($row);
+          $class_obj = new $class();
+          foreach ($row as $column => $value) {
+            $class_obj->$column = $value;
+          }
+          return $class_obj;
+
+        default:
+          throw new DBALException("Unknown fetch type '{$mode}'");
+      }
     }
   }
 
@@ -524,7 +589,7 @@ class Statement implements \IteratorAggregate, StatementInterface {
   /**
    * {@inheritdoc}
    */
-  public function fetchObject() {
+  public function fetchObject($class_name = NULL, $constructor_args = []) {
     // Handle via prefetched data if needed.
     if ($this->dbh->getDbalExtension()->onSelectPrefetchAllData()) {
       if (isset($this->currentRow)) {
@@ -534,7 +599,10 @@ class Statement implements \IteratorAggregate, StatementInterface {
         }
         else {
           $this->fetchStyle = \PDO::FETCH_CLASS;
-          $this->fetchOptions = ['constructor_args' => $constructor_args];
+          $this->fetchOptions = [
+            'class' => $class_name,
+            'constructor_args' => $constructor_args,
+          ];
           // Grab the row in the format specified above.
           $result = $this->current();
           // Reset the fetch parameters to the value stored using setFetchMode().
@@ -551,7 +619,7 @@ class Statement implements \IteratorAggregate, StatementInterface {
       }
     }
     else {
-      return $this->fetch(\PDO::FETCH_OBJ);
+      return $this->fetch($class_name ?? \PDO::FETCH_OBJ);
     }
   }
 
@@ -635,7 +703,7 @@ class Statement implements \IteratorAggregate, StatementInterface {
         case \PDO::FETCH_OBJ:
           return (object) $this->currentRow;
         case \PDO::FETCH_CLASS | \PDO::FETCH_CLASSTYPE:
-          $class_name = array_unshift($this->currentRow);
+          $class_name = array_shift($this->currentRow);
           // Deliberate no break.
         case \PDO::FETCH_CLASS:
           if (!isset($class_name)) {

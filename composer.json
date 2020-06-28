@@ -1,10 +1,12 @@
 {
-    "name": "drupal/drudbal",
+    "name": "mondrake/drudbal",
     "type": "drupal-module",
     "description": "Drupal driver for Doctrine DBAL.",
+    "license": "LGPL-3.0-or-later",
     "require": {
-        "drupal/core": "~8.4",
-        "doctrine/dbal": "^2.8.0"
+        "php": "^7.3",
+        "drupal/core": "^9.1",
+        "doctrine/dbal": "^2.10"
     },
     "minimum-stability": "dev"
 }

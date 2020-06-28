@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\Driver\Database\dbal;
+namespace Drupal\drudbal\Driver\Database\dbal;
 
 use Drupal\Core\Database\DatabaseExceptionWrapper;
 use Drupal\Core\Database\Query\Delete as QueryDelete;
@@ -11,7 +11,7 @@ use Doctrine\DBAL\Exception\LockWaitTimeoutException as DBALLockWaitTimeoutExcep
  *
  * Note: there should not be db platform specific code here. Any tasks that
  * cannot be managed by Doctrine DBAL should be added to extension specific
- * code in Drupal\Driver\Database\dbal\DbalExtension\[dbal_driver_name]
+ * code in Drupal\drudbal\Driver\Database\dbal\DbalExtension\[dbal_driver_name]
  * classes and execution handed over to there.
  */
 class Delete extends QueryDelete {
@@ -56,9 +56,10 @@ class Delete extends QueryDelete {
    * Builds the query via DBAL Query Builder.
    */
   protected function compileDbalQuery() {
+    // Need to pass the quoted table name here.
     $this->dbalQuery = $this->connection->getDbalConnection()
       ->createQueryBuilder()
-      ->delete($this->connection->getPrefixedTableName($this->table));
+      ->delete($this->connection->getPrefixedTableName($this->table, TRUE));
 
     // Adds a WHERE clause if necessary.
     // @todo this uses Drupal Condition API. Use DBAL expressions instead?

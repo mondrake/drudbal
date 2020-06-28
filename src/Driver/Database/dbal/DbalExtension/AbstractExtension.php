@@ -1,8 +1,8 @@
 <?php
 
-namespace Drupal\Driver\Database\dbal\DbalExtension;
+namespace Drupal\drudbal\Driver\Database\dbal\DbalExtension;
 
-use Drupal\Driver\Database\dbal\Connection as DruDbalConnection;
+use Drupal\drudbal\Driver\Database\dbal\Connection as DruDbalConnection;
 
 use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
@@ -19,7 +19,7 @@ class AbstractExtension implements DbalExtensionInterface {
   /**
    * The DruDbal connection.
    *
-   * @var \Drupal\Driver\Database\dbal\Connection
+   * @var \Drupal\drudbal\Driver\Database\dbal\Connection
    */
   protected $connection;
 
@@ -54,7 +54,7 @@ class AbstractExtension implements DbalExtensionInterface {
   /**
    * Constructs a DBAL extension object.
    *
-   * @param \Drupal\Driver\Database\dbal\Connection $drudbal_connection
+   * @param \Drupal\drudbal\Driver\Database\dbal\Connection $drudbal_connection
    *   The Drupal database connection object for this extension.
    * @param \Doctrine\DBAL\Connection $dbal_connection
    *   The DBAL connection.
@@ -68,6 +68,15 @@ class AbstractExtension implements DbalExtensionInterface {
 
     static $debugIdCnt = 0;
     $this->debugId = $debugIdCnt++;
+  }
+
+  /**
+   * Destructs a DBAL extension object.
+   */
+  public function __destruct() {
+    $this->dbalConnection->close();
+    $this->dbalConnection = NULL;
+    $this->connection = NULL;
   }
 
   /**
@@ -93,12 +102,6 @@ class AbstractExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function destroy() {
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function delegateClientVersion() {
     throw new \LogicException("Method " . __METHOD__ . " not implemented for '" . $this->dbalConnection->getDriver()->getName() . "'");
   }
@@ -115,6 +118,20 @@ class AbstractExtension implements DbalExtensionInterface {
    */
   public function getDbalConnection() {
     return $this->dbalConnection;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getDbServerPlatform(): string {
+    return $this->getDbalConnection()->getDriver()->getDatabasePlatform()->getName();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getDbServerVersion(): string {
+    return $this->getDbalConnection()->getWrappedConnection()->getServerVersion();
   }
 
   /**
@@ -165,15 +182,15 @@ class AbstractExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function getDbFieldName($field_name) {
-    return $field_name;
+  public function getDbFieldName($field_name, bool $quoted = TRUE) {
+    return $quoted ? $this->connection->escapeField($field_name) : $field_name;
   }
 
   /**
    * {@inheritdoc}
    */
-  public function getDbAlias($alias) {
-    return $alias;
+  public function getDbAlias($alias, bool $quoted = TRUE) {
+    return $quoted ? $this->connection->escapeField($alias) : $alias;
   }
 
   /**
@@ -191,16 +208,10 @@ class AbstractExtension implements DbalExtensionInterface {
   }
 
   /**
-   * Returns a fully prefixed table name from Drupal's {table} syntax.
-   *
-   * @param string $drupal_table
-   *   The table name in Drupal's syntax.
-   *
-   * @return string
-   *   The fully prefixed table name to be used in the DBMS.
+   * {@inheritdoc}
    */
-  protected function tableName($drupal_table) {
-    return $this->connection->getPrefixedTableName($drupal_table);
+  public function getDrupalIndexName(string $drupal_table_name, string $db_index_name): string {
+    return $db_index_name;
   }
 
   /**
@@ -224,14 +235,7 @@ class AbstractExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function delegateTransactionSupport(array &$connection_options = []) {
-    throw new \LogicException("Method " . __METHOD__ . " not implemented for '" . $this->dbalConnection->getDriver()->getName() . "'");
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function delegateTransactionalDdlSupport(array &$connection_options = []) {
+  public function delegateTransactionalDdlSupport(array &$connection_options = []): bool {
     throw new \LogicException("Method " . __METHOD__ . " not implemented for '" . $this->dbalConnection->getDriver()->getName() . "'");
   }
 
@@ -344,8 +348,8 @@ class AbstractExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function delegateFetch(DbalStatement $dbal_statement, $mode, $fetch_class) {
-    throw new \LogicException("Method " . __METHOD__ . " not implemented for '" . $this->dbalConnection->getDriver()->getName() . "'");
+  public function processFetchedRecord(array $record) : array {
+    return $record;
   }
 
   /**
@@ -546,20 +550,6 @@ class AbstractExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function delegateFieldSetDefault(DbalSchema $dbal_schema, $drupal_table_name, $field_name, $default) {
-    throw new \LogicException("Method " . __METHOD__ . " not implemented for '" . $this->dbalConnection->getDriver()->getName() . "'");
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function delegateFieldSetNoDefault(DbalSchema $dbal_schema, $drupal_table_name, $field_name) {
-    throw new \LogicException("Method " . __METHOD__ . " not implemented for '" . $this->dbalConnection->getDriver()->getName() . "'");
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function delegateIndexExists(&$result, DbalSchema $dbal_schema, $table_full_name, $drupal_table_name, $drupal_index_name) {
     return FALSE;
   }
@@ -588,6 +578,13 @@ class AbstractExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
+  public function preprocessIndexFields(DbalSchema $dbal_schema, string $table_full_name, string $index_full_name, string $drupal_table_name, string $drupal_index_name, array $drupal_field_specs, array $indexes_spec) : array {
+    return $drupal_field_specs;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function delegateDropPrimaryKey(&$primary_key_dropped_by_extension, DbalSchema $dbal_schema, $drupal_table_name) {
     return FALSE;
   }
@@ -603,7 +600,7 @@ class AbstractExtension implements DbalExtensionInterface {
    * {@inheritdoc}
    */
   public function delegateGetTableComment(DbalSchema $dbal_schema, $drupal_table_name) {
-    throw new \RuntimeException("Table comments are not supported for '" . $this->dbalConnection->getDriver()->getName() . "'");
+    return $dbal_schema->getTable($this->connection->getPrefixedTableName($drupal_table_name))->getComment();
   }
 
   /**
@@ -611,7 +608,7 @@ class AbstractExtension implements DbalExtensionInterface {
    */
   public function delegateGetColumnComment(DbalSchema $dbal_schema, $drupal_table_name, $column) {
     if ($this->getDbalConnection()->getDatabasePlatform()->supportsInlineColumnComments()) {
-      return $dbal_schema->getTable($this->tableName($drupal_table_name))->getColumn($column)->getComment();
+      return $dbal_schema->getTable($this->connection->getPrefixedTableName($drupal_table_name))->getColumn($column)->getComment();
     }
     else {
       throw new \RuntimeException("Column comments are not supported for '" . $this->dbalConnection->getDriver()->getName() . "'");

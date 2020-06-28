@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\Driver\Database\dbal\DbalExtension;
+namespace Drupal\drudbal\Driver\Database\dbal\DbalExtension;
 
 use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\Statement as DbalStatement;
@@ -40,20 +40,6 @@ class PDOMySqlExtension extends AbstractMySqlExtension {
    */
   public function delegateClientVersion() {
     return $this->dbalConnection->getWrappedConnection()->getAttribute(\PDO::ATTR_CLIENT_VERSION);
-  }
-
-  /**
-   * Statement delegated methods.
-   */
-
-  /**
-   * {@inheritdoc}
-   */
-  public function delegateFetch(DbalStatement $dbal_statement, $mode, $fetch_class) {
-    if ($mode === \PDO::FETCH_CLASS) {
-      $dbal_statement->setFetchMode($mode, $fetch_class);
-    }
-    return $dbal_statement->fetch($mode);
   }
 
 }

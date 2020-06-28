@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\Driver\Database\dbal;
+namespace Drupal\drudbal\Driver\Database\dbal;
 
 use Drupal\Core\Database\Connection as DatabaseConnection;
 use Drupal\Core\Database\ConnectionNotDefinedException;
@@ -13,10 +13,10 @@ use Drupal\Core\Database\TransactionNameNonUniqueException;
 use Drupal\Core\Database\TransactionNoActiveException;
 use Drupal\Core\Database\TransactionOutOfOrderException;
 
-use Drupal\Driver\Database\dbal\DbalExtension\MysqliExtension;
-use Drupal\Driver\Database\dbal\DbalExtension\Oci8Extension;
-use Drupal\Driver\Database\dbal\DbalExtension\PDOMySqlExtension;
-use Drupal\Driver\Database\dbal\DbalExtension\PDOSqliteExtension;
+use Drupal\drudbal\Driver\Database\dbal\DbalExtension\MysqliExtension;
+use Drupal\drudbal\Driver\Database\dbal\DbalExtension\Oci8Extension;
+use Drupal\drudbal\Driver\Database\dbal\DbalExtension\PDOMySqlExtension;
+use Drupal\drudbal\Driver\Database\dbal\DbalExtension\PDOSqliteExtension;
 
 use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\ConnectionException as DbalConnectionException;
@@ -25,14 +25,13 @@ use Doctrine\DBAL\DriverManager as DbalDriverManager;
 use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
 use Doctrine\DBAL\Version as DbalVersion;
 use GuzzleHttp\Psr7\Uri;
-use Psr\Http\Message\UriInterface;
 
 /**
  * DruDbal implementation of \Drupal\Core\Database\Connection.
  *
  * Note: there should not be db platform specific code here. Any tasks that
  * cannot be managed by Doctrine DBAL should be added to extension specific
- * code in Drupal\Driver\Database\dbal\DbalExtension\[dbal_driver_name]
+ * code in Drupal\drudbal\Driver\Database\dbal\DbalExtension\[dbal_driver_name]
  * classes and execution handed over to there.
  */
 class Connection extends DatabaseConnection {
@@ -75,7 +74,7 @@ class Connection extends DatabaseConnection {
   /**
    * The DruDbal extension for the DBAL driver.
    *
-   * @var \Drupal\Driver\Database\dbal\DbalExtension\DbalExtensionInterface
+   * @var \Drupal\drudbal\Driver\Database\dbal\DbalExtension\DbalExtensionInterface
    */
   protected $dbalExtension;
 
@@ -97,17 +96,33 @@ class Connection extends DatabaseConnection {
    * Constructs a Connection object.
    */
   public function __construct(DbalConnection $dbal_connection, array $connection_options = []) {
+    // The 'transactions' option is deprecated.
+    if (isset($connection_options['transactions'])) {
+      @trigger_error('Passing a \'transactions\' connection option to Drupal\\Core\\Database\\Connection::__construct is deprecated in drupal:9.1.0 and is removed in drupal:10.0.0. All database drivers must support transactions. See https://www.drupal.org/node/2278745', E_USER_DEPRECATED);
+      unset($connection_options['transactions']);
+    }
+
+    $this->dbalPlatform = $dbal_connection->getDatabasePlatform();
     $this->connectionOptions = $connection_options;
     $this->setPrefix(isset($connection_options['prefix']) ? $connection_options['prefix'] : '');
     $dbal_extension_class = static::getDbalExtensionClass($connection_options);
     $this->statementClass = static::getStatementClass($connection_options);
     $this->dbalExtension = new $dbal_extension_class($this, $dbal_connection, $this->statementClass);
-    $this->dbalPlatform = $dbal_connection->getDatabasePlatform();
-    $this->transactionSupport = $this->dbalExtension->delegateTransactionSupport($connection_options);
     $this->transactionalDDLSupport = $this->dbalExtension->delegateTransactionalDdlSupport($connection_options);
+
     // Unset $this->connection so that __get() can return the wrapped
     // DbalConnection on the extension instead.
     unset($this->connection);
+
+    $quote_identifier = $this->dbalPlatform->getIdentifierQuoteCharacter();
+    $this->identifierQuotes = [$quote_identifier, $quote_identifier];
+  }
+
+  /**
+   * Destructs a Connection object.
+   */
+  public function __destruct() {
+    $this->schema = NULL;
   }
 
   /**
@@ -125,8 +140,8 @@ class Connection extends DatabaseConnection {
    * {@inheritdoc}
    */
   public function destroy() {
-    $this->dbalExtension->destroy();
-    $this->schema = NULL;
+    @trigger_error(__METHOD__ . '() is deprecated in drupal:9.1.0 and is removed from drupal:10.0.0. Move custom database destruction logic to __destruct(). See https://www.drupal.org/node/3142866', E_USER_DEPRECATED);
+    return;
   }
 
   /**
@@ -165,7 +180,7 @@ class Connection extends DatabaseConnection {
       // Per-table prefixes are deprecated as of Drupal 8.2 so let's not get
       // in the complexity of trying to manage that. Assume a single default
       // prefix.
-      $this->dbTables['{' . $table . '}'] = $this->dbalExtension->getDbTableName($this->prefixes['default'], $table);
+      $this->dbTables['{' . $table . '}'] = $this->identifierQuotes[0] . $this->dbalExtension->getDbTableName($this->prefixes['default'], $table) . $this->identifierQuotes[1];
     }
     return str_replace(array_keys($this->dbTables), array_values($this->dbTables), $sql);
   }
@@ -175,12 +190,23 @@ class Connection extends DatabaseConnection {
    *
    * @param string $table_name
    *   A Drupal table name.
+   * @param bool $quoted
+   *   (Optional) If TRUE, the returned table name is wrapped into identifier
+   *   quotes.
    *
    * @return string
    *   A fully prefixed table name, suitable for direct usage in db queries.
    */
-  public function getPrefixedTableName($table_name) {
-    return $this->prefixTables('{' . $table_name . '}');
+  public function getPrefixedTableName(string $table_name, bool $quoted = FALSE): string {
+    // If the table name is enclosed in curly braces, remove them first.
+    $matches = [];
+    if (preg_match('/^{(\S*)}/', $table_name, $matches) === 1) {
+      $table_name = $matches[1];
+    }
+
+    $prefixed_table_name = $this->prefixTables('{' . $table_name . '}');
+    // @todo use substr  instead
+    return $quoted ? $prefixed_table_name : str_replace($this->identifierQuotes, ['', ''], $prefixed_table_name);
   }
 
   /**
@@ -205,12 +231,16 @@ class Connection extends DatabaseConnection {
         // semicolon) is not allowed unless the option is set.  Allowing
         // semicolons should only be needed for special cases like defining a
         // function or stored procedure in SQL. Trim any trailing delimiter to
-        // minimize false positives.
-        $query = rtrim($query, ";  \t\n\r\0\x0B");
+        // minimize false positives unless delimiter is allowed.
+        $trim_chars = " \xA0\t\n\r\0\x0B";
+        if (empty($options['allow_delimiter_in_query'])) {
+          $trim_chars .= ';';
+        }
+        $query = rtrim($query, $trim_chars);
         if (strpos($query, ';') !== FALSE && empty($options['allow_delimiter_in_query'])) {
           throw new \InvalidArgumentException('; is not supported in SQL strings. Use only one statement at a time.');
         }
-        $stmt = $this->prepareQueryWithParams($query, $args);
+        $stmt = $this->prepareStatement($query, $options);
         $stmt->execute($args, $options);
       }
 
@@ -359,25 +389,25 @@ class Connection extends DatabaseConnection {
       'dbal_statement_class' => NULL,
     ]);
     // Map to DBAL connection array the main keys from the Drupal connection.
-    if (isset($connection_options['database'])) {
+    if (!empty($connection_options['database'])) {
       $options['dbname'] = $connection_options['database'];
     }
-    if (isset($connection_options['username'])) {
+    if (!empty($connection_options['username'])) {
       $options['user'] = $connection_options['username'];
     }
-    if (isset($connection_options['password'])) {
+    if (!empty($connection_options['password'])) {
       $options['password'] = $connection_options['password'];
     }
-    if (isset($connection_options['host'])) {
+    if (!empty($connection_options['host'])) {
       $options['host'] = $connection_options['host'];
     }
-    if (isset($connection_options['port'])) {
+    if (!empty($connection_options['port'])) {
       $options['port'] = $connection_options['port'];
     }
-    if (isset($connection_options['dbal_url'])) {
+    if (!empty($connection_options['dbal_url'])) {
       $options['url'] = $connection_options['dbal_url'];
     }
-    if (isset($connection_options['dbal_driver'])) {
+    if (!empty($connection_options['dbal_driver'])) {
       $options['driver'] = $connection_options['dbal_driver'];
     }
     // If there is a 'pdo' key in Drupal, that needs to be mapped to the
@@ -460,66 +490,20 @@ class Connection extends DatabaseConnection {
   }
 
   /**
-   * Prepares a query string and returns the prepared statement.
-   *
-   * This method caches prepared statements, reusing them when possible. It also
-   * prefixes tables names enclosed in curly-braces.
-   * Emulated prepared statements does not communicate with the database server
-   * so this method does not check the statement.
-   *
-   * @param string $query
-   *   The query string as SQL, with curly-braces surrounding the
-   *   table names. Passed by reference to allow altering by DBAL extensions.
-   * @param array $args
-   *   An array of arguments for the prepared statement. If the prepared
-   *   statement uses ? placeholders, this array must be an indexed array.
-   *   If it contains named placeholders, it must be an associative array.
-   *   Passed by reference to allow altering by DBAL extensions.
-   * @param array $driver_options
-   *   (optional) This array holds one or more key=>value pairs to set
-   *   attribute values for the Statement object that this method returns.
-   *
-   * @return \Drupal\Core\Database\StatementInterface|false
-   *   If the database server successfully prepares the statement, returns a
-   *   StatementInterface object.
-   *   If the database server cannot successfully prepare the statement  returns
-   *   FALSE or emits an Exception (depending on error handling).
+   * {@inheritdoc}
    */
-  public function prepareQueryWithParams(&$query, array &$args = [], array $driver_options = []) {
+  public function prepareStatement(string $query, array $options): StatementInterface {
     $query = $this->prefixTables($query);
-    return new $this->statementClass($this, $query, $args, $driver_options);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function prepareQuery($query) {
-    // Should not be used, because it fails to execute properly in case the
-    // driver is not able to process named placeholders. Use
-    // ::prepareQueryWithParams instead.
-    // @todo raise an exception and fail hard??
-    return $this->prepareQueryWithParams($query);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function prepare($statement, array $driver_options = []) {
-    // Should not be used, because it fails to execute properly in case the
-    // driver is not able to process named placeholders. Use
-    // ::prepareQueryWithParams instead.
-    // @todo raise an exception and fail hard??
-    $params = [];
-    return new $this->statementClass($this, $statement, $params, $driver_options);
+    if (!($options['allow_square_brackets'] ?? FALSE)) {
+      $query = $this->quoteIdentifiers($query);
+    }
+    return new $this->statementClass($this, $query, $options['pdo'] ?? []);
   }
 
   /**
    * {@inheritdoc}
    */
   public function rollBack($savepoint_name = 'drupal_transaction') {
-    if (!$this->supportsTransactions()) {
-      return;
-    }
     if (!$this->inTransaction()) {
       throw new TransactionNoActiveException();
     }
@@ -552,6 +536,14 @@ class Connection extends DatabaseConnection {
         $rolled_back_other_active_savepoints = TRUE;
       }
     }
+
+    // Notify the callbacks about the rollback.
+    $callbacks = $this->rootTransactionEndCallbacks;
+    $this->rootTransactionEndCallbacks = [];
+    foreach ($callbacks as $callback) {
+      call_user_func($callback, FALSE);
+    }
+
     $this->connection->rollBack();
     if ($rolled_back_other_active_savepoints) {
       throw new TransactionOutOfOrderException();
@@ -562,9 +554,6 @@ class Connection extends DatabaseConnection {
    * {@inheritdoc}
    */
   public function pushTransaction($name) {
-    if (!$this->supportsTransactions()) {
-      return;
-    }
     if (isset($this->transactionLayers[$name])) {
       throw new TransactionNameNonUniqueException($name . " is already in use.");
     }
@@ -593,12 +582,7 @@ class Connection extends DatabaseConnection {
       // If there are no more layers left then we should commit.
       unset($this->transactionLayers[$name]);
       if (empty($this->transactionLayers)) {
-        try {
-          $this->getDbalConnection()->commit();
-        }
-        catch (DbalConnectionException $e) {
-          throw new TransactionCommitFailedException();
-        }
+        $this->doCommit();
       }
       else {
         // Attempt to release this savepoint in the standard way.
@@ -617,6 +601,33 @@ class Connection extends DatabaseConnection {
   }
 
   /**
+   * Do the actual commit, invoke post-commit callbacks.
+   *
+   * @internal
+   */
+  protected function doCommit() {
+    try {
+      $this->getDbalConnection()->commit();
+      $success = TRUE;
+    }
+    catch (DbalConnectionException $e) {
+      $success = FALSE;
+    }
+
+    if (!empty($this->rootTransactionEndCallbacks)) {
+      $callbacks = $this->rootTransactionEndCallbacks;
+      $this->rootTransactionEndCallbacks = [];
+      foreach ($callbacks as $callback) {
+        call_user_func($callback, $success);
+      }
+    }
+
+    if (!$success) {
+      throw new TransactionCommitFailedException();
+    }
+  }
+
+  /**
    * Gets the wrapped DBAL connection.
    *
    * @return string
@@ -629,7 +640,7 @@ class Connection extends DatabaseConnection {
   /**
    * Gets the DBAL extension.
    *
-   * @return \Drupal\Driver\Database\dbal\DbalExtension\DbalExtensionInterface
+   * @return \Drupal\drudbal\Driver\Database\dbal\DbalExtension\DbalExtensionInterface
    *   The DBAL extension for this connection.
    */
   public function getDbalExtension() {
@@ -670,16 +681,6 @@ class Connection extends DatabaseConnection {
       return $connection_options['dbal_statement_class'];
     }
     return Statement::class;
-  }
-
-  /**
-   * Gets the database server version.
-   *
-   * @return string
-   *   The database server version string.
-   */
-  public function getDbServerVersion() {
-    return $this->getDbalConnection()->getWrappedConnection()->getServerVersion();
   }
 
   /**
