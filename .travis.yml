@@ -24,7 +24,7 @@ jobs:
     - env: DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Database,Entity,Field" PHPUNIT_SKIP_CLASS='["Drupal\\KernelTests\\Core\\Database\\DatabaseExceptionWrapperTest"]'
       services:
         - mysql
-    - env: DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Installer,Cache,Config"
+    - env: DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Installer,Cache,Config" PHPUNIT_SKIP_CLASS='["Drupal\\KernelTests\\Core\\Cache\\EndOfTransactionQueriesTest"]'
       services:
         - mysql
     - env: DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group field"
@@ -39,7 +39,7 @@ jobs:
     - env: DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Database,Entity,Field" PHPUNIT_SKIP_CLASS='["Drupal\\KernelTests\\Core\\Database\\DatabaseExceptionWrapperTest"]'
       services:
         - mysql
-    - env: DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Installer,Cache,Config"
+    - env: DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Installer,Cache,Config" PHPUNIT_SKIP_CLASS='["Drupal\\KernelTests\\Core\\Cache\\EndOfTransactionQueriesTest"]'
       services:
         - mysql
     - env: DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group field"
@@ -53,17 +53,17 @@ jobs:
         - mysql
     - env: DRUDBAL_ENV="sqlite" TEST_ARGS="--group Database"
     - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database,Entity,Field" PHPUNIT_SKIP_CLASS='["Drupal\\KernelTests\\Core\\Database\\DatabaseExceptionWrapperTest"]'
-    - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Installer,Cache,Config"
+    - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Installer,Cache,Config" PHPUNIT_SKIP_CLASS='["Drupal\\KernelTests\\Core\\Cache\\EndOfTransactionQueriesTest"]'
     - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group field"
     - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group file" PHPUNIT_SKIP_CLASS='["Drupal\\Tests\\file\\Functional\\DownloadTest"]'
     - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group views"
     - php: 7.3
       env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database" PHPUNIT_SKIP_CLASS='["Drupal\\KernelTests\\Core\\Database\\DatabaseExceptionWrapperTest"]'
     - stage: Allow Failures
-      env: DRUDBAL_ENV="dbal/sqlite/memory" TEST_ARGS="--group Database,Installer,Cache,Config,Entity,Field" PHPUNIT_SKIP_CLASS='["Drupal\\KernelTests\\Core\\Database\\DatabaseExceptionWrapperTest"]'
+      env: DRUDBAL_ENV="dbal/sqlite/memory" TEST_ARGS="--group Database,Installer,Cache,Config,Entity,Field"
   fast_finish: true
   allow_failures:
-    - env: DRUDBAL_ENV="dbal/sqlite/memory" TEST_ARGS="--group Database,Installer,Cache,Config,Entity,Field" PHPUNIT_SKIP_CLASS='["Drupal\\KernelTests\\Core\\Database\\DatabaseExceptionWrapperTest"]'
+    - env: DRUDBAL_ENV="dbal/sqlite/memory" TEST_ARGS="--group Database,Installer,Cache,Config,Entity,Field"
 
 cache:
   directories:
@@ -171,8 +171,6 @@ before_install:
   - curl https://www.drupal.org/files/issues/2657888-18.patch | git apply
   # [#2992274] Installer tests fail if contrib driver hides database credentials form fields
   - curl https://www.drupal.org/files/issues/2019-04-02/2992274-5.patch | git apply
-  # [#3125987] EndOfTransactionQueriesTest fails with contrib db driver
-  - curl https://www.drupal.org/files/issues/2020-04-16/3125987-20.patch | git apply
   # [#3128616] Replace \Drupal\Core\Database\Connection::destroy() with a proper destructor
   - curl https://www.drupal.org/files/issues/2020-06-20/3128616-48.patch | git apply
 
