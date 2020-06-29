@@ -31,8 +31,9 @@ jobs:
 #      services:
 #        - mysql
 #    - env: DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group file"
-#      services:
-#        - mysql
+    - env: DRUDBAL_ENV="dbal/mysql" TEST_ARGS="modules/file/tests/src/Functional/DownloadTest.php"
+      services:
+        - mysql
 #    - env: DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group views"
 #      services:
 #        - mysql
