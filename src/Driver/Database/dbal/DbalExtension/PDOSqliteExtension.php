@@ -117,7 +117,7 @@ class PDOSqliteExtension extends AbstractExtension {
           // We can prune the database file if it doesn't have any tables.
           if ($count == 0) {
             // Detach the database.
-            $this->query('DETACH DATABASE :schema', [':schema' => $prefix]);
+            $this->connection->query('DETACH DATABASE :schema', [':schema' => $prefix]);
             // Destroy the database file.
             unlink($db_file);
           }
