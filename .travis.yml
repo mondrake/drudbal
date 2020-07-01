@@ -24,7 +24,7 @@ jobs:
     - env: DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Database,Entity,Field" PHPUNIT_SKIP_CLASS='["Drupal\\KernelTests\\Core\\Database\\DatabaseExceptionWrapperTest"]'
       services:
         - mysql
-    - env: DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Installer,Cache,Config" PHPUNIT_SKIP_CLASS='["Drupal\\KernelTests\\Core\\Cache\\EndOfTransactionQueriesTest"]'
+    - env: DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Installer,Cache,Config"
       services:
         - mysql
     - env: DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group field"
@@ -39,7 +39,7 @@ jobs:
     - env: DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Database,Entity,Field" PHPUNIT_SKIP_CLASS='["Drupal\\KernelTests\\Core\\Database\\DatabaseExceptionWrapperTest"]'
       services:
         - mysql
-    - env: DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Installer,Cache,Config" PHPUNIT_SKIP_CLASS='["Drupal\\KernelTests\\Core\\Cache\\EndOfTransactionQueriesTest"]'
+    - env: DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Installer,Cache,Config"
       services:
         - mysql
     - env: DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group field"
@@ -53,7 +53,7 @@ jobs:
         - mysql
     - env: DRUDBAL_ENV="sqlite" TEST_ARGS="--group Database"
     - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database,Entity,Field" PHPUNIT_SKIP_CLASS='["Drupal\\KernelTests\\Core\\Database\\DatabaseExceptionWrapperTest"]'
-    - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Installer,Cache,Config" PHPUNIT_SKIP_CLASS='["Drupal\\KernelTests\\Core\\Cache\\EndOfTransactionQueriesTest"]'
+    - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Installer,Cache,Config"
     - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group field"
     - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group file" PHPUNIT_SKIP_CLASS='["Drupal\\Tests\\file\\Functional\\DownloadTest"]'
     - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group views"
