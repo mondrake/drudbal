@@ -90,5 +90,4 @@ tbd                                                             | Add tests for 
 tbd                                                             | Ensure that when INSERTing a NULL value in a database column, SELECTing it back returns NULL and not empty string - for all fetch modes |
 tbd                                                             | UpdateTestBase::runUpdate should reset database schema after updating                                                             |
 [2992274](https://www.drupal.org/project/drupal/issues/2992274) | Installer tests fail if contrib driver hides database credentials form fields                                                           |
-[3125987](https://www.drupal.org/project/drupal/issues/3125987) | EndOfTransactionQueriesTest fails with contrib db driver                                                                                  |
 [3128616](https://www.drupal.org/project/drupal/issues/3128616) | Replace \Drupal\Core\Database\Connection::destroy() with a proper destructor                                                                                 |
