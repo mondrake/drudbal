@@ -273,6 +273,11 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
       $message = Unicode::truncateBytes($e->getMessage(), self::MIN_MAX_ALLOWED_PACKET);
       throw new DatabaseExceptionWrapper($message, $e->getSqlState(), $e);
     }
+    elseif ($e->getErrorCode() == 1364) {
+      // In case of attempted INSERT of a record with an undefined column and
+      // no default value indicated in schema, MySql returns a 1364 error code.
+      throw new IntegrityConstraintViolationException($message, $e->getCode(), $e);
+    }
     else {
       throw new DatabaseExceptionWrapper($message, 0, $e);
     }
