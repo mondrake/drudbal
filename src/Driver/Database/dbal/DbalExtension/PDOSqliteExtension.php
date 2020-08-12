@@ -269,6 +269,7 @@ class PDOSqliteExtension extends AbstractExtension {
     // Create functions needed by SQLite.
     $pdo->sqliteCreateFunction('if', [SqliteConnectionBase::class, 'sqlFunctionIf']);
     $pdo->sqliteCreateFunction('greatest', [SqliteConnectionBase::class, 'sqlFunctionGreatest']);
+    $pdo->sqliteCreateFunction('least', [SqliteConnectionBase::class, 'sqlFunctionLeast']);
     $pdo->sqliteCreateFunction('pow', 'pow', 2);
     $pdo->sqliteCreateFunction('exp', 'exp', 1);
     $pdo->sqliteCreateFunction('length', 'strlen', 1);
