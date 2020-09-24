@@ -61,7 +61,7 @@ jobs:
       env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database" PHPUNIT_SKIP_CLASS='["Drupal\\KernelTests\\Core\\Database\\DatabaseExceptionWrapperTest"]'
     - stage: Allow Failures
       php: nightly
-      env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database" PHPUNIT_SKIP_CLASS='["Drupal\\KernelTests\\Core\\Database\\DatabaseExceptionWrapperTest"]'
+      env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database" COMPOSER_ARGS="--ignore-platform-reqs" PHPUNIT_SKIP_CLASS='["Drupal\\KernelTests\\Core\\Database\\DatabaseExceptionWrapperTest"]'
     - stage: Allow Failures
       env: DRUDBAL_ENV="dbal/sqlite/memory" TEST_ARGS="--group Database,Installer,Cache,Config,Entity,Field"
   fast_finish: true
@@ -161,9 +161,9 @@ before_install:
       if [[ ! -f $DRUPAL_STAGING_DIR/index.php ]]; then
         git clone --depth=5 --branch=9.1.x http://git.drupal.org/project/drupal.git $DRUPAL_STAGING_DIR
         cd $DRUPAL_STAGING_DIR
-        composer install --no-progress --no-suggest
+        composer install --no-progress --no-suggest $COMPOSER_ARGS
         # Get Drush and Doctrine DBAL
-        composer require drush/drush --no-progress --no-suggest
+        composer require drush/drush --no-progress --no-suggest $COMPOSER_ARGS
       fi
 
   # Copy staged Drupal core to running path.
@@ -183,7 +183,7 @@ before_install:
   - cd $DRUPAL_PATH
   - |
       composer config repositories.travisci-run '{"type": "path", "url": "$TRAVIS_BUILD_DIR", "options": {"symlink": false}}'
-  - composer require "mondrake/drudbal:dev-travisci-run-branch" --no-progress --no-suggest
+  - composer require "mondrake/drudbal:dev-travisci-run-branch" --no-progress --no-suggest $COMPOSER_ARGS
 
   # Other general patches.
   # [#3110546] Allow contributed modules (mostly database drivers) to override tests in core
