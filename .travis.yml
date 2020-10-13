@@ -161,6 +161,7 @@ before_install:
         git clone --depth=5 --branch=9.1.x http://git.drupal.org/project/drupal.git $DRUPAL_STAGING_DIR
         cd $DRUPAL_STAGING_DIR
         composer install --no-progress --no-suggest $COMPOSER_ARGS
+        composer run-script drupal-phpunit-upgrade
         # Get Drush and Doctrine DBAL
         composer require drush/drush --no-progress --no-suggest $COMPOSER_ARGS
       fi
