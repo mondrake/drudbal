@@ -212,10 +212,10 @@ class Tasks extends InstallTasks {
       $options['url'] = $form_state->getValue(['dbal', 'dbal_url']);
       $dbal_connection = DbalDriverManager::getConnection($options);
       $form_state->setValue(['dbal', 'database'], $dbal_connection->getDatabase());
-      $form_state->setValue(['dbal', 'username'], $dbal_connection->getUsername());
-      $form_state->setValue(['dbal', 'password'], $dbal_connection->getPassword());
-      $form_state->setValue(['dbal', 'host'], $dbal_connection->getHost());
-      $form_state->setValue(['dbal', 'port'], $dbal_connection->getPort());
+      $form_state->setValue(['dbal', 'username'], $dbal_connection->getParams()['user'] ?? NULL);
+      $form_state->setValue(['dbal', 'password'], $dbal_connection->getParams()['password'] ?? NULL);
+      $form_state->setValue(['dbal', 'host'], $dbal_connection->getParams()['host'] ?? NULL);
+      $form_state->setValue(['dbal', 'port'], $dbal_connection->getParams()['port'] ?? NULL);
       $form_state->setValue(['dbal', 'dbal_driver'], $dbal_connection->getDriver()->getName());
     }
     catch (DBALException $e) {
