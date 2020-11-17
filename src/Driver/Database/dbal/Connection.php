@@ -337,7 +337,7 @@ class Connection extends DatabaseConnection {
       ]);
       // Below shouldn't happen, but if it does, then use the driver name
       // from the just established DBAL connection.
-      $connection_options['dbal_driver'] = $dbal_connection->getDriver()->getName();
+   //   $connection_options['dbal_driver'] = $dbal_connection->getDriver()->getName();
     }
 
     $dbal_extension_class = static::getDbalExtensionClass($connection_options);
