@@ -333,7 +333,7 @@ class Statement implements \IteratorAggregate, StatementInterface {
         $mode = $mode ?: $this->defaultFetchMode;
       }
 
-      $dbal_row = $this->dbalStatement->fetch(FetchMode::ASSOCIATIVE);
+      $dbal_row = $this->dbalStatement->fetchAssociative();
       if (!$dbal_row) {
         return FALSE;
       }
