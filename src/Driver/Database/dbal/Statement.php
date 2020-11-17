@@ -2,14 +2,15 @@
 
 namespace Drupal\drudbal\Driver\Database\dbal;
 
-use Drupal\Core\Database\Database;
-use Drupal\Core\Database\DatabaseExceptionWrapper;
-use Drupal\Core\Database\StatementInterface;
-use Drupal\Core\Database\RowCountException;
-use Drupal\drudbal\Driver\Database\dbal\Connection as DruDbalConnection;
 use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\FetchMode;
+use Doctrine\DBAL\Result;
 use Doctrine\DBAL\SQLParserUtils;
+use Drupal\Core\Database\Database;
+use Drupal\Core\Database\DatabaseExceptionWrapper;
+use Drupal\Core\Database\RowCountException;
+use Drupal\Core\Database\StatementInterface;
+use Drupal\drudbal\Driver\Database\dbal\Connection as DruDbalConnection;
 
 // @todo organize better prefetch vs normal
 // @todo DBAL 2.6.0:
@@ -48,6 +49,13 @@ class Statement implements \IteratorAggregate, StatementInterface {
    * @var \Doctrine\DBAL\Statement
    */
   protected $dbalStatement = NULL;
+
+  /**
+   * The DBAL executed statement result.
+   *
+   * @var \Doctrine\DBAL\Result
+   */
+  protected $dbalResult = NULL;
 
   /**
    * Holds supplementary driver options.
@@ -258,7 +266,7 @@ class Statement implements \IteratorAggregate, StatementInterface {
     }
 
     try {
-      $this->dbalStatement->execute($args);
+      $this->dbalResult = $this->dbalStatement->execute($args);
     }
     catch (DBALException $e) {
       throw new DatabaseExceptionWrapper($e->getMessage(), $e->getCode(), $e);
@@ -272,10 +280,13 @@ class Statement implements \IteratorAggregate, StatementInterface {
 
       // Fetch all the data from the reply, in order to release any lock
       // as soon as possible.
-      $this->data = $this->dbalStatement->fetchAll(FetchMode::ASSOCIATIVE);
+      $this->data = $this->dbalResult->fetchAllAssociative();
       // Destroy the statement as soon as possible. See the documentation of
       // \Drupal\Core\Database\Driver\sqlite\Statement for an explanation.
+      $this->dbalResult->free();
+      unset($this->dbalResult);
       unset($this->dbalStatement);
+      $this->dbalResult = NULL;
       $this->dbalStatement = NULL;
 
       $this->resultRowCount = count($this->data);
@@ -333,7 +344,7 @@ class Statement implements \IteratorAggregate, StatementInterface {
         $mode = $mode ?: $this->defaultFetchMode;
       }
 
-      $dbal_row = $this->dbalStatement->fetchAssociative();
+      $dbal_row = $this->dbalResult->fetchAssociative();
       if (!$dbal_row) {
         return FALSE;
       }
