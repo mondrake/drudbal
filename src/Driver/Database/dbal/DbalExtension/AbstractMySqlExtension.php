@@ -2,6 +2,12 @@
 
 namespace Drupal\drudbal\Driver\Database\dbal\DbalExtension;
 
+use Doctrine\DBAL\Connection as DbalConnection;
+use Doctrine\DBAL\ConnectionException as DbalConnectionException;
+use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
+use Doctrine\DBAL\Schema\Column as DbalColumn;
+use Doctrine\DBAL\Schema\Schema as DbalSchema;
+use Doctrine\DBAL\Schema\Table as DbalTable;
 use Drupal\Component\Utility\Unicode;
 use Drupal\Core\Database\Database;
 use Drupal\Core\Database\DatabaseException;
@@ -10,13 +16,6 @@ use Drupal\Core\Database\DatabaseNotFoundException;
 use Drupal\Core\Database\IntegrityConstraintViolationException;
 use Drupal\Core\Database\SchemaException;
 use Drupal\Core\Database\TransactionCommitFailedException;
-
-use Doctrine\DBAL\Connection as DbalConnection;
-use Doctrine\DBAL\ConnectionException as DbalConnectionException;
-use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
-use Doctrine\DBAL\Schema\Column as DbalColumn;
-use Doctrine\DBAL\Schema\Schema as DbalSchema;
-use Doctrine\DBAL\Schema\Table as DbalTable;
 
 /**
  * Abstract DBAL Extension for MySql drivers.
@@ -266,14 +265,14 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
     if (substr($e->getSqlState(), -6, -3) == '23') {
       throw new IntegrityConstraintViolationException($message, $e->getCode(), $e);
     }
-    elseif ($e->getErrorCode() == 1153) {
+    elseif ($e->getCode() == 1153) {
       // If a max_allowed_packet error occurs the message length is truncated.
       // This should prevent the error from recurring if the exception is
       // logged to the database using dblog or the like.
       $message = Unicode::truncateBytes($e->getMessage(), self::MIN_MAX_ALLOWED_PACKET);
       throw new DatabaseExceptionWrapper($message, $e->getSqlState(), $e);
     }
-    elseif ($e->getErrorCode() == 1364) {
+    elseif ($e->getCode() == 1364) {
       // In case of attempted INSERT of a record with an undefined column and
       // no default value indicated in schema, MySql returns a 1364 error code.
       throw new IntegrityConstraintViolationException($message, $e->getCode(), $e);
@@ -329,7 +328,7 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
     //
     // To avoid exceptions when no actual error has occurred, we silently
     // succeed for MySQL error code 1305 ("SAVEPOINT does not exist").
-    if ($e->getErrorCode() == '1305') {
+    if ($e->getCode() == '1305') {
       // We also have to explain to PDO that the transaction stack has
       // been cleaned-up.
       try {
@@ -445,7 +444,7 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
     $info = Database::getConnectionInfo();
 
     // Detect utf8mb4 incompability.
-    if ($e->getErrorCode() === self::UNSUPPORTED_CHARSET || $e->getErrorCode() === self::UNKNOWN_CHARSET) {
+    if ($e->getCode() === self::UNSUPPORTED_CHARSET || $e->getCode() === self::UNKNOWN_CHARSET) {
       $results['fail'][] = t('Your MySQL server and PHP MySQL driver must support utf8mb4 character encoding. Make sure to use a database system that supports this (such as MySQL/MariaDB/Percona 5.5.3 and up), and that the utf8mb4 character set is compiled in. See the <a href=":documentation" target="_blank">MySQL documentation</a> for more information.', [':documentation' => 'https://dev.mysql.com/doc/refman/5.0/en/cannot-initialize-character-set.html']);
       $info_copy = $info;
       // Set a flag to fall back to utf8. Note: this flag should only be
@@ -467,7 +466,7 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
     // Attempt to create the database if it is not found. Try to establish a
     // connection without database specified, try to create database, and if
     // successful reopen the connection to the new database.
-    if ($e->getErrorCode() === self::DATABASE_NOT_FOUND) {
+    if ($e->getCode() === self::DATABASE_NOT_FOUND) {
       try {
         // Remove the database string from connection info.
         $database = $info['default']['database'];
