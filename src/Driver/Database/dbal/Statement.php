@@ -644,7 +644,7 @@ class Statement implements \IteratorAggregate, StatementInterface {
         return $this->rowCount;
       }
       else {
-        return $this->dbh->getDbalExtension()->delegateRowCount($this->dbalStatement);
+        return $this->dbh->getDbalExtension()->delegateRowCount($this->dbalResult);
       }
     }
     else {
