@@ -2,16 +2,16 @@
 
 namespace Drupal\drudbal\Driver\Database\dbal\Install;
 
-use Drupal\Core\Database\ConnectionNotDefinedException;
-use Drupal\Core\Database\Database;
-use Drupal\Core\Form\FormStateInterface;
-use Drupal\Core\Database\Install\Tasks as InstallTasks;
-use Drupal\drudbal\Driver\Database\dbal\Connection as DruDbalConnection;
-
 use Doctrine\DBAL\DBALException;
+use Doctrine\DBAL\DriverManager as DbalDriverManager;
 use Doctrine\DBAL\Exception\ConnectionException as DbalExceptionConnectionException;
 use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
-use Doctrine\DBAL\DriverManager as DbalDriverManager;
+use Drupal\Core\Database\ConnectionNotDefinedException;
+use Drupal\Core\Database\Database;
+use Drupal\Core\Database\Install\Tasks as InstallTasks;
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\drudbal\Driver\Database\dbal\Connection as DruDbalConnection;
+use GuzzleHttp\Psr7\Uri;
 
 /**
  * Specifies installation tasks for DruDbal driver.
@@ -69,7 +69,7 @@ class Tasks extends InstallTasks {
     // Note: This is the minimum version of Doctrine DBAL; the minimum version
     // of the db server should be managed in
     // Drupal\drudbal\Driver\Database\dbal\DbalExtension\[dbal_driver_name]::runInstallTasks.
-    return '2.10.0';
+    return '3.0.0';
   }
 
   /**
@@ -208,15 +208,16 @@ class Tasks extends InstallTasks {
       if (empty($form_state->getValue(['dbal', 'dbal_url'])) && !empty(getenv("DBAL_URL"))) {
         $form_state->setValue(['dbal', 'dbal_url'], getenv("DBAL_URL"));
       }
-      $options = [];
-      $options['url'] = $form_state->getValue(['dbal', 'dbal_url']);
-      $dbal_connection = DbalDriverManager::getConnection($options);
-      $form_state->setValue(['dbal', 'database'], $dbal_connection->getDatabase());
-      $form_state->setValue(['dbal', 'username'], $dbal_connection->getParams()['user'] ?? NULL);
-      $form_state->setValue(['dbal', 'password'], $dbal_connection->getParams()['password'] ?? NULL);
-      $form_state->setValue(['dbal', 'host'], $dbal_connection->getParams()['host'] ?? NULL);
-      $form_state->setValue(['dbal', 'port'], $dbal_connection->getParams()['port'] ?? NULL);
-      $form_state->setValue(['dbal', 'dbal_driver'], $dbal_connection->getDriver()->getName());
+      $url = $form_state->getValue(['dbal', 'dbal_url']);
+      $dbal_connection = DbalDriverManager::getConnection(['url' => $url]);
+
+      $options = DruDbalConnection::createConnectionOptionsFromUrl($url);
+      $form_state->setValue(['dbal', 'database'], $options['database']);
+      $form_state->setValue(['dbal', 'username'], $options['username'] ?? NULL);
+      $form_state->setValue(['dbal', 'password'], $options['password'] ?? NULL);
+      $form_state->setValue(['dbal', 'host'], $options['host'] ?? NULL);
+      $form_state->setValue(['dbal', 'port'], $options['port'] ?? NULL);
+      $form_state->setValue(['dbal', 'dbal_driver'], $options['dbal_driver']);
     }
     catch (DBALException $e) {
       // If we get DBAL exception, probably the URL is malformed. We cannot

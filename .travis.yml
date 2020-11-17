@@ -71,7 +71,7 @@ jobs:
       env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database" COMPOSER_ARGS="--ignore-platform-reqs" PHPUNIT_SKIP_CLASS='["Drupal\\KernelTests\\Core\\Database\\DatabaseExceptionWrapperTest"]'
 cache:
   directories:
-    #- $HOME/drupal_staging
+    - $HOME/drupal_staging
     #- $ORACLE_DOWNLOAD_DIR
     - $HOME/.composer/cache
 
