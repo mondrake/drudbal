@@ -211,7 +211,7 @@ class Tasks extends InstallTasks {
       $url = $form_state->getValue(['dbal', 'dbal_url']);
       $dbal_connection = DbalDriverManager::getConnection(['url' => $url]);
 
-      $options = DruDbalConnection::createConnectionOptionsFromUrl($url);
+      $options = DruDbalConnection::createConnectionOptionsFromUrl($url, NULL);
       $form_state->setValue(['dbal', 'database'], $options['database']);
       $form_state->setValue(['dbal', 'username'], $options['username'] ?? NULL);
       $form_state->setValue(['dbal', 'password'], $options['password'] ?? NULL);
