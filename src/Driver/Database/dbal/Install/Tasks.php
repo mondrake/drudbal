@@ -211,13 +211,20 @@ class Tasks extends InstallTasks {
       $url = $form_state->getValue(['dbal', 'dbal_url']);
       $dbal_connection = DbalDriverManager::getConnection(['url' => $url]);
 
-      $options = DruDbalConnection::createConnectionOptionsFromUrl($url, NULL);
-      $form_state->setValue(['dbal', 'database'], $options['database']);
-      $form_state->setValue(['dbal', 'username'], $options['username'] ?? NULL);
-      $form_state->setValue(['dbal', 'password'], $options['password'] ?? NULL);
-      $form_state->setValue(['dbal', 'host'], $options['host'] ?? NULL);
-      $form_state->setValue(['dbal', 'port'], $options['port'] ?? NULL);
-      $form_state->setValue(['dbal', 'dbal_driver'], $options['dbal_driver']);
+      $uri = new Uri($url);
+      $user_info = $uri->getUserInfo();
+      if (!empty($user_info)) {
+        $user_info_elements = explode(':', $user_info, 2);
+      }
+      else {
+        $user_info_elements = [''];
+      }
+      $form_state->setValue(['dbal', 'database'], substr($uri->getPath(), 1));
+      $form_state->setValue(['dbal', 'username'], $user_info_elements[0]);
+      $form_state->setValue(['dbal', 'password'], $user_info_elements[1] ?? '');
+      $form_state->setValue(['dbal', 'host'], $uri->getHost() ?? NULL);
+      $form_state->setValue(['dbal', 'port'], $uri->getPort() ?? NULL);
+      $form_state->setValue(['dbal', 'dbal_driver'], $uri->getScheme());
     }
     catch (DBALException $e) {
       // If we get DBAL exception, probably the URL is malformed. We cannot

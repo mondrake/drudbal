@@ -6,7 +6,8 @@
     "require": {
         "php": "^7.4",
         "drupal/core": "^9.2",
-        "doctrine/dbal": "^3"
+        "doctrine/dbal": "^3",
+        "ocramius/package-versions": "^2"
     },
     "minimum-stability": "dev"
 }

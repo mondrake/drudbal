@@ -2,6 +2,11 @@
 
 namespace Drupal\drudbal\Driver\Database\dbal;
 
+use Doctrine\DBAL\Connection as DbalConnection;
+use Doctrine\DBAL\ConnectionException as DbalConnectionException;
+use Doctrine\DBAL\DBALException;
+use Doctrine\DBAL\DriverManager as DbalDriverManager;
+use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
 use Drupal\Core\Database\Connection as DatabaseConnection;
 use Drupal\Core\Database\ConnectionNotDefinedException;
 use Drupal\Core\Database\Database;
@@ -12,19 +17,12 @@ use Drupal\Core\Database\TransactionCommitFailedException;
 use Drupal\Core\Database\TransactionNameNonUniqueException;
 use Drupal\Core\Database\TransactionNoActiveException;
 use Drupal\Core\Database\TransactionOutOfOrderException;
-
 use Drupal\drudbal\Driver\Database\dbal\DbalExtension\MysqliExtension;
 use Drupal\drudbal\Driver\Database\dbal\DbalExtension\Oci8Extension;
 use Drupal\drudbal\Driver\Database\dbal\DbalExtension\PDOMySqlExtension;
 use Drupal\drudbal\Driver\Database\dbal\DbalExtension\PDOSqliteExtension;
-
-use Doctrine\DBAL\Connection as DbalConnection;
-use Doctrine\DBAL\ConnectionException as DbalConnectionException;
-use Doctrine\DBAL\DBALException;
-use Doctrine\DBAL\DriverManager as DbalDriverManager;
-use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
-use Doctrine\DBAL\Version as DbalVersion;
 use GuzzleHttp\Psr7\Uri;
+use PackageVersions\Versions;
 
 /**
  * DruDbal implementation of \Drupal\Core\Database\Connection.
@@ -337,7 +335,8 @@ class Connection extends DatabaseConnection {
       ]);
       // Below shouldn't happen, but if it does, then use the driver name
       // from the just established DBAL connection.
-   //   $connection_options['dbal_driver'] = $dbal_connection->getDriver()->getName();
+      $uri = new Uri($connection_options['dbal_url']);
+      $connection_options['dbal_driver'] = $uri->getScheme();
     }
 
     $dbal_extension_class = static::getDbalExtensionClass($connection_options);
@@ -458,7 +457,7 @@ class Connection extends DatabaseConnection {
    */
   public function version() {
     // Return the DBAL version.
-    return DbalVersion::VERSION;
+    return Versions::::getVersion('doctrine/dbal');
   }
 
   /**
