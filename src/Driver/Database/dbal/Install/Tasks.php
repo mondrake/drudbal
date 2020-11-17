@@ -54,7 +54,7 @@ class Tasks extends InstallTasks {
       return t('Doctrine DBAL on @database_type/@database_server_version via @dbal_driver', [
         '@database_type' => $connection->getDbalExtension()->getDbServerPlatform(),
         '@database_server_version' => $connection->getDbalExtension()->getDbServerVersion(),
-        '@dbal_driver' => $connection->getDbalConnection()->getDriver()->getName(),
+        '@dbal_driver' => 'bogus', //$connection->getDbalConnection()->getDriver()->getName(),
       ]);
     }
     catch (ConnectionNotDefinedException $e) {
