@@ -36,9 +36,9 @@ jobs:
 #    - env: DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group views" PHPUNIT_SKIP_CLASS='["Drupal\\Tests\\views\\Kernel\\ViewElementTest"]'
 #      services:
 #        - mysql
-#    - env: DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Database,Entity,Field" PHPUNIT_SKIP_CLASS='["Drupal\\KernelTests\\Core\\Database\\DatabaseExceptionWrapperTest"]'
-#      services:
-#        - mysql
+    - env: DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Database,Entity,Field" PHPUNIT_SKIP_CLASS='["Drupal\\KernelTests\\Core\\Database\\DatabaseExceptionWrapperTest"]'
+      services:
+        - mysql
 #    - env: DRUDBAL_ENV="dbal/mysqli" TEST_ARGS="--group Installer,Cache,Config" PHPUNIT_SKIP_CLASS='["Drupal\\KernelTests\\Core\\Cache\\EndOfTransactionQueriesTest"]'
 #      services:
 #        - mysql
@@ -69,6 +69,7 @@ jobs:
     - env: DRUDBAL_ENV="dbal/sqlite/memory" TEST_ARGS="--group Database,Installer,Cache,Config,Entity,Field"
     - php: nightly
       env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database" COMPOSER_ARGS="--ignore-platform-reqs" PHPUNIT_SKIP_CLASS='["Drupal\\KernelTests\\Core\\Database\\DatabaseExceptionWrapperTest"]'
+
 cache:
   directories:
     #- $HOME/drupal_staging
