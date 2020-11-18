@@ -151,12 +151,12 @@ class PDOSqliteExtension extends AbstractExtension {
     // re-run the query.
     // @see http://www.sqlite.org/faq.html#q15
     // @see http://www.sqlite.org/rescode.html#schema
-    if ($e->getErrorCode() === 17) {
+    if ($e->getCode() === 17) {
       return $this->connection->query($query, $args, $options);
     }
 
     // Match all SQLSTATE 23xxx errors.
-    if (substr($e->getSqlState(), -6, -3) == '23') {
+    if (method_exists($e, 'getSqlState') && substr($e->getSqlState(), -6, -3) == '23') {
       throw new IntegrityConstraintViolationException($message, $e->getCode(), $e);
     }
     else {
@@ -613,7 +613,7 @@ class PDOSqliteExtension extends AbstractExtension {
     // opening. If the file is not writable, or the file path is wrong, we
     // get a DATABASE_NOT_FOUND error. In such case we need the user to
     // correct the URL.
-    if ($e->getErrorCode() === self::DATABASE_NOT_FOUND) {
+    if ($e->getCode() === self::DATABASE_NOT_FOUND) {
       $results['fail'][] = t('There is a problem with the database URL. Likely, the database file specified is not writable, or the file path is wrong. Doctrine DBAL reports the following message: %message', ['%message' => $e->getMessage()]);
     }
 
@@ -661,7 +661,7 @@ class PDOSqliteExtension extends AbstractExtension {
       return $this->getDbalConnection()->getSchemaManager()->listTableNames();
     }
     catch (DbalDriverException $e) {
-      if ($e->getErrorCode() === 17) {
+      if ($e->getCode() === 17) {
         return $this->getDbalConnection()->getSchemaManager()->listTableNames();
       }
       else {
@@ -678,7 +678,7 @@ class PDOSqliteExtension extends AbstractExtension {
       $result = $this->getDbalConnection()->getSchemaManager()->tablesExist([$this->connection->getPrefixedTableName($drupal_table_name)]);
     }
     catch (DbalDriverException $e) {
-      if ($e->getErrorCode() === 17) {
+      if ($e->getCodeCode() === 17) {
         $result = $this->getDbalConnection()->getSchemaManager()->tablesExist([$this->connection->getPrefixedTableName($drupal_table_name)]);
       }
       else {
