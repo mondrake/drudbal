@@ -8,6 +8,8 @@ use Doctrine\DBAL\ConnectionException as DbalConnectionException;
 use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\DriverManager as DbalDriverManager;
 use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
+use Doctrine\DBAL\ExpandArrayParameters;
+use Doctrine\DBAL\SQL\Parser;
 use Drupal\Core\Database\Connection as DatabaseConnection;
 use Drupal\Core\Database\ConnectionNotDefinedException;
 use Drupal\Core\Database\Database;
@@ -89,6 +91,13 @@ class Connection extends DatabaseConnection {
    * @var \Drupal\Core\Database\PlatformSql|null
    */
   protected $platformSql;
+
+  /**
+   * The platform SQL parser.
+   *
+   * @var \Doctrine\DBAL\SQL\Parser|null
+   */
+  protected $parser;
 
   /**
    * Constructs a Connection object.
@@ -790,4 +799,25 @@ class Connection extends DatabaseConnection {
     return $this->setPrefix($prefix);
   }
 
+  /**
+   * @param array<int, mixed>|array<string, mixed>                               $params
+   * @param array<int, int|string|Type|null>|array<string, int|string|Type|null> $types
+   *
+   * @return array{string, list<mixed>, array<int,Type|int|string|null>}
+   */
+  public function expandArrayParameters(string $sql, array $params, array $types): array {
+    if ($this->parser === null) {
+      $this->parser = $this->getDbalConnection()->getDatabasePlatform()->createSQLParser();
+    }
+
+    $visitor = new ExpandArrayParameters($params, $types);
+
+    $this->parser->parse($sql, $visitor);
+
+    return [
+      $visitor->getSQL(),
+      $visitor->getParameters(),
+      $visitor->getTypes(),
+    ];
+  }
 }

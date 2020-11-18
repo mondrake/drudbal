@@ -230,7 +230,7 @@ class Statement implements \IteratorAggregate, StatementInterface {
       // Replace named placeholders with positional ones if needed.
       if (!$this->dbh->getDbalExtension()->delegateNamedPlaceholdersSupport()) {
         $this->paramsPositions = array_flip(array_keys($args));
-        list($query, $args) = SQLParserUtils::expandListParameters($this->queryString, $args, []);
+        list($query, $args) = $this->dbh->expandArrayParameters($this->queryString, $args, []);
         $this->queryString = $query;
       }
 
