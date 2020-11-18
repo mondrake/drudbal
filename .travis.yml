@@ -120,7 +120,7 @@ before_install:
         export SQLITE_UPDATE="true"
 
       elif [[ "$DRUDBAL_ENV" == "dbal/sqlite/file" ]]; then
-        export DBAL_URL="sqlite:///$DRUPAL_PATH/sqlite-drudbal"
+        export DBAL_URL="sqlite://localhost/$DRUPAL_PATH/sqlite-drudbal"
         export SIMPLETEST_DB="dbal://localhost/$DRUPAL_PATH/sqlite-drudbal?module=drudbal&dbal_driver=pdo_sqlite"
         export INSTALL_VIA="dbal"
         export SQLITE_UPDATE="true"
