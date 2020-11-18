@@ -2,7 +2,7 @@
 
 namespace Drupal\drudbal\Driver\Database\dbal;
 
-use Doctrine\DBAL\DBALException;
+use Doctrine\DBAL\Exception as DbalException;
 use Doctrine\DBAL\FetchMode;
 use Doctrine\DBAL\Result;
 use Drupal\Core\Database\Database;
@@ -237,7 +237,7 @@ class Statement implements \IteratorAggregate, StatementInterface {
         $this->dbh->getDbalExtension()->alterStatement($this->queryString, $args);
         $this->dbalStatement = $this->dbh->getDbalConnection()->prepare($this->queryString);
       }
-      catch (DBALException $e) {
+      catch (DbalException $e) {
         throw new DatabaseExceptionWrapper($e->getMessage(), $e->getCode(), $e);
       }
     }
@@ -267,14 +267,14 @@ class Statement implements \IteratorAggregate, StatementInterface {
     try {
       $this->dbalResult = $this->dbalStatement->execute($args);
     }
-    catch (DBALException $e) {
+    catch (DbalException $e) {
       throw new DatabaseExceptionWrapper($e->getMessage(), $e->getCode(), $e);
     }
 
     // Handle via prefetched data if needed.
     if ($this->dbh->getDbalExtension()->onSelectPrefetchAllData()) {
       if ($options['return'] == Database::RETURN_AFFECTED) {
-        $this->rowCount = $this->dbalStatement->rowCount();
+        $this->rowCount = $this->dbalResult->rowCount();
       }
 
       // Fetch all the data from the reply, in order to release any lock
@@ -377,7 +377,7 @@ class Statement implements \IteratorAggregate, StatementInterface {
           return $class_obj;
 
         default:
-          throw new DBALException("Unknown fetch type '{$mode}'");
+            throw new DbalException("Unknown fetch type '{$mode}'");
       }
     }
   }

@@ -5,7 +5,7 @@ namespace Drupal\drudbal\Driver\Database\dbal;
 use Composer\InstalledVersions;
 use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\ConnectionException as DbalConnectionException;
-use Doctrine\DBAL\DBALException;
+use Doctrine\DBAL\Exception as DbalException;
 use Doctrine\DBAL\DriverManager as DbalDriverManager;
 use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
 use Doctrine\DBAL\ExpandArrayParameters;
@@ -275,7 +275,7 @@ class Connection extends DatabaseConnection {
           return NULL;
 
         default:
-          throw new DBALException('Invalid return directive: ' . $options['return']);
+          throw new DbalException('Invalid return directive: ' . $options['return']);
 
       }
     }
@@ -288,7 +288,7 @@ class Connection extends DatabaseConnection {
   }
 
   /**
-   * Wraps and re-throws any DBALException thrown by ::query().
+   * Wraps and re-throws any DbalException thrown by ::query().
    *
    * @param \Exception $e
    *   The exception thrown by query().
@@ -478,7 +478,7 @@ class Connection extends DatabaseConnection {
       $this->getDbalConnection()->getSchemaManager()->createDatabase($database);
       $this->dbalExtension->postCreateDatabase($database);
     }
-    catch (DBALException $e) {
+    catch (DbalException $e) {
       throw new DatabaseNotFoundException($e->getMessage(), $e->getCode(), $e);
     }
   }

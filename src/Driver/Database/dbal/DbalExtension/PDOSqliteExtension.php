@@ -11,7 +11,7 @@ use Drupal\Core\Database\Driver\sqlite\Connection as SqliteConnectionBase;
 use Drupal\drudbal\Driver\Database\dbal\Connection as DruDbalConnection;
 
 use Doctrine\DBAL\Connection as DbalConnection;
-use Doctrine\DBAL\DBALException;
+use Doctrine\DBAL\Exception as DbalException;
 use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
 use Doctrine\DBAL\Schema\Schema as DbalSchema;
 use Doctrine\DBAL\Statement as DbalStatement;
@@ -996,7 +996,7 @@ class PDOSqliteExtension extends AbstractExtension {
     try {
       $primary_key_columns = $dbal_table->getPrimaryKeyColumns();
     }
-    catch (DBALException $e) {
+    catch (DbalException $e) {
       $primary_key_columns = [];
     }
 

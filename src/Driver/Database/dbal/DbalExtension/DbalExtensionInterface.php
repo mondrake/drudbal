@@ -258,7 +258,7 @@ interface DbalExtensionInterface {
   public function delegateNextId($existing_id = 0);
 
   /**
-   * Handles a DBALExceptions thrown by Connection::query().
+   * Handles a DbalExceptions thrown by Connection::query().
    *
    * @param string $query
    *   A string containing the failing SQL query.

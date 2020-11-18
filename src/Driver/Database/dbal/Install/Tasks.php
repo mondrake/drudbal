@@ -2,7 +2,7 @@
 
 namespace Drupal\drudbal\Driver\Database\dbal\Install;
 
-use Doctrine\DBAL\DBALException;
+use Doctrine\DBAL\Exception as DbalException;
 use Doctrine\DBAL\DriverManager as DbalDriverManager;
 use Doctrine\DBAL\Exception\ConnectionException as DbalExceptionConnectionException;
 use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
@@ -132,7 +132,7 @@ class Tasks extends InstallTasks {
       // Return true to continue with other checks.
       return TRUE;
     }
-    catch (DBALException $e) {
+    catch (DbalException $e) {
       // We get here if 'dbal_url' is defined but invalid/malformed.
       $this->fail(t('There is a problem with the database URL. Doctrine DBAL reports the following message: %message', ['%message' => $e->getMessage()]));
       return FALSE;
@@ -226,7 +226,7 @@ class Tasks extends InstallTasks {
       $form_state->setValue(['dbal', 'port'], $uri->getPort() ?? NULL);
       $form_state->setValue(['dbal', 'dbal_driver'], $uri->getScheme());
     }
-    catch (DBALException $e) {
+    catch (DbalException $e) {
       // If we get DBAL exception, probably the URL is malformed. We cannot
       // update user here, ::connect() will take care of that detail.
       return;
