@@ -2,6 +2,7 @@
 
 namespace Drupal\drudbal\Driver\Database\dbal;
 
+use Composer\InstalledVersions;
 use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\ConnectionException as DbalConnectionException;
 use Doctrine\DBAL\DBALException;
@@ -22,7 +23,6 @@ use Drupal\drudbal\Driver\Database\dbal\DbalExtension\Oci8Extension;
 use Drupal\drudbal\Driver\Database\dbal\DbalExtension\PDOMySqlExtension;
 use Drupal\drudbal\Driver\Database\dbal\DbalExtension\PDOSqliteExtension;
 use GuzzleHttp\Psr7\Uri;
-use PackageVersions\Versions;
 
 /**
  * DruDbal implementation of \Drupal\Core\Database\Connection.
@@ -457,7 +457,7 @@ class Connection extends DatabaseConnection {
    */
   public function version() {
     // Return the DBAL version.
-    return Versions::getVersion('doctrine/dbal');
+    return InstalledVersions::getVersion('doctrine/dbal');
   }
 
   /**
