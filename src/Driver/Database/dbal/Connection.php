@@ -814,8 +814,8 @@ class Connection extends DatabaseConnection {
     foreach($params as $k => $v) {
       $pms[strpos($k, 1)] = $v;
     }
-
-    $visitor = new ExpandArrayParameters($params, $types);
+dump($params, $pms);
+    $visitor = new ExpandArrayParameters($pms, $types);
 
     $this->parser->parse($sql, $visitor);
 
