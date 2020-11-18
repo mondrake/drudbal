@@ -264,7 +264,7 @@ class PDOSqliteExtension extends AbstractExtension {
    * {@inheritdoc}
    */
   public static function postConnectionOpen(DbalConnection $dbal_connection, array &$connection_options, array &$dbal_connection_options) {
-    $pdo = $dbal_connection->getWrappedConnection();
+    $pdo = $dbal_connection->getWrappedConnection()->getWrappedConnection();
 
     // Create functions needed by SQLite.
     $pdo->sqliteCreateFunction('if', [SqliteConnectionBase::class, 'sqlFunctionIf']);
