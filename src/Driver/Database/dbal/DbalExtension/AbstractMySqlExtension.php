@@ -262,7 +262,7 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
       $e = $e->getPrevious();
     }
     // Match all SQLSTATE 23xxx errors.
-    if (substr($e->getSqlState(), -6, -3) == '23') {
+    if (method_exists($e, 'getSqlState') && substr($e->getSqlState(), -6, -3) == '23') {
       throw new IntegrityConstraintViolationException($message, $e->getCode(), $e);
     }
     elseif ($e->getCode() == 1153) {
