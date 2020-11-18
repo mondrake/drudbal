@@ -18,9 +18,9 @@ jobs:
 #    - env: DRUDBAL_ENV="mysql" TEST_ARGS="--group Database"
 #      services:
 #        - mysql
-#    - env: DRUDBAL_ENV="dbal/mariadb" TEST_ARGS="--group Database,Entity,Field" PHPUNIT_SKIP_CLASS='["Drupal\\KernelTests\\Core\\Database\\DatabaseExceptionWrapperTest"]'
-#      addons:
-#        mariadb: '10.3'
+    - env: DRUDBAL_ENV="dbal/mariadb" TEST_ARGS="--group Database,Entity,Field" PHPUNIT_SKIP_CLASS='["Drupal\\KernelTests\\Core\\Database\\DatabaseExceptionWrapperTest"]'
+      addons:
+        mariadb: '10.3'
 #    - env: DRUDBAL_ENV="dbal/mysql" TEST_ARGS="--group Database,Entity,Field" PHPUNIT_SKIP_CLASS='["Drupal\\KernelTests\\Core\\Database\\DatabaseExceptionWrapperTest"]'
 #      services:
 #        - mysql
@@ -52,7 +52,7 @@ jobs:
 #      services:
 #        - mysql
 #    - env: DRUDBAL_ENV="sqlite" TEST_ARGS="--group Database"
-#    - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database,Entity,Field" PHPUNIT_SKIP_CLASS='["Drupal\\KernelTests\\Core\\Database\\DatabaseExceptionWrapperTest"]'
+    - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database,Entity,Field" PHPUNIT_SKIP_CLASS='["Drupal\\KernelTests\\Core\\Database\\DatabaseExceptionWrapperTest"]'
 #    - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Installer,Cache,Config" PHPUNIT_SKIP_CLASS='["Drupal\\KernelTests\\Core\\Cache\\EndOfTransactionQueriesTest"]'
 #    - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group field"
 #    - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group file" PHPUNIT_SKIP_CLASS='["Drupal\\Tests\\file\\Functional\\DownloadTest"]'
