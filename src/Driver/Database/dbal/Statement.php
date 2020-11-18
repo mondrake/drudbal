@@ -5,7 +5,6 @@ namespace Drupal\drudbal\Driver\Database\dbal;
 use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\FetchMode;
 use Doctrine\DBAL\Result;
-use Doctrine\DBAL\SQLParserUtils;
 use Drupal\Core\Database\Database;
 use Drupal\Core\Database\DatabaseExceptionWrapper;
 use Drupal\Core\Database\RowCountException;

@@ -810,6 +810,11 @@ class Connection extends DatabaseConnection {
       $this->parser = $this->getDbalConnection()->getDatabasePlatform()->createSQLParser();
     }
 
+    $pms = [];
+    foreach($params as $k => $v) {
+      $pms[strpos($k, 1)] = $v;
+    }
+
     $visitor = new ExpandArrayParameters($params, $types);
 
     $this->parser->parse($sql, $visitor);
