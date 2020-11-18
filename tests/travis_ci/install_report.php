@@ -39,3 +39,6 @@ print("-------------------------------------------------------------------------
 print("Connection options:\n");
 dump($connection_info['default']);
 print("------------------------------------------------------------------------------------------------\n");
+print("Drupal db connection URL:\n");
+dump($connection->createUrlFromConnectionOptions($connection_info['default']) . "\n");
+print("------------------------------------------------------------------------------------------------\n");

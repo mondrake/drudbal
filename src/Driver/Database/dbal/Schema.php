@@ -7,7 +7,7 @@ use Drupal\Core\Database\SchemaObjectDoesNotExistException;
 use Drupal\Core\Database\Schema as DatabaseSchema;
 use Drupal\Component\Utility\Unicode;
 
-use Doctrine\DBAL\DBALException;
+use Doctrine\DBAL\Exception as DbalException;
 use Doctrine\DBAL\Schema\Column as DbalColumn;
 use Doctrine\DBAL\Schema\Schema as DbalSchema;
 use Doctrine\DBAL\Schema\SchemaException as DbalSchemaException;
@@ -459,7 +459,7 @@ class Schema extends DatabaseSchema {
       try {
         $this->dropPrimaryKey($table);
       }
-      catch (DBALException $e) {
+      catch (DbalException $e) {
       }
     }
 
@@ -566,7 +566,7 @@ class Schema extends DatabaseSchema {
       }
       return $ret;
     }
-    catch (DBALException $e) {
+    catch (DbalException $e) {
       return [];
     }
   }
@@ -604,7 +604,7 @@ class Schema extends DatabaseSchema {
         }
       }
     }
-    catch (DBALException $e) {
+    catch (DbalException $e) {
       // Just continue.
     }
 

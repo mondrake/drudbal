@@ -457,7 +457,7 @@ class Connection extends DatabaseConnection {
    */
   public function version() {
     // Return the DBAL version.
-    return InstalledVersions::getVersion('doctrine/dbal');
+    return InstalledVersions::getPrettyVersion('doctrine/dbal');
   }
 
   /**
