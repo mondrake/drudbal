@@ -558,13 +558,14 @@ class Schema extends DatabaseSchema {
     }
     try {
       $this->dbalSchemaForceReload();
-      $columns = $this->dbalSchema()->getTable($this->connection->getPrefixedTableName($table))->getPrimaryKeyColumns();
-      $ret = [];
+      $columns = $this->dbalSchema()->getTable($this->connection->getPrefixedTableName($table))->getPrimaryKey()->getColumns();
+/*      $ret = [];
       foreach ($columns as $column) {
         $ret[] = $column->getName();
       }
 dump([$this->dbalSchema()->getTable($this->connection->getPrefixedTableName($table))->getPrimaryKey(), $ret]);
-      return $ret;
+return $ret;*/
+      return $columns;
     }
     catch (DbalException $e) {
       return [];
