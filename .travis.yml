@@ -216,8 +216,7 @@ script:
   - php install_report.php
 
   # Only run selected tests to avoid Travis timeout.
-  #- $DRUPAL_PATH/vendor/bin/phpunit $TEST_ARGS
-  - $DRUPAL_PATH/vendor/bin/phpunit tests/Drupal/KernelTests/Core/Database/SchemaTest.php
+  - $DRUPAL_PATH/vendor/bin/phpunit $TEST_ARGS
   #- cd $DRUPAL_PATH
   #- php core/scripts/run-tests.sh --concurrency $(nproc) --dburl $SIMPLETEST_DB --sqlite $DRUPAL_TEST_RESULTS_DB --verbose --color --php $(which php) --url http://127.0.0.1:8080 Database
 
