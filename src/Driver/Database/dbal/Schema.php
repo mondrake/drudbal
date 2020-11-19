@@ -560,10 +560,12 @@ class Schema extends DatabaseSchema {
     try {
       $this->dbalSchemaForceReload();
       $columns = $this->dbalSchema()->getTable($this->connection->getPrefixedTableName($table))->getPrimaryKeyColumns();
+dump($columns);
       $ret = [];
       foreach ($columns as $column) {
         $ret[] = $column->getName();
       }
+dump($ret);
       return $ret;
     }
     catch (DbalException $e) {
