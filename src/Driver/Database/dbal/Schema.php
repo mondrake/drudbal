@@ -559,7 +559,7 @@ class Schema extends DatabaseSchema {
     try {
       $this->dbalSchemaForceReload();
       $columns = $this->dbalSchema()->getTable($this->connection->getPrefixedTableName($table))->getPrimaryKeyColumns();
-dump($columns);
+dump($this->dbalSchema()->getTable($this->connection->getPrefixedTableName($table))->getPrimaryKeyColumns());
       $ret = [];
       foreach ($columns as $column) {
         $ret[] = $column->getName();
