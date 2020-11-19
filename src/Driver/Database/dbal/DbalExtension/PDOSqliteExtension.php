@@ -994,7 +994,8 @@ class PDOSqliteExtension extends AbstractExtension {
 
     // Primary key.
     try {
-      $primary_key_columns = $dbal_table->getPrimaryKeyColumns();
+      $primary_key = $this->dbalSchema()->getTable($this->connection->getPrefixedTableName($table))->getPrimaryKey();
+      $primary_key_columns = $primary_key ? $primary_key->getColumns() : [];
     }
     catch (DbalException $e) {
       $primary_key_columns = [];
