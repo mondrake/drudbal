@@ -2,16 +2,16 @@
 
 namespace Drupal\drudbal\Driver\Database\dbal\Install;
 
-use Drupal\Core\Database\ConnectionNotDefinedException;
-use Drupal\Core\Database\Database;
-use Drupal\Core\Form\FormStateInterface;
-use Drupal\Core\Database\Install\Tasks as InstallTasks;
-use Drupal\drudbal\Driver\Database\dbal\Connection as DruDbalConnection;
-
-use Doctrine\DBAL\DBALException;
+use Doctrine\DBAL\Exception as DbalException;
+use Doctrine\DBAL\DriverManager as DbalDriverManager;
 use Doctrine\DBAL\Exception\ConnectionException as DbalExceptionConnectionException;
 use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
-use Doctrine\DBAL\DriverManager as DbalDriverManager;
+use Drupal\Core\Database\ConnectionNotDefinedException;
+use Drupal\Core\Database\Database;
+use Drupal\Core\Database\Install\Tasks as InstallTasks;
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\drudbal\Driver\Database\dbal\Connection as DruDbalConnection;
+use GuzzleHttp\Psr7\Uri;
 
 /**
  * Specifies installation tasks for DruDbal driver.
@@ -54,7 +54,7 @@ class Tasks extends InstallTasks {
       return t('Doctrine DBAL on @database_type/@database_server_version via @dbal_driver', [
         '@database_type' => $connection->getDbalExtension()->getDbServerPlatform(),
         '@database_server_version' => $connection->getDbalExtension()->getDbServerVersion(),
-        '@dbal_driver' => $connection->getDbalConnection()->getDriver()->getName(),
+        '@dbal_driver' => $connection->getConnectionOptions()['dbal_driver'],
       ]);
     }
     catch (ConnectionNotDefinedException $e) {
@@ -69,7 +69,7 @@ class Tasks extends InstallTasks {
     // Note: This is the minimum version of Doctrine DBAL; the minimum version
     // of the db server should be managed in
     // Drupal\drudbal\Driver\Database\dbal\DbalExtension\[dbal_driver_name]::runInstallTasks.
-    return '2.10.0';
+    return '3.0.0';
   }
 
   /**
@@ -132,7 +132,7 @@ class Tasks extends InstallTasks {
       // Return true to continue with other checks.
       return TRUE;
     }
-    catch (DBALException $e) {
+    catch (DbalException $e) {
       // We get here if 'dbal_url' is defined but invalid/malformed.
       $this->fail(t('There is a problem with the database URL. Doctrine DBAL reports the following message: %message', ['%message' => $e->getMessage()]));
       return FALSE;
@@ -208,17 +208,25 @@ class Tasks extends InstallTasks {
       if (empty($form_state->getValue(['dbal', 'dbal_url'])) && !empty(getenv("DBAL_URL"))) {
         $form_state->setValue(['dbal', 'dbal_url'], getenv("DBAL_URL"));
       }
-      $options = [];
-      $options['url'] = $form_state->getValue(['dbal', 'dbal_url']);
-      $dbal_connection = DbalDriverManager::getConnection($options);
-      $form_state->setValue(['dbal', 'database'], $dbal_connection->getDatabase());
-      $form_state->setValue(['dbal', 'username'], $dbal_connection->getUsername());
-      $form_state->setValue(['dbal', 'password'], $dbal_connection->getPassword());
-      $form_state->setValue(['dbal', 'host'], $dbal_connection->getHost());
-      $form_state->setValue(['dbal', 'port'], $dbal_connection->getPort());
-      $form_state->setValue(['dbal', 'dbal_driver'], $dbal_connection->getDriver()->getName());
+      $url = $form_state->getValue(['dbal', 'dbal_url']);
+      $dbal_connection = DbalDriverManager::getConnection(['url' => $url]);
+
+      $uri = new Uri($url);
+      $user_info = $uri->getUserInfo();
+      if (!empty($user_info)) {
+        $user_info_elements = explode(':', $user_info, 2);
+      }
+      else {
+        $user_info_elements = [''];
+      }
+      $form_state->setValue(['dbal', 'database'], substr($uri->getPath(), 1));
+      $form_state->setValue(['dbal', 'username'], $user_info_elements[0]);
+      $form_state->setValue(['dbal', 'password'], $user_info_elements[1] ?? '');
+      $form_state->setValue(['dbal', 'host'], $uri->getHost() ?? NULL);
+      $form_state->setValue(['dbal', 'port'], $uri->getPort() ?? NULL);
+      $form_state->setValue(['dbal', 'dbal_driver'], $uri->getScheme());
     }
-    catch (DBALException $e) {
+    catch (DbalException $e) {
       // If we get DBAL exception, probably the URL is malformed. We cannot
       // update user here, ::connect() will take care of that detail.
       return;

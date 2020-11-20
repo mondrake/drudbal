@@ -11,7 +11,7 @@ use Drupal\Core\Database\Driver\sqlite\Connection as SqliteConnectionBase;
 use Drupal\drudbal\Driver\Database\dbal\Connection as DruDbalConnection;
 
 use Doctrine\DBAL\Connection as DbalConnection;
-use Doctrine\DBAL\DBALException;
+use Doctrine\DBAL\Exception as DbalException;
 use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
 use Doctrine\DBAL\Schema\Schema as DbalSchema;
 use Doctrine\DBAL\Statement as DbalStatement;
@@ -151,12 +151,12 @@ class PDOSqliteExtension extends AbstractExtension {
     // re-run the query.
     // @see http://www.sqlite.org/faq.html#q15
     // @see http://www.sqlite.org/rescode.html#schema
-    if ($e->getErrorCode() === 17) {
+    if ($e->getCode() === 17) {
       return $this->connection->query($query, $args, $options);
     }
 
     // Match all SQLSTATE 23xxx errors.
-    if (substr($e->getSqlState(), -6, -3) == '23') {
+    if (method_exists($e, 'getSqlState') && substr($e->getSqlState(), -6, -3) == '23') {
       throw new IntegrityConstraintViolationException($message, $e->getCode(), $e);
     }
     else {
@@ -264,7 +264,7 @@ class PDOSqliteExtension extends AbstractExtension {
    * {@inheritdoc}
    */
   public static function postConnectionOpen(DbalConnection $dbal_connection, array &$connection_options, array &$dbal_connection_options) {
-    $pdo = $dbal_connection->getWrappedConnection();
+    $pdo = $dbal_connection->getWrappedConnection()->getWrappedConnection();
 
     // Create functions needed by SQLite.
     $pdo->sqliteCreateFunction('if', [SqliteConnectionBase::class, 'sqlFunctionIf']);
@@ -613,7 +613,7 @@ class PDOSqliteExtension extends AbstractExtension {
     // opening. If the file is not writable, or the file path is wrong, we
     // get a DATABASE_NOT_FOUND error. In such case we need the user to
     // correct the URL.
-    if ($e->getErrorCode() === self::DATABASE_NOT_FOUND) {
+    if ($e->getCode() === self::DATABASE_NOT_FOUND) {
       $results['fail'][] = t('There is a problem with the database URL. Likely, the database file specified is not writable, or the file path is wrong. Doctrine DBAL reports the following message: %message', ['%message' => $e->getMessage()]);
     }
 
@@ -661,7 +661,7 @@ class PDOSqliteExtension extends AbstractExtension {
       return $this->getDbalConnection()->getSchemaManager()->listTableNames();
     }
     catch (DbalDriverException $e) {
-      if ($e->getErrorCode() === 17) {
+      if ($e->getCode() === 17) {
         return $this->getDbalConnection()->getSchemaManager()->listTableNames();
       }
       else {
@@ -678,7 +678,7 @@ class PDOSqliteExtension extends AbstractExtension {
       $result = $this->getDbalConnection()->getSchemaManager()->tablesExist([$this->connection->getPrefixedTableName($drupal_table_name)]);
     }
     catch (DbalDriverException $e) {
-      if ($e->getErrorCode() === 17) {
+      if ($e->getCodeCode() === 17) {
         $result = $this->getDbalConnection()->getSchemaManager()->tablesExist([$this->connection->getPrefixedTableName($drupal_table_name)]);
       }
       else {
@@ -994,9 +994,10 @@ class PDOSqliteExtension extends AbstractExtension {
 
     // Primary key.
     try {
-      $primary_key_columns = $dbal_table->getPrimaryKeyColumns();
+      $primary_key = $dbal_table->getPrimaryKey();
+      $primary_key_columns = $primary_key ? $primary_key->getColumns() : [];
     }
-    catch (DBALException $e) {
+    catch (DbalException $e) {
       $primary_key_columns = [];
     }
 

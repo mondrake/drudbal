@@ -2,14 +2,14 @@
 
 namespace Drupal\drudbal\Driver\Database\dbal;
 
+use Doctrine\DBAL\Exception as DbalException;
+use Doctrine\DBAL\FetchMode;
+use Doctrine\DBAL\Result;
 use Drupal\Core\Database\Database;
 use Drupal\Core\Database\DatabaseExceptionWrapper;
-use Drupal\Core\Database\StatementInterface;
 use Drupal\Core\Database\RowCountException;
+use Drupal\Core\Database\StatementInterface;
 use Drupal\drudbal\Driver\Database\dbal\Connection as DruDbalConnection;
-use Doctrine\DBAL\DBALException;
-use Doctrine\DBAL\FetchMode;
-use Doctrine\DBAL\SQLParserUtils;
 
 // @todo organize better prefetch vs normal
 // @todo DBAL 2.6.0:
@@ -48,6 +48,13 @@ class Statement implements \IteratorAggregate, StatementInterface {
    * @var \Doctrine\DBAL\Statement
    */
   protected $dbalStatement = NULL;
+
+  /**
+   * The DBAL executed statement result.
+   *
+   * @var \Doctrine\DBAL\Result
+   */
+  protected $dbalResult = NULL;
 
   /**
    * Holds supplementary driver options.
@@ -222,7 +229,7 @@ class Statement implements \IteratorAggregate, StatementInterface {
       // Replace named placeholders with positional ones if needed.
       if (!$this->dbh->getDbalExtension()->delegateNamedPlaceholdersSupport()) {
         $this->paramsPositions = array_flip(array_keys($args));
-        list($query, $args) = SQLParserUtils::expandListParameters($this->queryString, $args, []);
+        list($query, $args) = $this->dbh->expandArrayParameters($this->queryString, $args, []);
         $this->queryString = $query;
       }
 
@@ -230,7 +237,7 @@ class Statement implements \IteratorAggregate, StatementInterface {
         $this->dbh->getDbalExtension()->alterStatement($this->queryString, $args);
         $this->dbalStatement = $this->dbh->getDbalConnection()->prepare($this->queryString);
       }
-      catch (DBALException $e) {
+      catch (DbalException $e) {
         throw new DatabaseExceptionWrapper($e->getMessage(), $e->getCode(), $e);
       }
     }
@@ -258,24 +265,27 @@ class Statement implements \IteratorAggregate, StatementInterface {
     }
 
     try {
-      $this->dbalStatement->execute($args);
+      $this->dbalResult = $this->dbalStatement->execute($args);
     }
-    catch (DBALException $e) {
+    catch (DbalException $e) {
       throw new DatabaseExceptionWrapper($e->getMessage(), $e->getCode(), $e);
     }
 
     // Handle via prefetched data if needed.
     if ($this->dbh->getDbalExtension()->onSelectPrefetchAllData()) {
       if ($options['return'] == Database::RETURN_AFFECTED) {
-        $this->rowCount = $this->dbalStatement->rowCount();
+        $this->rowCount = $this->dbalResult->rowCount();
       }
 
       // Fetch all the data from the reply, in order to release any lock
       // as soon as possible.
-      $this->data = $this->dbalStatement->fetchAll(FetchMode::ASSOCIATIVE);
+      $this->data = $this->dbalResult->fetchAllAssociative();
       // Destroy the statement as soon as possible. See the documentation of
       // \Drupal\Core\Database\Driver\sqlite\Statement for an explanation.
+      $this->dbalResult->free();
+      unset($this->dbalResult);
       unset($this->dbalStatement);
+      $this->dbalResult = NULL;
       $this->dbalStatement = NULL;
 
       $this->resultRowCount = count($this->data);
@@ -333,7 +343,7 @@ class Statement implements \IteratorAggregate, StatementInterface {
         $mode = $mode ?: $this->defaultFetchMode;
       }
 
-      $dbal_row = $this->dbalStatement->fetch(FetchMode::ASSOCIATIVE);
+      $dbal_row = $this->dbalResult->fetchAssociative();
       if (!$dbal_row) {
         return FALSE;
       }
@@ -367,7 +377,7 @@ class Statement implements \IteratorAggregate, StatementInterface {
           return $class_obj;
 
         default:
-          throw new DBALException("Unknown fetch type '{$mode}'");
+            throw new DbalException("Unknown fetch type '{$mode}'");
       }
     }
   }
@@ -633,7 +643,7 @@ class Statement implements \IteratorAggregate, StatementInterface {
         return $this->rowCount;
       }
       else {
-        return $this->dbh->getDbalExtension()->delegateRowCount($this->dbalStatement);
+        return $this->dbh->getDbalExtension()->delegateRowCount($this->dbalResult);
       }
     }
     else {

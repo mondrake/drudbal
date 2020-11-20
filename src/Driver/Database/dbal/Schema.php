@@ -2,16 +2,15 @@
 
 namespace Drupal\drudbal\Driver\Database\dbal;
 
-use Drupal\Core\Database\SchemaObjectExistsException;
-use Drupal\Core\Database\SchemaObjectDoesNotExistException;
-use Drupal\Core\Database\Schema as DatabaseSchema;
-use Drupal\Component\Utility\Unicode;
-
-use Doctrine\DBAL\DBALException;
+use Doctrine\DBAL\Exception as DbalException;
 use Doctrine\DBAL\Schema\Column as DbalColumn;
 use Doctrine\DBAL\Schema\Schema as DbalSchema;
 use Doctrine\DBAL\Schema\SchemaException as DbalSchemaException;
 use Doctrine\DBAL\Types\Type as DbalType;
+use Drupal\Component\Utility\Unicode;
+use Drupal\Core\Database\Schema as DatabaseSchema;
+use Drupal\Core\Database\SchemaObjectDoesNotExistException;
+use Drupal\Core\Database\SchemaObjectExistsException;
 
 // @todo DBAL 2.7:
 // implemented mysql column-level collation, check
@@ -459,7 +458,7 @@ class Schema extends DatabaseSchema {
       try {
         $this->dropPrimaryKey($table);
       }
-      catch (DBALException $e) {
+      catch (DbalException $e) {
       }
     }
 
@@ -559,9 +558,10 @@ class Schema extends DatabaseSchema {
     }
     try {
       $this->dbalSchemaForceReload();
-      return $this->dbalSchema()->getTable($this->connection->getPrefixedTableName($table))->getPrimaryKeyColumns();
+      $primary_key = $this->dbalSchema()->getTable($this->connection->getPrefixedTableName($table))->getPrimaryKey();
+      return $primary_key ? $primary_key->getColumns() : [];
     }
-    catch (DBALException $e) {
+    catch (DbalException $e) {
       return [];
     }
   }
@@ -584,7 +584,9 @@ class Schema extends DatabaseSchema {
       $this->dbalSchemaForceReload();
 
       // Primary key.
-      foreach ($this->dbalSchema()->getTable($this->connection->getPrefixedTableName($table))->getPrimaryKeyColumns() as $column) {
+      $primary_key = $this->dbalSchema()->getTable($this->connection->getPrefixedTableName($table))->getPrimaryKey();
+      $columns = $primary_key ? $primary_key->getColumns() : [];
+      foreach ($columns as $column) {
         $index_schema['primary key'][] = $column;
       }
 
@@ -599,7 +601,7 @@ class Schema extends DatabaseSchema {
         }
       }
     }
-    catch (DBALException $e) {
+    catch (DbalException $e) {
       // Just continue.
     }
 

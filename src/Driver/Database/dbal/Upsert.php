@@ -124,13 +124,13 @@ class Upsert extends QueryUpsert {
         // Updating the unique / primary key is not necessary.
         $dbal_query
           ->set($dbal_extension->getDbFieldName($this->insertFields[$i]), ':db_update_placeholder_' . $i)
-          ->setParameter(':db_update_placeholder_' . $i, $insert_values[$i]);
+          ->setParameter('db_update_placeholder_' . $i, $insert_values[$i]);
       }
       else {
         // The unique / primary key is the WHERE condition for the UPDATE.
         $dbal_query
           ->where($dbal_query->expr()->eq($this->insertFields[$i], ':db_condition_placeholder_0'))
-          ->setParameter(':db_condition_placeholder_0', $insert_values[$i]);
+          ->setParameter('db_condition_placeholder_0', $insert_values[$i]);
       }
     }
 

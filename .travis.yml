@@ -57,18 +57,17 @@ jobs:
     - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group field"
     - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group file" PHPUNIT_SKIP_CLASS='["Drupal\\Tests\\file\\Functional\\DownloadTest"]'
     - env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group views"
-    - php: 7.3
-      env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database" PHPUNIT_SKIP_CLASS='["Drupal\\KernelTests\\Core\\Database\\DatabaseExceptionWrapperTest"]'
     - stage: Allow Failures
       php: nightly
-      env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database" COMPOSER_ARGS="--ignore-platform-reqs" PHPUNIT_SKIP_CLASS='["Drupal\\KernelTests\\Core\\Database\\DatabaseExceptionWrapperTest"]'
+      env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database" PHPUNIT_SKIP_CLASS='["Drupal\\KernelTests\\Core\\Database\\DatabaseExceptionWrapperTest"]'
     - stage: Allow Failures
       env: DRUDBAL_ENV="dbal/sqlite/memory" TEST_ARGS="--group Database,Installer,Cache,Config,Entity,Field"
   fast_finish: true
   allow_failures:
     - env: DRUDBAL_ENV="dbal/sqlite/memory" TEST_ARGS="--group Database,Installer,Cache,Config,Entity,Field"
     - php: nightly
-      env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database" COMPOSER_ARGS="--ignore-platform-reqs" PHPUNIT_SKIP_CLASS='["Drupal\\KernelTests\\Core\\Database\\DatabaseExceptionWrapperTest"]'
+      env: DRUDBAL_ENV="dbal/sqlite/file" TEST_ARGS="--group Database" PHPUNIT_SKIP_CLASS='["Drupal\\KernelTests\\Core\\Database\\DatabaseExceptionWrapperTest"]'
+
 cache:
   directories:
     #- $HOME/drupal_staging
@@ -119,7 +118,7 @@ before_install:
         export SQLITE_UPDATE="true"
 
       elif [[ "$DRUDBAL_ENV" == "dbal/sqlite/file" ]]; then
-        export DBAL_URL="sqlite:///$DRUPAL_PATH/sqlite-drudbal"
+        export DBAL_URL="sqlite://localhost/$DRUPAL_PATH/sqlite-drudbal"
         export SIMPLETEST_DB="dbal://localhost/$DRUPAL_PATH/sqlite-drudbal?module=drudbal&dbal_driver=pdo_sqlite"
         export INSTALL_VIA="dbal"
         export SQLITE_UPDATE="true"
@@ -158,12 +157,12 @@ before_install:
   # Stage Drupal core to get dependencies.
   - |
       if [[ ! -f $DRUPAL_STAGING_DIR/index.php ]]; then
-        git clone --depth=5 --branch=9.1.x http://git.drupal.org/project/drupal.git $DRUPAL_STAGING_DIR
+        git clone --depth=5 --branch=9.2.x http://git.drupal.org/project/drupal.git $DRUPAL_STAGING_DIR
         cd $DRUPAL_STAGING_DIR
-        composer install --no-progress --no-suggest $COMPOSER_ARGS
+        composer install --no-progress $COMPOSER_ARGS
         composer run-script drupal-phpunit-upgrade
         # Get Drush and Doctrine DBAL
-        composer require drush/drush --no-progress --no-suggest $COMPOSER_ARGS
+        composer require drush/drush --no-progress $COMPOSER_ARGS
       fi
 
   # Copy staged Drupal core to running path.
@@ -183,7 +182,7 @@ before_install:
   - cd $DRUPAL_PATH
   - |
       composer config repositories.travisci-run '{"type": "path", "url": "$TRAVIS_BUILD_DIR", "options": {"symlink": false}}'
-  - composer require "mondrake/drudbal:dev-travisci-run-branch" --no-progress --no-suggest $COMPOSER_ARGS
+  - composer require "mondrake/drudbal:dev-travisci-run-branch" --no-progress $COMPOSER_ARGS
 
   # Other general patches.
   # [#3110546] Allow contributed modules (mostly database drivers) to override tests in core

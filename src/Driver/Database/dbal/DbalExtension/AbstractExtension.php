@@ -2,14 +2,14 @@
 
 namespace Drupal\drudbal\Driver\Database\dbal\DbalExtension;
 
-use Drupal\drudbal\Driver\Database\dbal\Connection as DruDbalConnection;
-
 use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
+use Doctrine\DBAL\Result as DbalResult;
 use Doctrine\DBAL\Schema\Column as DbalColumn;
 use Doctrine\DBAL\Schema\Schema as DbalSchema;
 use Doctrine\DBAL\Schema\Table as DbalTable;
 use Doctrine\DBAL\Statement as DbalStatement;
+use Drupal\drudbal\Driver\Database\dbal\Connection as DruDbalConnection;
 
 /**
  * Abstract DBAL Extension.
@@ -355,8 +355,8 @@ class AbstractExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function delegateRowCount(DbalStatement $dbal_statement) {
-    return $dbal_statement->rowCount();
+  public function delegateRowCount(DbalResult $dbal_result) {
+    return $dbal_result->rowCount();
   }
 
   /**

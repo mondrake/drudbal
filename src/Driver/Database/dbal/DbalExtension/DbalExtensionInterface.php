@@ -4,6 +4,7 @@ namespace Drupal\drudbal\Driver\Database\dbal\DbalExtension;
 
 use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
+use Doctrine\DBAL\Result as DbalResult;
 use Doctrine\DBAL\Schema\Column as DbalColumn;
 use Doctrine\DBAL\Schema\Schema as DbalSchema;
 use Doctrine\DBAL\Schema\Table as DbalTable;
@@ -257,7 +258,7 @@ interface DbalExtensionInterface {
   public function delegateNextId($existing_id = 0);
 
   /**
-   * Handles a DBALExceptions thrown by Connection::query().
+   * Handles a DbalExceptions thrown by Connection::query().
    *
    * @param string $query
    *   A string containing the failing SQL query.
@@ -434,14 +435,14 @@ interface DbalExtensionInterface {
   /**
    * Returns the number of rows affected by the last SQL statement.
    *
-   * @param \Doctrine\DBAL\Statement $dbal_statement
-   *   The DBAL statement.
+   * @param \Doctrine\DBAL\Result $dbal_result
+   *   The DBAL statement results.
    *
    * @return int
    *   The number of rows affected by the last DELETE, INSERT, or UPDATE
    *   statement.
    */
-  public function delegateRowCount(DbalStatement $dbal_statement);
+  public function delegateRowCount(DbalResult $dbal_result);
 
   /**
    * Select delegated methods.

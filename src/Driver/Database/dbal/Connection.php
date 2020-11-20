@@ -2,6 +2,14 @@
 
 namespace Drupal\drudbal\Driver\Database\dbal;
 
+use Composer\InstalledVersions;
+use Doctrine\DBAL\Connection as DbalConnection;
+use Doctrine\DBAL\ConnectionException as DbalConnectionException;
+use Doctrine\DBAL\Exception as DbalException;
+use Doctrine\DBAL\DriverManager as DbalDriverManager;
+use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
+use Doctrine\DBAL\ExpandArrayParameters;
+use Doctrine\DBAL\SQL\Parser;
 use Drupal\Core\Database\Connection as DatabaseConnection;
 use Drupal\Core\Database\ConnectionNotDefinedException;
 use Drupal\Core\Database\Database;
@@ -12,18 +20,10 @@ use Drupal\Core\Database\TransactionCommitFailedException;
 use Drupal\Core\Database\TransactionNameNonUniqueException;
 use Drupal\Core\Database\TransactionNoActiveException;
 use Drupal\Core\Database\TransactionOutOfOrderException;
-
 use Drupal\drudbal\Driver\Database\dbal\DbalExtension\MysqliExtension;
 use Drupal\drudbal\Driver\Database\dbal\DbalExtension\Oci8Extension;
 use Drupal\drudbal\Driver\Database\dbal\DbalExtension\PDOMySqlExtension;
 use Drupal\drudbal\Driver\Database\dbal\DbalExtension\PDOSqliteExtension;
-
-use Doctrine\DBAL\Connection as DbalConnection;
-use Doctrine\DBAL\ConnectionException as DbalConnectionException;
-use Doctrine\DBAL\DBALException;
-use Doctrine\DBAL\DriverManager as DbalDriverManager;
-use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
-use Doctrine\DBAL\Version as DbalVersion;
 use GuzzleHttp\Psr7\Uri;
 
 /**
@@ -91,6 +91,13 @@ class Connection extends DatabaseConnection {
    * @var \Drupal\Core\Database\PlatformSql|null
    */
   protected $platformSql;
+
+  /**
+   * The platform SQL parser.
+   *
+   * @var \Doctrine\DBAL\SQL\Parser|null
+   */
+  protected $parser;
 
   /**
    * Constructs a Connection object.
@@ -268,7 +275,7 @@ class Connection extends DatabaseConnection {
           return NULL;
 
         default:
-          throw new DBALException('Invalid return directive: ' . $options['return']);
+          throw new DbalException('Invalid return directive: ' . $options['return']);
 
       }
     }
@@ -281,7 +288,7 @@ class Connection extends DatabaseConnection {
   }
 
   /**
-   * Wraps and re-throws any DBALException thrown by ::query().
+   * Wraps and re-throws any DbalException thrown by ::query().
    *
    * @param \Exception $e
    *   The exception thrown by query().
@@ -337,7 +344,8 @@ class Connection extends DatabaseConnection {
       ]);
       // Below shouldn't happen, but if it does, then use the driver name
       // from the just established DBAL connection.
-      $connection_options['dbal_driver'] = $dbal_connection->getDriver()->getName();
+      $uri = new Uri($connection_options['dbal_url']);
+      $connection_options['dbal_driver'] = $uri->getScheme();
     }
 
     $dbal_extension_class = static::getDbalExtensionClass($connection_options);
@@ -458,7 +466,7 @@ class Connection extends DatabaseConnection {
    */
   public function version() {
     // Return the DBAL version.
-    return DbalVersion::VERSION;
+    return InstalledVersions::getPrettyVersion('doctrine/dbal');
   }
 
   /**
@@ -470,7 +478,7 @@ class Connection extends DatabaseConnection {
       $this->getDbalConnection()->getSchemaManager()->createDatabase($database);
       $this->dbalExtension->postCreateDatabase($database);
     }
-    catch (DBALException $e) {
+    catch (DbalException $e) {
       throw new DatabaseNotFoundException($e->getMessage(), $e->getCode(), $e);
     }
   }
@@ -791,4 +799,30 @@ class Connection extends DatabaseConnection {
     return $this->setPrefix($prefix);
   }
 
+  /**
+   * @param array<int, mixed>|array<string, mixed>                               $params
+   * @param array<int, int|string|Type|null>|array<string, int|string|Type|null> $types
+   *
+   * @return array{string, list<mixed>, array<int,Type|int|string|null>}
+   */
+  public function expandArrayParameters(string $sql, array $params, array $types): array {
+    if ($this->parser === null) {
+      $this->parser = $this->getDbalConnection()->getDatabasePlatform()->createSQLParser();
+    }
+
+    $pms = [];
+    foreach($params as $k => $v) {
+      $pms[substr($k, 1)] = $v;
+    }
+
+    $visitor = new ExpandArrayParameters($pms, $types);
+
+    $this->parser->parse($sql, $visitor);
+
+    return [
+      $visitor->getSQL(),
+      $visitor->getParameters(),
+      $visitor->getTypes(),
+    ];
+  }
 }

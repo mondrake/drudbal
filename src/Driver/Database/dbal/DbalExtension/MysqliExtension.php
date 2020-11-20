@@ -3,6 +3,7 @@
 namespace Drupal\drudbal\Driver\Database\dbal\DbalExtension;
 
 use Doctrine\DBAL\Connection as DbalConnection;
+use Doctrine\DBAL\Result as DbalResult;
 use Doctrine\DBAL\Statement as DbalStatement;
 
 /**
@@ -43,10 +44,10 @@ class MysqliExtension extends AbstractMySqlExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateRowCount(DbalStatement $dbal_statement) {
+  public function delegateRowCount(DbalResult $dbal_result) {
     $wrapped_connection = $this->getDbalConnection()->getWrappedConnection()->getWrappedResourceHandle();
     if ($wrapped_connection->info === NULL) {
-      return $dbal_statement->rowCount();
+      return $dbal_result->rowCount();
     }
     else {
       list($matched) = sscanf($wrapped_connection->info, "Rows matched: %d Changed: %d Warnings: %d");

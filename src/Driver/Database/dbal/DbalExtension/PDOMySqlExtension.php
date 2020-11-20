@@ -39,7 +39,7 @@ class PDOMySqlExtension extends AbstractMySqlExtension {
    * {@inheritdoc}
    */
   public function delegateClientVersion() {
-    return $this->dbalConnection->getWrappedConnection()->getAttribute(\PDO::ATTR_CLIENT_VERSION);
+    return $this->dbalConnection->getWrappedConnection()->getServerVersion();
   }
 
 }
