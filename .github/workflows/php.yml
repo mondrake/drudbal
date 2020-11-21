@@ -12,6 +12,10 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    extension:
+      - "mysqli"
+      - "pdo_mysql"
+
     services:
       mysql:
         image: "mysql:5.7"
@@ -55,10 +59,10 @@ jobs:
     - name: Install Drupal
       run: |
         cd drupal
-        vendor/bin/drush site-install standard --db-url="mysql://root:@localhost/drudbal#drudbal_" -y
+        vendor/bin/drush site-install standard --db-url="mysql://root:@localhost:3306/drudbal#drudbal_" -y
 
-    # Add a test script to composer.json, for instance: "test": "vendor/bin/phpunit"
-    # Docs: https://getcomposer.org/doc/articles/scripts.md
-
-    # - name: Run test suite
-    #   run: composer run-script test
+    - name: Run test suite
+      run: |
+        cd drupal/core
+        export SIMPLETEST_DB="mysql://root:@localhost:3306/drudbal#drudbal_"
+        ../vendor/bin/phpunit --group Database
