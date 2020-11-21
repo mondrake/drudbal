@@ -35,7 +35,7 @@ jobs:
     - name: Checkout DruDbal
       uses: actions/checkout@v2
       with:
-        path: dbal_staging
+        path: drudbal_staging
 
     - name: Patch Drupal
       run: |
@@ -44,7 +44,7 @@ jobs:
         # [#2992274] Installer tests fail if contrib driver hides database credentials form fields
         curl https://www.drupal.org/files/issues/2019-04-02/2992274-5.patch | git apply -v
         # [#3110546] Allow contributed modules (mostly database drivers) to override tests in core
-        git apply -v dbal_staging/tests/travis_ci/alt-fix.patch
+        git apply -v drudbal_staging/tests/travis_ci/alt-fix.patch
 
 #    - name: Cache Composer packages
  #     id: composer-cache
@@ -64,8 +64,8 @@ jobs:
 
     - name: Composer require DruDbal from local
       run: |
-        git -C dbal_staging checkout -b travisci-run-branch
-        composer config repositories.travisci-run '{"type": "path", "url": "dbal_staging", "options": {"symlink": false}}'
+        git -C drudbal_staging checkout -b travisci-run-branch
+        composer config repositories.travisci-run '{"type": "path", "url": "drudbal_staging", "options": {"symlink": false}}'
         composer require "mondrake/drudbal:dev-travisci-run-branch" --no-progress
 
     - name: Install Drupal
@@ -79,7 +79,6 @@ jobs:
         # vendor/bin/drush site-install standard --db-url="$SIMPLETEST_DB" -y
         php install_cli.php
         vendor/bin/drush runserver localhost:8080 &
-        # sleep 2s
 
     - name: Report installation
       run: php install_report.php
@@ -89,4 +88,4 @@ jobs:
         export SIMPLETEST_DB="dbal://root:@0.0.0.0:3306/drudbal?module=drudbal&dbal_driver=pdo_mysql"
         export SIMPLETEST_BASE_URL="http://localhost:8080"
         export PHPUNIT_SKIP_CLASS='["Drupal\\KernelTests\\Core\\Database\\DatabaseExceptionWrapperTest"]'
-        vendor/bin/phpunit -c core --group Database,Entity,Field -v
+        vendor/bin/phpunit -c core --group Database,Entity,Field
