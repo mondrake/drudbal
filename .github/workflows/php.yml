@@ -53,22 +53,22 @@ jobs:
         composer run-script drupal-phpunit-upgrade
         composer require drush/drush --no-progress
 
-    # Require mondrake/drudbal from the source just cloned from GitHub.
     - name: Composer require DruDbal from local
       run: |
-        #cd dbal_staging
         git -C dbal_staging checkout -b travisci-run-branch
-        #cd ..
         composer config repositories.travisci-run '{"type": "path", "url": "dbal_staging", "options": {"symlink": false}}'
         composer require "mondrake/drudbal:dev-travisci-run-branch" --no-progress
 
     - name: Install Drupal
       run: |
-        export SIMPLETEST_DB="mysql://root:@0.0.0.0:3306/drudbal#drudbal_"
+        #export SIMPLETEST_DB="mysql://root:@0.0.0.0:3306/drudbal#drudbal_"
+        export DRUDBAL_ENV="dbal/mysql"
+        export DBAL_URL="mysql://root:@0.0.0.0:3306/drudbal"
+        export SIMPLETEST_DB="dbal://root:@0.0.0.0:3306/drudbal?module=drudbal&dbal_driver=pdo_mysql"
         export SIMPLETEST_BASE_URL="http://localhost:8080"
         cp modules/contrib/drudbal/tests/travis_ci/install_* .
-        vendor/bin/drush site-install standard --db-url="$SIMPLETEST_DB" -y
-        # php install_cli.php
+        # vendor/bin/drush site-install standard --db-url="$SIMPLETEST_DB" -y
+        php install_cli.php
         vendor/bin/drush runserver localhost:8080 &
         sleep 2s
 
@@ -76,5 +76,4 @@ jobs:
       run: php install_report.php
 
     - name: Run test suite
-      run: |
-      #  vendor/bin/phpunit -c core --group Database
+      run: vendor/bin/phpunit -c core --group Database,Entity,Field -v
