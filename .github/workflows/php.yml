@@ -22,24 +22,25 @@ jobs:
           - "3306:3306"
 
     steps:
-    - name: Checkout
-      uses: actions/checkout@v2
-
     - name: Install PHP
       uses: "shivammathur/setup-php@v2"
       with:
         coverage: "none"
         extensions: "mysqli,pdo_mysql"
 
-    - name: Git clone Drupal
-      run: |
-        git clone --depth=5 --branch=9.2.x http://git.drupal.org/project/drupal.git
+    - name: Checkout Drupal
+      run: git clone --depth=5 --branch=9.2.x http://git.drupal.org/project/drupal.git .
+
+    - name: Checkout DruDbal
+      uses: actions/checkout@v2
+      with:
+        path: dbal_staging
 
     - name: Cache Composer packages
       id: composer-cache
       uses: actions/cache@v2
       with:
-        path: drupal/vendor
+        path: vendor
         key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
         restore-keys: |
           ${{ runner.os }}-php-
@@ -47,22 +48,21 @@ jobs:
     - name: Install dependencies
       if: steps.composer-cache.outputs.cache-hit != 'true'
       run: |
-        cd drupal
+        #cd drupal
         composer install --no-progress
         composer run-script drupal-phpunit-upgrade
-        # Get Drush and Doctrine DBAL
         composer require drush/drush --no-progress
 
     - name: Install Drupal
       run: |
-        cd drupal
+        #cd drupal
         vendor/bin/drush site-install standard --db-url="mysql://root:@0.0.0.0:3306/drudbal#drudbal_" -y
         vendor/bin/drush runserver localhost:8080 &
         sleep 2s
 
     - name: Run test suite
       run: |
-        cd drupal/core
+        #cd drupal/core
         export SIMPLETEST_BASE_URL="http://localhost:8080"
         export SIMPLETEST_DB="mysql://root:@0.0.0.0:3306/drudbal#drudbal_"
-        ../vendor/bin/phpunit --group Database
+        vendor/bin/phpunit --group Database
