@@ -5,9 +5,6 @@
  * Initiates a command line installation of Drupal.
  */
 
-// Change the directory to the Drupal root.
-chdir('..');
-
 // Store the Drupal root path.
 $root_path = realpath('');
 

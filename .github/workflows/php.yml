@@ -64,8 +64,11 @@ jobs:
 
     - name: Install Drupal
       run: |
+        export SIMPLETEST_DB="mysql://root:@0.0.0.0:3306/drudbal#drudbal_"
+        export SIMPLETEST_BASE_URL="http://localhost:8080"
         cp modules/contrib/drudbal/tests/travis_ci/install_* .
-        vendor/bin/drush site-install standard --db-url="mysql://root:@0.0.0.0:3306/drudbal#drudbal_" -y
+        vendor/bin/drush site-install standard --db-url="$SIMPLETEST_DB" -y
+        # php install_cli.php
         vendor/bin/drush runserver localhost:8080 &
         sleep 2s
 
@@ -74,6 +77,4 @@ jobs:
 
     - name: Run test suite
       run: |
-        export SIMPLETEST_BASE_URL="http://localhost:8080"
-        export SIMPLETEST_DB="mysql://root:@0.0.0.0:3306/drudbal#drudbal_"
       #  vendor/bin/phpunit -c core --group Database

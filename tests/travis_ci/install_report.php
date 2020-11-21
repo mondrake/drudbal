@@ -9,9 +9,6 @@ use Drupal\Core\Database\Database;
 use Drupal\Core\DrupalKernel;
 use Drupal\Core\Site\Settings;
 
-// Change the directory to the Drupal root.
-chdir('..');
-
 // Store the Drupal root path.
 $root_path = realpath('');
 
