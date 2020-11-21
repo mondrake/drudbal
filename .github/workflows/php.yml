@@ -6,6 +6,15 @@ on:
   pull_request:
     branches: [ master ]
 
+services:
+  mysql:
+    image: "mysql:5.7"
+    options: >-
+      -e MYSQL_ALLOW_EMPTY_PASSWORD=yes
+      -e MYSQL_DATABASE=drudbal
+    ports:
+      - "3306:3306"
+
 jobs:
   build:
 
@@ -24,14 +33,14 @@ jobs:
       run: |
         git clone --depth=5 --branch=9.2.x http://git.drupal.org/project/drupal.git
 
-#    - name: Cache Composer packages
-#      id: composer-cache
-#      uses: actions/cache@v2
-#      with:
-#        path: vendor
-#        key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
-#        restore-keys: |
-#          ${{ runner.os }}-php-
+    - name: Cache Composer packages
+      id: composer-cache
+      uses: actions/cache@v2
+      with:
+        path: drupal/vendor
+        key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-php-
 
     - name: Install dependencies
       if: steps.composer-cache.outputs.cache-hit != 'true'
