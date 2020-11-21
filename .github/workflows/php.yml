@@ -7,18 +7,19 @@ on:
     branches: [ master ]
 
 jobs:
-  services:
-    mysql:
-      image: "mysql:5.7"
-      options: >-
-        -e MYSQL_ALLOW_EMPTY_PASSWORD=yes
-        -e MYSQL_DATABASE=drudbal
-      ports:
-        - "3306:3306"
 
   build:
 
     runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: "mysql:5.7"
+        options: >-
+          -e MYSQL_ALLOW_EMPTY_PASSWORD=yes
+          -e MYSQL_DATABASE=drudbal
+        ports:
+          - "3306:3306"
 
     steps:
     - name: Checkout
