@@ -27,6 +27,7 @@ jobs:
       with:
         coverage: "none"
         extensions: "mysqli,pdo_mysql"
+        ini-values: "zend.assertions=1"
 
     - name: Checkout Drupal
       run: git clone --depth=5 --branch=9.2.x http://git.drupal.org/project/drupal.git .
@@ -60,7 +61,6 @@ jobs:
 
     - name: Run test suite
       run: |
-        #cd drupal/core
         export SIMPLETEST_BASE_URL="http://localhost:8080"
         export SIMPLETEST_DB="mysql://root:@0.0.0.0:3306/drudbal#drudbal_"
         vendor/bin/phpunit -c core --group Database
