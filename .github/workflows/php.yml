@@ -57,9 +57,12 @@ jobs:
       run: |
         cd drupal
         vendor/bin/drush site-install standard --db-url="mysql://root:@0.0.0.0:3306/drudbal#drudbal_" -y
+        vendor/bin/drush runserver localhost:8080 &
+        sleep 2s
 
     - name: Run test suite
       run: |
         cd drupal/core
+        export SIMPLETEST_BASE_URL="http://localhost:8080"
         export SIMPLETEST_DB="mysql://root:@0.0.0.0:3306/drudbal#drudbal_"
         ../vendor/bin/phpunit --group Database
