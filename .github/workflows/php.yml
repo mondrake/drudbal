@@ -36,26 +36,24 @@ jobs:
       with:
         path: dbal_staging
 
-#    - name: Cache Composer packages
-#      id: composer-cache
-#      uses: actions/cache@v2
-#      with:
-#        path: vendor
-#        key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
-#        restore-keys: |
-#          ${{ runner.os }}-php-
+    - name: Cache Composer packages
+      id: composer-cache
+      uses: actions/cache@v2
+      with:
+        path: vendor
+        key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-php-
 
-    - name: Install dependencies
+    - name: Install Composer dependencies
       if: steps.composer-cache.outputs.cache-hit != 'true'
       run: |
-        #cd drupal
         composer install --no-progress
         composer run-script drupal-phpunit-upgrade
         composer require drush/drush --no-progress
 
     - name: Install Drupal
       run: |
-        #cd drupal
         vendor/bin/drush site-install standard --db-url="mysql://root:@0.0.0.0:3306/drudbal#drudbal_" -y
         vendor/bin/drush runserver localhost:8080 &
         sleep 2s
@@ -65,4 +63,4 @@ jobs:
         #cd drupal/core
         export SIMPLETEST_BASE_URL="http://localhost:8080"
         export SIMPLETEST_DB="mysql://root:@0.0.0.0:3306/drudbal#drudbal_"
-        vendor/bin/phpunit --group Database
+        vendor/bin/phpunit -c core --group Database
