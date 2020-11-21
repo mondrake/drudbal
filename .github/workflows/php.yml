@@ -70,10 +70,13 @@ jobs:
         # vendor/bin/drush site-install standard --db-url="$SIMPLETEST_DB" -y
         php install_cli.php
         vendor/bin/drush runserver localhost:8080 &
-        sleep 2s
+        # sleep 2s
 
     - name: Report installation
       run: php install_report.php
 
     - name: Run test suite
-      run: vendor/bin/phpunit -c core --group Database,Entity,Field -v
+      run: |
+        export SIMPLETEST_DB="dbal://root:@0.0.0.0:3306/drudbal?module=drudbal&dbal_driver=pdo_mysql"
+        export SIMPLETEST_BASE_URL="http://localhost:8080"
+        vendor/bin/phpunit -c core --group Database,Entity,Field -v
