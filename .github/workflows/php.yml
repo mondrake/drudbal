@@ -29,9 +29,7 @@ jobs:
       uses: "shivammathur/setup-php@v2"
       with:
         coverage: "none"
-        extensions:
-          - "mysqli"
-          - "pdo_mysql"
+        extensions: "mysqli,pdo_mysql"
 
     - name: Git clone Drupal
       run: |
