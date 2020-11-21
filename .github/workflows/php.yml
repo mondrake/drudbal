@@ -25,14 +25,14 @@ jobs:
         git clone --depth=5 --branch=9.2.x http://git.drupal.org/project/drupal.git
         cd drupal
 
-    - name: Cache Composer packages
-      id: composer-cache
-      uses: actions/cache@v2
-      with:
-        path: vendor
-        key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
-        restore-keys: |
-          ${{ runner.os }}-php-
+#    - name: Cache Composer packages
+#      id: composer-cache
+#      uses: actions/cache@v2
+#      with:
+#        path: vendor
+#        key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
+#        restore-keys: |
+#          ${{ runner.os }}-php-
 
     - name: Install dependencies
       if: steps.composer-cache.outputs.cache-hit != 'true'
@@ -44,7 +44,7 @@ jobs:
 
     - name: Install Drupal
       run: |
-        drush site-install standard --db-url="mysql://root:@localhost/drudbal#drudbal_" -y
+        vendor/bin/drush site-install standard --db-url="mysql://root:@localhost/drudbal#drudbal_" -y
 
     # Add a test script to composer.json, for instance: "test": "vendor/bin/phpunit"
     # Docs: https://getcomposer.org/doc/articles/scripts.md
