@@ -12,10 +12,6 @@ jobs:
 
     runs-on: ubuntu-latest
 
-    extension:
-      - "mysqli"
-      - "pdo_mysql"
-
     services:
       mysql:
         image: "mysql:5.7"
@@ -33,6 +29,9 @@ jobs:
       uses: "shivammathur/setup-php@v2"
       with:
         coverage: "none"
+        extensions:
+          - "mysqli"
+          - "pdo_mysql"
 
     - name: Git clone Drupal
       run: |
