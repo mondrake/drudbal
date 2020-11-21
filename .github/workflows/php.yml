@@ -56,9 +56,9 @@ jobs:
     # Require mondrake/drudbal from the source just cloned from GitHub.
     - name: Composer require DruDbal from local
       run: |
-        cd dbal_staging
-        git checkout -b travisci-run-branch
-        cd ..
+        #cd dbal_staging
+        git -C dbal_staging checkout -b travisci-run-branch
+        #cd ..
         composer config repositories.travisci-run '{"type": "path", "url": "dbal_staging", "options": {"symlink": false}}'
         composer require "mondrake/drudbal:dev-travisci-run-branch" --no-progress
 
