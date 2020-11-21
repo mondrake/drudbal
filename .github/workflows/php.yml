@@ -23,7 +23,6 @@ jobs:
     - name: Git clone Drupal
       run: |
         git clone --depth=5 --branch=9.2.x http://git.drupal.org/project/drupal.git
-        cd drupal
 
 #    - name: Cache Composer packages
 #      id: composer-cache
@@ -37,6 +36,7 @@ jobs:
     - name: Install dependencies
       if: steps.composer-cache.outputs.cache-hit != 'true'
       run: |
+        cd drupal
         composer install --no-progress
         composer run-script drupal-phpunit-upgrade
         # Get Drush and Doctrine DBAL
@@ -44,6 +44,7 @@ jobs:
 
     - name: Install Drupal
       run: |
+        cd drupal
         vendor/bin/drush site-install standard --db-url="mysql://root:@localhost/drudbal#drudbal_" -y
 
     # Add a test script to composer.json, for instance: "test": "vendor/bin/phpunit"
