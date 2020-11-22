@@ -3,8 +3,6 @@ name: MySql Testing
 on:
   push:
     branches: [ master ]
-  pull_request:
-    branches: [ master ]
   schedule:
     - cron: "0 6 * * 2"
 
@@ -35,11 +33,11 @@ jobs:
       matrix:
         test-args:
           - "--group Database"
-#          - "--group Entity"
-#          - "--group Cache,Config"
-#          - "--group field,Field"
-#          - "--group file"
-#          - "--group views"
+          - "--group Entity"
+          - "--group Cache,Config"
+          - "--group field,Field"
+          - "--group file"
+          - "--group views"
 
     services:
       mysql:
@@ -115,7 +113,7 @@ jobs:
       matrix:
         test-args:
           - "--group Database"
-#          - "--group Entity"
+          - "--group Entity"
 
     services:
       mysql:
@@ -191,7 +189,7 @@ jobs:
       matrix:
         test-args:
           - "--group Database"
-#          - "--group Entity"
+          - "--group Entity"
 
     services:
       mariadb:
