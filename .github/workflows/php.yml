@@ -17,6 +17,7 @@ env:
     SIMPLETEST_BASE_URL: "http://localhost:8080"
     PHPUNIT_SKIP_CLASS: '[
       "Drupal\\KernelTests\\Core\\Database\\DatabaseExceptionWrapperTest",
+      "Drupal\\KernelTests\\Core\\Cache\\ApcuBackendTest",
       "Drupal\\KernelTests\\Core\\Cache\\EndOfTransactionQueriesTest",
       "Drupal\\Tests\\views\\Kernel\\ViewElementTest"
     ]'
@@ -31,7 +32,7 @@ jobs:
       matrix:
         test-args:
           - "--group Database,Entity"
-          - "--group Installer,Cache,Config"
+          - "--group Cache,Config"
           - "--group field,Field"
           - "--group file"
           - "--group views"
