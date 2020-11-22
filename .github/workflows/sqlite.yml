@@ -1,0 +1,92 @@
+name: SQLite Testing
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  schedule:
+    - cron: "0 6 * * 2"
+
+env:
+    DRUDBAL_PHP_VERSION: "7.4"
+    DRUDBAL_DRUPAL_VERSION: "9.2.x"
+    SIMPLETEST_BASE_URL: "http://localhost:8080"
+    PHPUNIT_SKIP_CLASS: '[
+      "Drupal\\KernelTests\\Core\\Database\\DatabaseExceptionWrapperTest",
+      "Drupal\\KernelTests\\Core\\Cache\\ApcuBackendTest",
+      "Drupal\\KernelTests\\Core\\Cache\\EndOfTransactionQueriesTest"
+    ]'
+
+jobs:
+
+#################################
+
+  sqlite-pdo:
+    name: "SQLite with PDO"
+    runs-on: ubuntu-latest
+    env:
+        DRUDBAL_ENV: "dbal/sqlite/file"
+        DBAL_URL: "sqlite://localhost/~/sqlite-drudbal"
+        SIMPLETEST_DB: "dbal://localhost/~/sqlite-drudbal?module=drudbal&dbal_driver=pdo_sqlite"
+
+    strategy:
+      matrix:
+        test-args:
+          - "--group Database"
+#          - "--group Entity"
+#          - "--group Cache,Config"
+#          - "--group field,Field"
+#          - "--group file"
+#          - "--group views"
+
+    steps:
+    - name: Install PHP
+      uses: "shivammathur/setup-php@v2"
+      with:
+        php-version: $DRUDBAL_PHP_VERSION
+        coverage: "none"
+        extensions: "pdo_mysql"
+        ini-values: "zend.assertions=1"
+
+    - name: Checkout Drupal
+      run: git clone --depth=5 --branch=$DRUDBAL_DRUPAL_VERSION http://git.drupal.org/project/drupal.git .
+
+    - name: Checkout DruDbal
+      uses: actions/checkout@v2
+      with:
+        path: drudbal_staging
+
+    - name: '#2657888 Add Date function support in DTBNG'
+      run: curl https://www.drupal.org/files/issues/2657888-18.patch | git apply -v
+
+    - name: '#2992274 Installer tests fail if contrib driver hides database credentials form fields'
+      run: curl https://www.drupal.org/files/issues/2019-04-02/2992274-5.patch | git apply -v
+
+    - name: '#3110546 Allow contributed modules (mostly database drivers) to override tests in core'
+      run: git apply -v drudbal_staging/tests/travis_ci/alt-fix.patch
+
+    - name: Install Composer dependencies
+      run: |
+        composer install --no-progress --ansi
+        composer run-script drupal-phpunit-upgrade
+        composer require drush/drush --no-progress --ansi
+
+    - name: Composer require DruDbal from local staging
+      run: |
+        git -C drudbal_staging checkout -b travisci-run-branch
+        composer config repositories.travisci-run '{"type": "path", "url": "drudbal_staging", "options": {"symlink": false}}'
+        composer require "mondrake/drudbal:dev-travisci-run-branch" --no-progress --ansi
+
+    - name: Install Drupal
+      run: |
+        cp modules/contrib/drudbal/tests/travis_ci/install_* .
+        # Use the custom installer.
+        php install_cli.php
+        vendor/bin/drush runserver localhost:8080 &
+
+    - name: Report installation
+      run: php install_report.php
+
+    - name: Run test ${{ matrix.test-args }}
+      run: vendor/bin/phpunit -c core --color=always ${{ matrix.test-args }}

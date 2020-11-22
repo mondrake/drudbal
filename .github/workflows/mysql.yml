@@ -34,7 +34,8 @@ jobs:
     strategy:
       matrix:
         test-args:
-          - "--group Database,Entity"
+          - "--group Database"
+#          - "--group Entity"
 #          - "--group Cache,Config"
 #          - "--group field,Field"
 #          - "--group file"
