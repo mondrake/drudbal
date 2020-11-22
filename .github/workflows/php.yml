@@ -5,6 +5,8 @@ on:
     branches: [ master ]
   pull_request:
     branches: [ master ]
+  schedule:
+    - cron: "0 6 * * 2"
 
 env:
     DRUDBAL_PHP_VERSION: "7.4"
@@ -28,9 +30,11 @@ jobs:
     strategy:
       matrix:
         test-args:
-          - "--group Database"
-          - "--group Entity"
+          - "--group Database,Entity"
           - "--group Installer,Cache,Config"
+          - "--group field,Field"
+          - "--group file"
+          - "--group views"
 
     services:
       mysql:
