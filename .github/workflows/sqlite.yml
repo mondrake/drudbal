@@ -51,7 +51,7 @@ jobs:
 
     - name: Upgrade SQLite to 3.26
       run: |
-        sudo echo "deb http://archive.ubuntu.com/ubuntu focal main restricted universe multiverse" > /etc/apt/sources.list
+        #sudo echo "deb http://archive.ubuntu.com/ubuntu focal main restricted universe multiverse" > /etc/apt/sources.list
         sudo apt-get update
         sudo apt-get -y install sqlite3/focal
 
