@@ -30,11 +30,14 @@ jobs:
     strategy:
       matrix:
         test-args:
-          - "--group Database,Entity"
-          - "--group Installer,Cache,Config"
-          - "--group field,Field"
-          - "--group file"
-          - "--group views"
+#          - "--group Database,Entity"
+#          - "--group Installer,Cache,Config"
+          - "--group Installer"
+          - "--group Cache"
+          - "--group Config"
+#          - "--group field,Field"
+#          - "--group file"
+#          - "--group views"
 
     services:
       mysql:
@@ -73,15 +76,15 @@ jobs:
 
     - name: Install Composer dependencies
       run: |
-        composer install --no-progress
-        composer run-script drupal-phpunit-upgrade
-        composer require drush/drush --no-progress
+        composer install --no-progress --ansi
+        composer run-script drupal-phpunit-upgrade --ansi
+        composer require drush/drush --no-progress --ansi
 
     - name: Composer require DruDbal from local staging
       run: |
         git -C drudbal_staging checkout -b travisci-run-branch
         composer config repositories.travisci-run '{"type": "path", "url": "drudbal_staging", "options": {"symlink": false}}'
-        composer require "mondrake/drudbal:dev-travisci-run-branch" --no-progress
+        composer require "mondrake/drudbal:dev-travisci-run-branch" --no-progress --ansi
 
     - name: Install Drupal
       run: |
