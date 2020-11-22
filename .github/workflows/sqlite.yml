@@ -27,8 +27,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
         DRUDBAL_ENV: "dbal/sqlite/file"
-        DBAL_URL: "sqlite://localhost/~/sqlite-drudbal"
-        SIMPLETEST_DB: "dbal://localhost/~/sqlite-drudbal?module=drudbal&dbal_driver=pdo_sqlite"
+        DBAL_URL: "sqlite://localhost/sites/drudbal.sqlite"
+        SIMPLETEST_DB: "dbal://localhost/sites/drudbal.sqlite?module=drudbal&dbal_driver=pdo_sqlite"
 
     strategy:
       matrix:
