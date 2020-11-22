@@ -1,4 +1,4 @@
-name: PHPUnit Testing
+name: MySql Testing
 
 on:
   push:
@@ -6,11 +6,23 @@ on:
   pull_request:
     branches: [ master ]
 
+env:
+    DRUDBAL_ENV: "dbal/mysql"
+    DBAL_URL: "mysql://root:@0.0.0.0:3306/drudbal"
+    SIMPLETEST_DB: "dbal://root:@0.0.0.0:3306/drudbal?module=drudbal&dbal_driver=pdo_mysql"
+    SIMPLETEST_BASE_URL: "http://localhost:8080"
+
 jobs:
 
   build:
 
     runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        test-args:
+          - "--group Database"
+          - "--group Entity"
 
     services:
       mysql:
@@ -25,6 +37,7 @@ jobs:
     - name: Install PHP
       uses: "shivammathur/setup-php@v2"
       with:
+        php-version: "7.4"
         coverage: "none"
         extensions: "mysqli,pdo_mysql"
         ini-values: "zend.assertions=1"
@@ -56,7 +69,6 @@ jobs:
 #          ${{ runner.os }}-php-
 
     - name: Install Composer dependencies
-      if: steps.composer-cache.outputs.cache-hit != 'true'
       run: |
         composer install --no-progress
         composer run-script drupal-phpunit-upgrade
@@ -70,22 +82,16 @@ jobs:
 
     - name: Install Drupal
       run: |
-        export DRUDBAL_ENV="dbal/mysql"
-        export DBAL_URL="mysql://root:@0.0.0.0:3306/drudbal"
-        export SIMPLETEST_DB="dbal://root:@0.0.0.0:3306/drudbal?module=drudbal&dbal_driver=pdo_mysql"
-        export SIMPLETEST_BASE_URL="http://localhost:8080"
         cp modules/contrib/drudbal/tests/travis_ci/install_* .
+        # Use the custom installer.
         php install_cli.php
         vendor/bin/drush runserver localhost:8080 &
 
     - name: Report installation
       run: php install_report.php
 
-    - name: Run test suite
-      run: |
-        export DRUDBAL_ENV="dbal/mysql"
-        export DBAL_URL="mysql://root:@0.0.0.0:3306/drudbal"
-        export SIMPLETEST_DB="dbal://root:@0.0.0.0:3306/drudbal?module=drudbal&dbal_driver=pdo_mysql"
-        export SIMPLETEST_BASE_URL="http://localhost:8080"
-        export PHPUNIT_SKIP_CLASS='["Drupal\\KernelTests\\Core\\Database\\DatabaseExceptionWrapperTest"]'
-        vendor/bin/phpunit -c core --group Database,Entity,Field
+    - name: Run test ${{ matrix.test-args }}
+      env:
+        PHPUNIT_SKIP_CLASS: '["Drupal\\KernelTests\\Core\\Database\\DatabaseExceptionWrapperTest"]'
+      #run: vendor/bin/phpunit -c core --color=always --group Database,Entity,Field
+      run: vendor/bin/phpunit -c core --color=always "${{ matrix.test-args }}"
