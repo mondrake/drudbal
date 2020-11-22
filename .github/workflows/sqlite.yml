@@ -9,7 +9,7 @@ on:
     - cron: "0 6 * * 2"
 
 env:
-    DRUDBAL_PHP_VERSION: "7.3"
+    DRUDBAL_PHP_VERSION: "7.4"
     DRUDBAL_DRUPAL_VERSION: "9.2.x"
     SIMPLETEST_BASE_URL: "http://localhost:8080"
     PHPUNIT_SKIP_CLASS: '[
@@ -24,7 +24,7 @@ jobs:
 
   sqlite-pdo:
     name: "SQLite with PDO"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     env:
         DRUDBAL_ENV: "dbal/sqlite/file"
         DBAL_URL: "sqlite://localhost/sites/drudbal.sqlite"
