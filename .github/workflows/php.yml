@@ -1,16 +1,40 @@
-name: PHPUnit Testing
+name: MySql Testing
 
 on:
   push:
     branches: [ master ]
   pull_request:
     branches: [ master ]
+  schedule:
+    - cron: "0 6 * * 2"
+
+env:
+    DRUDBAL_PHP_VERSION: "7.4"
+    DRUDBAL_DRUPAL_VERSION: "9.2.x"
+    DRUDBAL_ENV: "dbal/mysql"
+    DBAL_URL: "mysql://root:@0.0.0.0:3306/drudbal"
+    SIMPLETEST_DB: "dbal://root:@0.0.0.0:3306/drudbal?module=drudbal&dbal_driver=pdo_mysql"
+    SIMPLETEST_BASE_URL: "http://localhost:8080"
+    PHPUNIT_SKIP_CLASS: '[
+      "Drupal\\KernelTests\\Core\\Database\\DatabaseExceptionWrapperTest",
+      "Drupal\\KernelTests\\Core\\Cache\\EndOfTransactionQueriesTest",
+      "Drupal\\Tests\\views\\Kernel\\ViewElementTest"
+    ]'
 
 jobs:
 
   build:
 
     runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        test-args:
+          - "--group Database,Entity"
+          - "--group Installer,Cache,Config"
+          - "--group field,Field"
+          - "--group file"
+          - "--group views"
 
     services:
       mysql:
@@ -25,12 +49,13 @@ jobs:
     - name: Install PHP
       uses: "shivammathur/setup-php@v2"
       with:
+        php-version: $DRUDBAL_PHP_VERSION
         coverage: "none"
         extensions: "mysqli,pdo_mysql"
         ini-values: "zend.assertions=1"
 
     - name: Checkout Drupal
-      run: git clone --depth=5 --branch=9.2.x http://git.drupal.org/project/drupal.git .
+      run: git clone --depth=5 --branch=$DRUDBAL_DRUPAL_VERSION http://git.drupal.org/project/drupal.git .
 
     - name: Checkout DruDbal
       uses: actions/checkout@v2
@@ -46,23 +71,13 @@ jobs:
     - name: '#3110546 Allow contributed modules (mostly database drivers) to override tests in core'
       run: git apply -v drudbal_staging/tests/travis_ci/alt-fix.patch
 
-#    - name: Cache Composer packages
- #     id: composer-cache
-    #  uses: actions/cache@v2
-#      with:
-#        path: vendor
- #       key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
-#        restore-keys: |
-#          ${{ runner.os }}-php-
-
     - name: Install Composer dependencies
-      if: steps.composer-cache.outputs.cache-hit != 'true'
       run: |
         composer install --no-progress
         composer run-script drupal-phpunit-upgrade
         composer require drush/drush --no-progress
 
-    - name: Composer require DruDbal from local
+    - name: Composer require DruDbal from local staging
       run: |
         git -C drudbal_staging checkout -b travisci-run-branch
         composer config repositories.travisci-run '{"type": "path", "url": "drudbal_staging", "options": {"symlink": false}}'
@@ -70,22 +85,13 @@ jobs:
 
     - name: Install Drupal
       run: |
-        export DRUDBAL_ENV="dbal/mysql"
-        export DBAL_URL="mysql://root:@0.0.0.0:3306/drudbal"
-        export SIMPLETEST_DB="dbal://root:@0.0.0.0:3306/drudbal?module=drudbal&dbal_driver=pdo_mysql"
-        export SIMPLETEST_BASE_URL="http://localhost:8080"
         cp modules/contrib/drudbal/tests/travis_ci/install_* .
+        # Use the custom installer.
         php install_cli.php
         vendor/bin/drush runserver localhost:8080 &
 
     - name: Report installation
       run: php install_report.php
 
-    - name: Run test suite
-      run: |
-        export DRUDBAL_ENV="dbal/mysql"
-        export DBAL_URL="mysql://root:@0.0.0.0:3306/drudbal"
-        export SIMPLETEST_DB="dbal://root:@0.0.0.0:3306/drudbal?module=drudbal&dbal_driver=pdo_mysql"
-        export SIMPLETEST_BASE_URL="http://localhost:8080"
-        export PHPUNIT_SKIP_CLASS='["Drupal\\KernelTests\\Core\\Database\\DatabaseExceptionWrapperTest"]'
-        vendor/bin/phpunit -c core --group Database,Entity,Field
+    - name: Run test ${{ matrix.test-args }}
+      run: vendor/bin/phpunit -c core --color=always ${{ matrix.test-args }}
