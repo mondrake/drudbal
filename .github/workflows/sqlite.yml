@@ -49,6 +49,12 @@ jobs:
         extensions: "pdo_mysql"
         ini-values: "zend.assertions=1"
 
+    - name: Upgrade SQLite to 3.26
+      run: |
+        sudo echo "deb http://archive.ubuntu.com/ubuntu focal main restricted universe multiverse" > /etc/apt/sources.list
+        sudo apt-get update
+        sudo apt-get -y install sqlite3/focal
+
     - name: Checkout Drupal
       run: git clone --depth=5 --branch=$DRUDBAL_DRUPAL_VERSION http://git.drupal.org/project/drupal.git .
 
