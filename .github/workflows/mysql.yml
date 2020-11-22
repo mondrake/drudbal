@@ -114,7 +114,8 @@ jobs:
     strategy:
       matrix:
         test-args:
-          - "--group Database,Entity"
+          - "--group Database"
+#          - "--group Entity"
 
     services:
       mysql:
@@ -189,7 +190,8 @@ jobs:
     strategy:
       matrix:
         test-args:
-          - "--group Database,Entity"
+          - "--group Database"
+#          - "--group Entity"
 
     services:
       mariadb:
