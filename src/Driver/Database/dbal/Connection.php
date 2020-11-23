@@ -451,7 +451,7 @@ class Connection extends DatabaseConnection {
    * {@inheritdoc}
    */
   public function driver() {
-    return 'dbal';
+    return 'drudbal';
   }
 
   /**

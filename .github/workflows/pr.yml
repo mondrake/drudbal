@@ -26,7 +26,7 @@ jobs:
     env:
         DRUDBAL_ENV: "dbal/mysql"
         DBAL_URL: "mysql://root:@0.0.0.0:3306/drudbal"
-        SIMPLETEST_DB: "dbal://root:@0.0.0.0:3306/drudbal?module=drudbal&dbal_driver=pdo_mysql"
+        SIMPLETEST_DB: "drudbal://root:@0.0.0.0:3306/drudbal?module=drudbal&dbal_driver=pdo_mysql"
 
     strategy:
       matrix:
