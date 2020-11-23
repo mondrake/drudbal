@@ -69,7 +69,7 @@ jobs:
       run: curl https://www.drupal.org/files/issues/2657888-18.patch | git apply -v
 
     - name: '#2992274 Installer tests fail if contrib driver hides database credentials form fields'
-      run: curl https://www.drupal.org/files/issues/2019-04-02/2992274-5.patch | git apply -v
+      run: curl https://www.drupal.org/files/issues/2020-11-23/2992274-13.patch | git apply -v
 
     - name: '#3110546 Allow contributed modules (mostly database drivers) to override tests in core'
       run: git apply -v drudbal_staging/tests/travis_ci/alt-fix.patch
@@ -145,7 +145,7 @@ jobs:
       run: curl https://www.drupal.org/files/issues/2657888-18.patch | git apply -v
 
     - name: '#2992274 Installer tests fail if contrib driver hides database credentials form fields'
-      run: curl https://www.drupal.org/files/issues/2019-04-02/2992274-5.patch | git apply -v
+      run: curl https://www.drupal.org/files/issues/2020-11-23/2992274-13.patch | git apply -v
 
     - name: '#3110546 Allow contributed modules (mostly database drivers) to override tests in core'
       run: git apply -v drudbal_staging/tests/travis_ci/alt-fix.patch
@@ -221,7 +221,7 @@ jobs:
       run: curl https://www.drupal.org/files/issues/2657888-18.patch | git apply -v
 
     - name: '#2992274 Installer tests fail if contrib driver hides database credentials form fields'
-      run: curl https://www.drupal.org/files/issues/2019-04-02/2992274-5.patch | git apply -v
+      run: curl https://www.drupal.org/files/issues/2020-11-23/2992274-13.patch | git apply -v
 
     - name: '#3110546 Allow contributed modules (mostly database drivers) to override tests in core'
       run: git apply -v drudbal_staging/tests/travis_ci/alt-fix.patch
