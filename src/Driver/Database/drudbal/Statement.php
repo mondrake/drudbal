@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\drudbal\Driver\Database\dbal;
+namespace Drupal\drudbal\Driver\Database\drudbal;
 
 use Doctrine\DBAL\Exception as DbalException;
 use Doctrine\DBAL\FetchMode;
@@ -9,7 +9,7 @@ use Drupal\Core\Database\Database;
 use Drupal\Core\Database\DatabaseExceptionWrapper;
 use Drupal\Core\Database\RowCountException;
 use Drupal\Core\Database\StatementInterface;
-use Drupal\drudbal\Driver\Database\dbal\Connection as DruDbalConnection;
+use Drupal\drudbal\Driver\Database\drudbal\Connection as DruDbalConnection;
 
 // @todo organize better prefetch vs normal
 // @todo DBAL 2.6.0:
@@ -21,7 +21,7 @@ use Drupal\drudbal\Driver\Database\dbal\Connection as DruDbalConnection;
  *
  * Note: there should not be db platform specific code here. Any tasks that
  * cannot be managed by Doctrine DBAL should be added to extension specific
- * code in Drupal\drudbal\Driver\Database\dbal\DbalExtension\[dbal_driver_name]
+ * code in Drupal\drudbal\Driver\Database\drudbal\DbalExtension\[dbal_driver_name]
  * classes and execution handed over to there.
  */
 class Statement implements \IteratorAggregate, StatementInterface {
@@ -31,7 +31,7 @@ class Statement implements \IteratorAggregate, StatementInterface {
    *
    * The name $dbh is inherited from \PDOStatement.
    *
-   * @var \Drupal\drudbal\Driver\Database\dbal\Connection
+   * @var \Drupal\drudbal\Driver\Database\drudbal\Connection
    */
   public $dbh;
 
@@ -206,7 +206,7 @@ class Statement implements \IteratorAggregate, StatementInterface {
    * call of the execute method, to allow replacing named parameters with
    * positional ones if needed.
    *
-   * @param \Drupal\drudbal\Driver\Database\dbal\Connection $dbh
+   * @param \Drupal\drudbal\Driver\Database\drudbal\Connection $dbh
    *   The database connection object for this statement.
    * @param string $query
    *   A string containing an SQL query.

@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\drudbal\Driver\Database\dbal\DbalExtension;
+namespace Drupal\drudbal\Driver\Database\drudbal\DbalExtension;
 
 use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\ConnectionException as DbalConnectionException;
