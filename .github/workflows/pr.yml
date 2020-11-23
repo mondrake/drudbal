@@ -31,7 +31,7 @@ jobs:
     strategy:
       matrix:
         test-args:
-          - "--group Database"
+        #  - "--group Database"
           - "--group Installer"
 
     services:
@@ -92,5 +92,8 @@ jobs:
       run: php install_report.php
 
     - name: Run test ${{ matrix.test-args }}
-      run: vendor/bin/phpunit -c core --color=always ${{ matrix.test-args }}
+      run: |
+        vendor/bin/phpunit -c core --color=always core/tests/Drupal/KernelTests/Core/Installer/InstallerLanguageTest.php
+        vendor/bin/phpunit -c core --color=always core/tests/Drupal/FunctionalTests/Installer/SiteNameTest.php
+        vendor/bin/phpunit -c core --color=always core/tests/Drupal/FunctionalTests/Installer/InstallerLanguageDirectionTest.php
 #      run: php core/scripts/run-tests.sh --concurrency $(nproc) --dburl $SIMPLETEST_DB --sqlite $DRUPAL_TEST_RESULTS_DB --verbose --color --php $(which php) --url $SIMPLETEST_BASE_URL ${{ matrix.test-args }}
