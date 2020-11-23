@@ -13,7 +13,8 @@ env:
     PHPUNIT_SKIP_CLASS: '[
       "Drupal\\KernelTests\\Core\\Database\\DatabaseExceptionWrapperTest",
       "Drupal\\KernelTests\\Core\\Cache\\ApcuBackendTest",
-      "Drupal\\KernelTests\\Core\\Cache\\EndOfTransactionQueriesTest"
+      "Drupal\\KernelTests\\Core\\Cache\\EndOfTransactionQueriesTest",
+      "Drupal\\Tests\\file\\Functional\\DownloadTest"
     ]'
 
 jobs:
