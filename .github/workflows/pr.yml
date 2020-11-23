@@ -31,8 +31,8 @@ jobs:
     strategy:
       matrix:
         test-args:
-          - "--group Installer"
-          - "--group Database"
+          - "Installer"
+          - "Database"
 
     services:
       mysql:
@@ -81,16 +81,16 @@ jobs:
         composer config repositories.travisci-run '{"type": "path", "url": "drudbal_staging", "options": {"symlink": false}}'
         composer require "mondrake/drudbal:dev-travisci-run-branch" --no-progress --ansi
 
-    - name: Install Drupal
-      run: |
-        cp modules/contrib/drudbal/tests/travis_ci/install_* .
-        # Use the custom installer.
-        php install_cli.php
-        vendor/bin/drush runserver localhost:8080 &
+#    - name: Install Drupal
+#      run: |
+#        cp modules/contrib/drudbal/tests/travis_ci/install_* .
+#        # Use the custom installer.
+#        php install_cli.php
+#        vendor/bin/drush runserver localhost:8080 &
 
-    - name: Report installation
-      run: php install_report.php
+#    - name: Report installation
+#      run: php install_report.php
 
     - name: Run test ${{ matrix.test-args }}
 #      run: vendor/bin/phpunit -c core --color=always ${{ matrix.test-args }}
-      run: php core/scripts/run-tests.sh --concurrency $(nproc) --dburl $SIMPLETEST_DB --sqlite $DRUPAL_TEST_RESULTS_DB --verbose --color --php $(which php) --url http://127.0.0.1:8080 Installer
+      run: php core/scripts/run-tests.sh --concurrency $(nproc) --dburl $SIMPLETEST_DB --sqlite $DRUPAL_TEST_RESULTS_DB --verbose --color --php $(which php) --url http://127.0.0.1:8080 {{ matrix.test-args }}
