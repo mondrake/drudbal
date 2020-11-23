@@ -69,6 +69,9 @@ jobs:
     - name: '#3110546 Allow contributed modules (mostly database drivers) to override tests in core'
       run: git apply -v drudbal_staging/tests/travis_ci/alt-fix.patch
 
+    - name: '#3129534 Automatically enable the module that is providing the current database driver'
+      run: curl https://www.drupal.org/files/issues/2020-09-20/3129534-35.patch | git apply -v
+
     - name: Install Composer dependencies
       run: |
         composer install --no-progress --ansi
