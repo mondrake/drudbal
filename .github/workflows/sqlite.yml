@@ -1,9 +1,7 @@
-name: MySql Testing
+name: SQLite Testing
 
 on:
   push:
-    branches: [ master ]
-  pull_request:
     branches: [ master ]
   schedule:
     - cron: "0 6 * * 2"
@@ -11,42 +9,35 @@ on:
 env:
     DRUDBAL_PHP_VERSION: "7.4"
     DRUDBAL_DRUPAL_VERSION: "9.2.x"
-    DRUDBAL_ENV: "dbal/mysql"
-    DBAL_URL: "mysql://root:@0.0.0.0:3306/drudbal"
-    SIMPLETEST_DB: "dbal://root:@0.0.0.0:3306/drudbal?module=drudbal&dbal_driver=pdo_mysql"
     SIMPLETEST_BASE_URL: "http://localhost:8080"
     PHPUNIT_SKIP_CLASS: '[
       "Drupal\\KernelTests\\Core\\Database\\DatabaseExceptionWrapperTest",
+      "Drupal\\KernelTests\\Core\\Cache\\ApcuBackendTest",
       "Drupal\\KernelTests\\Core\\Cache\\EndOfTransactionQueriesTest",
-      "Drupal\\Tests\\views\\Kernel\\ViewElementTest"
+      "Drupal\\Tests\\file\\Functional\\DownloadTest"
     ]'
 
 jobs:
 
-  build:
+#################################
 
-    runs-on: ubuntu-latest
+  sqlite-pdo:
+    name: "SQLite with PDO"
+    runs-on: ubuntu-20.04
+    env:
+        DRUDBAL_ENV: "dbal/sqlite/file"
+        DBAL_URL: "sqlite://localhost/sites/drudbal.sqlite"
+        SIMPLETEST_DB: "dbal://localhost/sites/drudbal.sqlite?module=drudbal&dbal_driver=pdo_sqlite"
 
     strategy:
       matrix:
         test-args:
-#          - "--group Database,Entity"
-#          - "--group Installer,Cache,Config"
-          - "--group Installer"
-          - "--group Cache"
-          - "--group Config"
-#          - "--group field,Field"
-#          - "--group file"
-#          - "--group views"
-
-    services:
-      mysql:
-        image: "mysql:5.7"
-        options: >-
-          -e MYSQL_ALLOW_EMPTY_PASSWORD=yes
-          -e MYSQL_DATABASE=drudbal
-        ports:
-          - "3306:3306"
+          - "--group Database"
+          - "--group Entity"
+          - "--group Cache,Config"
+          - "--group field,Field"
+          - "--group file"
+          - "--group views"
 
     steps:
     - name: Install PHP
@@ -54,7 +45,7 @@ jobs:
       with:
         php-version: $DRUDBAL_PHP_VERSION
         coverage: "none"
-        extensions: "mysqli,pdo_mysql"
+        extensions: "pdo_mysql"
         ini-values: "zend.assertions=1"
 
     - name: Checkout Drupal
@@ -77,7 +68,7 @@ jobs:
     - name: Install Composer dependencies
       run: |
         composer install --no-progress --ansi
-        composer run-script drupal-phpunit-upgrade --ansi
+        composer run-script drupal-phpunit-upgrade
         composer require drush/drush --no-progress --ansi
 
     - name: Composer require DruDbal from local staging
