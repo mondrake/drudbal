@@ -49,7 +49,7 @@ jobs:
       with:
         php-version: $DRUDBAL_PHP_VERSION
         coverage: "none"
-        extensions: "pdo_mysql"
+        extensions: "date,dom,filter,gd,hash,json,pcre,pdo_mysql,session,SimpleXML,SPL,tokenizer,xml"
         ini-values: "zend.assertions=1"
 
     - name: Checkout Drupal
