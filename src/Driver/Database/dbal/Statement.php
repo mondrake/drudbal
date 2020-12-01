@@ -231,8 +231,8 @@ class Statement implements \IteratorAggregate, StatementInterface {
         $this->paramsPositions = array_flip(array_keys($args));
         list($query, $args) = $this->dbh->expandArrayParameters($this->queryString, $args, []);
         $this->queryString = $query;
-        $args = $args ?? [];
       }
+      $args = $args ?? [];
 
       try {
         $this->dbh->getDbalExtension()->alterStatement($this->queryString, $args);
