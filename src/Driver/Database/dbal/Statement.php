@@ -234,7 +234,7 @@ class Statement implements \IteratorAggregate, StatementInterface {
       }
 
       try {
-        $this->dbh->getDbalExtension()->alterStatement($this->queryString, $args);
+        $this->dbh->getDbalExtension()->alterStatement($this->queryString, $args ?? []);
         $this->dbalStatement = $this->dbh->getDbalConnection()->prepare($this->queryString);
       }
       catch (DbalException $e) {
