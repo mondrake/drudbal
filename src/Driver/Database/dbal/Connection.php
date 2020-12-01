@@ -228,6 +228,7 @@ class Connection extends DatabaseConnection {
       // In either case, we want to end up with an executed statement object,
       // which we pass to Statement::execute.
       if ($query instanceof StatementInterface) {
+        @trigger_error('Passing a StatementInterface object as a $query argument to Drupal\Core\Database\Connection::query is deprecated in drupal:9.2.0 and is removed in drupal:10.0.0. Call the execute method from the StatementInterface object directly instead. See https://www.drupal.org/node/3154439', E_USER_DEPRECATED);
         $stmt = $query;
         $stmt->execute(NULL, $options);
       }
