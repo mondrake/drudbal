@@ -181,7 +181,7 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
       'init_commands' => [],
     ];
     $connection_options['init_commands'] += [
-      'sql_mode' => "SET sql_mode = 'ANSI,STRICT_TRANS_TABLES,STRICT_ALL_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,ONLY_FULL_GROUP_BY'",
+      'sql_mode' => "SET sql_mode = 'ANSI,TRADITIONAL'",
     ];
     // Execute initial commands.
     foreach ($connection_options['init_commands'] as $sql) {
