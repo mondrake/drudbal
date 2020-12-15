@@ -3,6 +3,8 @@ name: Oracle Testing
 on:
   push:
     branches: [ master ]
+  pull_request:
+    branches: [ dev-oracle ]
 
 env:
     DRUDBAL_PHP_VERSION: "7.4"
@@ -20,11 +22,10 @@ jobs:
 #################################
 
   oracle-oci8:
-    name: "Oracle with Oci8"
+    name: "Oracle on Oci8"
     runs-on: ubuntu-20.04
     env:
         DRUDBAL_ENV: "dbal/oci8"
-        DBAL_URL: "sqlite://localhost/sites/drudbal.sqlite"
         DBAL_URL: "oci8://ORAROOT:DRUDBAL@0.0.0.0:1521/XE"
         SIMPLETEST_DB: "dbal://ORAROOT:DRUDBAL@0.0.0.0:1521/XE?module=drudbal&dbal_driver=oci8"
 
@@ -45,7 +46,7 @@ jobs:
       with:
         php-version: $DRUDBAL_PHP_VERSION
         coverage: "none"
-        extensions: "pdo_mysql"
+        extensions: "oci8"
         ini-values: "zend.assertions=1"
 
     - name: Checkout Drupal
@@ -82,11 +83,12 @@ jobs:
         cp modules/contrib/drudbal/tests/travis_ci/install_* .
         # Use the custom installer.
         php install_cli.php
-        vendor/bin/drush pml --type=module --no-core
         vendor/bin/drush runserver localhost:8080 &
 
     - name: Report installation
-      run: php install_report.php
+      run: |
+        php install_report.php
+        vendor/bin/drush pml --type=module --no-core
 
     - name: Run test ${{ matrix.test-args }}
       run: vendor/bin/phpunit -c core --color=always ${{ matrix.test-args }}
