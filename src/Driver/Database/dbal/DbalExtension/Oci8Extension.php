@@ -303,7 +303,7 @@ if ($this->getDebugging()) {
   error_log('***** Query args   : ' . var_export($args, TRUE));
   error_log("***** Backtrace    : \n" . $this->formatBacktrace($backtrace));
 }
-          throw new DatabaseExceptionWrapper($message, 0, $e);
+          throw new DatabaseExceptionWrapper($message, 0);
 dump('xxxx');
 
       }
