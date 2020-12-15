@@ -91,11 +91,12 @@ jobs:
         cp modules/contrib/drudbal/tests/travis_ci/install_* .
         # Use the custom installer.
         php install_cli.php
-        vendor/bin/drush pml --type=module --no-core
         vendor/bin/drush runserver localhost:8080 &
 
     - name: Report installation
-      run: php install_report.php
+      run: |
+        php install_report.php
+        vendor/bin/drush pml --type=module --no-core
 
     - name: Run test ${{ matrix.test-args }}
       run: vendor/bin/phpunit -c core --color=always ${{ matrix.test-args }}
@@ -168,11 +169,12 @@ jobs:
         cp modules/contrib/drudbal/tests/travis_ci/install_* .
         # Use the custom installer.
         php install_cli.php
-        vendor/bin/drush pml --type=module --no-core
         vendor/bin/drush runserver localhost:8080 &
 
     - name: Report installation
-      run: php install_report.php
+      run: |
+        php install_report.php
+        vendor/bin/drush pml --type=module --no-core
 
     - name: Run test ${{ matrix.test-args }}
       run: vendor/bin/phpunit -c core --color=always ${{ matrix.test-args }}
@@ -245,11 +247,12 @@ jobs:
         cp modules/contrib/drudbal/tests/travis_ci/install_* .
         # Use the custom installer.
         php install_cli.php
-        vendor/bin/drush pml --type=module --no-core
         vendor/bin/drush runserver localhost:8080 &
 
     - name: Report installation
-      run: php install_report.php
+      run: |
+        php install_report.php
+        vendor/bin/drush pml --type=module --no-core
 
     - name: Run test ${{ matrix.test-args }}
       run: vendor/bin/phpunit -c core --color=always ${{ matrix.test-args }}
