@@ -126,7 +126,6 @@ class Oci8Extension extends AbstractExtension {
       $identifier_crc = hash('crc32b', $prefixed_table_name);
       $prefixed_table_name = substr($prefixed_table_name, 0, 16) . $identifier_crc;
     }
-    $prefixed_table_name = '"' . $prefixed_table_name . '"';
     return $prefixed_table_name;
   }
 

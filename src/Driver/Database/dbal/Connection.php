@@ -179,7 +179,6 @@ class Connection extends DatabaseConnection {
   public function prefixTables($sql) {
     $matches = [];
     preg_match_all('/{(\S*)}/', $sql, $matches, PREG_SET_ORDER, 0);
-dump($matches);
     foreach ($matches as $match) {
       $table = $match[1];
       if (isset($this->dbTables['{' . $table . '}'])) {
@@ -190,7 +189,6 @@ dump($matches);
       // prefix.
       $this->dbTables['{' . $table . '}'] = $this->identifierQuotes[0] . $this->dbalExtension->getDbTableName($this->prefixes['default'], $table) . $this->identifierQuotes[1];
     }
-dump($this->dbTables);
     return str_replace(array_keys($this->dbTables), array_values($this->dbTables), $sql);
   }
 
@@ -504,9 +502,7 @@ dump($this->dbTables);
    * {@inheritdoc}
    */
   public function prepareStatement(string $query, array $options): StatementInterface {
-dump($query);
     $query = $this->prefixTables($query);
-dump($query);
     if (!($options['allow_square_brackets'] ?? FALSE)) {
       $query = $this->quoteIdentifiers($query);
     }
