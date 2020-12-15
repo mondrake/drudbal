@@ -293,8 +293,8 @@ class Oci8Extension extends AbstractExtension {
           throw new DatabaseExceptionWrapper($message, 0, $e);
 
         default:
-dump('xxxx');
-if ($this->getDebugging()) {
+//dump('xxxx');
+/*if ($this->getDebugging()) {
   $backtrace = debug_backtrace();
   error_log("\n***** Exception    : " . get_class($e));
   error_log('***** Message      : ' . $message);
@@ -303,7 +303,7 @@ if ($this->getDebugging()) {
   error_log('***** Query        : ' . $query);
   error_log('***** Query args   : ' . var_export($args, TRUE));
   error_log("***** Backtrace    : \n" . $this->formatBacktrace($backtrace));
-}
+}*/
           throw new DatabaseExceptionWrapper($message, 0, $e);
 
       }
@@ -430,7 +430,7 @@ if ($this->getDebugging()) {
    * {@inheritdoc}
    */
   public function alterStatement(&$query, array &$args) {
-if ($this->getDebugging()) error_log('pre-alter: ' . $query . ' : ' . var_export($args, TRUE));
+//if ($this->getDebugging()) error_log('pre-alter: ' . $query . ' : ' . var_export($args, TRUE));
 
     // Modify placeholders and statement in case of placeholders with
     // reserved keywords or exceeding Oracle limits, and for empty strings.
@@ -439,8 +439,8 @@ if ($this->getDebugging()) error_log('pre-alter: ' . $query . ' : ' . var_export
       foreach ($args as $placeholder => $value) {
         $temp_pl = ltrim($placeholder, ':');
         $temp_pl_short = $this->getLimitedIdentifier($temp_pl, 29);
-if ($this->getDebugging()) error_log('temp_pl: ' . $temp_pl);
-if ($this->getDebugging()) error_log('temp_pl_short: ' . $temp_pl_short);
+//if ($this->getDebugging()) error_log('temp_pl: ' . $temp_pl);
+//if ($this->getDebugging()) error_log('temp_pl_short: ' . $temp_pl_short);
         $key = $placeholder;
         if (in_array($temp_pl, static::$oracleKeywords, TRUE)) {
           $key = $placeholder . '____oracle';
