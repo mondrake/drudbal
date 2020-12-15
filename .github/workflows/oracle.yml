@@ -26,8 +26,8 @@ jobs:
     runs-on: ubuntu-20.04
     env:
         DRUDBAL_ENV: "dbal/oci8"
-        DBAL_URL: "oci8://ORAROOT:DRUDBAL@0.0.0.0:1521/XE"
-        SIMPLETEST_DB: "dbal://ORAROOT:DRUDBAL@0.0.0.0:1521/XE?module=drudbal&dbal_driver=oci8"
+        DBAL_URL: "oci8://system:oracle@0.0.0.0:1521/XE"
+        SIMPLETEST_DB: "dbal://system:oracle@0.0.0.0:1521/XE?module=drudbal&dbal_driver=oci8"
 
     services:
       oracle:
