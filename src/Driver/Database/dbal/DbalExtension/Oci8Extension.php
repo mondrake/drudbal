@@ -293,6 +293,7 @@ class Oci8Extension extends AbstractExtension {
           throw new DatabaseExceptionWrapper($message, 0, $e);
 
         default:
+dump('xxxx');
 if ($this->getDebugging()) {
   $backtrace = debug_backtrace();
   error_log("\n***** Exception    : " . get_class($e));
@@ -303,8 +304,7 @@ if ($this->getDebugging()) {
   error_log('***** Query args   : ' . var_export($args, TRUE));
   error_log("***** Backtrace    : \n" . $this->formatBacktrace($backtrace));
 }
-          throw new DatabaseExceptionWrapper($message, 0);
-dump('xxxx');
+          throw new DatabaseExceptionWrapper($message, 0, $e);
 
       }
     }
