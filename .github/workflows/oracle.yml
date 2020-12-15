@@ -1,10 +1,8 @@
-name: SQLite Testing
+name: Oracle Testing
 
 on:
   push:
     branches: [ master ]
-  schedule:
-    - cron: "0 6 * * 2"
 
 env:
     DRUDBAL_PHP_VERSION: "7.4"
@@ -21,23 +19,25 @@ jobs:
 
 #################################
 
-  sqlite-pdo:
-    name: "SQLite with PDO"
+  oracle-oci8:
+    name: "Oracle with Oci8"
     runs-on: ubuntu-20.04
     env:
-        DRUDBAL_ENV: "dbal/sqlite/file"
+        DRUDBAL_ENV: "dbal/oci8"
         DBAL_URL: "sqlite://localhost/sites/drudbal.sqlite"
-        SIMPLETEST_DB: "dbal://localhost/sites/drudbal.sqlite?module=drudbal&dbal_driver=pdo_sqlite"
+        DBAL_URL: "oci8://ORAROOT:DRUDBAL@0.0.0.0:1521/XE"
+        SIMPLETEST_DB: "dbal://ORAROOT:DRUDBAL@0.0.0.0:1521/XE?module=drudbal&dbal_driver=oci8"
+
+    services:
+      oracle:
+        image: "wnameless/oracle-xe-11g-r2"
+        ports:
+          - "1521:1521"
 
     strategy:
       matrix:
         test-args:
           - "--group Database"
-          - "--group Entity"
-          - "--group Cache,Config"
-          - "--group field,Field"
-          - "--group file"
-          - "--group views"
 
     steps:
     - name: Install PHP
