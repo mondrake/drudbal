@@ -3,7 +3,7 @@ name: Oracle Testing
 on:
   push:
     branches: [ master ]
-  pull-request:
+  pull_request:
     branches: [ dev-oracle ]
 
 env:
