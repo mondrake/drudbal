@@ -276,7 +276,8 @@ class Oci8Extension extends AbstractExtension {
       $e = $e->getPrevious();
     }
 $exc_class = get_class($e);
-if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException' && $this->getDebugging()) {
+//if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException' && $this->getDebugging()) {
+if ($this->getDebugging()) {
   $backtrace = debug_backtrace();
   error_log("\n***** Exception    : " . $exc_class);
   error_log('***** Message      : ' . $message);
