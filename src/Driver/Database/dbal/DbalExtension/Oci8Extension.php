@@ -280,7 +280,6 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException' && $this-
   error_log("\n***** Exception    : " . $exc_class);
   error_log('***** Message      : ' . $message);
   error_log('***** getCode      : ' . $e->getCode());
-  error_log('***** getErrorCode : ' . $e->getErrorCode());
   error_log('***** getSQLState  : ' . $e->getSQLState());
   error_log('***** Query        : ' . $query);
   error_log('***** Query args   : ' . var_export($args, TRUE));
@@ -293,7 +292,7 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException' && $this-
       throw new IntegrityConstraintViolationException($message, $e->getCode(), $e);
     }
     elseif ($e instanceof DbalDriverException) {
-      switch ($e->getErrorCode()) {
+      switch ($e->getCode()) {
         // ORA-01407 cannot update (string) to NULL.
         case 1407:
           throw new IntegrityConstraintViolationException($message, $e->getCode(), $e);
