@@ -3,6 +3,8 @@ name: Oracle Testing
 on:
   push:
     branches: [ master ]
+  pull-request:
+    branches: [ dev-oracle ]
 
 env:
     DRUDBAL_PHP_VERSION: "7.4"
@@ -24,7 +26,6 @@ jobs:
     runs-on: ubuntu-20.04
     env:
         DRUDBAL_ENV: "dbal/oci8"
-        DBAL_URL: "sqlite://localhost/sites/drudbal.sqlite"
         DBAL_URL: "oci8://ORAROOT:DRUDBAL@0.0.0.0:1521/XE"
         SIMPLETEST_DB: "dbal://ORAROOT:DRUDBAL@0.0.0.0:1521/XE?module=drudbal&dbal_driver=oci8"
 
