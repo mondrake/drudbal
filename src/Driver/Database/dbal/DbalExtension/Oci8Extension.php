@@ -275,18 +275,7 @@ class Oci8Extension extends AbstractExtension {
     if ($e instanceof DatabaseExceptionWrapper) {
       $e = $e->getPrevious();
     }
-$exc_class = get_class($e);
 //if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException' && $this->getDebugging()) {
-if ($this->getDebugging()) {
-  $backtrace = debug_backtrace();
-  error_log("\n***** Exception    : " . $exc_class);
-  error_log('***** Message      : ' . $message);
-  error_log('***** getCode      : ' . $e->getCode());
-  error_log('***** getSQLState  : ' . $e->getSQLState());
-  error_log('***** Query        : ' . $query);
-  error_log('***** Query args   : ' . var_export($args, TRUE));
-  error_log("***** Backtrace    : \n" . $this->formatBacktrace($backtrace));
-}
     if ($e instanceof UniqueConstraintViolationException) {
       throw new IntegrityConstraintViolationException($message, $e->getCode(), $e);
     }
@@ -304,7 +293,18 @@ if ($this->getDebugging()) {
           throw new DatabaseExceptionWrapper($message, 0, $e);
 
         default:
+if ($this->getDebugging()) {
+  $backtrace = debug_backtrace();
+  error_log("\n***** Exception    : " . get_class($e));
+  error_log('***** Message      : ' . $message);
+  error_log('***** getCode      : ' . $e->getCode());
+  error_log('***** getSQLState  : ' . $e->getSQLState());
+  error_log('***** Query        : ' . $query);
+  error_log('***** Query args   : ' . var_export($args, TRUE));
+  error_log("***** Backtrace    : \n" . $this->formatBacktrace($backtrace));
+}
           throw new DatabaseExceptionWrapper($message, 0, $e);
+dump('xxxx');
 
       }
     }
