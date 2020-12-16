@@ -23,7 +23,7 @@ use Doctrine\DBAL\Exception\NotNullConstraintViolationException;
  */
 class Oci8Extension extends AbstractExtension {
 
-  protected static $isDebugging = TRUE;
+  //protected static $isDebugging = TRUE;
 
   const ORACLE_EMPTY_STRING_REPLACEMENT = "\010";
 
@@ -585,7 +585,7 @@ if ($this->getDebugging()) error_log($query . ' : ' . var_export($args, TRUE));
    * {@inheritdoc}
    */
   public function delegateTableExists(&$result, $drupal_table_name) {
-dump(['delegateTableExists', $drupal_table_name]);
+//dump(['delegateTableExists', $drupal_table_name]);
     // The DBAL Schema manager is quite slow here.
     // Instead, we try to select from the table in question.  If it fails,
     // the most likely reason is that it does not exist.
@@ -594,7 +594,7 @@ dump(['delegateTableExists', $drupal_table_name]);
       $result = TRUE;
     }
     catch (\Exception $e) {
-dump(['delegateTableExists exception']);
+//dump(['delegateTableExists exception']);
       $result = FALSE;
     }
     return TRUE;

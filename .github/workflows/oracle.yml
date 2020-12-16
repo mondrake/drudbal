@@ -78,17 +78,17 @@ jobs:
         composer config repositories.travisci-run '{"type": "path", "url": "drudbal_staging", "options": {"symlink": false}}'
         composer require "mondrake/drudbal:dev-travisci-run-branch" --no-progress --ansi
 
-    - name: Install Drupal
-      run: |
-        cp modules/contrib/drudbal/tests/travis_ci/install_* .
-        # Use the custom installer.
-        php install_cli.php
-        vendor/bin/drush runserver localhost:8080 &
-
-    - name: Report installation
-      run: |
-        php install_report.php
-        vendor/bin/drush pml --type=module --no-core
+#    - name: Install Drupal
+#     run: |
+#        cp modules/contrib/drudbal/tests/travis_ci/install_* .
+#        # Use the custom installer.
+#        php install_cli.php
+#        vendor/bin/drush runserver localhost:8080 &
+#
+#    - name: Report installation
+#      run: |
+#        php install_report.php
+#        vendor/bin/drush pml --type=module --no-core
 
     - name: Run test ${{ matrix.test-args }}
       run: vendor/bin/phpunit -c core --color=always ${{ matrix.test-args }}

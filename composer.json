@@ -6,7 +6,7 @@
     "require": {
         "php": "^7.3",
         "drupal/core": "^9.2",
-        "doctrine/dbal": "^2.12",
+        "doctrine/dbal": "^3",
         "composer-runtime-api": "^2.0.0"
     },
     "minimum-stability": "dev"
