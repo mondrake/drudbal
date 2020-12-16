@@ -73,38 +73,40 @@ class Schema extends DatabaseSchema {
   public function createTable($name, $table) {
 dump(['createTable', $name, $table]);
     if ($this->tableExists($name)) {
+dump('zero');
       throw new SchemaObjectExistsException(t('Table @name already exists.', ['@name' => $name]));
     }
 
+dump('a');
     // Check primary key does not have nullable fields.
     if (!empty($table['primary key']) && is_array($table['primary key'])) {
       $this->ensureNotNullPrimaryKey($table['primary key'], $table['fields']);
     }
 
+dump('b');
     // Create table via DBAL.
     $current_schema = $this->dbalSchema();
     $to_schema = clone $current_schema;
     $new_table = $to_schema->createTable($this->connection->getPrefixedTableName($name));
-dump('a', $new_table);
 
+dump('c', $new_table);
     // Add table comment.
     if (!empty($table['description'])) {
       $comment = $this->connection->prefixTables($table['description']);
       $this->dbalExtension->alterSetTableComment($comment, $name, $to_schema, $table);
       $new_table->addOption('comment', $this->prepareComment($comment));
     }
-dump('b', $new_table);
 
+dump('d', $new_table);
     // Let DBAL extension alter the table options if required.
     $this->dbalExtension->alterCreateTableOptions($new_table, $to_schema, $table, $name);
-dump('c', $new_table);
 
+dump('e', $new_table);
     // Add columns.
     foreach ($table['fields'] as $field_name => $field) {
       $dbal_type = $this->getDbalColumnType($field);
       $new_table->addColumn($this->dbalExtension->getDbFieldName($field_name), $dbal_type, $this->getDbalColumnOptions('createTable', $field_name, $dbal_type, $field));
     }
-dump('d', $new_table);
 
     // Add primary key.
     if (!empty($table['primary key'])) {
@@ -114,7 +116,6 @@ dump('d', $new_table);
       // autoincrement column.
       $new_table->setPrimaryKey($this->dbalGetFieldList($table['primary key']));
     }
-dump('e', $new_table);
 
     // Execute the table creation.
     $this->dbalExecuteSchemaChange($to_schema);
