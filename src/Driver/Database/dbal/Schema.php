@@ -86,6 +86,7 @@ dump('a');
 dump('b');
     // Create table via DBAL.
     $current_schema = $this->dbalSchema();
+dump(['b1' $current_schema]);
     $to_schema = clone $current_schema;
     $new_table = $to_schema->createTable($this->connection->getPrefixedTableName($name));
 
