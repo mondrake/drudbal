@@ -71,6 +71,7 @@ class Schema extends DatabaseSchema {
    * {@inheritdoc}
    */
   public function createTable($name, $table) {
+dump('createTable', $name, $table);
     if ($this->tableExists($name)) {
       throw new SchemaObjectExistsException(t('Table @name already exists.', ['@name' => $name]));
     }
@@ -816,6 +817,7 @@ dump('e', $new_table);
    * {@inheritdoc}
    */
   public function tableExists($table) {
+dump('tableExists', $table);
     // @todo remove if parent gets typehinted.
     if ($table === NULL) {
       return FALSE;
