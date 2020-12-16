@@ -73,11 +73,9 @@ class Schema extends DatabaseSchema {
   public function createTable($name, $table) {
 dump(['createTable', $name, $table]);
     if ($this->tableExists($name)) {
-dump('zero');
       throw new SchemaObjectExistsException(t('Table @name already exists.', ['@name' => $name]));
     }
 
-dump('a');
     // Check primary key does not have nullable fields.
     if (!empty($table['primary key']) && is_array($table['primary key'])) {
       $this->ensureNotNullPrimaryKey($table['primary key'], $table['fields']);
@@ -86,7 +84,7 @@ dump('a');
 dump('b');
     // Create table via DBAL.
     $current_schema = $this->dbalSchema();
-dump(['b1' $current_schema]);
+dump(['b1', $current_schema]);
     $to_schema = clone $current_schema;
     $new_table = $to_schema->createTable($this->connection->getPrefixedTableName($name));
 
