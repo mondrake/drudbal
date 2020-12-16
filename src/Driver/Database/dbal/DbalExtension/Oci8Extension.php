@@ -594,7 +594,7 @@ dump(['delegateTableExists', $drupal_table_name]);
       $result = TRUE;
     }
     catch (\Exception $e) {
-dump(['delegateTableExists exception', $e]);
+dump(['delegateTableExists exception']);
       $result = FALSE;
     }
     return TRUE;

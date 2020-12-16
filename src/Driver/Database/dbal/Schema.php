@@ -825,6 +825,7 @@ dump(['tableExists', $table]);
 
     $result = NULL;
     if ($this->dbalExtension->delegateTableExists($result, $table)) {
+dump(['tableExists delegated result', $result]);
       return $result;
     }
 
