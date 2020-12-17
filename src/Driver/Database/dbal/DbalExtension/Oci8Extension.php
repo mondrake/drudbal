@@ -135,7 +135,7 @@ class Oci8Extension extends AbstractExtension {
   public function getDbFullQualifiedTableName($drupal_table_name) {
     $options = $this->connection->getConnectionOptions();
     $prefix = $this->connection->tablePrefix($drupal_table_name);
-    return $options['username'] . '.' . $this->getDbTableName($prefix . $drupal_table_name);
+    return strtoupper($options['username']) . '.' . $this->getDbTableName($prefix . $drupal_table_name);
   }
 
   /**
@@ -145,13 +145,13 @@ class Oci8Extension extends AbstractExtension {
     $field_name_short = $this->getLimitedIdentifier($field_name);
     if ($field_name !== $field_name_short) {
       $this->dbIdentifiersMap[$field_name_short] = $field_name;
-      return $field_name_short;
+      return strtoupper($field_name_short);
     }
     elseif (in_array($field_name, static::$oracleKeywords)) {
-      return '"' . $field_name . '"';
+      return '"' . strtoupper($field_name) . '"';
     }
     else {
-      return $field_name;
+      return strtoupper($field_name);
     }
   }
 
@@ -162,13 +162,13 @@ class Oci8Extension extends AbstractExtension {
     $alias_short = $this->getLimitedIdentifier($alias);
     if ($alias !== $alias_short) {
       $this->dbIdentifiersMap[$alias_short] = $alias;
-      return $alias_short;
+      return strtoupper($alias_short);
     }
     elseif (in_array($alias, static::$oracleKeywords)) {
-      return '"' . $alias . '"';
+      return '"' . strtoupper($alias) . '"';
     }
     else {
-      return $alias;
+      return strtoupper($alias);
     }
   }
 
