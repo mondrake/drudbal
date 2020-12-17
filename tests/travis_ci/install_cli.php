@@ -16,9 +16,10 @@ $class_loader = require_once $root_path . '/autoload.php';
 // Create Oracle database
 $tmpConnection = DriverManager::getConnection(["url" => "oci8://system:oracle@0.0.0.0:1521/XE"]);
 dump($tmpConnection);
-$tmpConnection->exec('CREATE USER DRUDBAL IDENTIFIED BY ORACLE');
-$tmpConnection->exec('GRANT DBA TO DRUDBAL');
+dump($tmpConnection->exec('CREATE USER DRUDBAL IDENTIFIED BY ORACLE'));
+dump($tmpConnection->exec('GRANT DBA TO DRUDBAL'));
 $tmpConnection->close();
+dump($tmpConnection);
 
 $settings = [
   'parameters' => [
