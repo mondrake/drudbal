@@ -1,5 +1,7 @@
 <?php
 
+use Doctrine\DBAL\DriverManager;
+
 /**
  * @file
  * Initiates a command line installation of Drupal.
@@ -10,6 +12,12 @@ $root_path = realpath('');
 
 // Initialize the autoloader.
 $class_loader = require_once $root_path . '/autoload.php';
+
+// Create Oracle database
+$tmpConnection = DriverManager::getConnection("oci8://system:oracle@0.0.0.0:1521/XE");
+$tmpConnection->exec('CREATE USER "drudbal" IDENTIFIED BY "oracle"');
+$tmpConnection->exec('GRANT DBA TO "drudbal"');
+$tmpConnection->close();
 
 $settings = [
   'parameters' => [
