@@ -79,7 +79,7 @@ jobs:
         composer require "mondrake/drudbal:dev-travisci-run-branch" --no-progress --ansi
 
     - name: Install Drupal
-     run: |
+      run: |
         cp modules/contrib/drudbal/tests/travis_ci/install_* .
         # Use the custom installer.
         php install_cli.php
