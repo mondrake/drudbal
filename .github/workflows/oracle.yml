@@ -44,7 +44,7 @@ jobs:
     - name: Install PHP
       uses: "shivammathur/setup-php@v2"
       with:
-        php-version: $DRUDBAL_PHP_VERSION
+        php-version: "7.4"
         coverage: "none"
         extensions: "oci8"
         ini-values: "zend.assertions=1"
