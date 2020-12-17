@@ -23,7 +23,7 @@ use Doctrine\DBAL\Exception\NotNullConstraintViolationException;
  */
 class Oci8Extension extends AbstractExtension {
 
-  //protected static $isDebugging = TRUE;
+  protected static $isDebugging = TRUE;
 
   const ORACLE_EMPTY_STRING_REPLACEMENT = "\010";
 
