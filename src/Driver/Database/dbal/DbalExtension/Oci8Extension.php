@@ -142,15 +142,19 @@ class Oci8Extension extends AbstractExtension {
    * {@inheritdoc}
    */
   public function getDbFieldName($field_name, bool $quoted = TRUE) {
+dump(['getDbFieldName in', $field_name, $quoted]);
     $field_name_short = $this->getLimitedIdentifier($field_name);
     if ($field_name !== $field_name_short) {
       $this->dbIdentifiersMap[$field_name_short] = $field_name;
+dump(['getDbFieldName out 1', strtoupper($field_name_short)]);
       return strtoupper($field_name_short);
     }
     elseif (in_array($field_name, static::$oracleKeywords)) {
+dump(['getDbFieldName out 2', strtoupper($field_name)]);
       return '"' . strtoupper($field_name) . '"';
     }
     else {
+dump(['getDbFieldName out 3', strtoupper($field_name)]);
       return strtoupper($field_name);
     }
   }
