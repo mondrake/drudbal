@@ -198,6 +198,7 @@ class Connection extends DatabaseConnection {
   public function quoteIdentifiers($sql) {
     preg_match_all('/(\[(.+?)\])/', $sql, $matches);
     $ids = [];
+dump([$sql, $matches]);
     foreach($matches as $match) {
       $ids[$match[0]] = $this->getDbalExtension()->getDbFieldName($match[1], TRUE);
     }
