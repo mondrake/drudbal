@@ -199,8 +199,8 @@ class Connection extends DatabaseConnection {
     preg_match_all('/(\[(.+?)\])/', $sql, $matches);
     $ids = [];
 dump([$sql, $matches]);
-    foreach($matches as $match) {
-      $ids[$match[0]] = $this->getDbalExtension()->getDbFieldName($match[1], TRUE);
+    for($i = 0; $i++, $i < count($matches[0])) {
+      $ids[$matches[1][$i]] = $this->getDbalExtension()->getDbFieldName([$matches[2][$i]], TRUE);
     }
 dump([$ids, strtr($sql, $ids)]);
 //    return str_replace(['[', ']'], $this->identifierQuotes, $sql);
