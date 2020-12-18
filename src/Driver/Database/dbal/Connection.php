@@ -198,10 +198,12 @@ class Connection extends DatabaseConnection {
   public function quoteIdentifiers($sql) {
     preg_match_all('/(\[(.+?)\])/', $sql, $matches);
     $ids = [];
-dump(['match', $sql, $matches]);
-    for($i = 0; $i++; $i < count($matches[0])) {
-dump(['ids build', $matches[1][$i], $matches[2][$i]]);
-      $ids[$matches[1][$i]] = $this->getDbalExtension()->getDbFieldName($matches[2][$i], TRUE);
+    $i = 0;
+dump(['match', $sql]);
+    foreach($matches[1] as $m) {
+dump(['match cycle', $i, $m]);
+      $ids[$m] = $this->getDbalExtension()->getDbFieldName($matches[2][$i], TRUE);
+      $i++;
     }
 dump([$ids, strtr($sql, $ids)]);
 //    return str_replace(['[', ']'], $this->identifierQuotes, $sql);
