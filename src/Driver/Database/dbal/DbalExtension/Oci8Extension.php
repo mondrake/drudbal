@@ -303,7 +303,6 @@ class Oci8Extension extends AbstractExtension {
           throw new DatabaseExceptionWrapper($message, 0, $e);
 
         default:
-//dump('xxxx');
 /*if ($this->getDebugging()) {
   $backtrace = debug_backtrace();
   error_log("\n***** Exception    : " . get_class($e));

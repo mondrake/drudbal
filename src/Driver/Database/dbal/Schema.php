@@ -71,7 +71,6 @@ class Schema extends DatabaseSchema {
    * {@inheritdoc}
    */
   public function createTable($name, $table) {
-//dump(['createTable', $name, $table]);
     if ($this->tableExists($name)) {
       throw new SchemaObjectExistsException(t('Table @name already exists.', ['@name' => $name]));
     }
@@ -81,14 +80,11 @@ class Schema extends DatabaseSchema {
       $this->ensureNotNullPrimaryKey($table['primary key'], $table['fields']);
     }
 
-//dump('b');
     // Create table via DBAL.
     $current_schema = $this->dbalSchema();
-//dump(['b1', $current_schema]);
     $to_schema = clone $current_schema;
-    $new_table = $to_schema->createTable($this->connection->getPrefixedTableName($name));
+    $new_table = $to_schema->createTable($this->connection->getPrefixedTableName($name, TRUE));
 
-//dump('c', $new_table);
     // Add table comment.
     if (!empty($table['description'])) {
       $comment = $this->connection->prefixTables($table['description']);
@@ -96,11 +92,9 @@ class Schema extends DatabaseSchema {
       $new_table->addOption('comment', $this->prepareComment($comment));
     }
 
-//dump('d', $new_table);
     // Let DBAL extension alter the table options if required.
     $this->dbalExtension->alterCreateTableOptions($new_table, $to_schema, $table, $name);
 
-//dump('e', $new_table);
     // Add columns.
     foreach ($table['fields'] as $field_name => $field) {
       $dbal_type = $this->getDbalColumnType($field);
