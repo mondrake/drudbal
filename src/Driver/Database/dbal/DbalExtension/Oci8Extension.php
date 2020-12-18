@@ -143,15 +143,20 @@ class Oci8Extension extends AbstractExtension {
    */
   public function getDbFieldName($field_name, bool $quoted = TRUE) {
     $field_name_short = $this->getLimitedIdentifier($field_name);
+
     if ($field_name !== $field_name_short) {
       $this->dbIdentifiersMap[$field_name_short] = $field_name;
-      return strtoupper($field_name_short);
-    }
-    elseif (in_array($field_name, static::$oracleKeywords)) {
-      return '"' . strtoupper($field_name) . '"';
+      $identifier = $field_name_short;
     }
     else {
-      return strtoupper($field_name);
+      $identifier = $field_name;
+    }
+
+    if ($quoted) {
+      return '"' . strtoupper($identifier) . '"';
+    }
+    else {
+      return strtoupper($identifier);
     }
   }
 
@@ -160,15 +165,20 @@ class Oci8Extension extends AbstractExtension {
    */
   public function getDbAlias($alias, bool $quoted = TRUE) {
     $alias_short = $this->getLimitedIdentifier($alias);
+
     if ($alias !== $alias_short) {
       $this->dbIdentifiersMap[$alias_short] = $alias;
-      return strtoupper($alias_short);
-    }
-    elseif (in_array($alias, static::$oracleKeywords)) {
-      return '"' . strtoupper($alias) . '"';
+      $identifier = $alias_short;
     }
     else {
-      return strtoupper($alias);
+      $identifier = $alias;
+    }
+
+    if ($quoted) {
+      return '"' . strtoupper($identifier) . '"';
+    }
+    else {
+      return strtoupper($identifier);
     }
   }
 
