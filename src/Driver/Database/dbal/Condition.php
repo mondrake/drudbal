@@ -5,6 +5,8 @@ namespace Drupal\drudbal\Driver\Database\dbal;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Database\InvalidQueryException;
 use Drupal\Core\Database\Query\Condition as BaseCondition;
+use Drupal\Core\Database\Query\ConditionInterface;
+use Drupal\Core\Database\Query\PlaceholderInterface;
 
 /**
  * Generic class for a series of conditions in a query.
