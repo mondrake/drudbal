@@ -142,7 +142,8 @@ dump(['compile', $conditions]);
         }
         else {
           // Left hand part is a normal field. Add it as is.
-          $field_fragment = $connection->escapeField($condition['field']);
+          $field_fragment = $connection->getDbalExtension()->getDbFieldName($condition['field'], TRUE);
+//          $field_fragment = $connection->escapeField($condition['field']);
           $ignore_operator = FALSE;
         }
 
