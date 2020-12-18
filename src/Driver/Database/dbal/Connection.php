@@ -199,13 +199,11 @@ class Connection extends DatabaseConnection {
     preg_match_all('/(\[(.+?)\])/', $sql, $matches);
     $ids = [];
     $i = 0;
-dump(['match', $sql]);
     foreach($matches[1] as $m) {
-dump(['match cycle', $i, $m]);
       $ids[$m] = $this->getDbalExtension()->getDbFieldName($matches[2][$i], TRUE);
       $i++;
     }
-dump([$ids, strtr($sql, $ids)]);
+dump(['quoteIdentifiers', $ids, $sql, strtr($sql, $ids)]);
 //    return str_replace(['[', ']'], $this->identifierQuotes, $sql);
     return strtr($sql, $ids);
   }
