@@ -7,6 +7,7 @@ use Drupal\Core\Database\InvalidQueryException;
 use Drupal\Core\Database\Query\Condition as BaseCondition;
 use Drupal\Core\Database\Query\ConditionInterface;
 use Drupal\Core\Database\Query\PlaceholderInterface;
+use Drupal\Core\Database\Query\SelectInterface;
 
 /**
  * Generic class for a series of conditions in a query.
