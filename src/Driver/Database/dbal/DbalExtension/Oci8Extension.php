@@ -174,12 +174,12 @@ class Oci8Extension extends AbstractExtension {
       $identifier = $alias;
     }
 
-    if ($quoted) {
-      return '"' . strtoupper($identifier) . '"';
-    }
-    else {
+//    if ($quoted) {
+//      return '"' . strtoupper($identifier) . '"';
+//    }
+//    else {
       return strtoupper($identifier);
-    }
+//    }
   }
 
   /**
