@@ -109,7 +109,7 @@ class Condition extends BaseCondition {
       $arguments = [];
 
       $conditions = $this->conditions;
-dump(['compile', $conditions]);
+//dump(['compile', $conditions]);
 
       $conjunction = $conditions['#conjunction'];
       unset($conditions['#conjunction']);
