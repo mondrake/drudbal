@@ -193,6 +193,20 @@ class Connection extends DatabaseConnection {
   }
 
   /**
+   * {@inheritdoc}
+   */
+  public function quoteIdentifiers($sql) {
+    preg_match_all('/(\[(.+?)\])/', $sql, $matches);
+    $ids = [];
+    foreach($matches as $match) {
+      $ids[$match[0]] = $this->getDbalExtension()->getDbFieldName($match[1], TRUE);
+    }
+dump([$ids, strtr($sql, $ids)]);
+//    return str_replace(['[', ']'], $this->identifierQuotes, $sql);
+    return strtr($sql, $ids);
+  }
+
+  /**
    * Returns a prefixed table name.
    *
    * @param string $table_name
