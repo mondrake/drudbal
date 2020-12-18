@@ -199,7 +199,7 @@ class Connection extends DatabaseConnection {
     preg_match_all('/(\[(.+?)\])/', $sql, $matches);
     $ids = [];
 dump([$sql, $matches]);
-    for($i = 0; $i++, $i < count($matches[0])) {
+    for($i = 0; $i++; $i < count($matches[0])) {
       $ids[$matches[1][$i]] = $this->getDbalExtension()->getDbFieldName([$matches[2][$i]], TRUE);
     }
 dump([$ids, strtr($sql, $ids)]);
