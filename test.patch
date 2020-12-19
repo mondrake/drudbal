@@ -1,48 +1,49 @@
 diff --git a/core/lib/Drupal/Core/Config/ConfigInstaller.php b/core/lib/Drupal/Core/Config/ConfigInstaller.php
-index 235a7c1a41..ed325597f8 100644
+index 235a7c1a41..9914821176 100644
 --- a/core/lib/Drupal/Core/Config/ConfigInstaller.php
 +++ b/core/lib/Drupal/Core/Config/ConfigInstaller.php
-@@ -487,27 +487,35 @@ protected function findPreExistingConfiguration(StorageInterface $storage) {
+@@ -487,13 +487,19 @@ protected function findPreExistingConfiguration(StorageInterface $storage) {
     * {@inheritdoc}
     */
    public function checkConfigurationToInstall($type, $name) {
 +dump(['checkConfigurationToInstall', $type, $name]);
-+//\Drupal\Core\Database\Database::getConnection()->getDbalExtension()->setDebugging(TRUE);
++\Drupal\Core\Database\Database::getConnection()->getDbalExtension()->setDebugging(TRUE);
      if ($this->isSyncing()) {
        // Configuration is assumed to already be checked by the config importer
        // validation events.
 +\Drupal\Core\Database\Database::getConnection()->getDbalExtension()->setDebugging(FALSE);
++dump(['*************** exit a']);
        return;
      }
      $config_install_path = $this->getDefaultConfigDirectory($type, $name);
      if (!is_dir($config_install_path)) {
 +\Drupal\Core\Database\Database::getConnection()->getDbalExtension()->setDebugging(FALSE);
++dump(['*************** exit b']);
        return;
      }
  
-     $storage = new FileStorage($config_install_path, StorageInterface::DEFAULT_COLLECTION);
- 
-     $enabled_extensions = $this->getEnabledExtensions();
-+dump(['$enabled_extensions', $enabled_extensions]);
-     // Add the extension that will be enabled to the list of enabled extensions.
-     $enabled_extensions[] = $name;
-     // Gets profile storages to search for overrides if necessary.
-     $profile_storages = $this->getProfileStorages($name);
-+dump(['$profile_storages', $profile_storages]);
+@@ -507,7 +513,10 @@ public function checkConfigurationToInstall($type, $name) {
  
      // Check the dependencies of configuration provided by the module.
      list($invalid_default_config, $missing_dependencies) = $this->findDefaultConfigWithUnmetDependencies($storage, $enabled_extensions, $profile_storages);
-+dump(['$invalid_default_config', $invalid_default_config, $missing_dependencies]);
++dump(['$invalid_default_config', $invalid_default_config, $missing_dependencies, $enabled_extensions]);
      if (!empty($invalid_default_config)) {
 +\Drupal\Core\Database\Database::getConnection()->getDbalExtension()->setDebugging(FALSE);
++dump(['*************** exit c']);
        throw UnmetDependenciesException::create($name, array_unique($missing_dependencies, SORT_REGULAR));
      }
  
-@@ -519,6 +527,7 @@ public function checkConfigurationToInstall($type, $name) {
+@@ -519,9 +528,13 @@ public function checkConfigurationToInstall($type, $name) {
        // modules because those may depend on the current module being installed.
        $existing_configuration = $this->findPreExistingConfiguration($storage);
        if (!empty($existing_configuration)) {
 +\Drupal\Core\Database\Database::getConnection()->getDbalExtension()->setDebugging(FALSE);
++dump(['*************** exit d']);
          throw PreExistingConfigException::create($name, $existing_configuration);
        }
      }
++\Drupal\Core\Database\Database::getConnection()->getDbalExtension()->setDebugging(FALSE);
++dump(['*************** exit e']);
+   }
+ 
+   /**
