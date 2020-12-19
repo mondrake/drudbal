@@ -69,8 +69,8 @@ jobs:
 #    - name: '#3129534 Automatically enable the module that is providing the current database driver'
 #      run:  curl https://www.drupal.org/files/issues/2020-12-19/3129534-63.patch | git apply -v
 
-    - name: Test Drupal patch
-      run: git apply -v drudbal_staging/test.patch
+#    - name: Test Drupal patch
+#      run: git apply -v drudbal_staging/test.patch
 
     - name: Install Composer dependencies
       run: |
