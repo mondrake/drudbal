@@ -19,8 +19,8 @@ $settings = [
   'forms' => [
     'install_settings_form' => [
       'driver' => 'dbal',
-      'prefix' => 'DRU',
       'dbal' => [
+        'prefix' => 'DRU',
         'dbal_url' => getenv("DBAL_URL"),
       ],
     ],
