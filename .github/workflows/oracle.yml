@@ -27,7 +27,7 @@ jobs:
     env:
         DRUDBAL_ENV: "dbal/oci8"
         DBAL_URL: "oci8://DRUDBAL:ORACLE@0.0.0.0:1521/XE"
-        SIMPLETEST_DB: "dbal://DRUDBAL:ORACLE@0.0.0.0:1521/XE?module=drudbal&dbal_driver=oci8"
+        SIMPLETEST_DB: "dbal://DRUDBAL:ORACLE@0.0.0.0:1521/XE#DRU?module=drudbal&dbal_driver=oci8"
 
     services:
       oracle:
@@ -78,17 +78,21 @@ jobs:
         composer config repositories.travisci-run '{"type": "path", "url": "drudbal_staging", "options": {"symlink": false}}'
         composer require "mondrake/drudbal:dev-travisci-run-branch" --no-progress --ansi
 
-#    - name: Install Drupal
-#      run: |
-#        cp modules/contrib/drudbal/tests/travis_ci/install_* .
-#        # Use the custom installer.
-#        php install_cli.php
-#        vendor/bin/drush runserver localhost:8080 &
+    - name: Create Oracle schema
+      run: |
+        cp modules/contrib/drudbal/tests/travis_ci/install_* .
+        php install_oracle.php
 
-#    - name: Report installation
-#      run: |
-#        php install_report.php
-#        vendor/bin/drush pml --type=module --no-core
+    - name: Install Drupal
+      run: |
+        # Use the custom installer.
+        php install_cli.php
+        vendor/bin/drush runserver localhost:8080 &
+
+    - name: Report installation
+      run: |
+        php install_report.php
+        vendor/bin/drush pml --type=module --no-core
 
     - name: Run test ${{ matrix.test-args }}
       run: vendor/bin/phpunit -c core --color=always ${{ matrix.test-args }}
