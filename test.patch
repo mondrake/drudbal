@@ -1,13 +1,13 @@
 diff --git a/core/lib/Drupal/Core/Config/ConfigInstaller.php b/core/lib/Drupal/Core/Config/ConfigInstaller.php
-index 235a7c1a41..64a9bbb5c0 100644
+index 235a7c1a41..ed325597f8 100644
 --- a/core/lib/Drupal/Core/Config/ConfigInstaller.php
 +++ b/core/lib/Drupal/Core/Config/ConfigInstaller.php
-@@ -487,27 +487,34 @@ protected function findPreExistingConfiguration(StorageInterface $storage) {
+@@ -487,27 +487,35 @@ protected function findPreExistingConfiguration(StorageInterface $storage) {
     * {@inheritdoc}
     */
    public function checkConfigurationToInstall($type, $name) {
 +dump(['checkConfigurationToInstall', $type, $name]);
-+\Drupal\Core\Database\Database::getConnection()->getDbalExtension()->setDebugging(TRUE);
++//\Drupal\Core\Database\Database::getConnection()->getDbalExtension()->setDebugging(TRUE);
      if ($this->isSyncing()) {
        // Configuration is assumed to already be checked by the config importer
        // validation events.
@@ -32,12 +32,13 @@ index 235a7c1a41..64a9bbb5c0 100644
  
      // Check the dependencies of configuration provided by the module.
      list($invalid_default_config, $missing_dependencies) = $this->findDefaultConfigWithUnmetDependencies($storage, $enabled_extensions, $profile_storages);
++dump(['$invalid_default_config', $invalid_default_config, $missing_dependencies]);
      if (!empty($invalid_default_config)) {
 +\Drupal\Core\Database\Database::getConnection()->getDbalExtension()->setDebugging(FALSE);
        throw UnmetDependenciesException::create($name, array_unique($missing_dependencies, SORT_REGULAR));
      }
  
-@@ -519,6 +526,7 @@ public function checkConfigurationToInstall($type, $name) {
+@@ -519,6 +527,7 @@ public function checkConfigurationToInstall($type, $name) {
        // modules because those may depend on the current module being installed.
        $existing_configuration = $this->findPreExistingConfiguration($storage);
        if (!empty($existing_configuration)) {
