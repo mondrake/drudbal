@@ -224,7 +224,7 @@ class Statement implements \IteratorAggregate, StatementInterface {
    * {@inheritdoc}
    */
   public function execute($args = [], $options = []) {
-if ($this->dbh->getDbalExtension()->getDebugging()) dump(['exec', $query, $args]);
+if ($this->dbh->getDbalExtension()->getDebugging()) dump(['exec', $this->queryString, $args]);
     $args = $args ?? [];
 
     // Prepare the lower-level statement if it's not been prepared already.
