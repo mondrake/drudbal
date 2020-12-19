@@ -811,7 +811,6 @@ class Schema extends DatabaseSchema {
    * {@inheritdoc}
    */
   public function tableExists($table) {
-//dump(['tableExists', $table]);
     // @todo remove if parent gets typehinted.
     if ($table === NULL) {
       return FALSE;
@@ -819,7 +818,6 @@ class Schema extends DatabaseSchema {
 
     $result = NULL;
     if ($this->dbalExtension->delegateTableExists($result, $table)) {
-//dump(['tableExists delegated result', $result]);
       return $result;
     }
 

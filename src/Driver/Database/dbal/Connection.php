@@ -203,8 +203,6 @@ class Connection extends DatabaseConnection {
       $ids[$m] = $this->getDbalExtension()->getDbFieldName($matches[2][$i], TRUE);
       $i++;
     }
-//dump(['quoteIdentifiers', $ids, $sql, strtr($sql, $ids)]);
-//    return str_replace(['[', ']'], $this->identifierQuotes, $sql);
     return strtr($sql, $ids);
   }
 

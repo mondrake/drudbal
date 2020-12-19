@@ -594,7 +594,6 @@ if ($this->getDebugging()) error_log($query . ' : ' . var_export($args, TRUE));
    * {@inheritdoc}
    */
   public function delegateTableExists(&$result, $drupal_table_name) {
-//dump(['delegateTableExists', $drupal_table_name]);
     // The DBAL Schema manager is quite slow here.
     // Instead, we try to select from the table in question.  If it fails,
     // the most likely reason is that it does not exist.
@@ -603,7 +602,6 @@ if ($this->getDebugging()) error_log($query . ' : ' . var_export($args, TRUE));
       $result = TRUE;
     }
     catch (\Exception $e) {
-//dump(['delegateTableExists exception']);
       $result = FALSE;
     }
     return TRUE;

@@ -13,7 +13,7 @@ $class_loader = require_once $root_path . '/autoload.php';
 
 $settings = [
   'parameters' => [
-    'profile' => 'standard',
+    'profile' => 'minimal',
     'locale' => 'en',
   ],
   'forms' => [
