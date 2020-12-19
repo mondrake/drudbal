@@ -1,0 +1,26 @@
+diff --git a/core/lib/Drupal/Core/Config/ConfigInstaller.php b/core/lib/Drupal/Core/Config/ConfigInstaller.php
+index 235a7c1a41..938e4d9314 100644
+--- a/core/lib/Drupal/Core/Config/ConfigInstaller.php
++++ b/core/lib/Drupal/Core/Config/ConfigInstaller.php
+@@ -487,6 +487,8 @@ protected function findPreExistingConfiguration(StorageInterface $storage) {
+    * {@inheritdoc}
+    */
+   public function checkConfigurationToInstall($type, $name) {
++dump(['checkConfigurationToInstall', $type, $name]);
++\Drupal\Core\Database\Database::getConnection()->getDbalExtension()->setDebugging(TRUE);
+     if ($this->isSyncing()) {
+       // Configuration is assumed to already be checked by the config importer
+       // validation events.
+@@ -500,10 +502,12 @@ public function checkConfigurationToInstall($type, $name) {
+     $storage = new FileStorage($config_install_path, StorageInterface::DEFAULT_COLLECTION);
+ 
+     $enabled_extensions = $this->getEnabledExtensions();
++dump(['$enabled_extensions', $enabled_extensions]);
+     // Add the extension that will be enabled to the list of enabled extensions.
+     $enabled_extensions[] = $name;
+     // Gets profile storages to search for overrides if necessary.
+     $profile_storages = $this->getProfileStorages($name);
++dump(['$profile_storages', $profile_storages]);
+ 
+     // Check the dependencies of configuration provided by the module.
+     list($invalid_default_config, $missing_dependencies) = $this->findDefaultConfigWithUnmetDependencies($storage, $enabled_extensions, $profile_storages);
