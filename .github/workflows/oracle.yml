@@ -7,7 +7,6 @@ on:
     branches: [ master ]
 
 env:
-    DRUDBAL_PHP_VERSION: "7.4"
     DRUDBAL_DRUPAL_VERSION: "9.2.x"
     SIMPLETEST_BASE_URL: "http://localhost:8080"
     PHPUNIT_SKIP_CLASS: '[
@@ -37,6 +36,8 @@ jobs:
 
     strategy:
       matrix:
+        php-version:
+          - "7.4"
         test-args:
           - "--group Database"
 
@@ -44,7 +45,7 @@ jobs:
     - name: Install PHP
       uses: "shivammathur/setup-php@v2"
       with:
-        php-version: "7.4"
+        php-version: "${{ matrix.php-version }}"
         coverage: "none"
         extensions: "oci8"
         ini-values: "zend.assertions=1"
