@@ -23,7 +23,7 @@ use Doctrine\DBAL\Exception\NotNullConstraintViolationException;
  */
 class Oci8Extension extends AbstractExtension {
 
-//  protected static $isDebugging = TRUE;
+  protected static $isDebugging = TRUE;
 
   const ORACLE_EMPTY_STRING_REPLACEMENT = "\010";
 
@@ -174,12 +174,12 @@ class Oci8Extension extends AbstractExtension {
       $identifier = $alias;
     }
 
-//    if ($quoted) {
-//      return '"' . strtoupper($identifier) . '"';
-//    }
-//    else {
+    if ($quoted && substr($identifier, 0, 1) !== '"') {
+      return '"' . strtoupper($identifier) . '"';
+    }
+    else {
       return strtoupper($identifier);
-//    }
+    }
   }
 
   /**
