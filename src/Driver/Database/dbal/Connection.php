@@ -526,6 +526,13 @@ class Connection extends DatabaseConnection {
   /**
    * {@inheritdoc}
    */
+  public function escapeField($field) {
+    return $this->getDbalExtension()->getDbFieldName($field, TRUE);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function rollBack($savepoint_name = 'drupal_transaction') {
     if (!$this->inTransaction()) {
       throw new TransactionNoActiveException();

@@ -44,7 +44,7 @@ jobs:
     - name: Install PHP
       uses: "shivammathur/setup-php@v2"
       with:
-        php-version: "7.4"
+        php-version: $DRUDBAL_PHP_VERSION
         coverage: "none"
         extensions: "oci8"
         ini-values: "zend.assertions=1"
@@ -65,9 +65,6 @@ jobs:
 
     - name: '#3110546 Allow contributed modules (mostly database drivers) to override tests in core'
       run: git apply -v drudbal_staging/tests/travis_ci/alt-fix.patch
-
-#    - name: '#3129534 Automatically enable the module that is providing the current database driver'
-#      run:  curl https://www.drupal.org/files/issues/2020-12-19/3129534-63.patch | git apply -v
 
 #    - name: Test Drupal patch
 #      run: git apply -v drudbal_staging/test.patch
@@ -98,7 +95,6 @@ jobs:
     - name: Report installation
       run: |
         php install_report.php
-#        vendor/bin/drush pml --type=module --no-core
 
     - name: Run test ${{ matrix.test-args }}
       run: vendor/bin/phpunit -c core --color=always ${{ matrix.test-args }}
