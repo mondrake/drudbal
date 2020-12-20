@@ -752,7 +752,7 @@ class Connection extends DatabaseConnection {
    * {@inheritdoc}
    */
   public static function createConnectionOptionsFromUrl($url, $root) {
-dump([$url, $root]);
+//dump([$url, $root]);
     $uri = new Uri($url);
     if (empty($uri->getHost()) || empty($uri->getScheme()) || empty($uri->getPath())) {
       throw new \InvalidArgumentException('Minimum requirement: driver://host/database');
@@ -791,7 +791,7 @@ dump([$url, $root]);
     $dbal_driver = isset($parts['dbal_driver']) ? $parts['dbal_driver'] : '';
     $connection_options['dbal_driver'] = $dbal_driver;
 
-dump([$connection_options]);
+//dump([$connection_options]);
     return $connection_options;
   }
 
