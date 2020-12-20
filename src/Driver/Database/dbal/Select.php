@@ -136,7 +136,6 @@ class Select extends QuerySelect {
     // ORDER BY
     if ($this->order) {
       foreach ($this->order as $field => $direction) {
-//        $dbal_query->addOrderBy($dbal_extension->resolveAliases($this->connection->escapeField($field)), $direction);
         $dbal_query->addOrderBy($dbal_extension->getDbAlias($field), $direction);
       }
     }
