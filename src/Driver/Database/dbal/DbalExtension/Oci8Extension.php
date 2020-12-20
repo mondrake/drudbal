@@ -175,7 +175,7 @@ class Oci8Extension extends AbstractExtension {
     }
 
     if ($quoted && substr($identifier, 0, 1) !== '"') {
-      return '"' . strtoupper($identifier) . '"';
+      return '"' . str_replace('.', '"."', strtoupper($identifier)) . '"';
     }
     else {
       return strtoupper($identifier);
