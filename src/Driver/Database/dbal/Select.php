@@ -46,7 +46,7 @@ class Select extends QuerySelect {
     foreach ($this->fields as $field) {
       $field_prefix = isset($field['table']) ? $dbal_extension->getDbAlias($this->connection->escapeTable($field['table'])) . '.' : '';
       $escaped_field_field = $this->connection->escapeField($field['field']);
-      $escaped_field_alias = $this->connection->escapeAlias($dbal_extension->getDbFieldName($field['alias']));
+      $escaped_field_alias = $this->connection->escapeAlias($field['alias']);
       $dbal_query->addSelect($field_prefix . $escaped_field_field . ' AS ' . $escaped_field_alias);
     }
     foreach ($this->expressions as $expression) {
