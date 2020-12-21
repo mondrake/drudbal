@@ -83,7 +83,7 @@ class Schema extends DatabaseSchema {
     // Create table via DBAL.
     $current_schema = $this->dbalSchema();
     $to_schema = clone $current_schema;
-    $new_table = $to_schema->createTable($this->connection->getPrefixedTableName($name));
+    $new_table = $to_schema->createTable($this->connection->getPrefixedTableName($name, TRUE));
 
     // Add table comment.
     if (!empty($table['description'])) {

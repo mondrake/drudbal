@@ -13,13 +13,14 @@ $class_loader = require_once $root_path . '/autoload.php';
 
 $settings = [
   'parameters' => [
-    'profile' => 'standard',
+    'profile' => 'minimal',
     'locale' => 'en',
   ],
   'forms' => [
     'install_settings_form' => [
       'driver' => 'dbal',
       'dbal' => [
+        'prefix' => 'DRU',
         'dbal_url' => getenv("DBAL_URL"),
       ],
     ],

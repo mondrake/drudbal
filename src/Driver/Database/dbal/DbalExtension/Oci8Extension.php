@@ -23,6 +23,8 @@ use Doctrine\DBAL\Exception\NotNullConstraintViolationException;
  */
 class Oci8Extension extends AbstractExtension {
 
+//  protected static $isDebugging = TRUE;
+
   const ORACLE_EMPTY_STRING_REPLACEMENT = "\010";
 
   /**
@@ -124,8 +126,7 @@ class Oci8Extension extends AbstractExtension {
       $identifier_crc = hash('crc32b', $prefixed_table_name);
       $prefixed_table_name = substr($prefixed_table_name, 0, 16) . $identifier_crc;
     }
-    $prefixed_table_name = '"' . $prefixed_table_name . '"';
-    return $prefixed_table_name;
+    return strtoupper($prefixed_table_name);
   }
 
   /**
@@ -134,7 +135,7 @@ class Oci8Extension extends AbstractExtension {
   public function getDbFullQualifiedTableName($drupal_table_name) {
     $options = $this->connection->getConnectionOptions();
     $prefix = $this->connection->tablePrefix($drupal_table_name);
-    return $options['username'] . '.' . $this->getDbTableName($prefix . $drupal_table_name);
+    return strtoupper($options['username']) . '.' . $this->getDbTableName($prefix . $drupal_table_name);
   }
 
   /**
@@ -142,15 +143,20 @@ class Oci8Extension extends AbstractExtension {
    */
   public function getDbFieldName($field_name, bool $quoted = TRUE) {
     $field_name_short = $this->getLimitedIdentifier($field_name);
+
     if ($field_name !== $field_name_short) {
       $this->dbIdentifiersMap[$field_name_short] = $field_name;
-      return $field_name_short;
-    }
-    elseif (in_array($field_name, static::$oracleKeywords)) {
-      return '"' . $field_name . '"';
+      $identifier = $field_name_short;
     }
     else {
-      return $field_name;
+      $identifier = $field_name;
+    }
+
+    if ($quoted) {
+      return '"' . str_replace('.', '"."', strtoupper($identifier)) . '"';
+    }
+    else {
+      return strtoupper($identifier);
     }
   }
 
@@ -159,15 +165,20 @@ class Oci8Extension extends AbstractExtension {
    */
   public function getDbAlias($alias, bool $quoted = TRUE) {
     $alias_short = $this->getLimitedIdentifier($alias);
+
     if ($alias !== $alias_short) {
       $this->dbIdentifiersMap[$alias_short] = $alias;
-      return $alias_short;
-    }
-    elseif (in_array($alias, static::$oracleKeywords)) {
-      return '"' . $alias . '"';
+      $identifier = $alias_short;
     }
     else {
-      return $alias;
+      $identifier = $alias;
+    }
+
+    if ($quoted && substr($identifier, 0, 1) !== '"') {
+      return '"' . str_replace('.', '"."', strtoupper($identifier)) . '"';
+    }
+    else {
+      return strtoupper($identifier);
     }
   }
 
@@ -274,18 +285,7 @@ class Oci8Extension extends AbstractExtension {
     if ($e instanceof DatabaseExceptionWrapper) {
       $e = $e->getPrevious();
     }
-$exc_class = get_class($e);
-if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException' && $this->getDebugging()) {
-  $backtrace = debug_backtrace();
-  error_log("\n***** Exception    : " . $exc_class);
-  error_log('***** Message      : ' . $message);
-  error_log('***** getCode      : ' . $e->getCode());
-  error_log('***** getErrorCode : ' . $e->getErrorCode());
-  error_log('***** getSQLState  : ' . $e->getSQLState());
-  error_log('***** Query        : ' . $query);
-  error_log('***** Query args   : ' . var_export($args, TRUE));
-  error_log("***** Backtrace    : \n" . $this->formatBacktrace($backtrace));
-}
+//if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException' && $this->getDebugging()) {
     if ($e instanceof UniqueConstraintViolationException) {
       throw new IntegrityConstraintViolationException($message, $e->getCode(), $e);
     }
@@ -293,7 +293,7 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException' && $this-
       throw new IntegrityConstraintViolationException($message, $e->getCode(), $e);
     }
     elseif ($e instanceof DbalDriverException) {
-      switch ($e->getErrorCode()) {
+      switch ($e->getCode()) {
         // ORA-01407 cannot update (string) to NULL.
         case 1407:
           throw new IntegrityConstraintViolationException($message, $e->getCode(), $e);
@@ -303,6 +303,16 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException' && $this-
           throw new DatabaseExceptionWrapper($message, 0, $e);
 
         default:
+/*if ($this->getDebugging()) {
+  $backtrace = debug_backtrace();
+  error_log("\n***** Exception    : " . get_class($e));
+  error_log('***** Message      : ' . $message);
+  error_log('***** getCode      : ' . $e->getCode());
+  error_log('***** getSQLState  : ' . $e->getSQLState());
+  error_log('***** Query        : ' . $query);
+  error_log('***** Query args   : ' . var_export($args, TRUE));
+  error_log("***** Backtrace    : \n" . $this->formatBacktrace($backtrace));
+}*/
           throw new DatabaseExceptionWrapper($message, 0, $e);
 
       }
@@ -429,7 +439,7 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException' && $this-
    * {@inheritdoc}
    */
   public function alterStatement(&$query, array &$args) {
-if ($this->getDebugging()) error_log('pre-alter: ' . $query . ' : ' . var_export($args, TRUE));
+//if ($this->getDebugging()) error_log('pre-alter: ' . $query . ' : ' . var_export($args, TRUE));
 
     // Modify placeholders and statement in case of placeholders with
     // reserved keywords or exceeding Oracle limits, and for empty strings.
@@ -438,8 +448,8 @@ if ($this->getDebugging()) error_log('pre-alter: ' . $query . ' : ' . var_export
       foreach ($args as $placeholder => $value) {
         $temp_pl = ltrim($placeholder, ':');
         $temp_pl_short = $this->getLimitedIdentifier($temp_pl, 29);
-if ($this->getDebugging()) error_log('temp_pl: ' . $temp_pl);
-if ($this->getDebugging()) error_log('temp_pl_short: ' . $temp_pl_short);
+//if ($this->getDebugging()) error_log('temp_pl: ' . $temp_pl);
+//if ($this->getDebugging()) error_log('temp_pl_short: ' . $temp_pl_short);
         $key = $placeholder;
         if (in_array($temp_pl, static::$oracleKeywords, TRUE)) {
           $key = $placeholder . '____oracle';

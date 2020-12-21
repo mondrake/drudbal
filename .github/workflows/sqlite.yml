@@ -7,7 +7,6 @@ on:
     - cron: "0 6 * * 2"
 
 env:
-    DRUDBAL_PHP_VERSION: "7.4"
     DRUDBAL_DRUPAL_VERSION: "9.2.x"
     SIMPLETEST_BASE_URL: "http://localhost:8080"
     PHPUNIT_SKIP_CLASS: '[
@@ -43,7 +42,7 @@ jobs:
     - name: Install PHP
       uses: "shivammathur/setup-php@v2"
       with:
-        php-version: $DRUDBAL_PHP_VERSION
+        php-version: "${{ matrix.php-version }}"
         coverage: "none"
         extensions: "pdo_mysql"
         ini-values: "zend.assertions=1"

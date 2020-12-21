@@ -193,6 +193,20 @@ class Connection extends DatabaseConnection {
   }
 
   /**
+   * {@inheritdoc}
+   */
+  public function quoteIdentifiers($sql) {
+    preg_match_all('/(\[(.+?)\])/', $sql, $matches);
+    $ids = [];
+    $i = 0;
+    foreach($matches[1] as $m) {
+      $ids[$m] = $this->getDbalExtension()->getDbFieldName($matches[2][$i], TRUE);
+      $i++;
+    }
+    return strtr($sql, $ids);
+  }
+
+  /**
    * Returns a prefixed table name.
    *
    * @param string $table_name
@@ -512,6 +526,20 @@ class Connection extends DatabaseConnection {
   /**
    * {@inheritdoc}
    */
+  public function escapeField($field) {
+    return $this->getDbalExtension()->getDbFieldName($field, TRUE);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function escapeAlias($field) {
+    return $this->getDbalExtension()->getDbAlias($field, TRUE);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function rollBack($savepoint_name = 'drupal_transaction') {
     if (!$this->inTransaction()) {
       throw new TransactionNoActiveException();
@@ -731,6 +759,7 @@ class Connection extends DatabaseConnection {
    * {@inheritdoc}
    */
   public static function createConnectionOptionsFromUrl($url, $root) {
+//dump([$url, $root]);
     $uri = new Uri($url);
     if (empty($uri->getHost()) || empty($uri->getScheme()) || empty($uri->getPath())) {
       throw new \InvalidArgumentException('Minimum requirement: driver://host/database');
@@ -769,6 +798,7 @@ class Connection extends DatabaseConnection {
     $dbal_driver = isset($parts['dbal_driver']) ? $parts['dbal_driver'] : '';
     $connection_options['dbal_driver'] = $dbal_driver;
 
+//dump([$connection_options]);
     return $connection_options;
   }
 

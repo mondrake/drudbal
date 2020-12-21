@@ -183,14 +183,24 @@ class AbstractExtension implements DbalExtensionInterface {
    * {@inheritdoc}
    */
   public function getDbFieldName($field_name, bool $quoted = TRUE) {
-    return $quoted ? $this->connection->escapeField($field_name) : $field_name;
+    if ($quoted && $field_name !== NULL && $field_name !== '') {
+      return '"' . str_replace('.', '"."', $field_name) . '"';
+    }
+    else {
+      return $field_name;
+    }
   }
 
   /**
    * {@inheritdoc}
    */
   public function getDbAlias($alias, bool $quoted = TRUE) {
-    return $quoted ? $this->connection->escapeField($alias) : $alias;
+    if ($quoted && $alias !== NULL && $alias !== '' && substr($alias, 0, 1) !== '"') {
+      return '"' . str_replace('.', '"."', $alias) . '"';
+    }
+    else {
+      return $alias;
+    }
   }
 
   /**
