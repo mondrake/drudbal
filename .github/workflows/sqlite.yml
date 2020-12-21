@@ -30,6 +30,8 @@ jobs:
 
     strategy:
       matrix:
+        php-version:
+          - "7.4"
         test-args:
           - "--group Database"
           - "--group Entity"
