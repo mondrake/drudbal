@@ -6,6 +6,7 @@ on:
 
 env:
     DRUDBAL_DRUPAL_VERSION: "9.2.x"
+    DRUDBAL_DRUPAL_PROFILE: "standard"
     SIMPLETEST_BASE_URL: "http://localhost:8080"
     PHPUNIT_SKIP_CLASS: '[
       "Drupal\\KernelTests\\Core\\Database\\DatabaseExceptionWrapperTest",
@@ -19,13 +20,13 @@ jobs:
 
 #################################
 
-  mysql-pdo:
-    name: "MySql with PDO"
-    runs-on: ubuntu-latest
+  sqlite-pdo:
+    name: "SQLite with PDO"
+    runs-on: ubuntu-20.04
     env:
-        DRUDBAL_ENV: "dbal/mysql"
-        DBAL_URL: "mysql://root:@0.0.0.0:3306/drudbal"
-        SIMPLETEST_DB: "dbal://root:@0.0.0.0:3306/drudbal?module=drudbal&dbal_driver=pdo_mysql"
+        DRUDBAL_ENV: "dbal/sqlite/file"
+        DBAL_URL: "sqlite://localhost/sites/drudbal.sqlite"
+        SIMPLETEST_DB: "dbal://localhost/sites/drudbal.sqlite?module=drudbal&dbal_driver=pdo_sqlite"
 
     strategy:
       matrix:
@@ -34,22 +35,13 @@ jobs:
         test-args:
           - "--group Database"
 
-    services:
-      mysql:
-        image: "mysql:5.7"
-        options: >-
-          -e MYSQL_ALLOW_EMPTY_PASSWORD=yes
-          -e MYSQL_DATABASE=drudbal
-        ports:
-          - "3306:3306"
-
     steps:
     - name: Install PHP
       uses: "shivammathur/setup-php@v2"
       with:
         php-version: "${{ matrix.php-version }}"
         coverage: "none"
-        extensions: "date,dom,filter,gd,hash,json,pcre,pdo_mysql,session,SimpleXML,SPL,tokenizer,xml"
+        extensions: "pdo_mysql"
         ini-values: "zend.assertions=1"
 
     - name: Checkout Drupal
@@ -89,7 +81,9 @@ jobs:
         vendor/bin/drush runserver localhost:8080 &
 
     - name: Report installation
-      run: php install_report.php
+      run: |
+        php install_report.php
+        vendor/bin/drush pml --type=module --no-core
 
     - name: Run test ${{ matrix.test-args }}
-      run: vendor/bin/phpunit -c core --color=always ${{ matrix.test-args }}
+      run: vendor/bin/phpunit -c core --color=always core/tests/Drupal/KernelTests/Core/Database/InsertTest.php
