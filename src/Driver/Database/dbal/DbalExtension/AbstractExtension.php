@@ -183,7 +183,7 @@ class AbstractExtension implements DbalExtensionInterface {
    * {@inheritdoc}
    */
   public function getDbFieldName($field_name, bool $quoted = TRUE) {
-    if ($quoted && $field_name !== NULL && $field_name !== '' && substr($alias, 0, 1) !== '"') {
+    if ($quoted && $field_name !== NULL && $field_name !== '' && substr($field_name, 0, 1) !== '"') {
       return '"' . str_replace('.', '"."', $field_name) . '"';
     }
     else {
