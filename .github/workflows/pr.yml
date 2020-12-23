@@ -82,6 +82,9 @@ jobs:
         composer config repositories.travisci-run '{"type": "path", "url": "drudbal_staging", "options": {"symlink": false}}'
         composer require "mondrake/drudbal:dev-travisci-run-branch" --no-progress --ansi
 
+    - name: Patch doctrine/dbal
+      run: patch -p1 < modules/contrib/drudbal/tests/travis_ci/dbal/oci8/dbal.patch
+
     - name: Create Oracle schema
       run: |
         cp modules/contrib/drudbal/tests/travis_ci/install_* .

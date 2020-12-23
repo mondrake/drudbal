@@ -1,11 +1,12 @@
-diff --git a/lib/Doctrine/DBAL/Platforms/OraclePlatform.php b/lib/Doctrine/DBAL/Platforms/OraclePlatform.php
-index dc0217d..de2b747 100644
---- a/lib/Doctrine/DBAL/Platforms/OraclePlatform.php
-+++ b/lib/Doctrine/DBAL/Platforms/OraclePlatform.php
-@@ -411,6 +411,33 @@ class OraclePlatform extends AbstractPlatform
+diff --git a/src/Platforms/OraclePlatform.php b/src/Platforms/OraclePlatform.php
+index cbbfb07d1..fe64f81aa 100644
+--- a/src/Platforms/OraclePlatform.php
++++ b/src/Platforms/OraclePlatform.php
+@@ -409,6 +409,33 @@ class OraclePlatform extends AbstractPlatform
+         return $sql;
      }
  
-     /**
++    /**
 +     * Returns the list of all the indexes in the database.
 +     *
 +     * @param string $database
@@ -32,14 +33,14 @@ index dc0217d..de2b747 100644
 +SQL;
 +    }
 +
-+    /**
+     /**
       * {@inheritDoc}
       *
-      * @license New BSD License
-@@ -606,6 +633,33 @@ END;';
+@@ -620,6 +647,33 @@ END;';
+             : $identifierName;
      }
  
-     /**
++    /**
 +     * Returns the list of all the foreign keys in the database.
 +     *
 +     * @param string $database
@@ -66,14 +67,14 @@ index dc0217d..de2b747 100644
 +SQL;
 +    }
 +
-+    /**
+     /**
       * {@inheritDoc}
       */
-     public function getListTableForeignKeysSQL($table)
-@@ -649,6 +703,27 @@ END;';
+@@ -663,6 +717,27 @@ END;';
+         return 'SELECT * FROM user_constraints WHERE table_name = ' . $table;
      }
  
-     /**
++    /**
 +     * Returns the list of all the columns of all the tables in the database.
 +     *
 +     * @param string $database
@@ -94,18 +95,20 @@ index dc0217d..de2b747 100644
 +SQL;
 +    }
 +
-+    /**
+     /**
       * {@inheritDoc}
       */
-     public function getListTableColumnsSQL($table, $database = null)
-diff --git a/lib/Doctrine/DBAL/Schema/OracleSchemaManager.php b/lib/Doctrine/DBAL/Schema/OracleSchemaManager.php
-index 9feecdc..d6be078 100644
---- a/lib/Doctrine/DBAL/Schema/OracleSchemaManager.php
-+++ b/lib/Doctrine/DBAL/Schema/OracleSchemaManager.php
-@@ -36,6 +36,65 @@ class OracleSchemaManager extends AbstractSchemaManager
-     /**
-      * {@inheritdoc}
-      */
+diff --git a/src/Schema/OracleSchemaManager.php b/src/Schema/OracleSchemaManager.php
+index 148f0b922..287e5b8bf 100644
+--- a/src/Schema/OracleSchemaManager.php
++++ b/src/Schema/OracleSchemaManager.php
+@@ -22,6 +22,65 @@ use const CASE_LOWER;
+  */
+ class OracleSchemaManager extends AbstractSchemaManager
+ {
++    /**
++     * {@inheritdoc}
++     */
 +    public function listTables()
 +    {
 +        $currentDatabase = $this->_conn->getDatabase();
@@ -162,9 +165,6 @@ index 9feecdc..d6be078 100644
 +        return $output;
 +    }
 +
-+    /**
-+     * {@inheritdoc}
-+     */
-     public function dropDatabase($database)
-     {
-         try {
+     /**
+      * {@inheritdoc}
+      */
