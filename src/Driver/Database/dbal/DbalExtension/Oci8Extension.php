@@ -203,7 +203,7 @@ class Oci8Extension extends AbstractExtension {
     // with the Drupal name, regardless of prefix. It may be a table was
     // renamed so the prefix is no longer relevant.
     if (in_array($context, ['indexExists', 'dropIndex'])) {
-      $dbal_table = $dbal_schema->getTable($this->connection->getPrefixedTableName($drupal_table_name));
+      $dbal_table = $dbal_schema->getTable($this->connection->getPrefixedTableName($drupal_table_name, TRUE));
       foreach ($dbal_table->getIndexes() as $index) {
         $index_full_name = $index->getName();
         $matches = [];
@@ -604,7 +604,7 @@ if ($this->getDebugging()) error_log($query . ' : ' . var_export($args, TRUE));
     // Instead, we try to select from the table in question.  If it fails,
     // the most likely reason is that it does not exist.
     try {
-      $this->getDbalConnection()->query("SELECT 1 FROM " . $this->connection->getPrefixedTableName($drupal_table_name) . " WHERE ROWNUM <= 1");
+      $this->getDbalConnection()->query("SELECT 1 FROM " . $this->connection->getPrefixedTableName($drupal_table_name, TRUE) . " WHERE ROWNUM <= 1");
       $result = TRUE;
     }
     catch (\Exception $e) {
@@ -621,7 +621,7 @@ if ($this->getDebugging()) error_log($query . ' : ' . var_export($args, TRUE));
     // Instead, we try to select from the table and field in question. If it
     // fails, the most likely reason is that it does not exist.
     try {
-      $this->getDbalConnection()->query("SELECT $field_name FROM " . $this->connection->getPrefixedTableName($drupal_table_name) . " WHERE ROWNUM <= 1");
+      $this->getDbalConnection()->query("SELECT $field_name FROM " . $this->connection->getPrefixedTableName($drupal_table_name, TRUE) . " WHERE ROWNUM <= 1");
       $result = TRUE;
     }
     catch (\Exception $e) {
@@ -721,7 +721,7 @@ if ($this->getDebugging()) error_log($query . ' : ' . var_export($args, TRUE));
       $change_nullability = FALSE;
     }
 
-    $sql = "ALTER TABLE " . $this->connection->getPrefixedTableName($drupal_table_name) . " MODIFY ($field_name NUMBER(10) ";
+    $sql = "ALTER TABLE " . $this->connection->getPrefixedTableName($drupal_table_name, TRUE) . " MODIFY ($field_name NUMBER(10) ";
     if ($change_nullability) {
       $sql .= array_key_exists('not null', $drupal_field_new_specs) && $drupal_field_new_specs['not null'] ? 'NOT NULL' : 'NULL';
     }
