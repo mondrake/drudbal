@@ -1,0 +1,23 @@
+diff --git a/core/lib/Drupal/Core/Database/Database.php b/core/lib/Drupal/Core/Database/Database.php
+index f2d5f9c2bd..3aa71456b5 100644
+--- a/core/lib/Drupal/Core/Database/Database.php
++++ b/core/lib/Drupal/Core/Database/Database.php
+@@ -450,6 +450,7 @@ public static function ignoreTarget($key, $target) {
+    *   Exception thrown when a module provided database driver does not exist.
+    */
+   public static function convertDbUrlToConnectionInfo($url, $root) {
++dump(['a', $url, $root]);
+     // Check that the URL is well formed, starting with 'scheme://', where
+     // 'scheme' is a database driver name.
+     if (preg_match('/^(.*):\/\//', $url, $matches) !== 1) {
+@@ -461,8 +462,10 @@ public static function convertDbUrlToConnectionInfo($url, $root) {
+     $module = NULL;
+     $connection_class = NULL;
+     $url_components = parse_url($url);
++dump(['b', $url_components]);
+     if (isset($url_components['query'])) {
+       parse_str($url_components['query'], $query);
++dump(['c', $query]);
+       if (isset($query['module']) && $query['module']) {
+         $module = $query['module'];
+         // Set up an additional autoloader. We don't use the main autoloader as
