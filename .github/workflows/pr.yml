@@ -9,10 +9,10 @@ env:
     DRUDBAL_DRUPAL_PROFILE: "minimal"
     SIMPLETEST_BASE_URL: "http://localhost:8080"
     PHPUNIT_SKIP_CLASS: '[
+      "Drupal\\KernelTests\\Core\\Database\\ConnectionUnitTest",
       "Drupal\\KernelTests\\Core\\Database\\DatabaseExceptionWrapperTest",
       "Drupal\\KernelTests\\Core\\Cache\\ApcuBackendTest",
-      "Drupal\\KernelTests\\Core\\Cache\\EndOfTransactionQueriesTest",
-      "Drupal\\Tests\\views\\Kernel\\ViewElementTest"
+      "Drupal\\KernelTests\\Core\\Cache\\EndOfTransactionQueriesTest"
     ]'
     DRUPAL_TEST_RESULTS_DB: "sites/test_results.sqlite"
 
