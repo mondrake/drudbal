@@ -1,10 +1,8 @@
-name: SQLite Testing
+name: Pull Request Testing
 
 on:
-  push:
+  pull_request:
     branches: [ master ]
-  schedule:
-    - cron: "0 6 * * 2"
 
 env:
     DRUDBAL_DRUPAL_VERSION: "9.2.x"
@@ -14,8 +12,9 @@ env:
       "Drupal\\KernelTests\\Core\\Database\\DatabaseExceptionWrapperTest",
       "Drupal\\KernelTests\\Core\\Cache\\ApcuBackendTest",
       "Drupal\\KernelTests\\Core\\Cache\\EndOfTransactionQueriesTest",
-      "Drupal\\Tests\\file\\Functional\\DownloadTest"
+      "Drupal\\Tests\\views\\Kernel\\ViewElementTest"
     ]'
+    DRUPAL_TEST_RESULTS_DB: "sites/test_results.sqlite"
 
 jobs:
 
@@ -35,11 +34,6 @@ jobs:
           - "7.4"
         test-args:
           - "--group Database"
-          - "--group Entity"
-          - "--group Cache,Config"
-          - "--group field,Field"
-          - "--group file"
-          - "--group views"
 
     steps:
     - name: Install PHP
@@ -92,4 +86,4 @@ jobs:
         vendor/bin/drush pml --type=module --no-core
 
     - name: Run test ${{ matrix.test-args }}
-      run: vendor/bin/phpunit -c core --color=always ${{ matrix.test-args }}
+      run: vendor/bin/phpunit -c core --color=always core/tests/Drupal/KernelTests/Core/Database/InsertTest.php

@@ -7,8 +7,8 @@ on:
     - cron: "0 6 * * 2"
 
 env:
-    DRUDBAL_PHP_VERSION: "7.4"
     DRUDBAL_DRUPAL_VERSION: "9.2.x"
+    DRUDBAL_DRUPAL_PROFILE: "standard"
     SIMPLETEST_BASE_URL: "http://localhost:8080"
     PHPUNIT_SKIP_CLASS: '[
       "Drupal\\KernelTests\\Core\\Database\\DatabaseExceptionWrapperTest",
@@ -31,6 +31,8 @@ jobs:
 
     strategy:
       matrix:
+        php-version:
+          - "7.4"
         test-args:
           - "--group Database"
           - "--group Entity"
@@ -52,7 +54,7 @@ jobs:
     - name: Install PHP
       uses: "shivammathur/setup-php@v2"
       with:
-        php-version: $DRUDBAL_PHP_VERSION
+        php-version: "${{ matrix.php-version }}"
         coverage: "none"
         extensions: "pdo_mysql"
         ini-values: "zend.assertions=1"
@@ -113,6 +115,8 @@ jobs:
 
     strategy:
       matrix:
+        php-version:
+          - "7.4"
         test-args:
           - "--group Database"
           - "--group Entity"
@@ -130,7 +134,7 @@ jobs:
     - name: Install PHP
       uses: "shivammathur/setup-php@v2"
       with:
-        php-version: $DRUDBAL_PHP_VERSION
+        php-version: "${{ matrix.php-version }}"
         coverage: "none"
         extensions: "mysqli"
         ini-values: "zend.assertions=1"
@@ -191,6 +195,8 @@ jobs:
 
     strategy:
       matrix:
+        php-version:
+          - "7.4"
         test-args:
           - "--group Database"
           - "--group Entity"
@@ -208,7 +214,7 @@ jobs:
     - name: Install PHP
       uses: "shivammathur/setup-php@v2"
       with:
-        php-version: $DRUDBAL_PHP_VERSION
+        php-version: "${{ matrix.php-version }}"
         coverage: "none"
         extensions: "pdo_mysql"
         ini-values: "zend.assertions=1"

@@ -1,33 +1,21 @@
-name: SQLite Testing
+TODO
 
-on:
-  push:
-    branches: [ master ]
-  schedule:
-    - cron: "0 6 * * 2"
+* Connection::createUrlFromConnectionOptions does not export the module name
+* standard profile in Oracle install
+* lowercase identifiers Oracle
+* tests Oracle
+* new identifier management class
 
-env:
-    DRUDBAL_DRUPAL_VERSION: "9.2.x"
-    DRUDBAL_DRUPAL_PROFILE: "standard"
-    SIMPLETEST_BASE_URL: "http://localhost:8080"
-    PHPUNIT_SKIP_CLASS: '[
-      "Drupal\\KernelTests\\Core\\Database\\DatabaseExceptionWrapperTest",
-      "Drupal\\KernelTests\\Core\\Cache\\ApcuBackendTest",
-      "Drupal\\KernelTests\\Core\\Cache\\EndOfTransactionQueriesTest",
-      "Drupal\\Tests\\file\\Functional\\DownloadTest"
-    ]'
 
-jobs:
+-----------
 
-#################################
-
-  sqlite-pdo:
-    name: "SQLite with PDO"
-    runs-on: ubuntu-20.04
+  mysql-pdo:
+    name: "MySql with PDO"
+    runs-on: ubuntu-latest
     env:
-        DRUDBAL_ENV: "dbal/sqlite/file"
-        DBAL_URL: "sqlite://localhost/sites/drudbal.sqlite"
-        SIMPLETEST_DB: "dbal://localhost/sites/drudbal.sqlite?module=drudbal&dbal_driver=pdo_sqlite"
+        DRUDBAL_ENV: "dbal/mysql"
+        DBAL_URL: "mysql://root:@0.0.0.0:3306/drudbal"
+        SIMPLETEST_DB: "dbal://root:@0.0.0.0:3306/drudbal?module=drudbal&dbal_driver=pdo_mysql"
 
     strategy:
       matrix:
@@ -35,11 +23,15 @@ jobs:
           - "7.4"
         test-args:
           - "--group Database"
-          - "--group Entity"
-          - "--group Cache,Config"
-          - "--group field,Field"
-          - "--group file"
-          - "--group views"
+
+    services:
+      mysql:
+        image: "mysql:5.7"
+        options: >-
+          -e MYSQL_ALLOW_EMPTY_PASSWORD=yes
+          -e MYSQL_DATABASE=drudbal
+        ports:
+          - "3306:3306"
 
     steps:
     - name: Install PHP
@@ -47,7 +39,7 @@ jobs:
       with:
         php-version: "${{ matrix.php-version }}"
         coverage: "none"
-        extensions: "pdo_mysql"
+        extensions: "date,dom,filter,gd,hash,json,pcre,pdo_mysql,session,SimpleXML,SPL,tokenizer,xml"
         ini-values: "zend.assertions=1"
 
     - name: Checkout Drupal
@@ -87,9 +79,8 @@ jobs:
         vendor/bin/drush runserver localhost:8080 &
 
     - name: Report installation
-      run: |
-        php install_report.php
-        vendor/bin/drush pml --type=module --no-core
+      run: php install_report.php
 
     - name: Run test ${{ matrix.test-args }}
       run: vendor/bin/phpunit -c core --color=always ${{ matrix.test-args }}
+

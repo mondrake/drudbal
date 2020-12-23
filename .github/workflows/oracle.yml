@@ -3,12 +3,12 @@ name: Oracle Testing
 on:
   push:
     branches: [ master ]
-  pull_request:
-    branches: [ master ]
+  schedule:
+    - cron: "0 6 * * 2"
 
 env:
-    DRUDBAL_PHP_VERSION: "7.4"
     DRUDBAL_DRUPAL_VERSION: "9.2.x"
+    DRUDBAL_DRUPAL_PROFILE: "minimal"
     SIMPLETEST_BASE_URL: "http://localhost:8080"
     PHPUNIT_SKIP_CLASS: '[
       "Drupal\\KernelTests\\Core\\Database\\DatabaseExceptionWrapperTest",
@@ -37,6 +37,8 @@ jobs:
 
     strategy:
       matrix:
+        php-version:
+          - "7.4"
         test-args:
           - "--group Database"
 
@@ -44,7 +46,7 @@ jobs:
     - name: Install PHP
       uses: "shivammathur/setup-php@v2"
       with:
-        php-version: "7.4"
+        php-version: "${{ matrix.php-version }}"
         coverage: "none"
         extensions: "oci8"
         ini-values: "zend.assertions=1"
@@ -65,9 +67,6 @@ jobs:
 
     - name: '#3110546 Allow contributed modules (mostly database drivers) to override tests in core'
       run: git apply -v drudbal_staging/tests/travis_ci/alt-fix.patch
-
-#    - name: '#3129534 Automatically enable the module that is providing the current database driver'
-#      run:  curl https://www.drupal.org/files/issues/2020-12-19/3129534-63.patch | git apply -v
 
 #    - name: Test Drupal patch
 #      run: git apply -v drudbal_staging/test.patch
@@ -98,7 +97,6 @@ jobs:
     - name: Report installation
       run: |
         php install_report.php
-        vendor/bin/drush pml --type=module --no-core
 
-    - name: Run test ${{ matrix.test-args }}
-      run: vendor/bin/phpunit -c core --color=always ${{ matrix.test-args }}
+#    - name: Run test ${{ matrix.test-args }}
+#      run: vendor/bin/phpunit -c core --color=always ${{ matrix.test-args }}

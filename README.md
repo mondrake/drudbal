@@ -1,9 +1,10 @@
 # DruDbal
-(Updated: March 30, 2020)
-
 [![MySql Testing](https://github.com/mondrake/drudbal/workflows/MySql%20Testing/badge.svg)](https://github.com/mondrake/drudbal/actions?query=workflow%3A%22MySql+Testing%22)
 [![SQLite Testing](https://github.com/mondrake/drudbal/workflows/SQLite%20Testing/badge.svg)](https://github.com/mondrake/drudbal/actions?query=workflow%3A%22SQLite+Testing%22)
+[![Oracle Testing](https://github.com/mondrake/drudbal/workflows/Oracle%20Testing/badge.svg)](https://github.com/mondrake/drudbal/actions?query=workflow%3A%22Oracle+Testing%22)
 [![License](https://img.shields.io/github/license/mondrake/drudbal.svg)](https://packagist.org/packages/mondrake/drudbal)
+
+(This README updated March 30, 2020)
 
 An __experimental__ Drupal driver for Doctrine DBAL. __Do not use if not for trial. No support, sorry :)__
 
