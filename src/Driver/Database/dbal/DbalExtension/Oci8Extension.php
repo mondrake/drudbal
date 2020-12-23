@@ -180,13 +180,6 @@ class Oci8Extension extends AbstractExtension {
     else {
       return strtoupper($identifier);
     }
-
-//    if ($quoted) {
-//      return '"' . strtoupper($identifier) . '"';
-//    }
-//    else {
-      return strtoupper($identifier);
-//    }
   }
 
   /**
