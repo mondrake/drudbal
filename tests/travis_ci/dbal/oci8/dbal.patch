@@ -99,7 +99,7 @@ index cbbfb07d1..fe64f81aa 100644
       * {@inheritDoc}
       */
 diff --git a/src/Schema/OracleSchemaManager.php b/src/Schema/OracleSchemaManager.php
-index 148f0b922..262cf95ba 100644
+index 148f0b922..9bfb0461d 100644
 --- a/src/Schema/OracleSchemaManager.php
 +++ b/src/Schema/OracleSchemaManager.php
 @@ -22,6 +22,65 @@ use const CASE_LOWER;
@@ -140,7 +140,7 @@ index 148f0b922..262cf95ba 100644
 +                $indexes = $this->_getPortableTableIndexesList($indexesByTable[$unquotedTableName], $tableName);
 +            }
 +
-+            $tables[] = new Table($tableName, $columns, $indexes, $foreignKeys, false, []);
++            $tables[] = new Table($tableName, $columns, $indexes, [], $foreignKeys, []);
 +        }
 +
 +        return $tables;
