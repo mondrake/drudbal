@@ -26,7 +26,7 @@ jobs:
     env:
         DRUDBAL_ENV: "dbal/oci8"
         DBAL_URL: "oci8://DRUDBAL:ORACLE@0.0.0.0:1521/XE"
-        SIMPLETEST_DB: "dbal://DRUDBAL:ORACLE@0.0.0.0:1521/XE#DRU?module=drudbal&dbal_driver=oci8"
+        SIMPLETEST_DB: "dbal://DRUDBAL:ORACLE@0.0.0.0:1521/XE?module=drudbal&dbal_driver=oci8#DRU"
 
     services:
       oracle:
@@ -67,8 +67,8 @@ jobs:
     - name: '#3110546 Allow contributed modules (mostly database drivers) to override tests in core'
       run: git apply -v drudbal_staging/tests/travis_ci/alt-fix.patch
 
-    - name: Test Drupal patch
-      run: git apply -v drudbal_staging/test.patch
+#    - name: Test Drupal patch
+#      run: git apply -v drudbal_staging/test.patch
 
     - name: Install Composer dependencies
       run: |
