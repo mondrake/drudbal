@@ -99,7 +99,7 @@ index cbbfb07d1..fe64f81aa 100644
       * {@inheritDoc}
       */
 diff --git a/src/Schema/OracleSchemaManager.php b/src/Schema/OracleSchemaManager.php
-index 148f0b922..287e5b8bf 100644
+index 148f0b922..262cf95ba 100644
 --- a/src/Schema/OracleSchemaManager.php
 +++ b/src/Schema/OracleSchemaManager.php
 @@ -22,6 +22,65 @@ use const CASE_LOWER;
@@ -157,7 +157,7 @@ index 148f0b922..287e5b8bf 100644
 +     */
 +    private function getAssetRecordsByTable(string $sql): array
 +    {
-+        $input = $this->_conn->fetchAll($sql);
++        $input = $this->_conn->fetchAllAssociative($sql);
 +        $output = [];
 +        foreach ($input as $record) {
 +            $output[$record['TABLE_NAME']][] = $record;
