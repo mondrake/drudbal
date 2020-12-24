@@ -1,3 +1,100 @@
+diff --git a/core/tests/Drupal/KernelTests/Core/Database/LoggingTest.php b/core/tests/Drupal/KernelTests/Core/Database/LoggingTest.php
+index 4716ce10e0..db3740a62b 100644
+--- a/core/tests/Drupal/KernelTests/Core/Database/LoggingTest.php
++++ b/core/tests/Drupal/KernelTests/Core/Database/LoggingTest.php
+@@ -24,7 +24,7 @@ public function testEnableLogging() {
+     $this->connection->query('SELECT [age] FROM {test} WHERE [name] = :name', [':name' => 'Ringo'])->fetchCol();
+ 
+     // Trigger a call that does not have file in the backtrace.
+-    call_user_func_array([Database::getConnection(), 'query'], ['SELECT age FROM {test} WHERE name = :name', [':name' => 'Ringo']])->fetchCol();
++    call_user_func_array([Database::getConnection(), 'query'], ['SELECT [age] FROM {test} WHERE [name] = :name', [':name' => 'Ringo']])->fetchCol();
+ 
+     $queries = Database::getLog('testing', 'default');
+ 
+diff --git a/core/tests/Drupal/KernelTests/Core/Database/SelectSubqueryTest.php b/core/tests/Drupal/KernelTests/Core/Database/SelectSubqueryTest.php
+index dbbc40f180..b0a5aaacec 100644
+--- a/core/tests/Drupal/KernelTests/Core/Database/SelectSubqueryTest.php
++++ b/core/tests/Drupal/KernelTests/Core/Database/SelectSubqueryTest.php
+@@ -23,7 +23,7 @@ public function testFromSubquerySelect() {
+       // Create another query that joins against the virtual table resulting
+       // from the subquery.
+       $select = $this->connection->select($subquery, 'tt2');
+-      $select->join('test', 't', 't.id=tt2.pid');
++      $select->join('test', 't', '[t].[id]=[tt2].[pid]');
+       $select->addField('t', 'name');
+       if ($i) {
+         // Use a different number of conditions here to confuse the subquery
+@@ -57,7 +57,7 @@ public function testFromSubquerySelectWithLimit() {
+     // Create another query that joins against the virtual table resulting
+     // from the subquery.
+     $select = $this->connection->select($subquery, 'tt2');
+-    $select->join('test', 't', 't.id=tt2.pid');
++    $select->join('test', 't', '[t].[id]=[tt2].[pid]');
+     $select->addField('t', 'name');
+ 
+     // The resulting query should be equivalent to:
+@@ -98,12 +98,12 @@ public function testConditionSubquerySelect() {
+   public function testConditionSubquerySelect2() {
+     // Create a subquery, which is just a normal query object.
+     $subquery = $this->connection->select('test', 't2');
+-    $subquery->addExpression('AVG(t2.age)');
++    $subquery->addExpression('AVG([t2].[age])');
+ 
+     // Create another query that adds a clause using the subquery.
+     $select = $this->connection->select('test', 't');
+     $select->addField('t', 'name');
+-    $select->condition('t.age', $subquery, '<');
++    $select->condition('[t].[age]', $subquery, '<');
+ 
+     // The resulting query should be equivalent to:
+     // SELECT t.name
+@@ -119,12 +119,12 @@ public function testConditionSubquerySelect2() {
+   public function testConditionSubquerySelect3() {
+     // Create subquery 1, which is just a normal query object.
+     $subquery1 = $this->connection->select('test_task', 'tt');
+-    $subquery1->addExpression('AVG(tt.priority)');
+-    $subquery1->where('tt.pid = t.id');
++    $subquery1->addExpression('AVG([tt].[priority])');
++    $subquery1->where('[tt].[pid] = [t].[id]');
+ 
+     // Create subquery 2, which is just a normal query object.
+     $subquery2 = $this->connection->select('test_task', 'tt2');
+-    $subquery2->addExpression('AVG(tt2.priority)');
++    $subquery2->addExpression('AVG([tt2].[priority])');
+ 
+     // Create another query that adds a clause using the subqueries.
+     $select = $this->connection->select('test', 't');
+diff --git a/core/tests/Drupal/KernelTests/Core/Database/UpdateComplexTest.php b/core/tests/Drupal/KernelTests/Core/Database/UpdateComplexTest.php
+index 0d7b091d39..9911fea004 100644
+--- a/core/tests/Drupal/KernelTests/Core/Database/UpdateComplexTest.php
++++ b/core/tests/Drupal/KernelTests/Core/Database/UpdateComplexTest.php
+@@ -92,7 +92,7 @@ public function testUpdateExpression() {
+     $num_updated = $this->connection->update('test')
+       ->condition('name', 'Ringo')
+       ->fields(['job' => 'Musician'])
+-      ->expression('age', 'age + :age', [':age' => 4])
++      ->expression('age', '[age] + :age', [':age' => 4])
+       ->execute();
+     $this->assertIdentical($num_updated, 1, 'Updated 1 record.');
+ 
+@@ -112,7 +112,7 @@ public function testUpdateOnlyExpression() {
+     $before_age = $this->connection->query('SELECT [age] FROM {test} WHERE [name] = :name', [':name' => 'Ringo'])->fetchField();
+     $num_updated = $this->connection->update('test')
+       ->condition('name', 'Ringo')
+-      ->expression('age', 'age + :age', [':age' => 4])
++      ->expression('age', '[age] + :age', [':age' => 4])
+       ->execute();
+     $this->assertIdentical($num_updated, 1, 'Updated 1 record.');
+ 
+@@ -125,7 +125,7 @@ public function testUpdateOnlyExpression() {
+    */
+   public function testSubSelectUpdate() {
+     $subselect = $this->connection->select('test_task', 't');
+-    $subselect->addExpression('MAX(priority) + :increment', 'max_priority', [':increment' => 30]);
++    $subselect->addExpression('MAX([priority]) + :increment', 'max_priority', [':increment' => 30]);
+     // Clone this to make sure we are running a different query when
+     // asserting.
+     $select = clone $subselect;
 diff --git a/core/tests/Drupal/KernelTests/Core/Database/UpdateTest.php b/core/tests/Drupal/KernelTests/Core/Database/UpdateTest.php
 index 607f61417e..f8f564d96c 100644
 --- a/core/tests/Drupal/KernelTests/Core/Database/UpdateTest.php
