@@ -86,11 +86,11 @@ class Upsert extends QueryUpsert {
     $dbal_query = $dbal_connection->createQueryBuilder()->insert($this->connection->getPrefixedTableName($this->table, TRUE));
 
     foreach ($this->defaultFields as $field) {
-      $dbal_query->setValue($dbal_extension->getDbFieldName($field), 'DEFAULT');
+      $dbal_query->setValue($dbal_extension->getDbFieldName($field, TRUE), 'DEFAULT');
     }
     $max_placeholder = 0;
     foreach ($this->insertFields as $field) {
-      $dbal_query->setValue($dbal_extension->getDbFieldName($field), ':db_insert_placeholder_' . $max_placeholder++);
+      $dbal_query->setValue($dbal_extension->getDbFieldName($field, TRUE), ':db_insert_placeholder_' . $max_placeholder++);
     }
     return $comments . $dbal_query->getSQL();
   }
@@ -123,13 +123,13 @@ class Upsert extends QueryUpsert {
       if ($this->insertFields[$i] != $this->key) {
         // Updating the unique / primary key is not necessary.
         $dbal_query
-          ->set($dbal_extension->getDbFieldName($this->insertFields[$i]), ':db_update_placeholder_' . $i)
+          ->set($dbal_extension->getDbFieldName($this->insertFields[$i], TRUE), ':db_update_placeholder_' . $i)
           ->setParameter('db_update_placeholder_' . $i, $insert_values[$i]);
       }
       else {
         // The unique / primary key is the WHERE condition for the UPDATE.
         $dbal_query
-          ->where($dbal_query->expr()->eq($this->insertFields[$i], ':db_condition_placeholder_0'))
+          ->where($dbal_query->expr()->eq($dbal_extension->getDbFieldName($this->insertFields[$i], TRUE), ':db_condition_placeholder_0'))
           ->setParameter('db_condition_placeholder_0', $insert_values[$i]);
       }
     }
