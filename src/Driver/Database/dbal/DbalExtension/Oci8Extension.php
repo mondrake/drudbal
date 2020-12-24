@@ -126,7 +126,6 @@ class Oci8Extension extends AbstractExtension {
       $identifier_crc = hash('crc32b', $prefixed_table_name);
       $prefixed_table_name = substr($prefixed_table_name, 0, 16) . $identifier_crc;
     }
-//    return strtoupper($prefixed_table_name);
     return $prefixed_table_name;
   }
 
@@ -155,11 +154,9 @@ class Oci8Extension extends AbstractExtension {
     }
 
     if ($quoted) {
-//      return '"' . str_replace('.', '"."', strtoupper($identifier)) . '"';
       return '"' . str_replace('.', '"."', $identifier) . '"';
     }
     else {
-//      return strtoupper($identifier);
       return $identifier;
     }
   }
@@ -179,11 +176,9 @@ class Oci8Extension extends AbstractExtension {
     }
 
     if ($quoted && substr($identifier, 0, 1) !== '"') {
-//      return '"' . str_replace('.', '"."', strtoupper($identifier)) . '"';
       return '"' . str_replace('.', '"."', $identifier) . '"';
     }
     else {
-//      return strtoupper($identifier);
       return $identifier;
     }
   }
