@@ -126,7 +126,7 @@ class Oci8Extension extends AbstractExtension {
       $identifier_crc = hash('crc32b', $prefixed_table_name);
       $prefixed_table_name = substr($prefixed_table_name, 0, 16) . $identifier_crc;
     }
-    return strtoupper($prefixed_table_name);
+    return $prefixed_table_name;
   }
 
   /**
@@ -135,7 +135,7 @@ class Oci8Extension extends AbstractExtension {
   public function getDbFullQualifiedTableName($drupal_table_name) {
     $options = $this->connection->getConnectionOptions();
     $prefix = $this->connection->tablePrefix($drupal_table_name);
-    return strtoupper($options['username']) . '.' . $this->getDbTableName($prefix . $drupal_table_name);
+    return $options['username'] . '.' . $this->getDbTableName($prefix . $drupal_table_name);
   }
 
   /**
@@ -153,10 +153,10 @@ class Oci8Extension extends AbstractExtension {
     }
 
     if ($quoted) {
-      return '"' . str_replace('.', '"."', strtoupper($identifier)) . '"';
+      return '"' . str_replace('.', '"."', $identifier) . '"';
     }
     else {
-      return strtoupper($identifier);
+      return $identifier;
     }
   }
 
@@ -175,10 +175,10 @@ class Oci8Extension extends AbstractExtension {
     }
 
     if ($quoted && substr($identifier, 0, 1) !== '"') {
-      return '"' . str_replace('.', '"."', strtoupper($identifier)) . '"';
+      return '"' . str_replace('.', '"."', $identifier) . '"';
     }
     else {
-      return strtoupper($identifier);
+      return $identifier;
     }
   }
 
@@ -197,7 +197,7 @@ class Oci8Extension extends AbstractExtension {
     // with the Drupal name, regardless of prefix. It may be a table was
     // renamed so the prefix is no longer relevant.
     if (in_array($context, ['indexExists', 'dropIndex'])) {
-      $dbal_table = $dbal_schema->getTable($this->connection->getPrefixedTableName($drupal_table_name));
+      $dbal_table = $dbal_schema->getTable($this->connection->getPrefixedTableName($drupal_table_name, TRUE));
       foreach ($dbal_table->getIndexes() as $index) {
         $index_full_name = $index->getName();
         $matches = [];
@@ -257,17 +257,17 @@ class Oci8Extension extends AbstractExtension {
   public function delegateNextId($existing_id = 0) {
     // @codingStandardsIgnoreLine
     $trn = $this->connection->startTransaction();
-    $affected = $this->connection->query('UPDATE {sequences} SET value = GREATEST(value, :existing_id) + 1', [
+    $affected = $this->connection->query('UPDATE {sequences} SET [value] = GREATEST([value], :existing_id) + 1', [
       ':existing_id' => $existing_id,
     ], ['return' => Database::RETURN_AFFECTED]);
     if (!$affected) {
-      $this->connection->query('INSERT INTO {sequences} (value) VALUES (:existing_id + 1)', [
+      $this->connection->query('INSERT INTO {sequences} ([value]) VALUES (:existing_id + 1)', [
         ':existing_id' => $existing_id,
       ]);
     }
     // The transaction gets committed when the transaction object gets destroyed
     // because it gets out of scope.
-    return $this->connection->query('SELECT value FROM {sequences}')->fetchField();
+    return $this->connection->query('SELECT [value] FROM {sequences}')->fetchField();
   }
 
   /**
@@ -598,7 +598,7 @@ if ($this->getDebugging()) error_log($query . ' : ' . var_export($args, TRUE));
     // Instead, we try to select from the table in question.  If it fails,
     // the most likely reason is that it does not exist.
     try {
-      $this->getDbalConnection()->query("SELECT 1 FROM " . $this->connection->getPrefixedTableName($drupal_table_name) . " WHERE ROWNUM <= 1");
+      $this->getDbalConnection()->query("SELECT 1 FROM " . $this->connection->getPrefixedTableName($drupal_table_name, TRUE) . " WHERE ROWNUM <= 1");
       $result = TRUE;
     }
     catch (\Exception $e) {
@@ -615,7 +615,7 @@ if ($this->getDebugging()) error_log($query . ' : ' . var_export($args, TRUE));
     // Instead, we try to select from the table and field in question. If it
     // fails, the most likely reason is that it does not exist.
     try {
-      $this->getDbalConnection()->query("SELECT $field_name FROM " . $this->connection->getPrefixedTableName($drupal_table_name) . " WHERE ROWNUM <= 1");
+      $this->getDbalConnection()->query("SELECT $field_name FROM " . $this->connection->getPrefixedTableName($drupal_table_name, TRUE) . " WHERE ROWNUM <= 1");
       $result = TRUE;
     }
     catch (\Exception $e) {
@@ -715,7 +715,7 @@ if ($this->getDebugging()) error_log($query . ' : ' . var_export($args, TRUE));
       $change_nullability = FALSE;
     }
 
-    $sql = "ALTER TABLE " . $this->connection->getPrefixedTableName($drupal_table_name) . " MODIFY ($field_name NUMBER(10) ";
+    $sql = "ALTER TABLE " . $this->connection->getPrefixedTableName($drupal_table_name, TRUE) . " MODIFY ($field_name NUMBER(10) ";
     if ($change_nullability) {
       $sql .= array_key_exists('not null', $drupal_field_new_specs) && $drupal_field_new_specs['not null'] ? 'NOT NULL' : 'NULL';
     }
