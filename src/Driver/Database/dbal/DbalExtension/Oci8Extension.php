@@ -263,17 +263,17 @@ class Oci8Extension extends AbstractExtension {
   public function delegateNextId($existing_id = 0) {
     // @codingStandardsIgnoreLine
     $trn = $this->connection->startTransaction();
-    $affected = $this->connection->query('UPDATE {sequences} SET value = GREATEST(value, :existing_id) + 1', [
+    $affected = $this->connection->query('UPDATE {sequences} SET [value] = GREATEST([value], :existing_id) + 1', [
       ':existing_id' => $existing_id,
     ], ['return' => Database::RETURN_AFFECTED]);
     if (!$affected) {
-      $this->connection->query('INSERT INTO {sequences} (value) VALUES (:existing_id + 1)', [
+      $this->connection->query('INSERT INTO {sequences} ([value]) VALUES (:existing_id + 1)', [
         ':existing_id' => $existing_id,
       ]);
     }
     // The transaction gets committed when the transaction object gets destroyed
     // because it gets out of scope.
-    return $this->connection->query('SELECT value FROM {sequences}')->fetchField();
+    return $this->connection->query('SELECT [value] FROM {sequences}')->fetchField();
   }
 
   /**
