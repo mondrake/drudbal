@@ -6,7 +6,7 @@ on:
 
 env:
     DRUDBAL_DRUPAL_VERSION: "9.1.x"
-    DRUDBAL_DRUPAL_PROFILE: "minimal"
+    DRUDBAL_DRUPAL_PROFILE: "standard"
     SIMPLETEST_BASE_URL: "http://localhost:8080"
     PHPUNIT_SKIP_CLASS: '[
       "Drupal\\KernelTests\\Core\\Database\\ConnectionUnitTest",
