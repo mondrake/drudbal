@@ -401,8 +401,7 @@ class Oci8Extension extends AbstractExtension {
   public function alterStatement(&$query, array &$args) {
 //if ($this->getDebugging()) error_log('pre-alter: ' . $query . ' : ' . var_export($args, TRUE));
 
-    // Modify placeholders and statement in case of placeholders with
-    // reserved keywords or exceeding Oracle limits, and for empty strings.
+    // Modify arguments for empty strings.
     foreach ($args as $placeholder => &$value) {
       $value = $value === '' ? self::ORACLE_EMPTY_STRING_REPLACEMENT : $value;  // @todo here check
     }
