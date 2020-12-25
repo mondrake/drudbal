@@ -401,6 +401,12 @@ class Oci8Extension extends AbstractExtension {
   public function alterStatement(&$query, array &$args) {
 //if ($this->getDebugging()) error_log('pre-alter: ' . $query . ' : ' . var_export($args, TRUE));
 
+    // Modify placeholders and statement in case of placeholders with
+    // reserved keywords or exceeding Oracle limits, and for empty strings.
+    foreach ($args as $placeholder => &$value) {
+      $value = $value === '' ? self::ORACLE_EMPTY_STRING_REPLACEMENT : $value;  // @todo here check
+    }
+
     // Replace empty strings.
     $query = str_replace("''", "'" . self::ORACLE_EMPTY_STRING_REPLACEMENT . "'", $query);
 
@@ -411,40 +417,6 @@ class Oci8Extension extends AbstractExtension {
     // REGEXP is not available in Oracle; convert to using REGEXP_LIKE
     // function.
     $query = preg_replace('/([^\s]+)\s+REGEXP\s+([^\s]+)/', 'REGEXP_LIKE($1, $2)', $query);
-
-    // CONCAT_WS is not available in Oracle; convert to using || operator.
-    $matches = [];
-    if (preg_match_all('/(?:[\s\(])(CONCAT_WS\(([^\)]*)\))/', $query, $matches, PREG_OFFSET_CAPTURE)) {
-      $concat_ws_replacements = [];
-      foreach ($matches[2] as $match) {
-        $concat_ws_parms_matches = [];
-        preg_match_all('/(\'(?:\\\\\\\\)+\'|\'(?:[^\'\\\\]|\\\\\'?|\'\')*\')|([^\'"\s,]+)/', $match[0], $concat_ws_parms_matches);
-        $parms = $concat_ws_parms_matches[0];
-        $sep = $parms[0];
-        $repl = '';
-        for ($i = 1, $first = FALSE; $i < count($parms); $i++) {
-          if ($parms[$i] === 'NULL') { // @todo check case insensitive
-            continue;
-          }
-          if (array_key_exists($parms[$i], $args) && $args[$parms[$i]] === NULL) {
-            unset($args[$parms[$i]]);
-            continue;
-          }
-          if (array_key_exists($parms[$i], $args) && $args[$parms[$i]] === self::ORACLE_EMPTY_STRING_REPLACEMENT) {
-            $args[$parms[$i]] = '';
-          }
-          if ($first) {
-            $repl .= ' || ' . $sep . ' || ';
-          }
-          $repl .= $parms[$i];
-          $first = TRUE;
-        }
-        $concat_ws_replacements[] = "($repl)";
-      }
-      for ($i = count($concat_ws_replacements) - 1; $i >= 0; $i--) {
-        $query = substr_replace($query, $concat_ws_replacements[$i], $matches[1][$i][1], strlen($matches[1][$i][0]));
-      }
-    };
 
     // In case of missing from, Oracle requires FROM DUAL.
     if (strpos($query, 'SELECT ') === 0 && strpos($query, ' FROM ') === FALSE) {
