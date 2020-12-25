@@ -117,7 +117,7 @@ class Select extends QuerySelect {
       $fields = $this->getFields();
       foreach ($this->group as $expression) {
         if (strpos($expression, '.') === FALSE && isset($fields[$expression])) {
-          $dbal_query->addGroupBy($fields[$expression]['table'] . '.' . $fields[$expression]['field']);
+          $dbal_query->addGroupBy($this->connection->escapeAlias($fields[$expression]['table']) . '.' . $this->connection->escapeAlias($fields[$expression]['field']));
         }
         else {
           $dbal_query->addGroupBy($expression);
@@ -128,7 +128,7 @@ class Select extends QuerySelect {
     // HAVING
     // @todo this uses Drupal Condition API. Use DBAL expressions instead?
     if (count($this->having)) {
-      $dbal_query->having($dbal_extension->resolveAliases((string) $this->having));
+      $dbal_query->having((string) $this->having);
     }
 
     // UNION is not supported by DBAL. Need to delegate to the DBAL extension.

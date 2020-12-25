@@ -1,3 +1,29 @@
+diff --git a/core/lib/Drupal/Core/Cache/DatabaseCacheTagsChecksum.php b/core/lib/Drupal/Core/Cache/DatabaseCacheTagsChecksum.php
+index 72cf989890..7b797b9ae8 100644
+--- a/core/lib/Drupal/Core/Cache/DatabaseCacheTagsChecksum.php
++++ b/core/lib/Drupal/Core/Cache/DatabaseCacheTagsChecksum.php
+@@ -37,7 +37,7 @@ protected function doInvalidateTags(array $tags) {
+       foreach ($tags as $tag) {
+         $this->connection->merge('cachetags')
+           ->insertFields(['invalidations' => 1])
+-          ->expression('invalidations', 'invalidations + 1')
++          ->expression('invalidations', '[invalidations] + 1')
+           ->key('tag', $tag)
+           ->execute();
+       }
+diff --git a/core/tests/Drupal/KernelTests/Core/Database/InsertTest.php b/core/tests/Drupal/KernelTests/Core/Database/InsertTest.php
+index 1c18d5fadf..45a2f5de0d 100644
+--- a/core/tests/Drupal/KernelTests/Core/Database/InsertTest.php
++++ b/core/tests/Drupal/KernelTests/Core/Database/InsertTest.php
+@@ -157,7 +157,7 @@ public function testInsertSelectFields() {
+     // The query builder will always append expressions after fields.
+     // Add the expression first to test that the insert fields are correctly
+     // re-ordered.
+-    $query->addExpression('tp.age', 'age');
++    $query->addExpression('[tp].[age]', 'age');
+     $query
+       ->fields('tp', ['name', 'job'])
+       ->condition('tp.name', 'Meredith');
 diff --git a/core/tests/Drupal/KernelTests/Core/Database/LoggingTest.php b/core/tests/Drupal/KernelTests/Core/Database/LoggingTest.php
 index 4716ce10e0..db3740a62b 100644
 --- a/core/tests/Drupal/KernelTests/Core/Database/LoggingTest.php
@@ -11,8 +37,109 @@ index 4716ce10e0..db3740a62b 100644
  
      $queries = Database::getLog('testing', 'default');
  
+diff --git a/core/tests/Drupal/KernelTests/Core/Database/MergeTest.php b/core/tests/Drupal/KernelTests/Core/Database/MergeTest.php
+index 563f59f21d..3fd1311d3e 100644
+--- a/core/tests/Drupal/KernelTests/Core/Database/MergeTest.php
++++ b/core/tests/Drupal/KernelTests/Core/Database/MergeTest.php
+@@ -129,7 +129,7 @@ public function testMergeUpdateExpression() {
+       ->key('job', 'Speaker')
+       ->fields(['name' => 'Tiffany'])
+       ->insertFields(['age' => 31])
+-      ->expression('age', 'age + :age', [':age' => 4])
++      ->expression('age', '[age] + :age', [':age' => 4])
+       ->execute();
+ 
+     $num_records_after = $this->connection->query('SELECT COUNT(*) FROM {test_people}')->fetchField();
+diff --git a/core/tests/Drupal/KernelTests/Core/Database/SelectComplexTest.php b/core/tests/Drupal/KernelTests/Core/Database/SelectComplexTest.php
+index 2ef1112a6f..15c924da97 100644
+--- a/core/tests/Drupal/KernelTests/Core/Database/SelectComplexTest.php
++++ b/core/tests/Drupal/KernelTests/Core/Database/SelectComplexTest.php
+@@ -26,7 +26,7 @@ class SelectComplexTest extends DatabaseTestBase {
+    */
+   public function testDefaultJoin() {
+     $query = $this->connection->select('test_task', 't');
+-    $people_alias = $query->join('test', 'p', 't.pid = p.id');
++    $people_alias = $query->join('test', 'p', '[t].[pid] = [p].[id]');
+     $name_field = $query->addField($people_alias, 'name', 'name');
+     $query->addField('t', 'task', 'task');
+     $priority_field = $query->addField('t', 'priority', 'priority');
+@@ -52,7 +52,7 @@ public function testDefaultJoin() {
+    */
+   public function testLeftOuterJoin() {
+     $query = $this->connection->select('test', 'p');
+-    $people_alias = $query->leftJoin('test_task', 't', 't.pid = p.id');
++    $people_alias = $query->leftJoin('test_task', 't', '[t].[pid] = [p].[id]');
+     $name_field = $query->addField('p', 'name', 'name');
+     $query->addField($people_alias, 'task', 'task');
+     $query->addField($people_alias, 'priority', 'priority');
+@@ -77,7 +77,7 @@ public function testLeftOuterJoin() {
+    */
+   public function testGroupBy() {
+     $query = $this->connection->select('test_task', 't');
+-    $count_field = $query->addExpression('COUNT(task)', 'num');
++    $count_field = $query->addExpression('COUNT([task])', 'num');
+     $task_field = $query->addField('t', 'task');
+     $query->orderBy($count_field);
+     $query->groupBy($task_field);
+@@ -114,11 +114,11 @@ public function testGroupBy() {
+    */
+   public function testGroupByAndHaving() {
+     $query = $this->connection->select('test_task', 't');
+-    $count_field = $query->addExpression('COUNT(task)', 'num');
++    $count_field = $query->addExpression('COUNT([task])', 'num');
+     $task_field = $query->addField('t', 'task');
+     $query->orderBy($count_field);
+     $query->groupBy($task_field);
+-    $query->having('COUNT(task) >= 2');
++    $query->having('COUNT([task]) >= 2');
+     $result = $query->execute();
+ 
+     $num_records = 0;
+@@ -212,9 +212,9 @@ public function testHavingCountQuery() {
+     $query = $this->connection->select('test')
+       ->extend('Drupal\Core\Database\Query\PagerSelectExtender')
+       ->groupBy('age')
+-      ->having('age + 1 > 0');
++      ->having('[age] + 1 > 0');
+     $query->addField('test', 'age');
+-    $query->addExpression('age + 1');
++    $query->addExpression('[age] + 1');
+     $count = count($query->execute()->fetchCol());
+     $this->assertEqual($count, 4, 'Counted the correct number of records.');
+   }
+@@ -296,7 +296,7 @@ public function testCountQueryGroupBy() {
+     // reason.
+     $query = $this->connection->select('test_task');
+     $query->addField('test_task', 'pid', 'pid_alias');
+-    $query->addExpression('COUNT(test_task.task)', 'count');
++    $query->addExpression('COUNT([test_task].[task])', 'count');
+     $query->groupBy('pid_alias');
+     $query->orderBy('pid_alias', 'asc');
+ 
+@@ -327,10 +327,10 @@ public function testNestedConditions() {
+    */
+   public function testJoinTwice() {
+     $query = $this->connection->select('test')->fields('test');
+-    $alias = $query->join('test', 'test', 'test.job = %alias.job');
++    $alias = $query->join('test', 'test', 'test.job = [%alias].[job]');
+     $query->addField($alias, 'name', 'other_name');
+     $query->addField($alias, 'job', 'other_job');
+-    $query->where("$alias.name <> test.name");
++    $query->where("[$alias].[name] <> [test].[name]");
+     $crowded_job = $query->execute()->fetch();
+     $this->assertEqual($crowded_job->job, $crowded_job->other_job, 'Correctly joined same table twice.');
+     $this->assertNotEqual($crowded_job->name, $crowded_job->other_name, 'Correctly joined same table twice.');
+@@ -399,7 +399,7 @@ public function testSelectWithRowCount() {
+   public function testJoinConditionObject() {
+     // Same test as testDefaultJoin, but with a Condition object.
+     $query = $this->connection->select('test_task', 't');
+-    $join_cond = ($this->connection->condition('AND'))->where('t.pid = p.id');
++    $join_cond = ($this->connection->condition('AND'))->where('[t].[pid] = [p].[id]');
+     $people_alias = $query->join('test', 'p', $join_cond);
+     $name_field = $query->addField($people_alias, 'name', 'name');
+     $query->addField('t', 'task', 'task');
 diff --git a/core/tests/Drupal/KernelTests/Core/Database/SelectSubqueryTest.php b/core/tests/Drupal/KernelTests/Core/Database/SelectSubqueryTest.php
-index dbbc40f180..b0a5aaacec 100644
+index dbbc40f180..af7597e2bc 100644
 --- a/core/tests/Drupal/KernelTests/Core/Database/SelectSubqueryTest.php
 +++ b/core/tests/Drupal/KernelTests/Core/Database/SelectSubqueryTest.php
 @@ -23,7 +23,7 @@ public function testFromSubquerySelect() {
@@ -33,7 +160,7 @@ index dbbc40f180..b0a5aaacec 100644
      $select->addField('t', 'name');
  
      // The resulting query should be equivalent to:
-@@ -98,12 +98,12 @@ public function testConditionSubquerySelect() {
+@@ -98,7 +98,7 @@ public function testConditionSubquerySelect() {
    public function testConditionSubquerySelect2() {
      // Create a subquery, which is just a normal query object.
      $subquery = $this->connection->select('test', 't2');
@@ -42,12 +169,6 @@ index dbbc40f180..b0a5aaacec 100644
  
      // Create another query that adds a clause using the subquery.
      $select = $this->connection->select('test', 't');
-     $select->addField('t', 'name');
--    $select->condition('t.age', $subquery, '<');
-+    $select->condition('[t].[age]', $subquery, '<');
- 
-     // The resulting query should be equivalent to:
-     // SELECT t.name
 @@ -119,12 +119,12 @@ public function testConditionSubquerySelect2() {
    public function testConditionSubquerySelect3() {
      // Create subquery 1, which is just a normal query object.
@@ -64,6 +185,79 @@ index dbbc40f180..b0a5aaacec 100644
  
      // Create another query that adds a clause using the subqueries.
      $select = $this->connection->select('test', 't');
+@@ -149,18 +149,18 @@ public function testConditionSubquerySelect3() {
+   public function testConditionSubquerySelect4() {
+     // Create subquery 1, which is just a normal query object.
+     $subquery1 = $this->connection->select('test_task', 'tt');
+-    $subquery1->addExpression('AVG(tt.priority)');
+-    $subquery1->where('tt.pid = t.id');
++    $subquery1->addExpression('AVG([tt].[priority])');
++    $subquery1->where('[tt].[pid] = [t].[id]');
+ 
+     // Create subquery 2, which is just a normal query object.
+     $subquery2 = $this->connection->select('test_task', 'tt2');
+-    $subquery2->addExpression('MIN(tt2.priority)');
+-    $subquery2->where('tt2.pid <> t.id');
++    $subquery2->addExpression('MIN([tt2].[priority])');
++    $subquery2->where('[tt2].[pid] <> [t].[id]');
+ 
+     // Create subquery 3, which is just a normal query object.
+     $subquery3 = $this->connection->select('test_task', 'tt3');
+-    $subquery3->addExpression('AVG(tt3.priority)');
+-    $subquery3->where('tt3.pid <> t.id');
++    $subquery3->addExpression('AVG([tt3].[priority])');
++    $subquery3->where('[tt3].[pid] <> [t].[id]');
+ 
+     // Create another query that adds a clause using the subqueries.
+     $select = $this->connection->select('test', 't');
+@@ -189,7 +189,7 @@ public function testJoinSubquerySelect() {
+     // Create another query that joins against the virtual table resulting
+     // from the subquery.
+     $select = $this->connection->select('test', 't');
+-    $select->join($subquery, 'tt', 't.id=tt.pid');
++    $select->join($subquery, 'tt', '[t].[id]=[tt].[pid]');
+     $select->addField('t', 'name');
+ 
+     // The resulting query should be equivalent to:
+diff --git a/core/tests/Drupal/KernelTests/Core/Database/SelectTest.php b/core/tests/Drupal/KernelTests/Core/Database/SelectTest.php
+index 2412797875..47a84d825f 100644
+--- a/core/tests/Drupal/KernelTests/Core/Database/SelectTest.php
++++ b/core/tests/Drupal/KernelTests/Core/Database/SelectTest.php
+@@ -126,7 +126,7 @@ public function testSimpleSelectConditional() {
+   public function testSimpleSelectExpression() {
+     $query = $this->connection->select('test');
+     $name_field = $query->addField('test', 'name');
+-    $age_field = $query->addExpression("age*2", 'double_age');
++    $age_field = $query->addExpression("[age]*2", 'double_age');
+     $query->condition('age', 27);
+     $result = $query->execute();
+ 
+@@ -146,8 +146,8 @@ public function testSimpleSelectExpression() {
+   public function testSimpleSelectExpressionMultiple() {
+     $query = $this->connection->select('test');
+     $name_field = $query->addField('test', 'name');
+-    $age_double_field = $query->addExpression("age*2");
+-    $age_triple_field = $query->addExpression("age*3");
++    $age_double_field = $query->addExpression("[age]*2");
++    $age_triple_field = $query->addExpression("[age]*3");
+     $query->condition('age', 27);
+     $result = $query->execute();
+ 
+diff --git a/core/tests/Drupal/KernelTests/Core/Database/StatementTest.php b/core/tests/Drupal/KernelTests/Core/Database/StatementTest.php
+index 6cf7bf9235..65b8c47f63 100644
+--- a/core/tests/Drupal/KernelTests/Core/Database/StatementTest.php
++++ b/core/tests/Drupal/KernelTests/Core/Database/StatementTest.php
+@@ -41,8 +41,8 @@ public function testRepeatedInsertStatementReuse() {
+ 
+     $num_records_after = $this->connection->select('test')->countQuery()->execute()->fetchField();
+     $this->assertEquals($num_records_before + 2, $num_records_after);
+-    $this->assertSame('30', $this->connection->query('SELECT age FROM {test} WHERE name = :name', [':name' => 'Larry'])->fetchField());
+-    $this->assertSame('31', $this->connection->query('SELECT age FROM {test} WHERE name = :name', [':name' => 'Curly'])->fetchField());
++    $this->assertSame('30', $this->connection->query('SELECT [age] FROM {test} WHERE [name] = :name', [':name' => 'Larry'])->fetchField());
++    $this->assertSame('31', $this->connection->query('SELECT [age] FROM {test} WHERE [name] = :name', [':name' => 'Curly'])->fetchField());
+   }
+ 
+ }
 diff --git a/core/tests/Drupal/KernelTests/Core/Database/UpdateComplexTest.php b/core/tests/Drupal/KernelTests/Core/Database/UpdateComplexTest.php
 index 0d7b091d39..9911fea004 100644
 --- a/core/tests/Drupal/KernelTests/Core/Database/UpdateComplexTest.php

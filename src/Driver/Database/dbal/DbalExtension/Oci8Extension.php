@@ -135,13 +135,17 @@ class Oci8Extension extends AbstractExtension {
   public function getDbFullQualifiedTableName($drupal_table_name) {
     $options = $this->connection->getConnectionOptions();
     $prefix = $this->connection->tablePrefix($drupal_table_name);
-    return $options['username'] . '.' . $this->getDbTableName($prefix . $drupal_table_name);
+    return $options['username'] . '.' . $this->getDbTableName($prefix, $drupal_table_name);
   }
 
   /**
    * {@inheritdoc}
    */
   public function getDbFieldName($field_name, bool $quoted = TRUE) {
+    if ($field_name === NULL || $field_name === '') {
+      return '';
+    }
+
     $field_name_short = $this->getLimitedIdentifier($field_name);
 
     if ($field_name !== $field_name_short) {
@@ -164,6 +168,10 @@ class Oci8Extension extends AbstractExtension {
    * {@inheritdoc}
    */
   public function getDbAlias($alias, bool $quoted = TRUE) {
+    if ($alias === NULL || $alias === '') {
+      return '';
+    }
+
     $alias_short = $this->getLimitedIdentifier($alias);
 
     if ($alias !== $alias_short) {
