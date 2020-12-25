@@ -53,13 +53,13 @@ jobs:
     - name: Checkout Drupal
       run: git clone --depth=5 --branch=$DRUDBAL_DRUPAL_VERSION http://git.drupal.org/project/drupal.git .
 
-    - name: Patch Drupal
-      run: ./tests/github/drupal_patch.sh
-
     - name: Checkout DruDbal
       uses: actions/checkout@v2
       with:
         path: drudbal_staging
+
+    - name: Patch Drupal
+      run: ./drudbal_staging/tests/github/drupal_patch.sh
 
 #    - name: '#2657888 Add Date function support in DTBNG'
 #      run: curl https://www.drupal.org/files/issues/2657888-18.patch | git apply -v
