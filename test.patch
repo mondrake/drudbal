@@ -11,6 +11,18 @@ index 72cf989890..7b797b9ae8 100644
            ->key('tag', $tag)
            ->execute();
        }
+diff --git a/core/lib/Drupal/Core/Entity/EntityStorageBase.php b/core/lib/Drupal/Core/Entity/EntityStorageBase.php
+index 8b78be167a..74159733a8 100644
+--- a/core/lib/Drupal/Core/Entity/EntityStorageBase.php
++++ b/core/lib/Drupal/Core/Entity/EntityStorageBase.php
+@@ -556,6 +556,7 @@ public function restore(EntityInterface $entity) {
+    */
+   protected function buildPropertyQuery(QueryInterface $entity_query, array $values) {
+     foreach ($values as $name => $value) {
++dump([$name, (array) $value]);
+       // Cast scalars to array so we can consistently use an IN condition.
+       $entity_query->condition($name, (array) $value, 'IN');
+     }
 diff --git a/core/modules/system/tests/modules/database_test/database_test.module b/core/modules/system/tests/modules/database_test/database_test.module
 index 210998444a..c03ef5ca3d 100644
 --- a/core/modules/system/tests/modules/database_test/database_test.module
