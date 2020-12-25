@@ -86,7 +86,7 @@ class Oci8Extension extends AbstractExtension {
    *
    * @var string[]
    */
-  protected $dbIdentifiersMap = [];
+  private $dbIdentifiersMap = [];
 
   /**
    * Constructs an Oci8Extension object.
@@ -107,10 +107,12 @@ class Oci8Extension extends AbstractExtension {
    * Database asset name resolution methods.
    */
 
-  protected function getLimitedIdentifier(string $identifier, int $max_length = 30): string {
+  private function getLimitedIdentifier(string $identifier, int $max_length = 30): string {
     if (strlen($identifier) > $max_length) {
       $identifier_crc = hash('crc32b', $identifier);
-      return substr($identifier, 0, $max_length - 8) . $identifier_crc;
+      $limited_identifier = substr($identifier, 0, $max_length - 8) . $identifier_crc;
+      $this->dbIdentifiersMap[$limited_identifier] = $identifier;
+      return $limited_identifier;
     }
     return $identifier;
   }
@@ -135,51 +137,65 @@ class Oci8Extension extends AbstractExtension {
   public function getDbFullQualifiedTableName($drupal_table_name) {
     $options = $this->connection->getConnectionOptions();
     $prefix = $this->connection->tablePrefix($drupal_table_name);
-    return $options['username'] . '.' . $this->getDbTableName($prefix . $drupal_table_name);
+    return $options['username'] . '."' . $this->getDbTableName($prefix, $drupal_table_name) . '"';
   }
 
   /**
    * {@inheritdoc}
    */
   public function getDbFieldName($field_name, bool $quoted = TRUE) {
-    $field_name_short = $this->getLimitedIdentifier($field_name);
-
-    if ($field_name !== $field_name_short) {
-      $this->dbIdentifiersMap[$field_name_short] = $field_name;
-      $identifier = $field_name_short;
-    }
-    else {
-      $identifier = $field_name;
+    if ($field_name === NULL || $field_name === '') {
+      return '';
     }
 
-    if ($quoted) {
-      return '"' . str_replace('.', '"."', $identifier) . '"';
+    if (strpos($field_name, '.') !== FALSE) {
+      [$table_tmp, $field_tmp] = explode('.', $field_name);
+      $table = $this->getLimitedIdentifier($table_tmp);
+      $field = $this->getLimitedIdentifier($field_tmp);
     }
     else {
-      return $identifier;
+      $field = $this->getLimitedIdentifier($field_name);
     }
+
+    $identifier = '';
+    if (isset($table)) {
+      $identifier .= $quoted ? '"' . $table . '".' : $table . '.';
+    }
+
+    $identifier .= $quoted ? '"' . $field . '"' : $field;
+
+    return $identifier;
   }
 
   /**
    * {@inheritdoc}
    */
   public function getDbAlias($alias, bool $quoted = TRUE) {
-    $alias_short = $this->getLimitedIdentifier($alias);
-
-    if ($alias !== $alias_short) {
-      $this->dbIdentifiersMap[$alias_short] = $alias;
-      $identifier = $alias_short;
-    }
-    else {
-      $identifier = $alias;
+    if ($alias === NULL || $alias === '') {
+      return '';
     }
 
-    if ($quoted && substr($identifier, 0, 1) !== '"') {
-      return '"' . str_replace('.', '"."', $identifier) . '"';
+    if (substr($alias, 0, 1) === '"') {
+      return $alias;
+    }
+
+    if (strpos($alias, '.') !== FALSE) {
+      [$table_tmp, $alias_tmp] = explode('.', $alias);
+      $table = $this->getLimitedIdentifier($table_tmp);
+      $alias = $this->getLimitedIdentifier($alias_tmp);
     }
     else {
-      return $identifier;
+      $alias = $this->getLimitedIdentifier($alias);
     }
+
+    $identifier = '';
+    if (isset($table)) {
+      $identifier .= $quoted ? '"' . $table . '".' : $table . '.';
+    }
+
+    $identifier .= $quoted ? '"' . $alias . '"' : $alias;
+
+    return $identifier;
   }
 
   /**

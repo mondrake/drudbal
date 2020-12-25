@@ -6,7 +6,7 @@ on:
 
 env:
     DRUDBAL_DRUPAL_VERSION: "9.1.x"
-    DRUDBAL_DRUPAL_PROFILE: "minimal"
+    DRUDBAL_DRUPAL_PROFILE: "standard"
     SIMPLETEST_BASE_URL: "http://localhost:8080"
     PHPUNIT_SKIP_CLASS: '[
       "Drupal\\KernelTests\\Core\\Database\\ConnectionUnitTest",
@@ -58,14 +58,8 @@ jobs:
       with:
         path: drudbal_staging
 
-    - name: '#2657888 Add Date function support in DTBNG'
-      run: curl https://www.drupal.org/files/issues/2657888-18.patch | git apply -v
-
-    - name: '#2992274 Installer tests fail if contrib driver hides database credentials form fields'
-      run: curl https://www.drupal.org/files/issues/2020-11-23/2992274-13.patch | git apply -v
-
-    - name: '#3110546 Allow contributed modules (mostly database drivers) to override tests in core'
-      run: git apply -v drudbal_staging/tests/travis_ci/alt-fix.patch
+    - name: Patch Drupal
+      run: ./drudbal_staging/tests/github/drupal_patch.sh
 
 #    - name: Test Drupal patch
 #      run: git apply -v drudbal_staging/test.patch

@@ -617,7 +617,10 @@ class AbstractExtension implements DbalExtensionInterface {
    * {@inheritdoc}
    */
   public function delegateGetColumnComment(DbalSchema $dbal_schema, $drupal_table_name, $column) {
-    if ($this->getDbalConnection()->getDatabasePlatform()->supportsInlineColumnComments()) {
+    if (
+      $this->getDbalConnection()->getDatabasePlatform()->supportsInlineColumnComments() ||
+      $this->getDbalConnection()->getDatabasePlatform()->supportsCommentOnStatement()
+    ) {
       return $dbal_schema->getTable($this->connection->getPrefixedTableName($drupal_table_name))->getColumn($column)->getComment();
     }
     else {
