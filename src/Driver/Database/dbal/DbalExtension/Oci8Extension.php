@@ -162,7 +162,7 @@ class Oci8Extension extends AbstractExtension {
       $identifier .= $quoted ? '"' . $table . '".' : $table . '.';
     }
 
-    $identifier .= $quoted ? '"' . $field . '".' : $field . '.';
+    $identifier .= $quoted ? '"' . $field . '"' : $field;
 
     return $identifier;
   }
