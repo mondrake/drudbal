@@ -38,47 +38,6 @@ class Oci8Extension extends AbstractExtension {
   ];
 
   /**
-   * A list of Oracle keywords that collide with Drupal.
-   *
-   * @var string[]
-   */
-  protected static $oracleKeywords = [
-    'access',
-    'check',
-    'cluster',
-    'comment',
-    'compress',
-    'current',
-    'date',
-    'file',
-    'increment',
-    'initial',
-    'level',
-    'lock',
-    'mode',
-    'offset',
-    'option',
-    'pctfree',
-    'public',
-    'range',
-    'raw',
-    'resource',
-    'row',
-    'rowid',
-    'rownum',
-    'rows',
-    'session',
-    'size',
-    'start',
-    'successful',
-    'table',
-    'uid',
-    'user',
-  ];
-
-  protected $oracleKeywordTokens;
-
-  /**
    * Map of database identifiers.
    *
    * This array maps actual database identifiers to identifiers longer than 30
@@ -87,21 +46,6 @@ class Oci8Extension extends AbstractExtension {
    * @var string[]
    */
   private $dbIdentifiersMap = [];
-
-  /**
-   * Constructs an Oci8Extension object.
-   *
-   * @param \Drupal\drudbal\Driver\Database\dbal\Connection $drudbal_connection
-   *   The Drupal database connection object for this extension.
-   * @param \Doctrine\DBAL\Connection $dbal_connection
-   *   The DBAL connection.
-   * @param string $statement_class
-   *   The StatementInterface class to be used.
-   */
-  public function __construct(DruDbalConnection $drudbal_connection, DbalConnection $dbal_connection, $statement_class) {
-    parent::__construct($drudbal_connection, $dbal_connection, $statement_class);
-    $this->oracleKeywordTokens = implode('|', static::$oracleKeywords);
-  }
 
   /**
    * Database asset name resolution methods.
@@ -457,35 +401,8 @@ class Oci8Extension extends AbstractExtension {
   public function alterStatement(&$query, array &$args) {
 //if ($this->getDebugging()) error_log('pre-alter: ' . $query . ' : ' . var_export($args, TRUE));
 
-    // Modify placeholders and statement in case of placeholders with
-    // reserved keywords or exceeding Oracle limits, and for empty strings.
-    if (count($args)) {
-      $temp_args = [];
-      foreach ($args as $placeholder => $value) {
-        $temp_pl = ltrim($placeholder, ':');
-        $temp_pl_short = $this->getLimitedIdentifier($temp_pl, 29);
-//if ($this->getDebugging()) error_log('temp_pl: ' . $temp_pl);
-//if ($this->getDebugging()) error_log('temp_pl_short: ' . $temp_pl_short);
-        $key = $placeholder;
-        if (in_array($temp_pl, static::$oracleKeywords, TRUE)) {
-          $key = $placeholder . '____oracle';
-          $query = str_replace($placeholder, $key, $query);
-        }
-        elseif ($temp_pl !== $temp_pl_short) {
-          $key = ':' . $temp_pl_short;
-          $query = str_replace($placeholder, $key, $query);
-        }
-        $temp_args[$key] = $value === '' ? self::ORACLE_EMPTY_STRING_REPLACEMENT : $value;  // @todo here check
-      }
-      $args = $temp_args;
-    }
-
     // Replace empty strings.
     $query = str_replace("''", "'" . self::ORACLE_EMPTY_STRING_REPLACEMENT . "'", $query);
-
-    // Enclose any identifier that is a reserved keyword for Oracle in double
-    // quotes.
-    $query = preg_replace('/([\s\.(])(' . $this->oracleKeywordTokens . ')([\s,)])/', '$1"$2"$3', $query);
 
     // RAND() is not available in Oracle; convert to using
     // DBMS_RANDOM.VALUE function.
