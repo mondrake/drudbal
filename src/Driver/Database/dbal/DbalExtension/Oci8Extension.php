@@ -175,6 +175,10 @@ class Oci8Extension extends AbstractExtension {
       return '';
     }
 
+    if (substr($alias, 0, 1) === '"') {
+      return $alias;
+    }
+
     if (strpos($alias, '.') !== FALSE) {
       [$table_tmp, $alias_tmp] = explode('.', $alias);
       $table = $this->getLimitedIdentifier($table_tmp);
