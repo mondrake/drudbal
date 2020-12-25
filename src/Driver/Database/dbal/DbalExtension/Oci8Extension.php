@@ -175,26 +175,23 @@ class Oci8Extension extends AbstractExtension {
       return '';
     }
 
-    $alias_short = $this->getLimitedIdentifier($alias);
-
     if (strpos($alias, '.') !== FALSE) {
-      dump(['alias', $alias, $alias_short]);
-      throw new \RuntimeException('No dots in alias!!');
-    }
-
-    if ($alias !== $alias_short) {
-      $identifier = $alias_short;
+      [$table_tmp, $alias_tmp] = explode('.', $alias);
+      $table = $this->getLimitedIdentifier($table_tmp);
+      $alias = $this->getLimitedIdentifier($alias_tmp);
     }
     else {
-      $identifier = $alias;
+      $alias = $this->getLimitedIdentifier($alias);
     }
 
-    if ($quoted && substr($identifier, 0, 1) !== '"') {
-      return '"' . str_replace('.', '"."', $identifier) . '"';
+    $identifier = '';
+    if (isset($table)) {
+      $identifier .= $quoted ? '"' . $table . '".' : $table . '.';
     }
-    else {
-      return $identifier;
-    }
+
+    $identifier .= $quoted ? '"' . $alias . '"' : $alias;
+
+    return $identifier;
   }
 
   /**
