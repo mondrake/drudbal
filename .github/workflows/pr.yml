@@ -54,7 +54,7 @@ jobs:
       run: git clone --depth=5 --branch=$DRUDBAL_DRUPAL_VERSION http://git.drupal.org/project/drupal.git .
 
     - name: Patch Drupal
-      run: tests/github/drupal_patch
+      run: ./tests/github/drupal_patch.sh
 
     - name: Checkout DruDbal
       uses: actions/checkout@v2

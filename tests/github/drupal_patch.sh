@@ -1,3 +1,5 @@
+#!/bin/sh -e
+
 #2657888 Add Date function support in DTBNG
 curl https://www.drupal.org/files/issues/2657888-18.patch | git apply -v
 
