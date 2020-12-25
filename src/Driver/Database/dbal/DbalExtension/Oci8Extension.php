@@ -149,6 +149,7 @@ class Oci8Extension extends AbstractExtension {
     $field_name_short = $this->getLimitedIdentifier($field_name);
 
     if ($field_name !== $field_name_short) {
+dump(['field', $field_name, $field_name_short]);
       $this->dbIdentifiersMap[$field_name_short] = $field_name;
       $identifier = $field_name_short;
     }
@@ -175,6 +176,7 @@ class Oci8Extension extends AbstractExtension {
     $alias_short = $this->getLimitedIdentifier($alias);
 
     if ($alias !== $alias_short) {
+dump(['alias', $alias, $alias_short]);
       $this->dbIdentifiersMap[$alias_short] = $alias;
       $identifier = $alias_short;
     }

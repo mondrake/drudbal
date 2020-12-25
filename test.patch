@@ -11,18 +11,6 @@ index 72cf989890..7b797b9ae8 100644
            ->key('tag', $tag)
            ->execute();
        }
-diff --git a/core/lib/Drupal/Core/Entity/Query/Sql/Condition.php b/core/lib/Drupal/Core/Entity/Query/Sql/Condition.php
-index 4d70b1e456..65b8d39dec 100644
---- a/core/lib/Drupal/Core/Entity/Query/Sql/Condition.php
-+++ b/core/lib/Drupal/Core/Entity/Query/Sql/Condition.php
-@@ -37,6 +37,7 @@ public function compile($conditionContainer) {
-     // added to the $conditionContainer object to keep grouping.
-     $sql_query = $conditionContainer instanceof SelectInterface ? $conditionContainer : $conditionContainer->sqlQuery;
-     $tables = $this->query->getTables($sql_query);
-+dump([$tables, $this->conditions]);
-     foreach ($this->conditions as $condition) {
-       if ($condition['field'] instanceof ConditionInterface) {
-         $sql_condition = $sql_query->getConnection()->condition($condition['field']->getConjunction());
 diff --git a/core/modules/system/tests/modules/database_test/database_test.module b/core/modules/system/tests/modules/database_test/database_test.module
 index 210998444a..c03ef5ca3d 100644
 --- a/core/modules/system/tests/modules/database_test/database_test.module
