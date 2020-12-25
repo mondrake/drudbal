@@ -86,7 +86,7 @@ class Oci8Extension extends AbstractExtension {
    *
    * @var string[]
    */
-  protected $dbIdentifiersMap = [];
+  private $dbIdentifiersMap = [];
 
   /**
    * Constructs an Oci8Extension object.
@@ -107,10 +107,12 @@ class Oci8Extension extends AbstractExtension {
    * Database asset name resolution methods.
    */
 
-  protected function getLimitedIdentifier(string $identifier, int $max_length = 30): string {
+  private function getLimitedIdentifier(string $identifier, int $max_length = 30): string {
     if (strlen($identifier) > $max_length) {
       $identifier_crc = hash('crc32b', $identifier);
-      return substr($identifier, 0, $max_length - 8) . $identifier_crc;
+      $limited_identifier = substr($identifier, 0, $max_length - 8) . $identifier_crc;
+      $this->dbIdentifiersMap[$limited_identifier] = $identifier;
+      return $limited_identifier;
     }
     return $identifier;
   }
@@ -146,23 +148,23 @@ class Oci8Extension extends AbstractExtension {
       return '';
     }
 
-    $field_name_short = $this->getLimitedIdentifier($field_name);
-
-    if ($field_name !== $field_name_short) {
-dump(['field', $field_name, $field_name_short]);
-      $this->dbIdentifiersMap[$field_name_short] = $field_name;
-      $identifier = $field_name_short;
+    if (strpos($field_name, '.') !== FALSE) {
+      [$table_tmp, $field_tmp] = explode('.', $field_name);
+      $table = $this->getLimitedIdentifier($table_tmp);
+      $field = $this->getLimitedIdentifier($field_tmp);
     }
     else {
-      $identifier = $field_name;
+      $field = $this->getLimitedIdentifier($field_name);
     }
 
-    if ($quoted) {
-      return '"' . str_replace('.', '"."', $identifier) . '"';
+    $identifier = '';
+    if (isset($table)) {
+      $identifier .= $quoted ? '"' . $table . '".' : $table . '.';
     }
-    else {
-      return $identifier;
-    }
+
+    $identifier .= $quoted ? '"' . $field . '".' : $field . '.';
+
+    return $identifier;
   }
 
   /**
@@ -175,9 +177,12 @@ dump(['field', $field_name, $field_name_short]);
 
     $alias_short = $this->getLimitedIdentifier($alias);
 
+    if (strpos($alias, '.') !== FALSE) {
+      dump(['alias', $alias, $alias_short]);
+      throw new \RuntimeException('No dots in alias!!');
+    }
+
     if ($alias !== $alias_short) {
-dump(['alias', $alias, $alias_short]);
-      $this->dbIdentifiersMap[$alias_short] = $alias;
       $identifier = $alias_short;
     }
     else {
