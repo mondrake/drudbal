@@ -553,7 +553,10 @@ END;
 PLSQL);
     }
     catch (\Exception $e) {
-      $results['fail'][] = t("Failed installation of the CONCAT_WS function: " . $e->getMessage());
+      // ORA-24344: success with compilation error.
+      if ($e->getCode() !== 24344) {
+        $results['fail'][] = t("Failed installation of the CONCAT_WS function: " . $e->getMessage());
+      }
     }
 
     // Install a GREATEST function.
