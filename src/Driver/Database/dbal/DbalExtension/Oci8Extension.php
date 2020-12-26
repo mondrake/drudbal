@@ -25,7 +25,7 @@ class Oci8Extension extends AbstractExtension {
 
   // protected static $isDebugging = TRUE;
 
-  const ORACLE_EMPTY_STRING_REPLACEMENT = "\010";
+  const ORACLE_EMPTY_STRING_REPLACEMENT = "\010"; // it's the Backspace, dec=8, hex=8, oct=10.
 
   /**
    * A map of condition operators to SQLite operators.
@@ -543,7 +543,7 @@ BEGIN
                            THEN p_delim
                             END
                 || CASE
-                       WHEN l_str_list(i) = IDENTIFIER.empty_replacer_char()
+                       WHEN l_str_list(i) = CHR(8)
                            THEN NULL
                        ELSE l_str_list(i)
                             END;
@@ -553,10 +553,10 @@ END;
 PLSQL);
     }
     catch (\Exception $e) {
-      // ORA-24344: success with compilation error.
-      if ($e->getCode() !== 24344) {
+//      // ORA-24344: success with compilation error.
+//      if ($e->getCode() !== 24344) {
         $results['fail'][] = t("Failed installation of the CONCAT_WS function: " . $e->getMessage());
-      }
+//      }
     }
 
     // Install a GREATEST function.
