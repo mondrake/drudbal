@@ -623,7 +623,7 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function runInstallTasks() {
+  public function runInstallTasks(): array {
     $results = [
       'fail' => [],
       'pass' => [],
