@@ -114,6 +114,7 @@ class Select extends QuerySelect {
 
     // GROUP BY
     if ($this->group) {
+dump($this->group);
       $fields = $this->getFields();
       foreach ($this->group as $expression) {
         if (strpos($expression, '.') === FALSE && isset($fields[$expression])) {
