@@ -2,7 +2,7 @@
 
 namespace Drupal\Tests\drudbal\Kernel;
 
-use Drupal\KernelTests\Core\Database\BasicSyntaxTestTest as BasicSyntaxTestBase;
+use Drupal\KernelTests\Core\Database\BasicSyntaxTest as BasicSyntaxTestBase;
 
 /**
  * Tests SQL syntax interpretation.
