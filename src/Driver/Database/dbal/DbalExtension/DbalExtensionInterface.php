@@ -557,7 +557,7 @@ interface DbalExtensionInterface {
    * @return array
    *   An array of pass/fail installation messages.
    */
-  public function runInstallTasks();
+  public function runInstallTasks(): array;
 
   /**
    * Schema delegated methods.

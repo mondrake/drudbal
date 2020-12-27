@@ -23,9 +23,9 @@ use Doctrine\DBAL\Exception\NotNullConstraintViolationException;
  */
 class Oci8Extension extends AbstractExtension {
 
-//  protected static $isDebugging = TRUE;
+  // protected static $isDebugging = TRUE;
 
-  const ORACLE_EMPTY_STRING_REPLACEMENT = "\010";
+  const ORACLE_EMPTY_STRING_REPLACEMENT = "\010"; // it's the Backspace, dec=8, hex=8, oct=10.
 
   /**
    * A map of condition operators to SQLite operators.
@@ -38,47 +38,6 @@ class Oci8Extension extends AbstractExtension {
   ];
 
   /**
-   * A list of Oracle keywords that collide with Drupal.
-   *
-   * @var string[]
-   */
-  protected static $oracleKeywords = [
-    'access',
-    'check',
-    'cluster',
-    'comment',
-    'compress',
-    'current',
-    'date',
-    'file',
-    'increment',
-    'initial',
-    'level',
-    'lock',
-    'mode',
-    'offset',
-    'option',
-    'pctfree',
-    'public',
-    'range',
-    'raw',
-    'resource',
-    'row',
-    'rowid',
-    'rownum',
-    'rows',
-    'session',
-    'size',
-    'start',
-    'successful',
-    'table',
-    'uid',
-    'user',
-  ];
-
-  protected $oracleKeywordTokens;
-
-  /**
    * Map of database identifiers.
    *
    * This array maps actual database identifiers to identifiers longer than 30
@@ -87,21 +46,6 @@ class Oci8Extension extends AbstractExtension {
    * @var string[]
    */
   private $dbIdentifiersMap = [];
-
-  /**
-   * Constructs an Oci8Extension object.
-   *
-   * @param \Drupal\drudbal\Driver\Database\dbal\Connection $drudbal_connection
-   *   The Drupal database connection object for this extension.
-   * @param \Doctrine\DBAL\Connection $dbal_connection
-   *   The DBAL connection.
-   * @param string $statement_class
-   *   The StatementInterface class to be used.
-   */
-  public function __construct(DruDbalConnection $drudbal_connection, DbalConnection $dbal_connection, $statement_class) {
-    parent::__construct($drudbal_connection, $dbal_connection, $statement_class);
-    $this->oracleKeywordTokens = implode('|', static::$oracleKeywords);
-  }
 
   /**
    * Database asset name resolution methods.
@@ -457,77 +401,17 @@ class Oci8Extension extends AbstractExtension {
   public function alterStatement(&$query, array &$args) {
 //if ($this->getDebugging()) error_log('pre-alter: ' . $query . ' : ' . var_export($args, TRUE));
 
-    // Modify placeholders and statement in case of placeholders with
-    // reserved keywords or exceeding Oracle limits, and for empty strings.
-    if (count($args)) {
-      $temp_args = [];
-      foreach ($args as $placeholder => $value) {
-        $temp_pl = ltrim($placeholder, ':');
-        $temp_pl_short = $this->getLimitedIdentifier($temp_pl, 29);
-//if ($this->getDebugging()) error_log('temp_pl: ' . $temp_pl);
-//if ($this->getDebugging()) error_log('temp_pl_short: ' . $temp_pl_short);
-        $key = $placeholder;
-        if (in_array($temp_pl, static::$oracleKeywords, TRUE)) {
-          $key = $placeholder . '____oracle';
-          $query = str_replace($placeholder, $key, $query);
-        }
-        elseif ($temp_pl !== $temp_pl_short) {
-          $key = ':' . $temp_pl_short;
-          $query = str_replace($placeholder, $key, $query);
-        }
-        $temp_args[$key] = $value === '' ? self::ORACLE_EMPTY_STRING_REPLACEMENT : $value;  // @todo here check
-      }
-      $args = $temp_args;
+    // Modify arguments for empty strings.
+    foreach ($args as $placeholder => &$value) {
+      $value = $value === '' ? self::ORACLE_EMPTY_STRING_REPLACEMENT : $value;  // @todo here check
     }
 
     // Replace empty strings.
     $query = str_replace("''", "'" . self::ORACLE_EMPTY_STRING_REPLACEMENT . "'", $query);
 
-    // Enclose any identifier that is a reserved keyword for Oracle in double
-    // quotes.
-    $query = preg_replace('/([\s\.(])(' . $this->oracleKeywordTokens . ')([\s,)])/', '$1"$2"$3', $query);
-
-    // RAND() is not available in Oracle; convert to using
-    // DBMS_RANDOM.VALUE function.
-    $query = str_replace('RAND()', 'DBMS_RANDOM.VALUE', $query);
-
     // REGEXP is not available in Oracle; convert to using REGEXP_LIKE
     // function.
     $query = preg_replace('/([^\s]+)\s+REGEXP\s+([^\s]+)/', 'REGEXP_LIKE($1, $2)', $query);
-
-    // CONCAT_WS is not available in Oracle; convert to using || operator.
-    $matches = [];
-    if (preg_match_all('/(?:[\s\(])(CONCAT_WS\(([^\)]*)\))/', $query, $matches, PREG_OFFSET_CAPTURE)) {
-      $concat_ws_replacements = [];
-      foreach ($matches[2] as $match) {
-        $concat_ws_parms_matches = [];
-        preg_match_all('/(\'(?:\\\\\\\\)+\'|\'(?:[^\'\\\\]|\\\\\'?|\'\')*\')|([^\'"\s,]+)/', $match[0], $concat_ws_parms_matches);
-        $parms = $concat_ws_parms_matches[0];
-        $sep = $parms[0];
-        $repl = '';
-        for ($i = 1, $first = FALSE; $i < count($parms); $i++) {
-          if ($parms[$i] === 'NULL') { // @todo check case insensitive
-            continue;
-          }
-          if (array_key_exists($parms[$i], $args) && $args[$parms[$i]] === NULL) {
-            unset($args[$parms[$i]]);
-            continue;
-          }
-          if (array_key_exists($parms[$i], $args) && $args[$parms[$i]] === self::ORACLE_EMPTY_STRING_REPLACEMENT) {
-            $args[$parms[$i]] = '';
-          }
-          if ($first) {
-            $repl .= ' || ' . $sep . ' || ';
-          }
-          $repl .= $parms[$i];
-          $first = TRUE;
-        }
-        $concat_ws_replacements[] = "($repl)";
-      }
-      for ($i = count($concat_ws_replacements) - 1; $i >= 0; $i--) {
-        $query = substr_replace($query, $concat_ws_replacements[$i], $matches[1][$i][1], strlen($matches[1][$i][0]));
-      }
-    };
 
     // In case of missing from, Oracle requires FROM DUAL.
     if (strpos($query, 'SELECT ') === 0 && strpos($query, ' FROM ') === FALSE) {
@@ -593,11 +477,118 @@ if ($this->getDebugging()) error_log($query . ' : ' . var_export($args, TRUE));
   /**
    * {@inheritdoc}
    */
-  public function runInstallTasks() {
+  public function runInstallTasks(): array {
     $results = [
       'fail' => [],
       'pass' => [],
     ];
+
+    // Install a CONCAT_WS function.
+    try {
+      $this->dbalConnection->exec(<<<PLSQL
+CREATE OR REPLACE FUNCTION CONCAT_WS(p_delim IN VARCHAR2
+                                    , p_str1 IN VARCHAR2 DEFAULT NULL
+                                    , p_str2 IN VARCHAR2 DEFAULT NULL
+                                    , p_str3 IN VARCHAR2 DEFAULT NULL
+                                    , p_str4 IN VARCHAR2 DEFAULT NULL
+                                    , p_str5 IN VARCHAR2 DEFAULT NULL
+                                    , p_str6 IN VARCHAR2 DEFAULT NULL
+                                    , p_str7 IN VARCHAR2 DEFAULT NULL
+                                    , p_str8 IN VARCHAR2 DEFAULT NULL
+                                    , p_str9 IN VARCHAR2 DEFAULT NULL
+                                    , p_str10 IN VARCHAR2 DEFAULT NULL
+                                    , p_str11 IN VARCHAR2 DEFAULT NULL
+                                    , p_str12 IN VARCHAR2 DEFAULT NULL
+                                    , p_str13 IN VARCHAR2 DEFAULT NULL
+                                    , p_str14 IN VARCHAR2 DEFAULT NULL
+                                    , p_str15 IN VARCHAR2 DEFAULT NULL
+                                    , p_str16 IN VARCHAR2 DEFAULT NULL
+                                    , p_str17 IN VARCHAR2 DEFAULT NULL
+                                    , p_str18 IN VARCHAR2 DEFAULT NULL
+                                    , p_str19 IN VARCHAR2 DEFAULT NULL
+                                    , p_str20 IN VARCHAR2 DEFAULT NULL) RETURN VARCHAR2 IS
+    TYPE t_str IS VARRAY (20) OF VARCHAR2(4000);
+    l_str_list t_str := t_str(p_str1
+        , p_str2
+        , p_str3
+        , p_str4
+        , p_str5
+        , p_str6
+        , p_str7
+        , p_str8
+        , p_str9
+        , p_str10
+        , p_str11
+        , p_str12
+        , p_str13
+        , p_str14
+        , p_str15
+        , p_str16
+        , p_str17
+        , p_str18
+        , p_str19
+        , p_str20);
+    i          INTEGER;
+    l_result   VARCHAR2(4000);
+BEGIN
+    FOR i IN l_str_list.FIRST .. l_str_list.LAST
+        LOOP
+            l_result := l_result
+                || CASE
+                       WHEN l_str_list(i) IS NOT NULL
+                           THEN p_delim
+                            END
+                || CASE
+                       WHEN l_str_list(i) = CHR(8)
+                           THEN NULL
+                       ELSE l_str_list(i)
+                            END;
+        END LOOP;
+    RETURN LTRIM(l_result, p_delim);
+END;
+PLSQL);
+    }
+    catch (\Exception $e) {
+      $results['fail'][] = t("Failed installation of the CONCAT_WS function: " . $e->getMessage());
+    }
+
+    // Install a GREATEST function.
+    try {
+      $this->dbalConnection->exec(<<<PLSQL
+create or replace function greatest(p1 number, p2 number, p3 number default null)
+return number
+as
+begin
+  if p3 is null then
+    if p1 > p2 or p2 is null then
+     return p1;
+    else
+     return p2;
+    end if;
+  else
+   return greatest(p1,greatest(p2,p3));
+  end if;
+end;
+PLSQL);
+    }
+    catch (\Exception $e) {
+      $results['fail'][] = t("Failed installation of the GREATEST function: " . $e->getMessage());
+    }
+
+    // Install a RAND function.
+    try {
+      $this->dbalConnection->exec(<<<PLSQL
+create or replace function rand
+return number
+as
+begin
+  return dbms_random.random;
+end;
+PLSQL);
+    }
+    catch (\Exception $e) {
+      $results['fail'][] = t("Failed installation of the RAND function: " . $e->getMessage());
+    }
 
     return $results;
   }
