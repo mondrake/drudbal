@@ -114,14 +114,13 @@ class Select extends QuerySelect {
 
     // GROUP BY
     if ($this->group) {
-dump($this->group);
       $fields = $this->getFields();
       foreach ($this->group as $expression) {
         if (strpos($expression, '.') === FALSE && isset($fields[$expression])) {
           $dbal_query->addGroupBy($this->connection->escapeAlias($fields[$expression]['table']) . '.' . $this->connection->escapeAlias($fields[$expression]['field']));
         }
         else {
-          $dbal_query->addGroupBy($expression);
+          $dbal_query->addGroupBy($this->connection->escapeAlias($expression));
         }
       }
     }
