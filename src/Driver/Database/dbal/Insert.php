@@ -46,8 +46,13 @@ class Insert extends QueryInsert {
           foreach ($insert_values as $value) {
             $values[':db_insert_placeholder_' . $max_placeholder++] = $value;
           }
-          try {
-            $last_insert_id = $this->connection->query($sql, $values, $this->queryOptions);
+//          try {
+            $stmt = $this->connection->prepareStatement($sql, $this->queryOptions);
+            $stmt->execute($values, $this->queryOptions);
+            $last_insert_id = (string) $this->connection->getDbalConnection()->lastInsertId($this->queryOptions['sequence_name']);
+//          }
+/*          catch (DbalSequenceDoesNotExist $e) {
+            $last_insert_id = NULL;
           }
           catch (IntegrityConstraintViolationException $e) {
             // Abort the entire insert in case of integrity constraint violation
@@ -56,13 +61,15 @@ class Insert extends QueryInsert {
               $this->connection->rollBack();
             }
             throw $e;
-          }
+          }*/
         }
       }
       else {
         // If there are no values, then this is a default-only query. We still
         // need to handle that.
-        $last_insert_id = $this->connection->query($sql, [], $this->queryOptions);
+        $stmt = $this->connection->prepareStatement($sql, $this->queryOptions);
+        $stmt->execute([], $this->queryOptions);
+        $last_insert_id = (string) $this->connection->getDbalConnection()->lastInsertId($this->queryOptions['sequence_name']);
       }
     }
     else {
@@ -76,17 +83,19 @@ class Insert extends QueryInsert {
         foreach ($row as $value) {
           $values[':db_insert_placeholder_' . $max_placeholder++] = $value;
         }
-        try {
-          $last_insert_id = $this->connection->query($sql, $values, $this->queryOptions);
-        }
-        catch (IntegrityConstraintViolationException $e) {
+//        try {
+          $stmt = $this->connection->prepareStatement($sql, $this->queryOptions);
+          $stmt->execute($values, $this->queryOptions);
+          $last_insert_id = (string) $this->connection->getDbalConnection()->lastInsertId($this->queryOptions['sequence_name']);
+//        }
+/*        catch (IntegrityConstraintViolationException $e) {
           // Abort the entire insert in case of integrity constraint violation
           // and a transaction is open.
           if ($this->connection->inTransaction()) {
             $this->connection->rollBack();
           }
           throw $e;
-        }
+        }*/
       }
     }
 
