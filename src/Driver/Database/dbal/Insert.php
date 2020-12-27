@@ -3,6 +3,8 @@
 namespace Drupal\drudbal\Driver\Database\dbal;
 
 use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
+use Doctrine\DBAL\Exception\NotNullConstraintViolationException as DbalNotNullConstraintViolationException;
+use Doctrine\DBAL\Exception\UniqueConstraintViolationException as DbalUniqueConstraintViolationException;
 use Drupal\Core\Database\IntegrityConstraintViolationException;
 use Drupal\Core\Database\Query\Insert as QueryInsert;
 
@@ -51,13 +53,13 @@ class Insert extends QueryInsert {
             $stmt = $this->connection->prepareStatement($sql, $this->queryOptions);
             $stmt->execute($values, $this->queryOptions);
           }
-          catch (IntegrityConstraintViolationException $e) {
+          catch (DbalNotNullConstraintViolationException | DbalUniqueConstraintViolationException $e) {
             // Abort the entire insert in case of integrity constraint violation
             // and a transaction is open.
             if ($this->connection->inTransaction()) {
               $this->connection->rollBack();
             }
-            throw $e;
+            throw new IntegrityConstraintViolationException($message, $e->getCode(), $e);
           }
           try {
             $last_insert_id = (string) $this->connection->getDbalConnection()->lastInsertId($this->queryOptions['sequence_name']);
@@ -74,13 +76,13 @@ class Insert extends QueryInsert {
           $stmt = $this->connection->prepareStatement($sql, $this->queryOptions);
           $stmt->execute([], $this->queryOptions);
         }
-        catch (IntegrityConstraintViolationException $e) {
+        catch (DbalNotNullConstraintViolationException | DbalUniqueConstraintViolationException $e) {
           // Abort the entire insert in case of integrity constraint violation
           // and a transaction is open.
           if ($this->connection->inTransaction()) {
             $this->connection->rollBack();
           }
-          throw $e;
+          throw new IntegrityConstraintViolationException($message, $e->getCode(), $e);
         }
         try {
           $last_insert_id = (string) $this->connection->getDbalConnection()->lastInsertId($this->queryOptions['sequence_name']);
@@ -105,13 +107,13 @@ class Insert extends QueryInsert {
           $stmt = $this->connection->prepareStatement($sql, $this->queryOptions);
           $stmt->execute($values, $this->queryOptions);
         }
-        catch (IntegrityConstraintViolationException $e) {
+        catch (DbalNotNullConstraintViolationException | DbalUniqueConstraintViolationException $e) {
           // Abort the entire insert in case of integrity constraint violation
           // and a transaction is open.
           if ($this->connection->inTransaction()) {
             $this->connection->rollBack();
           }
-          throw $e;
+          throw new IntegrityConstraintViolationException($message, $e->getCode(), $e);
         }
         try {
           $last_insert_id = (string) $this->connection->getDbalConnection()->lastInsertId($this->queryOptions['sequence_name']);
