@@ -278,13 +278,13 @@ class Connection extends DatabaseConnection {
           return $stmt->rowCount();
 
         case Database::RETURN_INSERT_ID:
-//          try {
+          try {
             $sequence_name = isset($options['sequence_name']) ? $options['sequence_name'] : NULL;
             return (string) $this->getDbalConnection()->lastInsertId($sequence_name);
-//          }
-/*          catch (\Exception $e) {
+          }
+          catch (\Exception $e) {
             return '0';
-          }*/
+          }
 
         case Database::RETURN_NULL:
           return NULL;

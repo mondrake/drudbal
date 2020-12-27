@@ -621,8 +621,9 @@ PLSQL);
     // The DBAL Schema manager is quite slow here.
     // Instead, we try to select from the table and field in question. If it
     // fails, the most likely reason is that it does not exist.
+    $db_field = $this->getDbFieldName($field_name, TRUE);
     try {
-      $this->getDbalConnection()->query("SELECT $field_name FROM " . $this->connection->getPrefixedTableName($drupal_table_name, TRUE) . " WHERE ROWNUM <= 1");
+      $this->getDbalConnection()->query("SELECT $db_field FROM " . $this->connection->getPrefixedTableName($drupal_table_name, TRUE) . " WHERE ROWNUM <= 1");
       $result = TRUE;
     }
     catch (\Exception $e) {
