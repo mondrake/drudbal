@@ -2,9 +2,6 @@
 
 namespace Drupal\drudbal\Driver\Database\dbal;
 
-use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
-use Doctrine\DBAL\Exception\NotNullConstraintViolationException as DbalNotNullConstraintViolationException;
-use Doctrine\DBAL\Exception\UniqueConstraintViolationException as DbalUniqueConstraintViolationException;
 use Drupal\Core\Database\IntegrityConstraintViolationException;
 use Drupal\Core\Database\Query\Insert as QueryInsert;
 
@@ -50,46 +47,22 @@ class Insert extends QueryInsert {
             $values[':db_insert_placeholder_' . $max_placeholder++] = $value;
           }
           try {
-            $stmt = $this->connection->prepareStatement($sql, $this->queryOptions);
-            $stmt->execute($values, $this->queryOptions);
+            $last_insert_id = $this->connection->query($sql, $values, $this->queryOptions);
           }
-          catch (DbalNotNullConstraintViolationException | DbalUniqueConstraintViolationException $e) {
+          catch (IntegrityConstraintViolationException $e) {
             // Abort the entire insert in case of integrity constraint violation
             // and a transaction is open.
             if ($this->connection->inTransaction()) {
               $this->connection->rollBack();
             }
-            throw new IntegrityConstraintViolationException($message, $e->getCode(), $e);
-          }
-          try {
-            $last_insert_id = (string) $this->connection->getDbalConnection()->lastInsertId($this->queryOptions['sequence_name']);
-          }
-          catch (DbalDriverException $e) {
-            $last_insert_id = NULL;
+            throw $e;
           }
         }
       }
       else {
         // If there are no values, then this is a default-only query. We still
         // need to handle that.
-        try {
-          $stmt = $this->connection->prepareStatement($sql, $this->queryOptions);
-          $stmt->execute([], $this->queryOptions);
-        }
-        catch (DbalNotNullConstraintViolationException | DbalUniqueConstraintViolationException $e) {
-          // Abort the entire insert in case of integrity constraint violation
-          // and a transaction is open.
-          if ($this->connection->inTransaction()) {
-            $this->connection->rollBack();
-          }
-          throw new IntegrityConstraintViolationException($message, $e->getCode(), $e);
-        }
-        try {
-          $last_insert_id = (string) $this->connection->getDbalConnection()->lastInsertId($this->queryOptions['sequence_name']);
-        }
-        catch (DbalDriverException $e) {
-          $last_insert_id = NULL;
-        }
+        $last_insert_id = $this->connection->query($sql, [], $this->queryOptions);
       }
     }
     else {
@@ -104,22 +77,15 @@ class Insert extends QueryInsert {
           $values[':db_insert_placeholder_' . $max_placeholder++] = $value;
         }
         try {
-          $stmt = $this->connection->prepareStatement($sql, $this->queryOptions);
-          $stmt->execute($values, $this->queryOptions);
+          $last_insert_id = $this->connection->query($sql, $values, $this->queryOptions);
         }
-        catch (DbalNotNullConstraintViolationException | DbalUniqueConstraintViolationException $e) {
+        catch (IntegrityConstraintViolationException $e) {
           // Abort the entire insert in case of integrity constraint violation
           // and a transaction is open.
           if ($this->connection->inTransaction()) {
             $this->connection->rollBack();
           }
-          throw new IntegrityConstraintViolationException($message, $e->getCode(), $e);
-        }
-        try {
-          $last_insert_id = (string) $this->connection->getDbalConnection()->lastInsertId($this->queryOptions['sequence_name']);
-        }
-        catch (DbalDriverException $e) {
-          $last_insert_id = NULL;
+          throw $e;
         }
       }
     }
