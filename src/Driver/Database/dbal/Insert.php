@@ -135,7 +135,7 @@ class Insert extends QueryInsert {
     foreach ($insert_fields as $field) {
       $dbal_query->setValue($dbal_extension->getDbFieldName($field), ':db_insert_placeholder_' . $max_placeholder++);
     }
-dump($comments . $dbal_query->getSQL());
+//dump($comments . $dbal_query->getSQL());
     return $comments . $dbal_query->getSQL();
   }
 
