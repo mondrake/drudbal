@@ -7,7 +7,7 @@ on:
     - cron: "0 6 * * 2"
 
 env:
-    DRUDBAL_DRUPAL_VERSION: "9.1.x"
+    DRUDBAL_DRUPAL_VERSION: "9.2.x"
     DRUDBAL_DRUPAL_PROFILE: "standard"
     SIMPLETEST_BASE_URL: "http://localhost:8080"
     PHPUNIT_SKIP_CLASS: '[
@@ -92,6 +92,8 @@ jobs:
     - name: Report installation
       run: |
         php install_report.php
+        vendor/bin/drush core:status
+        vendor/bin/drush core:requirements
         vendor/bin/drush pml --type=module --no-core
 
     - name: Run test ${{ matrix.test-args }}
@@ -166,6 +168,8 @@ jobs:
     - name: Report installation
       run: |
         php install_report.php
+        vendor/bin/drush core:status
+        vendor/bin/drush core:requirements
         vendor/bin/drush pml --type=module --no-core
 
     - name: Run test ${{ matrix.test-args }}
@@ -240,6 +244,8 @@ jobs:
     - name: Report installation
       run: |
         php install_report.php
+        vendor/bin/drush core:status
+        vendor/bin/drush core:requirements
         vendor/bin/drush pml --type=module --no-core
 
     - name: Run test ${{ matrix.test-args }}

@@ -409,13 +409,9 @@ class Oci8Extension extends AbstractExtension {
     // Replace empty strings.
     $query = str_replace("''", "'" . self::ORACLE_EMPTY_STRING_REPLACEMENT . "'", $query);
 
-    // RAND() is not available in Oracle; convert to using
-    // DBMS_RANDOM.VALUE function.
-    $query = str_replace('RAND()', 'DBMS_RANDOM.VALUE', $query);
-
     // REGEXP is not available in Oracle; convert to using REGEXP_LIKE
     // function.
-//    $query = preg_replace('/([^\s]+)\s+REGEXP\s+([^\s]+)/', 'REGEXP_LIKE($1, $2)', $query);
+    $query = preg_replace('/([^\s]+)\s+REGEXP\s+([^\s]+)/', 'REGEXP_LIKE($1, $2)', $query);
 
     // In case of missing from, Oracle requires FROM DUAL.
     if (strpos($query, 'SELECT ') === 0 && strpos($query, ' FROM ') === FALSE) {
@@ -553,10 +549,7 @@ END;
 PLSQL);
     }
     catch (\Exception $e) {
-//      // ORA-24344: success with compilation error.
-//      if ($e->getCode() !== 24344) {
-        $results['fail'][] = t("Failed installation of the CONCAT_WS function: " . $e->getMessage());
-//      }
+      $results['fail'][] = t("Failed installation of the CONCAT_WS function: " . $e->getMessage());
     }
 
     // Install a GREATEST function.
@@ -580,6 +573,21 @@ PLSQL);
     }
     catch (\Exception $e) {
       $results['fail'][] = t("Failed installation of the GREATEST function: " . $e->getMessage());
+    }
+
+    // Install a RAND function.
+    try {
+      $this->dbalConnection->exec(<<<PLSQL
+create or replace function rand
+return number
+as
+begin
+  return dbms_random.random;
+end;
+PLSQL);
+    }
+    catch (\Exception $e) {
+      $results['fail'][] = t("Failed installation of the RAND function: " . $e->getMessage());
     }
 
     return $results;

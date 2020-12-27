@@ -236,7 +236,7 @@ class Tasks extends InstallTasks {
   /**
    * Executes DBAL driver installation specific tasks.
    */
-  public function runDbalInstallTasks() {
+  public function runDbalInstallTasks(): void {
     $results = Database::getConnection()->getDbalExtension()->runInstallTasks();
     foreach ($results['pass'] as $result) {
       $this->pass($result);
