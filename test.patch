@@ -1,0 +1,19 @@
+diff --git a/core/tests/Drupal/KernelTests/Core/Database/InsertTest.php b/core/tests/Drupal/KernelTests/Core/Database/InsertTest.php
+index 45a2f5de0d..94832d0e14 100644
+--- a/core/tests/Drupal/KernelTests/Core/Database/InsertTest.php
++++ b/core/tests/Drupal/KernelTests/Core/Database/InsertTest.php
+@@ -139,12 +139,14 @@ public function testInsertFieldOnlyDefinition() {
+    * Tests that inserts return the proper auto-increment ID.
+    */
+   public function testInsertLastInsertID() {
++    $this->connection->getDbalExtension()->setDebugging(TRUE);
+     $id = $this->connection->insert('test')
+       ->fields([
+         'name' => 'Larry',
+         'age' => '30',
+       ])
+       ->execute();
++    $this->connection->getDbalExtension()->setDebugging(FALSE);
+ 
+     $this->assertIdentical($id, '5', 'Auto-increment ID returned successfully.');
+   }
