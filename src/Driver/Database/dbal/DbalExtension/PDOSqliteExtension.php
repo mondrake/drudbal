@@ -544,9 +544,6 @@ class PDOSqliteExtension extends AbstractExtension {
         }
       }
     }
-    if ($this->getDebugging()) {
-      error_log($query . ' : ' . var_export($args, TRUE));
-    }
     return $this;
   }
 

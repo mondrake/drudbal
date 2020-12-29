@@ -417,7 +417,7 @@ class Oci8Extension extends AbstractExtension {
       $query .= ' FROM DUAL';
     }
 
-    if ($this->getDebugging()) error_log($query . ' : ' . var_export($args, TRUE));
+    //if ($this->getDebugging()) error_log($query . ' : ' . var_export($args, TRUE));
 
     return $this;
   }

@@ -284,7 +284,7 @@ if ($this->getDbalExtension()->getDebugging()) dump($query, $args, $options);
             return (string) $this->getDbalConnection()->lastInsertId($sequence_name);
           }
           catch (\Exception $e) {
-if ($this->getDbalExtension()->getDebugging()) dump($e);
+if ($this->getDbalExtension()->getDebugging()) dump($options, $e);
             return '0';
           }
 
