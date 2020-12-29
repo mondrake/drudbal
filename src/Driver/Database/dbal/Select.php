@@ -120,7 +120,7 @@ class Select extends QuerySelect {
           $dbal_query->addGroupBy($this->connection->escapeAlias($fields[$expression]['table']) . '.' . $this->connection->escapeAlias($fields[$expression]['field']));
         }
         else {
-          $dbal_query->addGroupBy($expression);
+          $dbal_query->addGroupBy($this->connection->escapeAlias($expression));
         }
       }
     }

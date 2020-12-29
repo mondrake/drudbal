@@ -245,7 +245,6 @@ class Oci8Extension extends AbstractExtension {
     if ($e instanceof DatabaseExceptionWrapper) {
       $e = $e->getPrevious();
     }
-//if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException' && $this->getDebugging()) {
     if ($e instanceof UniqueConstraintViolationException) {
       throw new IntegrityConstraintViolationException($message, $e->getCode(), $e);
     }
@@ -263,16 +262,16 @@ class Oci8Extension extends AbstractExtension {
           throw new DatabaseExceptionWrapper($message, 0, $e);
 
         default:
-/*if ($this->getDebugging()) {
-  $backtrace = debug_backtrace();
-  error_log("\n***** Exception    : " . get_class($e));
-  error_log('***** Message      : ' . $message);
-  error_log('***** getCode      : ' . $e->getCode());
-  error_log('***** getSQLState  : ' . $e->getSQLState());
-  error_log('***** Query        : ' . $query);
-  error_log('***** Query args   : ' . var_export($args, TRUE));
-  error_log("***** Backtrace    : \n" . $this->formatBacktrace($backtrace));
-}*/
+          /*if ($this->getDebugging()) {
+            $backtrace = debug_backtrace();
+            error_log("\n***** Exception    : " . get_class($e));
+            error_log('***** Message      : ' . $message);
+            error_log('***** getCode      : ' . $e->getCode());
+            error_log('***** getSQLState  : ' . $e->getSQLState());
+            error_log('***** Query        : ' . $query);
+            error_log('***** Query args   : ' . var_export($args, TRUE));
+            error_log("***** Backtrace    : \n" . $this->formatBacktrace($backtrace));
+          }*/
           throw new DatabaseExceptionWrapper($message, 0, $e);
 
       }
@@ -309,16 +308,16 @@ class Oci8Extension extends AbstractExtension {
         $call['function'] = 'main';
       }
 
-/*      if (isset($trace['args'])) {
-        foreach ($trace['args'] as $arg) {
-          if (is_scalar($arg)) {
-            $call['args'][] = is_string($arg) ? '\'' . $arg . '\'' : $arg;
-          }
-          else {
-            $call['args'][] = ucfirst(gettype($arg));
-          }
-        }
-      }*/
+      /*      if (isset($trace['args'])) {
+              foreach ($trace['args'] as $arg) {
+                if (is_scalar($arg)) {
+                  $call['args'][] = is_string($arg) ? '\'' . $arg . '\'' : $arg;
+                }
+                else {
+                  $call['args'][] = ucfirst(gettype($arg));
+                }
+              }
+            }*/
 
       $line = '';
       if (isset($trace['line'])) {
@@ -399,7 +398,7 @@ class Oci8Extension extends AbstractExtension {
    * {@inheritdoc}
    */
   public function alterStatement(&$query, array &$args) {
-//if ($this->getDebugging()) error_log('pre-alter: ' . $query . ' : ' . var_export($args, TRUE));
+    //if ($this->getDebugging()) error_log('pre-alter: ' . $query . ' : ' . var_export($args, TRUE));
 
     // Modify arguments for empty strings.
     foreach ($args as $placeholder => &$value) {
@@ -418,7 +417,8 @@ class Oci8Extension extends AbstractExtension {
       $query .= ' FROM DUAL';
     }
 
-if ($this->getDebugging()) error_log($query . ' : ' . var_export($args, TRUE));
+    //if ($this->getDebugging()) error_log($query . ' : ' . var_export($args, TRUE));
+
     return $this;
   }
 
@@ -450,12 +450,7 @@ if ($this->getDebugging()) error_log($query . ' : ' . var_export($args, TRUE));
    */
   public function getSequenceNameForInsert($drupal_table_name) {
     $table_name = $this->connection->getPrefixedTableName($drupal_table_name);
-    if (substr($table_name, 0, 1) === '"') {
-      return '"' . rtrim(ltrim($table_name, '"'), '"') . '_SEQ"';
-    }
-    else {
-      return $table_name . '_SEQ';
-    }
+    return "\"{$table_name}_SEQ\"";
   }
 
   /**
@@ -621,8 +616,9 @@ PLSQL);
     // The DBAL Schema manager is quite slow here.
     // Instead, we try to select from the table and field in question. If it
     // fails, the most likely reason is that it does not exist.
+    $db_field = $this->getDbFieldName($field_name, TRUE);
     try {
-      $this->getDbalConnection()->query("SELECT $field_name FROM " . $this->connection->getPrefixedTableName($drupal_table_name, TRUE) . " WHERE ROWNUM <= 1");
+      $this->getDbalConnection()->query("SELECT $db_field FROM " . $this->connection->getPrefixedTableName($drupal_table_name, TRUE) . " WHERE ROWNUM <= 1");
       $result = TRUE;
     }
     catch (\Exception $e) {
@@ -722,10 +718,11 @@ PLSQL);
       $change_nullability = FALSE;
     }
 
-    $sql = "ALTER TABLE " . $this->connection->getPrefixedTableName($drupal_table_name, TRUE) . " MODIFY ($field_name NUMBER(10) ";
-    if ($change_nullability) {
-      $sql .= array_key_exists('not null', $drupal_field_new_specs) && $drupal_field_new_specs['not null'] ? 'NOT NULL' : 'NULL';
-    }
+    $sql = "ALTER TABLE " . $this->connection->getPrefixedTableName($drupal_table_name, TRUE) . " MODIFY (\"$field_name\" NUMBER(10) ";
+    $sql .= "NOT NULL";
+//    if ($change_nullability) {
+//      $sql .= array_key_exists('not null', $drupal_field_new_specs) && $drupal_field_new_specs['not null'] ? 'NOT NULL' : 'NULL';
+//    }
     $sql .= ")";
     $this->connection->query($sql);
 

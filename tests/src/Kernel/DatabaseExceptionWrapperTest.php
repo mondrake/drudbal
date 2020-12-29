@@ -5,7 +5,6 @@ namespace Drupal\Tests\drudbal\Kernel;
 use Drupal\Core\Database\DatabaseExceptionWrapper;
 use Drupal\Core\Database\Database;
 use Drupal\KernelTests\Core\Database\DatabaseExceptionWrapperTest as DatabaseExceptionWrapperTestBase;
-use Drupal\KernelTests\KernelTestBase;
 
 /**
  * Tests exceptions thrown by queries.
