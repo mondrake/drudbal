@@ -450,12 +450,7 @@ class Oci8Extension extends AbstractExtension {
    */
   public function getSequenceNameForInsert($drupal_table_name) {
     $table_name = $this->connection->getPrefixedTableName($drupal_table_name);
-    if (substr($table_name, 0, 1) === '"') {
-      return '"' . rtrim(ltrim($table_name, '"'), '"') . '_SEQ"';
-    }
-    else {
-      return $table_name . '_SEQ';
-    }
+    return "\"{$table_name}_SEQ\"";
   }
 
   /**
