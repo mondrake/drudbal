@@ -64,8 +64,8 @@ jobs:
     - name: Patch Drupal
       run: ./drudbal_staging/tests/github/drupal_patch.sh
 
-#    - name: Test Drupal patch
-#      run: git apply -v drudbal_staging/test.patch
+    - name: Test Drupal patch
+      run: git apply -v drudbal_staging/test.patch
 
     - name: Install Composer dependencies
       run: |
