@@ -719,9 +719,10 @@ PLSQL);
     }
 
     $sql = "ALTER TABLE " . $this->connection->getPrefixedTableName($drupal_table_name, TRUE) . " MODIFY (\"$field_name\" NUMBER(10) ";
-    if ($change_nullability) {
-      $sql .= array_key_exists('not null', $drupal_field_new_specs) && $drupal_field_new_specs['not null'] ? 'NOT NULL' : 'NULL';
-    }
+    $sql .= "NOT NULL";
+//    if ($change_nullability) {
+//      $sql .= array_key_exists('not null', $drupal_field_new_specs) && $drupal_field_new_specs['not null'] ? 'NOT NULL' : 'NULL';
+//    }
     $sql .= ")";
     $this->connection->query($sql);
 
