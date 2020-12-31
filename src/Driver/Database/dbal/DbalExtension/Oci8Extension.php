@@ -241,6 +241,13 @@ class Oci8Extension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
+  public function delegateQueryTemporary($drupal_table_name, $query, array $args = [], array $options = []) {
+    return $this->connection->query('CREATE GLOBAL TEMPORARY TABLE {' . $drupal_table_name . '} ON COMMIT PRESERVE ROWS AS ' . $query, $args, $options);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function delegateQueryExceptionProcess($query, array $args, array $options, $message, \Exception $e) {
     if ($e instanceof DatabaseExceptionWrapper) {
       $e = $e->getPrevious();
