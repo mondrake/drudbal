@@ -23,7 +23,7 @@ use Doctrine\DBAL\Exception\NotNullConstraintViolationException;
  */
 class Oci8Extension extends AbstractExtension {
 
-  protected static $isDebugging = TRUE;
+//  protected static $isDebugging = TRUE;
 
   const ORACLE_EMPTY_STRING_REPLACEMENT = "\010"; // it's the Backspace, dec=8, hex=8, oct=10.
 
@@ -433,6 +433,7 @@ class Oci8Extension extends AbstractExtension {
 
     // REGEXP is not available in Oracle; convert to using REGEXP_LIKE
     // function.
+    $query = preg_replace('/([^\s]+)\s+NOT REGEXP\s+([^\s]+)/', 'NOT REGEXP_LIKE($1, $2)', $query);
     $query = preg_replace('/([^\s]+)\s+REGEXP\s+([^\s]+)/', 'REGEXP_LIKE($1, $2)', $query);
 
     // In case of missing from, Oracle requires FROM DUAL.
