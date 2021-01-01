@@ -10,6 +10,7 @@ use Doctrine\DBAL\DriverManager as DbalDriverManager;
 use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
 use Doctrine\DBAL\ExpandArrayParameters;
 use Doctrine\DBAL\SQL\Parser;
+use Drupal\Component\Uuid\Php as Uuid;
 use Drupal\Core\Database\Connection as DatabaseConnection;
 use Drupal\Core\Database\ConnectionNotDefinedException;
 use Drupal\Core\Database\Database;
@@ -451,6 +452,13 @@ class Connection extends DatabaseConnection {
    */
   public function queryRange($query, $from, $count, array $args = [], array $options = []) {
     return $this->dbalExtension->delegateQueryRange($query, $from, $count, $args, $options);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function generateTemporaryTableName() {
+    return "temptab-" . (new Uuid())->generate();
   }
 
   /**

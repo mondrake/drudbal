@@ -23,7 +23,7 @@ use Doctrine\DBAL\Exception\NotNullConstraintViolationException;
  */
 class Oci8Extension extends AbstractExtension {
 
-  // protected static $isDebugging = TRUE;
+//  protected static $isDebugging = TRUE;
 
   const ORACLE_EMPTY_STRING_REPLACEMENT = "\010"; // it's the Backspace, dec=8, hex=8, oct=10.
 
@@ -37,6 +37,8 @@ class Oci8Extension extends AbstractExtension {
     'NOT LIKE' => ['postfix' => " ESCAPE '\\'"],
   ];
 
+  private $tempTables = [];
+
   /**
    * Map of database identifiers.
    *
@@ -46,6 +48,16 @@ class Oci8Extension extends AbstractExtension {
    * @var string[]
    */
   private $dbIdentifiersMap = [];
+
+  /**
+   * Destructs an Oci8 extension object.
+   */
+  public function __destruct() {
+    foreach ($this->tempTables as $db_table) {
+      $this->dbalConnection->exec("DROP TABLE $db_table");
+    }
+    parent::__destruct();
+  }
 
   /**
    * Database asset name resolution methods.
@@ -241,6 +253,17 @@ class Oci8Extension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
+  public function delegateQueryTemporary($drupal_table_name, $query, array $args = [], array $options = []) {
+    // @todo Oracle 18 allows session scoped temporary tables, but until then
+    //   we need to store away the table being created and drop it during
+    //   destruction.
+    $this->tempTables[$drupal_table_name] = $this->connection->getPrefixedTableName($drupal_table_name, TRUE);
+    return $this->connection->query('CREATE GLOBAL TEMPORARY TABLE {' . $drupal_table_name . '} ON COMMIT PRESERVE ROWS AS ' . $query, $args, $options);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function delegateQueryExceptionProcess($query, array $args, array $options, $message, \Exception $e) {
     if ($e instanceof DatabaseExceptionWrapper) {
       $e = $e->getPrevious();
@@ -398,7 +421,7 @@ class Oci8Extension extends AbstractExtension {
    * {@inheritdoc}
    */
   public function alterStatement(&$query, array &$args) {
-    //if ($this->getDebugging()) error_log('pre-alter: ' . $query . ' : ' . var_export($args, TRUE));
+    if ($this->getDebugging()) dump(['pre-alter', $query, $args]);
 
     // Modify arguments for empty strings.
     foreach ($args as $placeholder => &$value) {
@@ -410,6 +433,7 @@ class Oci8Extension extends AbstractExtension {
 
     // REGEXP is not available in Oracle; convert to using REGEXP_LIKE
     // function.
+    $query = preg_replace('/([^\s]+)\s+NOT REGEXP\s+([^\s]+)/', 'NOT REGEXP_LIKE($1, $2)', $query);
     $query = preg_replace('/([^\s]+)\s+REGEXP\s+([^\s]+)/', 'REGEXP_LIKE($1, $2)', $query);
 
     // In case of missing from, Oracle requires FROM DUAL.
@@ -417,7 +441,7 @@ class Oci8Extension extends AbstractExtension {
       $query .= ' FROM DUAL';
     }
 
-    //if ($this->getDebugging()) error_log($query . ' : ' . var_export($args, TRUE));
+    if ($this->getDebugging()) dump(['post-alter', $query, $args]);
 
     return $this;
   }
@@ -637,6 +661,17 @@ PLSQL);
       $table_names[] = rtrim(ltrim($db_table_name, '"'), '"');
     }
     return $table_names;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateColumnNameList(array $columns) {
+    $column_names = [];
+    foreach ($columns as $dbal_column_name) {
+      $column_names[] = trim($dbal_column_name, '"');
+    }
+    return $column_names;
   }
 
   /**

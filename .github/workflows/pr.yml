@@ -93,6 +93,7 @@ jobs:
         # Use the custom installer.
         php install_cli.php
         vendor/bin/drush runserver localhost:8080 &
+        sleep 5s
 
     - name: Report installation
       run: |
@@ -103,3 +104,4 @@ jobs:
 
     - name: Run test ${{ matrix.test-args }}
       run: vendor/bin/phpunit -c core --color=always ${{ matrix.test-args }}
+#      run: vendor/bin/phpunit -c core --color=always core/tests/Drupal/KernelTests/Core/Database/SelectTest.php

@@ -301,9 +301,9 @@ class Schema extends DatabaseSchema {
     // DBAL Schema will drop the old table and create a new one, so we go for
     // using the manager instead, that allows in-place renaming.
     // @see https://github.com/doctrine/migrations/issues/17
-    if ($this->dbalExtension->getDebugging()) {
-      error_log('renameTable ' . $this->connection->getPrefixedTableName($table) . ' to ' . $this->connection->getPrefixedTableName($new_name));
-    }
+//    if ($this->dbalExtension->getDebugging()) {
+//      error_log('renameTable ' . $this->connection->getPrefixedTableName($table) . ' to ' . $this->connection->getPrefixedTableName($new_name));
+//    }
     $dbal_schema = $this->dbalSchema();
     $this->dbalSchemaManager->renameTable($this->connection->getPrefixedTableName($table), $this->connection->getPrefixedTableName($new_name));
     $this->dbalExtension->postRenameTable($dbal_schema, $table, $new_name);
@@ -559,7 +559,8 @@ class Schema extends DatabaseSchema {
     try {
       $this->dbalSchemaForceReload();
       $primary_key = $this->dbalSchema()->getTable($this->connection->getPrefixedTableName($table))->getPrimaryKey();
-      return $primary_key ? $primary_key->getColumns() : [];
+      $columns = $primary_key ? $this->dbalExtension->delegateColumnNameList($primary_key->getColumns()) : [];
+      return $columns;
     }
     catch (DbalException $e) {
       return [];
@@ -581,14 +582,8 @@ class Schema extends DatabaseSchema {
     ];
 
     try {
-      $this->dbalSchemaForceReload();
-
       // Primary key.
-      $primary_key = $this->dbalSchema()->getTable($this->connection->getPrefixedTableName($table))->getPrimaryKey();
-      $columns = $primary_key ? $primary_key->getColumns() : [];
-      foreach ($columns as $column) {
-        $index_schema['primary key'][] = $column;
-      }
+      $index_schema['primary key'] = $this->findPrimaryKeyColumns($table);
 
       // Indexes.
       foreach ($this->dbalSchema()->getTable($this->connection->getPrefixedTableName($table))->getIndexes() as $index) {

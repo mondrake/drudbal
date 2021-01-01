@@ -88,6 +88,7 @@ jobs:
         # Use the custom installer.
         php install_cli.php
         vendor/bin/drush runserver localhost:8080 &
+        sleep 1s
 
     - name: Report installation
       run: |
@@ -164,6 +165,7 @@ jobs:
         # Use the custom installer.
         php install_cli.php
         vendor/bin/drush runserver localhost:8080 &
+        sleep 1s
 
     - name: Report installation
       run: |
@@ -240,6 +242,7 @@ jobs:
         # Use the custom installer.
         php install_cli.php
         vendor/bin/drush runserver localhost:8080 &
+        sleep 1s
 
     - name: Report installation
       run: |
