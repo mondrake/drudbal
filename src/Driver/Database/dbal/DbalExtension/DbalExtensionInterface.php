@@ -582,9 +582,7 @@ interface DbalExtensionInterface {
    * @return string[]
    *   An array of column names (as known by Drupal).
    */
-  public function delegateColumnNameList(array $columns) {
-    return $columns;
-  }
+  public function delegateColumnNameList(array $columns);
 
   /**
    * Returns a list of all tables in the current database.
