@@ -458,7 +458,7 @@ class Connection extends DatabaseConnection {
    * {@inheritdoc}
    */
   protected function generateTemporaryTableName() {
-    return "temptab-" . (new Uuid())->generate();
+    return "ttb-" . (new Uuid())->generate();
   }
 
   /**
