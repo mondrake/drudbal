@@ -559,7 +559,8 @@ class Schema extends DatabaseSchema {
     try {
       $this->dbalSchemaForceReload();
       $primary_key = $this->dbalSchema()->getTable($this->connection->getPrefixedTableName($table))->getPrimaryKey();
-      return $primary_key ? $primary_key->getColumns() : [];
+      $columns = $primary_key ? $this->dbalExtension->delegateColumnNameList($primary_key->getColumns()) : [];
+      return $columns;
     }
     catch (DbalException $e) {
       return [];
@@ -581,14 +582,8 @@ class Schema extends DatabaseSchema {
     ];
 
     try {
-      $this->dbalSchemaForceReload();
-
       // Primary key.
-      $primary_key = $this->dbalSchema()->getTable($this->connection->getPrefixedTableName($table))->getPrimaryKey();
-      $columns = $primary_key ? $primary_key->getColumns() : [];
-      foreach ($columns as $column) {
-        $index_schema['primary key'][] = $column;
-      }
+      $index_schema['primary key'] = $this->findPrimaryKeyColumns($table);
 
       // Indexes.
       foreach ($this->dbalSchema()->getTable($this->connection->getPrefixedTableName($table))->getIndexes() as $index) {

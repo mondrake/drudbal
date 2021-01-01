@@ -37,6 +37,8 @@ class Oci8Extension extends AbstractExtension {
     'NOT LIKE' => ['postfix' => " ESCAPE '\\'"],
   ];
 
+  private $tempTables = [];
+
   /**
    * Map of database identifiers.
    *
@@ -46,6 +48,16 @@ class Oci8Extension extends AbstractExtension {
    * @var string[]
    */
   private $dbIdentifiersMap = [];
+
+  /**
+   * Destructs an Oci8 extension object.
+   */
+  public function __destruct() {
+    foreach ($this->tempTables as $db_table) {
+      $this->dbalConnection->exec("DROP TABLE $db_table");
+    }
+    parent::__destruct();
+  }
 
   /**
    * Database asset name resolution methods.
@@ -242,6 +254,10 @@ class Oci8Extension extends AbstractExtension {
    * {@inheritdoc}
    */
   public function delegateQueryTemporary($drupal_table_name, $query, array $args = [], array $options = []) {
+    // @todo Oracle 18 allows session scoped temporary tables, but until then
+    //   we need to store away the table being created and drop it during
+    //   destruction.
+    $this->tempTables[$drupal_table_name] = $this->connection->getPrefixedTableName($drupal_table_name, TRUE);
     return $this->connection->query('CREATE GLOBAL TEMPORARY TABLE {' . $drupal_table_name . '} ON COMMIT PRESERVE ROWS AS ' . $query, $args, $options);
   }
 
@@ -644,6 +660,17 @@ PLSQL);
       $table_names[] = rtrim(ltrim($db_table_name, '"'), '"');
     }
     return $table_names;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateColumnNameList(array $columns) {
+    $column_names = [];
+    foreach ($columns as $dbal_column_name) {
+      $column_names[] = trim($db_table_name, '"');
+    }
+    return $column_names;
   }
 
   /**
