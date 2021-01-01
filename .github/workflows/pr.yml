@@ -40,9 +40,9 @@ jobs:
         php-version:
           - "7.4"
         test-args:
-          - "--group Database"
-#          - "--group Cache,Config"
-#          - "--group field,Field"
+#          - "--group Database"
+          - "--group Cache,Config"
+          - "--group field,Field"
 
     steps:
     - name: Install PHP
