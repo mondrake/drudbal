@@ -462,6 +462,13 @@ class AbstractExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
+  public function delegateColumnNameList(array $columns) {
+    return $columns;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function delegateListTableNames() {
     return $this->getDbalConnection()->getSchemaManager()->listTableNames();
   }

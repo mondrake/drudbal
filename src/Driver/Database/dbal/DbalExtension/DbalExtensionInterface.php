@@ -574,6 +574,19 @@ interface DbalExtensionInterface {
   public function alterDefaultSchema(&$default_schema);
 
   /**
+   * Returns a list of columns, based on a list retrieved by DBAL.
+   *
+   * @param string[] $columns
+   *   An array of column names (as retrieved from the DBMS).
+   *
+   * @return string[]
+   *   An array of column names (as known by Drupal).
+   */
+  public function delegateColumnNameList(array $columns) {
+    return $columns;
+  }
+
+  /**
    * Returns a list of all tables in the current database.
    *
    * @return string[]
