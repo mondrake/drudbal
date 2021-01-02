@@ -458,7 +458,7 @@ class Connection extends DatabaseConnection {
    * {@inheritdoc}
    */
   protected function generateTemporaryTableName() {
-    return "ttb-" . (new Uuid())->generate();
+    return "tmp_tab_" . str_replace('-', '_', (new Uuid())->generate());
   }
 
   /**

@@ -54,6 +54,7 @@ class Oci8Extension extends AbstractExtension {
    */
   public function __destruct() {
 dump($this->tempTables);
+dump($this->delegateListTableNames());
     foreach ($this->tempTables as $db_table) {
 //      $this->dbalConnection->exec("DROP TABLE $db_table");
     }

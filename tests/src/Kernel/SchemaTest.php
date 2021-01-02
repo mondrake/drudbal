@@ -13,6 +13,83 @@ use Drupal\KernelTests\Core\Database\SchemaTest as SchemaTestBase;
 class SchemaTest extends SchemaTestBase {
 
   /**
+   * @covers \Drupal\Core\Database\Driver\mysql\Schema::introspectIndexSchema
+   * @covers \Drupal\Core\Database\Driver\pgsql\Schema::introspectIndexSchema
+   * @covers \Drupal\Core\Database\Driver\sqlite\Schema::introspectIndexSchema
+   */
+  public function testIntrospectIndexSchema() {
+    $table_specification = [
+      'fields' => [
+        'id'  => [
+          'type' => 'int',
+          'not null' => TRUE,
+          'default' => 0,
+        ],
+        'test_field_1'  => [
+          'type' => 'int',
+          'not null' => TRUE,
+          'default' => 0,
+        ],
+        'test_field_2'  => [
+          'type' => 'int',
+          'default' => 0,
+        ],
+        'test_field_3'  => [
+          'type' => 'int',
+          'default' => 0,
+        ],
+        'test_field_4'  => [
+          'type' => 'int',
+          'default' => 0,
+        ],
+        'test_field_5'  => [
+          'type' => 'int',
+          'default' => 0,
+        ],
+      ],
+      'primary key' => ['id', 'test_field_1'],
+      'unique keys' => [
+        'test_field_2' => ['test_field_2'],
+        'test_field_3_test_field_4' => ['test_field_3', 'test_field_4'],
+      ],
+      'indexes' => [
+        'test_field_4' => ['test_field_4'],
+        'test_field_4_test_field_5' => ['test_field_4', 'test_field_5'],
+      ],
+    ];
+
+    $table_name = strtolower($this->getRandomGenerator()->name());
+    $this->schema->createTable($table_name, $table_specification);
+
+    unset($table_specification['fields']);
+
+    $introspect_index_schema = new \ReflectionMethod(get_class($this->schema), 'introspectIndexSchema');
+    $introspect_index_schema->setAccessible(TRUE);
+    $index_schema = $introspect_index_schema->invoke($this->schema, $table_name);
+
+    // The PostgreSQL driver is using a custom naming scheme for its indexes, so
+    // we need to adjust the initial table specification.
+    if ($this->connection->databaseType() === 'pgsql') {
+      $ensure_identifier_length = new \ReflectionMethod(get_class($this->schema), 'ensureIdentifiersLength');
+      $ensure_identifier_length->setAccessible(TRUE);
+
+      foreach ($table_specification['unique keys'] as $original_index_name => $columns) {
+        unset($table_specification['unique keys'][$original_index_name]);
+        $new_index_name = $ensure_identifier_length->invoke($this->schema, $table_name, $original_index_name, 'key');
+        $table_specification['unique keys'][$new_index_name] = $columns;
+      }
+
+      foreach ($table_specification['indexes'] as $original_index_name => $columns) {
+        unset($table_specification['indexes'][$original_index_name]);
+        $new_index_name = $ensure_identifier_length->invoke($this->schema, $table_name, $original_index_name, 'idx');
+        $table_specification['indexes'][$new_index_name] = $columns;
+      }
+    }
+
+    $this->assertEquals($table_specification, $index_schema);
+  }
+
+  /**
    * Tests the findTables() method.
    */
   public function testFindTables() {
