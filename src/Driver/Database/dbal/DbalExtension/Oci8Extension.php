@@ -55,6 +55,7 @@ class Oci8Extension extends AbstractExtension {
   public function __destruct() {
     foreach ($this->tempTables as $db_table) {
       try {
+        $this->dbalConnection->exec("TRUNCATE TABLE $db_table");
         $this->dbalConnection->exec("DROP TABLE $db_table");
       }
       catch (\Exception $e) {
