@@ -33,6 +33,7 @@ class QueryTemporaryTest extends DatabaseTestBase {
     ";
     $table_name_test = $connection->queryTemporary($sql, []);
     $this->assertEquals($connection->select('test')->countQuery()->execute()->fetchField(), $connection->select($table_name_test)->countQuery()->execute()->fetchField(), 'Leading white space and comments do not interfere with temporary table creation.');
+    $connection = NULL;
   }
 
 }
