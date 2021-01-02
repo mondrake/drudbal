@@ -2,6 +2,7 @@
 
 namespace Drupal\Tests\drudbal\Kernel;
 
+use Drupal\Core\Database\Database;
 use Drupal\KernelTests\Core\Database\SchemaTest as SchemaTestBase;
 
 /**
