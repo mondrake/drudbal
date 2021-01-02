@@ -49,10 +49,10 @@ class SchemaTest extends SchemaTestBase {
       // The 'config' table is added by
       // \Drupal\KernelTests\KernelTestBase::containerBuild().
       'config',
+      'table_3_test',
       'test_1_table',
       // This table uses a per-table prefix, yet it is returned as un-prefixed.
       'test_2_table',
-      'table_3_test',
     ];
     $this->assertEquals($expected, $tables);
 
