@@ -40,7 +40,7 @@ class SchemaTest extends SchemaTestBase {
     ];
     $test_schema->createTable('test_1_table', $table_specification);
     $test_schema->createTable('test_2_table', $table_specification);
-    $test_schema->createTable('test_3_table', $table_specification);
+    $test_schema->createTable('table_3_test', $table_specification);
 
     // Check the "all tables" syntax.
     $tables = $test_schema->findTables('%');
@@ -52,9 +52,9 @@ class SchemaTest extends SchemaTestBase {
       'test_1_table',
       // This table uses a per-table prefix, yet it is returned as un-prefixed.
       'test_2_table',
-      'test_3_table',
+      'table_3_test',
     ];
-    $this->assertEqual($tables, $expected, 'All tables were found.');
+    $this->assertEquals($expected, $tables);
 
     // Check the restrictive syntax.
     $tables = $test_schema->findTables('test_%');
@@ -63,7 +63,7 @@ class SchemaTest extends SchemaTestBase {
       'test_1_table',
       'test_2_table',
     ];
-    $this->assertEqual($tables, $expected, 'Two tables were found.');
+    $this->assertEquals($expected, $tables);
 
     // Go back to the initial connection.
     Database::setActiveConnection('default');
