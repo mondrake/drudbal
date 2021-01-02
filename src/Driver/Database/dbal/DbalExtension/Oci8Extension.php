@@ -266,8 +266,9 @@ class Oci8Extension extends AbstractExtension {
     $prefixes = $this->connection->getPrefixes();
     $prefixes[$drupal_table_name] = '';
     $this->connection->setPrefixPublic($prefixes);
-    $this->tempTables[$drupal_table_name] = $this->connection->getPrefixedTableName($drupal_table_name, TRUE);
-    return $this->connection->query('CREATE GLOBAL TEMPORARY TABLE ' . $this->tempTables[$drupal_table_name] . ' ON COMMIT PRESERVE ROWS AS ' . $query, $args, $options);
+//    $this->tempTables[$drupal_table_name] = $this->connection->getPrefixedTableName($drupal_table_name, TRUE);
+    $this->tempTables[$drupal_table_name] = $this->connection->getLimitedIdentifier($drupal_table_name, 24);
+    return $this->connection->query('CREATE GLOBAL TEMPORARY TABLE "' . $this->tempTables[$drupal_table_name] . '" ON COMMIT PRESERVE ROWS AS ' . $query, $args, $options);
   }
 
   /**
