@@ -58,7 +58,7 @@ class Oci8Extension extends AbstractExtension {
         $this->dbalConnection->exec("DROP TABLE $db_table");
       }
       catch (\Exception $e) {
-dump($this->tempTables, $this->delegateListTableNames());
+//dump($this->tempTables, $this->delegateListTableNames());
         throw new \RuntimeException("Missing temp table $db_table", $e->getCode(), $e);
       }
     }
