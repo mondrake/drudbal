@@ -328,7 +328,12 @@ class Schema extends DatabaseSchema {
     $table_full_name = $this->connection->getPrefixedTableName($table);
     $current_schema = $this->dbalSchema();
     // Need to pass the quoted table name here.
-    $this->dbalSchemaManager->dropTable($this->connection->getPrefixedTableName($table, TRUE));
+    try {
+      $this->dbalSchemaManager->dropTable($this->connection->getPrefixedTableName($table, TRUE));
+    }
+    catch (\Exception $e) {
+      throw new \RuntimeException("Failed dropping table $table, real {$this->connection->getPrefixedTableName($table, TRUE)}", $e->getCode(), $e);
+    }
 
     // After dropping the table physically, still need to reflect it in the
     // DBAL schema.
