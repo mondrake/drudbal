@@ -16,7 +16,11 @@ class QueryTemporaryTest extends DatabaseTestBase {
    * Confirms that temporary tables work.
    */
   public function testTemporaryQuery() {
-    $connection = Database::getConnection();
+    // Add a new target to the connection, by cloning the current connection.
+    $connection_info = Database::getConnectionInfo();
+    Database::addConnectionInfo('default', 'temp_query', $connection_info['default']);
+
+    $connection = Database::getConnection('temp_query');
 
     // Now try to run two temporary queries in the same request.
     $table_name_test = $connection->queryTemporary('SELECT [name] FROM {test}', []);
@@ -33,7 +37,9 @@ class QueryTemporaryTest extends DatabaseTestBase {
     ";
     $table_name_test = $connection->queryTemporary($sql, []);
     $this->assertEquals($connection->select('test')->countQuery()->execute()->fetchField(), $connection->select($table_name_test)->countQuery()->execute()->fetchField(), 'Leading white space and comments do not interfere with temporary table creation.');
+
     $connection = NULL;
+    Database::closeConnection('temp_query');
   }
 
 }
