@@ -105,9 +105,9 @@ jobs:
         vendor/bin/drush core:status
         vendor/bin/drush core:requirements
 
-    - name: Run test a
-      continue-on-error: true
-      run: vendor/bin/phpunit -c core --color=always modules/contrib/drudbal/tests/src/Kernel/SchemaTest.php
+#    - name: Run test a
+#      continue-on-error: true
+#      run: vendor/bin/phpunit -c core --color=always modules/contrib/drudbal/tests/src/Kernel/SchemaTest.php
 #      run: vendor/bin/phpunit -c core --color=always ${{ matrix.test-args }}
 
     - name: Run test b

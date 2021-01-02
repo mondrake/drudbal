@@ -53,8 +53,7 @@ class Oci8Extension extends AbstractExtension {
    * Destructs an Oci8 extension object.
    */
   public function __destruct() {
-dump($this->tempTables);
-//dump($this->delegateListTableNames());
+dump($this->tempTables, $this->delegateListTableNames());
     foreach ($this->tempTables as $db_table) {
 //      $this->dbalConnection->exec("DROP TABLE $db_table");
     }
