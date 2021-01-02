@@ -59,7 +59,6 @@ class Oci8Extension extends AbstractExtension {
         $this->dbalConnection->exec("DROP TABLE $db_table");
       }
       catch (\Exception $e) {
-//dump($this->tempTables, $this->delegateListTableNames());
         throw new \RuntimeException("Missing temp table $db_table", $e->getCode(), $e);
       }
     }
@@ -264,8 +263,11 @@ class Oci8Extension extends AbstractExtension {
     // @todo Oracle 18 allows session scoped temporary tables, but until then
     //   we need to store away the table being created and drop it during
     //   destruction.
+    $prefixes = $this->connection->getPrefixes();
+    $prefixes[$drupal_table_name] = '';
+    $this->connection->setPrefixPublic($prefixes);
     $this->tempTables[$drupal_table_name] = $this->connection->getPrefixedTableName($drupal_table_name, TRUE);
-    return $this->connection->query('CREATE GLOBAL TEMPORARY TABLE {' . $drupal_table_name . '} ON COMMIT PRESERVE ROWS AS ' . $query, $args, $options);
+    return $this->connection->query('CREATE GLOBAL TEMPORARY TABLE ' . $this->tempTables[$drupal_table_name] . ' ON COMMIT PRESERVE ROWS AS ' . $query, $args, $options);
   }
 
   /**
