@@ -239,8 +239,8 @@ class Oci8Extension extends AbstractExtension {
       ':existing_id' => $existing_id,
     ], ['return' => Database::RETURN_AFFECTED]);
     if (!$affected) {
-      $this->connection->query('INSERT INTO {sequences} ([value]) VALUES (:existing_id + 1)', [
-        ':existing_id' => $existing_id,
+      $this->connection->query('INSERT INTO {sequences} ([value]) VALUES (:new_id)', [
+        ':new_id' => $existing_id + 1,
       ]);
     }
     // The transaction gets committed when the transaction object gets destroyed

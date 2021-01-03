@@ -69,7 +69,7 @@ class SchemaTest extends SchemaTestBase {
 
     // The PostgreSQL driver is using a custom naming scheme for its indexes, so
     // we need to adjust the initial table specification.
-    if ($this->connection->databaseType() === 'pgsql') {
+    if ($this->connection->databaseType() === 'oracle') {
       $ensure_identifier_length = new \ReflectionMethod(get_class($this->schema), 'ensureIdentifiersLength');
       $ensure_identifier_length->setAccessible(TRUE);
 
@@ -100,7 +100,7 @@ class SchemaTest extends SchemaTestBase {
 
     // Add per-table prefix to the second table.
     $new_connection_info = $connection_info['default'];
-    $new_connection_info['prefix']['test_2_table'] = $new_connection_info['prefix']['default'] . '_shared_';
+    $new_connection_info['prefix']['test2'] = $new_connection_info['prefix']['default'] . 's_';
     Database::addConnectionInfo('test', 'default', $new_connection_info);
     Database::setActiveConnection('test');
     $test_schema = Database::getConnection()->schema();
@@ -116,7 +116,7 @@ class SchemaTest extends SchemaTestBase {
       ],
     ];
     $test_schema->createTable('test_1_table', $table_specification);
-    $test_schema->createTable('test_2_table', $table_specification);
+    $test_schema->createTable('test2', $table_specification);
     $test_schema->createTable('table_3_test', $table_specification);
 
     // Check the "all tables" syntax.
