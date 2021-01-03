@@ -228,6 +228,7 @@ class Connection extends DatabaseConnection {
 
     $prefixed_table_name = $this->prefixTables('{' . $table_name . '}');
     // @todo use substr  instead
+dump([$table_name, $quoted, $prefixed_table_name]);
     return $quoted ? $prefixed_table_name : str_replace($this->identifierQuotes, ['', ''], $prefixed_table_name);
   }
 
