@@ -9,6 +9,7 @@ use Doctrine\DBAL\Schema\Column as DbalColumn;
 use Doctrine\DBAL\Schema\Schema as DbalSchema;
 use Doctrine\DBAL\Schema\Table as DbalTable;
 use Doctrine\DBAL\Statement as DbalStatement;
+use Drupal\Component\Uuid\Php as Uuid;
 use Drupal\drudbal\Driver\Database\dbal\Connection as DruDbalConnection;
 
 /**
@@ -285,9 +286,19 @@ class AbstractExtension implements DbalExtensionInterface {
   }
 
   /**
+   * Generates a temporary table name.
+   *
+   * @return string
+   *   A table name.
+   */
+  protected function generateTemporaryTableName() {
+    return "tmp_tab_" . str_replace('-', '_', (new Uuid())->generate());
+  }
+
+  /**
    * {@inheritdoc}
    */
-  public function delegateQueryTemporary($drupal_table_name, $query, array $args = [], array $options = []) {
+  public function delegateQueryTemporary(string $query, array $args = [], array $options = []): string {
     throw new \LogicException("Method " . __METHOD__ . " not implemented for '" . $this->dbalConnection->getDriver()->getName() . "'");
   }
 

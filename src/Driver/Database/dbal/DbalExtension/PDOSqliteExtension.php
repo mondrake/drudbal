@@ -369,11 +369,16 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateQueryTemporary($drupal_table_name, $query, array $args = [], array $options = []) {
+  public function delegateQueryTemporary(string $query, array $args = [], array $options = []): string {
+    $table_name = $this->generateTemporaryTableName();
+    $this->connection->query('CREATE TEMPORARY TABLE ' . $table_name . ' AS ' . $query, $args, $options);
+
+    // Temp tables should not be prefixed.
     $prefixes = $this->connection->getPrefixes();
-    $prefixes[$drupal_table_name] = '';
+    $prefixes[$table_name] = '';
     $this->connection->setPrefixPublic($prefixes);
-    return $this->connection->query('CREATE TEMPORARY TABLE ' . $drupal_table_name . ' AS ' . $query, $args, $options);
+
+    return $table_name;
   }
 
   /**

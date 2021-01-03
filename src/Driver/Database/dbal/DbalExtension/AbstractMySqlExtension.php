@@ -313,8 +313,10 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateQueryTemporary($drupal_table_name, $query, array $args = [], array $options = []) {
-    return $this->connection->query('CREATE TEMPORARY TABLE {' . $drupal_table_name . '} Engine=MEMORY ' . $query, $args, $options);
+  public function delegateQueryTemporary(string $query, array $args = [], array $options = []): string {
+    $table_name = $this->generateTemporaryTableName();
+    $this->connection->query('CREATE TEMPORARY TABLE {' . $table_name . '} Engine=MEMORY ' . $query, $args, $options);
+    return $table_name;
   }
 
   /**

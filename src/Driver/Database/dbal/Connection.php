@@ -457,17 +457,8 @@ class Connection extends DatabaseConnection {
   /**
    * {@inheritdoc}
    */
-  protected function generateTemporaryTableName() {
-    return "tmp_tab_" . str_replace('-', '_', (new Uuid())->generate());
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function queryTemporary($query, array $args = [], array $options = []) {
-    $tablename = $this->generateTemporaryTableName();
-    $this->dbalExtension->delegateQueryTemporary($tablename, $query, $args, $options);
-    return $tablename;
+    return $this->dbalExtension->delegateQueryTemporary($query, $args, $options);
   }
 
   /**
