@@ -318,7 +318,7 @@ interface DbalExtensionInterface {
    *   A database query result resource, or NULL if the query was not executed
    *   correctly.
    */
-  public function delegateQueryTemporary($drupal_table_name, $query, array $args = [], array $options = []);
+  public function delegateQueryTemporary(string $query, array $args = [], array $options = []): string;
 
   /**
    * Handles exceptions thrown by Connection::popCommittableTransactions().

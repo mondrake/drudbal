@@ -177,25 +177,6 @@ class Connection extends DatabaseConnection {
   /**
    * {@inheritdoc}
    */
-  public function prefixTables($sql) {
-    $matches = [];
-    preg_match_all('/{(\S*)}/', $sql, $matches, PREG_SET_ORDER, 0);
-    foreach ($matches as $match) {
-      $table = $match[1];
-      if (isset($this->dbTables['{' . $table . '}'])) {
-        continue;
-      }
-      // Per-table prefixes are deprecated as of Drupal 8.2 so let's not get
-      // in the complexity of trying to manage that. Assume a single default
-      // prefix.
-      $this->dbTables['{' . $table . '}'] = $this->identifierQuotes[0] . $this->dbalExtension->getDbTableName($this->prefixes['default'], $table) . $this->identifierQuotes[1];
-    }
-    return str_replace(array_keys($this->dbTables), array_values($this->dbTables), $sql);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function quoteIdentifiers($sql) {
     preg_match_all('/(\[(.+?)\])/', $sql, $matches);
     $ids = [];
@@ -205,6 +186,23 @@ class Connection extends DatabaseConnection {
       $i++;
     }
     return strtr($sql, $ids);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function prefixTables($sql) {
+    $matches = [];
+    preg_match_all('/{(\S*)}/', $sql, $matches, PREG_SET_ORDER, 0);
+    foreach ($matches as $match) {
+      $table = $match[1];
+      if (isset($this->dbTables['{' . $table . '}'])) {
+        continue;
+      }
+      $prefix = $this->prefixes[$table] ?? $this->prefixes['default'];
+      $this->dbTables['{' . $table . '}'] = $this->identifierQuotes[0] . $this->dbalExtension->getDbTableName($prefix, $table) . $this->identifierQuotes[1];
+    }
+    return str_replace(array_keys($this->dbTables), array_values($this->dbTables), $sql);
   }
 
   /**
@@ -457,17 +455,8 @@ class Connection extends DatabaseConnection {
   /**
    * {@inheritdoc}
    */
-  protected function generateTemporaryTableName() {
-    return "ttb-" . (new Uuid())->generate();
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function queryTemporary($query, array $args = [], array $options = []) {
-    $tablename = $this->generateTemporaryTableName();
-    $this->dbalExtension->delegateQueryTemporary($tablename, $query, $args, $options);
-    return $tablename;
+    return $this->dbalExtension->delegateQueryTemporary($query, $args, $options);
   }
 
   /**

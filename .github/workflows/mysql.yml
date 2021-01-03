@@ -30,6 +30,7 @@ jobs:
         SIMPLETEST_DB: "dbal://root:@0.0.0.0:3306/drudbal?module=drudbal&dbal_driver=pdo_mysql"
 
     strategy:
+      fail-fast: false
       matrix:
         php-version:
           - "7.4"
@@ -111,6 +112,7 @@ jobs:
         SIMPLETEST_DB: "dbal://root:@0.0.0.0:3306/drudbal?module=drudbal&dbal_driver=mysqli"
 
     strategy:
+      fail-fast: false
       matrix:
         php-version:
           - "7.4"
@@ -188,6 +190,7 @@ jobs:
         SIMPLETEST_DB: "dbal://root:@0.0.0.0:3306/drudbal?module=drudbal&dbal_driver=pdo_mysql"
 
     strategy:
+      fail-fast: false
       matrix:
         php-version:
           - "7.4"
