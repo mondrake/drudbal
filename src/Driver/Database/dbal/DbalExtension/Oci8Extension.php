@@ -276,7 +276,7 @@ class Oci8Extension extends AbstractExtension {
     // @todo Oracle 18 allows session scoped temporary tables, but until then
     //   we need to store away the table being created and drop it during
     //   destruction.
-    $this->tempTables[$table_name] = $table_name;
+    $this->tempTables[$table_name] = '"' . $table_name . '"';
 
     // Temp tables should not be prefixed.
     $prefixes = $this->connection->getPrefixes();
