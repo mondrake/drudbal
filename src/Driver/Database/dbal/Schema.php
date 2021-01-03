@@ -332,7 +332,7 @@ class Schema extends DatabaseSchema {
       $this->dbalSchemaManager->dropTable($this->connection->getPrefixedTableName($table, TRUE));
     }
     catch (\Exception $e) {
-      throw new \RuntimeException("Failed dropping table $table, real {$this->connection->getPrefixedTableName($table, TRUE)} " . var_export($this->dbalSchemaManager->listTableNames(), TRUE), $e->getCode(), $e);
+      $this->dbalExtension->handleDropTableException($e, $table, $table_full_name);
     }
 
     // After dropping the table physically, still need to reflect it in the

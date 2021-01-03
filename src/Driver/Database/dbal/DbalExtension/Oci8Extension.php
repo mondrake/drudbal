@@ -330,6 +330,21 @@ class Oci8Extension extends AbstractExtension {
   }
 
   /**
+   * {@inheritdoc}
+   */
+  public function handleDropTableException(\Exception $e, string $drupal_table_name, string $db_table_name): void {
+    // ORA-14452: attempt to create, alter or drop an index on temporary table
+    // already in use.
+    if ($e->getCode() == 14452) {
+      // In this case the table is temporary, and will be removed by the
+      // destructor.
+      return;
+    }
+
+    throw new DatabaseExceptionWrapper("Failed dropping table '$drupal_table_name', (on DBMS: '$db_table_name')", $e->getCode(), $e);
+  }
+
+  /**
    * Formats a backtrace into a plain-text string.
    *
    * The calls show values for scalar arguments and type names for complex ones.

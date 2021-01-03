@@ -45,10 +45,10 @@ jobs:
         test-args:
           - "--group Database"
           - "--group Entity"
-          - "--group Cache,Config"
-          - "--group field,Field"
-          - "--group file"
-          - "--group views"
+#          - "--group Cache,Config"
+#          - "--group field,Field"
+#          - "--group file"
+#          - "--group views"
 
     steps:
     - name: Install PHP
