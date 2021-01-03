@@ -185,26 +185,10 @@ class Connection extends DatabaseConnection {
       if (isset($this->dbTables['{' . $table . '}'])) {
         continue;
       }
-      // Per-table prefixes are deprecated as of Drupal 8.2 so let's not get
-      // in the complexity of trying to manage that. Assume a single default
-      // prefix.
-      $this->dbTables['{' . $table . '}'] = $this->identifierQuotes[0] . $this->dbalExtension->getDbTableName($this->prefixes['default'], $table) . $this->identifierQuotes[1];
+      $prefix = $this->prefixes[$table] ?? $this->prefixes['default'];
+      $this->dbTables['{' . $table . '}'] = $this->identifierQuotes[0] . $this->dbalExtension->getDbTableName($prefix, $table) . $this->identifierQuotes[1];
     }
     return str_replace(array_keys($this->dbTables), array_values($this->dbTables), $sql);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function quoteIdentifiers($sql) {
-    preg_match_all('/(\[(.+?)\])/', $sql, $matches);
-    $ids = [];
-    $i = 0;
-    foreach($matches[1] as $m) {
-      $ids[$m] = $this->getDbalExtension()->getDbFieldName($matches[2][$i], TRUE);
-      $i++;
-    }
-    return strtr($sql, $ids);
   }
 
   /**
@@ -230,6 +214,20 @@ class Connection extends DatabaseConnection {
     // @todo use substr  instead
 dump([$table_name, $quoted, $prefixed_table_name]);
     return $quoted ? $prefixed_table_name : str_replace($this->identifierQuotes, ['', ''], $prefixed_table_name);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function quoteIdentifiers($sql) {
+    preg_match_all('/(\[(.+?)\])/', $sql, $matches);
+    $ids = [];
+    $i = 0;
+    foreach($matches[1] as $m) {
+      $ids[$m] = $this->getDbalExtension()->getDbFieldName($matches[2][$i], TRUE);
+      $i++;
+    }
+    return strtr($sql, $ids);
   }
 
   /**
