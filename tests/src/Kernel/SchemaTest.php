@@ -67,21 +67,18 @@ class SchemaTest extends SchemaTestBase {
     $introspect_index_schema->setAccessible(TRUE);
     $index_schema = $introspect_index_schema->invoke($this->schema, $table_name);
 
-    // The PostgreSQL driver is using a custom naming scheme for its indexes, so
+    // Oracle is using a custom naming scheme for its indexes, so
     // we need to adjust the initial table specification.
     if ($this->connection->databaseType() === 'oracle') {
-      $ensure_identifier_length = new \ReflectionMethod(get_class($this->schema), 'ensureIdentifiersLength');
-      $ensure_identifier_length->setAccessible(TRUE);
-
       foreach ($table_specification['unique keys'] as $original_index_name => $columns) {
         unset($table_specification['unique keys'][$original_index_name]);
-        $new_index_name = $ensure_identifier_length->invoke($this->schema, $table_name, $original_index_name, 'key');
+        $new_index_name = $this->connection->getDbalExtension()->getDbIndexName('indexExists', $this->getDbalExtension()->dbalSchema(), $table_name, $original_index_name, $this->getDbalExtension()->getPrefixInfo($table_name));
         $table_specification['unique keys'][$new_index_name] = $columns;
       }
 
       foreach ($table_specification['indexes'] as $original_index_name => $columns) {
         unset($table_specification['indexes'][$original_index_name]);
-        $new_index_name = $ensure_identifier_length->invoke($this->schema, $table_name, $original_index_name, 'idx');
+        $new_index_name = $this->connection->getDbalExtension()->getDbIndexName('indexExists', $this->getDbalExtension()->dbalSchema(), $table_name, $original_index_name, $this->getDbalExtension()->getPrefixInfo($table_name));
         $table_specification['indexes'][$new_index_name] = $columns;
       }
     }
@@ -127,18 +124,18 @@ class SchemaTest extends SchemaTestBase {
       // \Drupal\KernelTests\KernelTestBase::containerBuild().
       'config',
       'table_3_test',
-      'test_1_table',
       // This table uses a per-table prefix, yet it is returned as un-prefixed.
-      'test_2_table',
+      'test2',
+      'test_1_table',
     ];
     $this->assertEquals($expected, $tables);
 
     // Check the restrictive syntax.
-    $tables = $test_schema->findTables('test_%');
+    $tables = $test_schema->findTables('test%');
     sort($tables);
     $expected = [
+      'test2',
       'test_1_table',
-      'test_2_table',
     ];
     $this->assertEquals($expected, $tables);
 

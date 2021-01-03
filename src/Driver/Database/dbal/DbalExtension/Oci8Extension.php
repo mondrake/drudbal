@@ -245,7 +245,8 @@ class Oci8Extension extends AbstractExtension {
     }
     // The transaction gets committed when the transaction object gets destroyed
     // because it gets out of scope.
-    return $this->connection->query('SELECT [value] FROM {sequences}')->fetchField();
+dump($this->connection->query('SELECT [value] FROM {sequences}')->fetchField());
+    return (int) $this->connection->query('SELECT [value] FROM {sequences}')->fetchField();
   }
 
   /**
