@@ -283,6 +283,7 @@ class Oci8Extension extends AbstractExtension {
     $prefixes[$table_name] = '';
     $this->connection->setPrefixPublic($prefixes);
 
+dump([$this->connection->getPrefixes(), $this->tempTables, $this->delegateListTableNames()]);
     return $table_name;
   }
 
