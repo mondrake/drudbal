@@ -14,6 +14,7 @@ env:
       "Drupal\\KernelTests\\Core\\Database\\BasicSyntaxTest",
       "Drupal\\KernelTests\\Core\\Database\\ConnectionUnitTest",
       "Drupal\\KernelTests\\Core\\Database\\DatabaseExceptionWrapperTest",
+      "Drupal\\KernelTests\\Core\\Database\\SchemaTest",
       "Drupal\\KernelTests\\Core\\Cache\\ApcuBackendTest",
       "Drupal\\KernelTests\\Core\\Cache\\EndOfTransactionQueriesTest"
     ]'
@@ -37,6 +38,7 @@ jobs:
           - "1521:1521"
 
     strategy:
+      fail-fast: false
       matrix:
         php-version:
           - "7.4"
@@ -92,11 +94,12 @@ jobs:
         sleep 5s
 
     - name: Report installation
+      continue-on-error: true
       run: |
         php install_report.php
-#        vendor/bin/drush pml --type=module --no-core
-#        vendor/bin/drush core:status
-#        vendor/bin/drush core:requirements
+        vendor/bin/drush core:status
+        vendor/bin/drush core:requirements
+        vendor/bin/drush pml --type=module --no-core
 
     - name: Run test ${{ matrix.test-args }}
       run: vendor/bin/phpunit -c core --color=always ${{ matrix.test-args }}

@@ -30,6 +30,7 @@ jobs:
         SIMPLETEST_DB: "dbal://localhost/sites/drudbal.sqlite?module=drudbal&dbal_driver=pdo_sqlite"
 
     strategy:
+      fail-fast: false
       matrix:
         php-version:
           - "7.4"

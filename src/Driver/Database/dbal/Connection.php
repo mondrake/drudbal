@@ -177,6 +177,20 @@ class Connection extends DatabaseConnection {
   /**
    * {@inheritdoc}
    */
+  public function quoteIdentifiers($sql) {
+    preg_match_all('/(\[(.+?)\])/', $sql, $matches);
+    $ids = [];
+    $i = 0;
+    foreach($matches[1] as $m) {
+      $ids[$m] = $this->getDbalExtension()->getDbFieldName($matches[2][$i], TRUE);
+      $i++;
+    }
+    return strtr($sql, $ids);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function prefixTables($sql) {
     $matches = [];
     preg_match_all('/{(\S*)}/', $sql, $matches, PREG_SET_ORDER, 0);
@@ -212,22 +226,7 @@ class Connection extends DatabaseConnection {
 
     $prefixed_table_name = $this->prefixTables('{' . $table_name . '}');
     // @todo use substr  instead
-dump([$table_name, $quoted, $prefixed_table_name]);
     return $quoted ? $prefixed_table_name : str_replace($this->identifierQuotes, ['', ''], $prefixed_table_name);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function quoteIdentifiers($sql) {
-    preg_match_all('/(\[(.+?)\])/', $sql, $matches);
-    $ids = [];
-    $i = 0;
-    foreach($matches[1] as $m) {
-      $ids[$m] = $this->getDbalExtension()->getDbFieldName($matches[2][$i], TRUE);
-      $i++;
-    }
-    return strtr($sql, $ids);
   }
 
   /**
