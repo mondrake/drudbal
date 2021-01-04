@@ -232,7 +232,8 @@ class Oci8Extension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateNextId($existing_id = 0) {
+  public function delegateNextId(int $existing_id = 0): int {
+if (!is_numeric($existing_id)) throw new \Exception('id ' . $existing_id);
     // @codingStandardsIgnoreLine
     $trn = $this->connection->startTransaction();
     $affected = $this->connection->query('UPDATE {sequences} SET [value] = GREATEST([value], :existing_id) + 1', [

@@ -335,7 +335,8 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateNextId($existing_id = 0) {
+  public function delegateNextId(int $existing_id = 0): int {
+
     // @codingStandardsIgnoreLine
     $trn = $this->connection->startTransaction();
     // We can safely use literal queries here instead of the slower query
