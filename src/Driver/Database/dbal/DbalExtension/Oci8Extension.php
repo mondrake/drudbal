@@ -467,7 +467,7 @@ class Oci8Extension extends AbstractExtension {
     $new_args = [];
     foreach ($args as $placeholder => $value) {
       // Rename placeholders that are reserved keywords.
-      if (in_array(strtoupper(substr($placeholder, 1)), $this->connection->getDbalPlatform()->getReservedKeywordsList()->getKeywords())) {
+      if ($this->connection->getDbalPlatform()->getReservedKeywordsList()->isKeyword(substr($placeholder, 1))) {
         $new_placeholder = $placeholder . 'x';
         $query = str_replace($placeholder, $new_placeholder, $query);
         $placeholder = $new_placeholder;
