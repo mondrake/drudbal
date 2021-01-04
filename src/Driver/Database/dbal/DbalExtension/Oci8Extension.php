@@ -613,7 +613,8 @@ BEGIN
         END LOOP;
     RETURN LTRIM(l_result, p_delim);
 END;
-PLSQL);
+PLSQL
+      );
     }
     catch (\Exception $e) {
       $results['fail'][] = t("Failed installation of the CONCAT_WS function: " . $e->getMessage());
@@ -636,7 +637,8 @@ begin
    return greatest(p1,greatest(p2,p3));
   end if;
 end;
-PLSQL);
+PLSQL
+      );
     }
     catch (\Exception $e) {
       $results['fail'][] = t("Failed installation of the GREATEST function: " . $e->getMessage());
@@ -651,7 +653,8 @@ as
 begin
   return dbms_random.random;
 end;
-PLSQL);
+PLSQL
+      );
     }
     catch (\Exception $e) {
       $results['fail'][] = t("Failed installation of the RAND function: " . $e->getMessage());

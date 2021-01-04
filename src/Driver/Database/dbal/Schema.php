@@ -488,7 +488,7 @@ class Schema extends DatabaseSchema {
     if (!$this->tableExists($table)) {
       return FALSE;
     }
-    $table_full_name = $this->connection->getPrefixedTableName($table);
+    $table_full_name = $this->connection->getPrefixedTableName($table, TRUE);
 
     // Delegate to DBAL extension.
     $result = FALSE;

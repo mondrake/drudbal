@@ -42,4 +42,27 @@ class QueryTemporaryTest extends DatabaseTestBase {
     Database::closeConnection('temp_query');
   }
 
+  /**
+   * Confirms updating to NULL.
+   */
+  public function testSimpleNullUpdate() {
+    $this->ensureSampleDataNull();
+    $num_updated = $this->connection->update('test_null')
+      ->fields(['age' => NULL])
+      ->condition('name', 'Kermit')
+      ->execute();
+    $this->assertIdentical($num_updated, 1, 'Updated 1 record.');
+dump($this->connection->query('SELECT * FROM {test_null}')->fetchAll());
+    $saved_age = $this->connection->query('SELECT [age] FROM {test_null} WHERE [name] = :name', [':name' => 'Kermit'])->fetchField();
+    $this->assertNull($saved_age, 'Updated name successfully.');
+  }
+
+  /**
+   * Tests the Schema::indexExists() method.
+   */
+  public function testDBIndexExists() {
+    $this->assertTrue($this->connection->schema()->indexExists('test', 'ages'), 'Returns true for existent index.');
+    $this->assertFalse($this->connection->schema()->indexExists('test', 'no_such_index'), 'Returns false for nonexistent index.');
+  }
+
 }
