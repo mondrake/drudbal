@@ -305,7 +305,7 @@ class Schema extends DatabaseSchema {
 //      error_log('renameTable ' . $this->connection->getPrefixedTableName($table) . ' to ' . $this->connection->getPrefixedTableName($new_name));
 //    }
     $dbal_schema = $this->dbalSchema();
-    $this->dbalSchemaManager->renameTable($this->connection->getPrefixedTableName($table), $this->connection->getPrefixedTableName($new_name));
+    $this->dbalSchemaManager->renameTable($this->connection->getPrefixedTableName($table, TRUE), $this->connection->getPrefixedTableName($new_name, TRUE));
     $this->dbalExtension->postRenameTable($dbal_schema, $table, $new_name);
     $this->dbalSchemaForceReload();
   }

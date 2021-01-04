@@ -463,10 +463,19 @@ class Oci8Extension extends AbstractExtension {
   public function alterStatement(&$query, array &$args) {
     if ($this->getDebugging()) dump(['pre-alter', $query, $args]);
 
-    // Modify arguments for empty strings.
-    foreach ($args as $placeholder => &$value) {
-      $value = $value === '' ? self::ORACLE_EMPTY_STRING_REPLACEMENT : $value;  // @todo here check
+    // Reprocess args.
+    $new_args = [];
+    foreach ($args as $placeholder => $value) {
+      // Rename placeholders that are reserved keywords.
+      if (in_array(strtoupper(substr($placeholder, 1)), $this->connection->getDbalPlatform()->getReservedKeywordsList())) {
+        $new_placeholder = $placeholder . 'x';
+        $query = str_replace($placeholder, $new_placeholder, $query);
+        $placeholder = $new_placeholder;
+      }
+      // Modify arguments for empty strings.
+      $new_args[$placeholder] = $value === '' ? self::ORACLE_EMPTY_STRING_REPLACEMENT : $value;  // @todo here check
     }
+    $args = $new_args;
 
     // Replace empty strings.
     $query = str_replace("''", "'" . self::ORACLE_EMPTY_STRING_REPLACEMENT . "'", $query);
@@ -482,7 +491,6 @@ class Oci8Extension extends AbstractExtension {
     }
 
     if ($this->getDebugging()) dump(['post-alter', $query, $args]);
-
     return $this;
   }
 

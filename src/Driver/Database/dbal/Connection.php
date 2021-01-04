@@ -9,6 +9,7 @@ use Doctrine\DBAL\Exception as DbalException;
 use Doctrine\DBAL\DriverManager as DbalDriverManager;
 use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
 use Doctrine\DBAL\ExpandArrayParameters;
+use Doctrine\DBAL\Platforms\AbstractPlatform as DbalAbstractPlatform;
 use Doctrine\DBAL\SQL\Parser;
 use Drupal\Component\Uuid\Php as Uuid;
 use Drupal\Core\Database\Connection as DatabaseConnection;
@@ -680,6 +681,16 @@ class Connection extends DatabaseConnection {
    */
   public function getDbalExtension() {
     return $this->dbalExtension;
+  }
+
+  /**
+   * Gets the DBAL platform.
+   *
+   * @return \Doctrine\DBAL\Platforms\AbstractPlatform
+   *   The DBAL platform for this connection.
+   */
+  public function getDbalPlatform(): DbalAbstractPlatform {
+    return $this->dbalPlatform;
   }
 
   /**
