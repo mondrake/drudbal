@@ -506,8 +506,8 @@ class Connection extends DatabaseConnection {
    * {@inheritdoc}
    */
   public function nextId($existing_id = 0) {
-if (!is_numeric($existing_id)) throw new \Exception('id: ' . $existing_id);
-    return $this->dbalExtension->delegateNextId($existing_id ?? 0);
+    $id = is_numeric($existing_id ?? 0) ? ($existing_id ?? 0) : 0;
+    return $this->dbalExtension->delegateNextId($id);
   }
 
   /**
