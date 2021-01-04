@@ -72,13 +72,13 @@ class SchemaTest extends SchemaTestBase {
     if ($this->connection->databaseType() === 'oracle') {
       foreach ($table_specification['unique keys'] as $original_index_name => $columns) {
         unset($table_specification['unique keys'][$original_index_name]);
-        $new_index_name = $this->connection->getDbalExtension()->getDbIndexName('indexExists', $this->connection->getDbalExtension()->dbalSchema(), $table_name, $original_index_name, $this->connection->getDbalExtension()->getPrefixInfo($table_name));
+        $new_index_name = $this->connection->getDbalExtension()->getDbIndexName('indexExists', $this->connection->getDbalConnection()->getSchemaManager()->createSchema(), $table_name, $original_index_name, $this->connection->getDbalExtension()->getPrefixInfo($table_name));
         $table_specification['unique keys'][$new_index_name] = $columns;
       }
 
       foreach ($table_specification['indexes'] as $original_index_name => $columns) {
         unset($table_specification['indexes'][$original_index_name]);
-        $new_index_name = $this->connection->getDbalExtension()->getDbIndexName('indexExists', $this->connection->getDbalExtension()->dbalSchema(), $table_name, $original_index_name, $this->connection->getDbalExtension()->getPrefixInfo($table_name));
+        $new_index_name = $this->connection->getDbalExtension()->getDbIndexName('indexExists', $this->connection->getDbalConnection()->getSchemaManager()->createSchema(), $table_name, $original_index_name, $this->connection->getDbalExtension()->getPrefixInfo($table_name));
         $table_specification['indexes'][$new_index_name] = $columns;
       }
     }
