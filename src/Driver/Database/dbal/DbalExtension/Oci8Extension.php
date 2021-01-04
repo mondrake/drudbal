@@ -508,7 +508,19 @@ class Oci8Extension extends AbstractExtension {
       if (isset($this->dbIdentifiersMap[$column])) {
         $column = $this->dbIdentifiersMap[$column];
       }
-      $result[$column] = $value === self::ORACLE_EMPTY_STRING_REPLACEMENT ? '' : (string) $value;
+      switch ($value) {
+        case self::ORACLE_EMPTY_STRING_REPLACEMENT:
+          $result[$column] = '';
+          break;
+
+        case NULL:
+          $result[$column] = NULL;
+          break;
+
+        default:
+          $result[$column] = (string) $value;
+
+      }
     }
     return $result;
   }
