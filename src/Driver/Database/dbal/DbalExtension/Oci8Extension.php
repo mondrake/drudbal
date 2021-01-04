@@ -232,20 +232,20 @@ class Oci8Extension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateNextId($existing_id = 0) {
+  public function delegateNextId(int $existing_id = 0): int {
     // @codingStandardsIgnoreLine
     $trn = $this->connection->startTransaction();
     $affected = $this->connection->query('UPDATE {sequences} SET [value] = GREATEST([value], :existing_id) + 1', [
       ':existing_id' => $existing_id,
     ], ['return' => Database::RETURN_AFFECTED]);
     if (!$affected) {
-      $this->connection->query('INSERT INTO {sequences} ([value]) VALUES (:existing_id + 1)', [
-        ':existing_id' => $existing_id,
+      $this->connection->query('INSERT INTO {sequences} ([value]) VALUES (:new_id)', [
+        ':new_id' => $existing_id + 1,
       ]);
     }
     // The transaction gets committed when the transaction object gets destroyed
     // because it gets out of scope.
-    return $this->connection->query('SELECT [value] FROM {sequences}')->fetchField();
+    return (int) $this->connection->query('SELECT [value] FROM {sequences}')->fetchField();
   }
 
   /**
@@ -327,6 +327,21 @@ class Oci8Extension extends AbstractExtension {
     else {
       throw new DatabaseExceptionWrapper($message, 0, $e);
     }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function handleDropTableException(\Exception $e, string $drupal_table_name, string $db_table_name): void {
+    // ORA-14452: attempt to create, alter or drop an index on temporary table
+    // already in use.
+    if ($e->getCode() == 14452) {
+      // In this case the table is temporary, and will be removed by the
+      // destructor.
+      return;
+    }
+
+    throw new DatabaseExceptionWrapper("Failed dropping table '$drupal_table_name', (on DBMS: '$db_table_name')", $e->getCode(), $e);
   }
 
   /**

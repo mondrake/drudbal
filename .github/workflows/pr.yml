@@ -90,30 +90,31 @@ jobs:
         cp modules/contrib/drudbal/tests/travis_ci/install_* .
         php install_oracle.php
 
-    - name: Install Drupal
-      run: |
-        # Use the custom installer.
-        php install_cli.php
-        vendor/bin/drush runserver localhost:8080 &
-        sleep 5s
+#    - name: Install Drupal
+#      run: |
+#        # Use the custom installer.
+#        php install_cli.php
+#        vendor/bin/drush runserver localhost:8080 &
+#        sleep 5s
 
-    - name: Report installation
-      continue-on-error: true
-      run: |
-        php install_report.php
-        vendor/bin/drush pml --type=module --no-core
-        vendor/bin/drush core:status
-        vendor/bin/drush core:requirements
-
-#    - name: Run test a
+#    - name: Report installation
 #      continue-on-error: true
-#      run: vendor/bin/phpunit -c core --color=always modules/contrib/drudbal/tests/src/Kernel/SchemaTest.php
+#      run: |
+#        php install_report.php
+#        vendor/bin/drush pml --type=module --no-core
+#        vendor/bin/drush core:status
+#        vendor/bin/drush core:requirements
+
+    - name: Run test a
+      continue-on-error: true
+      run: vendor/bin/phpunit -c core --color=always modules/contrib/drudbal/tests/src/Kernel/SchemaTest.php
 #      run: vendor/bin/phpunit -c core --color=always ${{ matrix.test-args }}
 
-    - name: Run test b
+    - name: Run test d
       continue-on-error: true
-      run: vendor/bin/phpunit -c core --color=always modules/contrib/drudbal/tests/src/Kernel/QueryTemporaryTest.php
+      run: vendor/bin/phpunit -c core --color=always core/tests/Drupal/KernelTests/Core/Entity/ContentEntityNonRevisionableFieldTest.php
 
-    - name: Run test c
-      continue-on-error: true
-      run: vendor/bin/phpunit -c core --color=always core/modules/system/tests/src/Functional/Database/TemporaryQueryTest.php
+#    - name: Run test e
+#      continue-on-error: true
+#      run: vendor/bin/phpunit -c core --color=always core/tests/Drupal/KernelTests/Core/Entity/EntitySchemaTest.php
+

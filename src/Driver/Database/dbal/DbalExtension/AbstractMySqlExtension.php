@@ -209,7 +209,7 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateNextId($existing_id = 0) {
+  public function delegateNextId(int $existing_id = 0): int {
     $new_id = $this->connection->query('INSERT INTO {sequences} () VALUES ()', [], ['return' => Database::RETURN_INSERT_ID]);
     // This should only happen after an import or similar event.
     if ($existing_id >= $new_id) {

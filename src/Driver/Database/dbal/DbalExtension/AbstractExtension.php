@@ -274,7 +274,7 @@ class AbstractExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function delegateNextId($existing_id = 0) {
+  public function delegateNextId(int $existing_id = 0): int {
     throw new \LogicException("Method " . __METHOD__ . " not implemented for '" . $this->dbalConnection->getDriver()->getName() . "'");
   }
 

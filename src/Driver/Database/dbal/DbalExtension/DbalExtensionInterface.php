@@ -255,7 +255,7 @@ interface DbalExtensionInterface {
    *   An integer number larger than any number returned by earlier calls and
    *   also larger than the $existing_id if one was passed in.
    */
-  public function delegateNextId($existing_id = 0);
+  public function delegateNextId(int $existing_id = 0): int;
 
   /**
    * Handles a DbalExceptions thrown by Connection::query().
