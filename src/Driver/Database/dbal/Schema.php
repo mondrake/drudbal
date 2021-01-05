@@ -488,7 +488,7 @@ class Schema extends DatabaseSchema {
     if (!$this->tableExists($table)) {
       return FALSE;
     }
-    $table_full_name = $this->connection->getPrefixedTableName($table, TRUE);
+    $table_full_name = $this->connection->getPrefixedTableName($table);
 
     // Delegate to DBAL extension.
     $result = FALSE;
@@ -497,7 +497,7 @@ class Schema extends DatabaseSchema {
     }
 
     // DBAL extension did not pick up, proceed with DBAL.
-    $index_full_name = $this->dbalExtension->getDbIndexName('indexExists', $this->dbalSchema(), $table, $name, $this->getPrefixInfo($table));
+    $index_full_name = $this->dbalExtension->getDbIndexName('indexExists', $this->dbalSchema(), $table, $name);
     return in_array($index_full_name, array_keys($this->dbalSchemaManager->listTableIndexes($table_full_name)));
     // @todo it would be preferred to do
     // return $this->dbalSchema()->getTable($this->connection->getPrefixedTableName($table))->hasIndex($index_full_name);
@@ -619,7 +619,7 @@ class Schema extends DatabaseSchema {
     }
 
     $table_full_name = $this->connection->getPrefixedTableName($table);
-    $index_full_name = $this->dbalExtension->getDbIndexName('addUniqueKey', $this->dbalSchema(), $table, $name, $this->getPrefixInfo($table));
+    $index_full_name = $this->dbalExtension->getDbIndexName('addUniqueKey', $this->dbalSchema(), $table, $name);
 
     // Delegate to DBAL extension.
     if ($this->dbalExtension->delegateAddUniqueKey($this->dbalSchema(), $table_full_name, $index_full_name, $table, $name, $fields)) {
@@ -652,7 +652,7 @@ class Schema extends DatabaseSchema {
     }
 
     $table_full_name = $this->connection->getPrefixedTableName($table);
-    $index_full_name = $this->dbalExtension->getDbIndexName('addIndex', $this->dbalSchema(), $table, $name, $this->getPrefixInfo($table));
+    $index_full_name = $this->dbalExtension->getDbIndexName('addIndex', $this->dbalSchema(), $table, $name);
 
     // Delegate to DBAL extension.
     if ($this->dbalExtension->delegateAddIndex($this->dbalSchema(), $table_full_name, $index_full_name, $table, $name, $fields, $spec)) {
@@ -688,7 +688,7 @@ class Schema extends DatabaseSchema {
     }
 
     $table_full_name = $this->connection->getPrefixedTableName($table);
-    $index_full_name = $this->dbalExtension->getDbIndexName('dropIndex', $this->dbalSchema(), $table, $name, $this->getPrefixInfo($table));
+    $index_full_name = $this->dbalExtension->getDbIndexName('dropIndex', $this->dbalSchema(), $table, $name);
 
     // Delegate to DBAL extension.
     if ($this->dbalExtension->delegateDropIndex($this->dbalSchema(), $table_full_name, $index_full_name, $table, $name)) {

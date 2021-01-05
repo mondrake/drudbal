@@ -125,15 +125,13 @@ interface DbalExtensionInterface {
    *   The DBAL schema object.
    * @param string $drupal_table_name
    *   A string with the Drupal name of the table.
-   * @param string $index_name
+   * @param string $drupal_index_name
    *   A string with the Drupal name of the index.
-   * @param array $table_prefix_info
-   *   A keyed array with information about the schema, table name and prefix.
    *
    * @return string
    *   A string with the name of the index to be used in the DBMS.
    */
-  public function getDbIndexName($context, DbalSchema $dbal_schema, $drupal_table_name, $index_name, array $table_prefix_info);
+  public function getDbIndexName(string $context, DbalSchema $dbal_schema, string $drupal_table_name, string $drupal_index_name): string;
 
   /**
    * Get the Drupal index name, from a database-level index name.

@@ -195,7 +195,7 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function getDbIndexName($context, DbalSchema $dbal_schema, $drupal_table_name, $index_name, array $table_prefix_info) {
+  public function getDbIndexName(string $context, DbalSchema $dbal_schema, string $drupal_table_name, string $drupal_index_name): string {
     // If checking for index existence or dropping, see if an index exists
     // with the Drupal name, regardless of prefix. A table can be renamed so
     // that the prefix is no longer relevant.
@@ -205,7 +205,7 @@ class PDOSqliteExtension extends AbstractExtension {
         $index_full_name = $index->getName();
         $matches = [];
         if (preg_match('/.*____(.+)/', $index_full_name, $matches)) {
-          if ($matches[1] === $index_name) {
+          if ($matches[1] === $drupal_index_name) {
             return $index_full_name;
           }
         }
@@ -217,7 +217,7 @@ class PDOSqliteExtension extends AbstractExtension {
       // dependent (otherwise indexes need to be recreated if the table gets
       // renamed).
       $uuid = new Uuid();
-      return 'idx_' . str_replace('-', '', $uuid->generate()) . '____' . $index_name;
+      return 'idx_' . str_replace('-', '', $uuid->generate()) . '____' . $drupal_index_name;
     }
   }
 

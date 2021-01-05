@@ -170,7 +170,7 @@ class Oci8Extension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function getDbIndexName($context, DbalSchema $dbal_schema, $drupal_table_name, $index_name, array $table_prefix_info) {
+  public function getDbIndexName(string $context, DbalSchema $dbal_schema, string $drupal_table_name, string $drupal_index_name): string {
     // If checking for index existence or dropping, see if an index exists
     // with the Drupal name, regardless of prefix. It may be a table was
     // renamed so the prefix is no longer relevant.
@@ -180,7 +180,7 @@ class Oci8Extension extends AbstractExtension {
         $index_full_name = $index->getName();
         $matches = [];
         if (preg_match('/.*____(.+)/', $index_full_name, $matches)) {
-          if ($matches[1] === hash('crc32b', $index_name)) {
+          if ($matches[1] === hash('crc32b', $drupal_index_name)) {
             return strtolower($index_full_name);
           }
         }
@@ -191,7 +191,7 @@ class Oci8Extension extends AbstractExtension {
       // To keep things... short, use a CRC32 hash of a UUID and one of the
       // Drupal index name as the db name of the index.
       $uuid = new Uuid();
-      return 'IDX_' . hash('crc32b', $uuid->generate()) . '____' . hash('crc32b', $index_name);
+      return 'IDX_' . hash('crc32b', $uuid->generate()) . '____' . hash('crc32b', $drupal_index_name);
     }
   }
 
@@ -863,6 +863,15 @@ PLSQL
     }
 
     $this->cleanUpSchema($table);*/
+    return TRUE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateIndexExists(&$result, DbalSchema $dbal_schema, $table_full_name, $drupal_table_name, $drupal_index_name) {
+    $index_full_name = $this->getDbIndexName('indexExists', $dbal_schema, $drupal_table_name, $drupal_index_name);
+    $result = in_array($index_full_name, array_keys($this->getDbalConnection()->getSchemaManager()->listTableIndexes("\"$table_full_name\"")));
     return TRUE;
   }
 
