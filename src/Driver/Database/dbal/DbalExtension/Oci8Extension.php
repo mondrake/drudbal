@@ -871,7 +871,7 @@ PLSQL
    */
   public function delegateIndexExists(&$result, DbalSchema $dbal_schema, $table_full_name, $drupal_table_name, $drupal_index_name) {
     $index_full_name = $this->getDbIndexName('indexExists', $dbal_schema, $drupal_table_name, $drupal_index_name);
-    $result = in_array($index_full_name, array_keys($this->->getDbalConnection()->getSchemaManager()->listTableIndexes("\"$table_full_name\"")));
+    $result = in_array($index_full_name, array_keys($this->getDbalConnection()->getSchemaManager()->listTableIndexes("\"$table_full_name\"")));
     return TRUE;
   }
 
