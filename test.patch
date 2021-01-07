@@ -26,24 +26,8 @@ index 0f7ae5b217..2e2d7a01c1 100644
        }
      }
      return $this;
-diff --git a/core/modules/views/tests/src/Kernel/QueryGroupByTest.php b/core/modules/views/tests/src/Kernel/QueryGroupByTest.php
-index 507c40eb5f..447b353b01 100644
---- a/core/modules/views/tests/src/Kernel/QueryGroupByTest.php
-+++ b/core/modules/views/tests/src/Kernel/QueryGroupByTest.php
-@@ -210,7 +210,10 @@ public function testGroupByBaseField() {
-     $view->displayHandlers->get('default')->options['fields']['name']['group_type'] = 'min';
-     unset($view->displayHandlers->get('default')->options['fields']['id']['group_type']);
-     $this->executeView($view);
--    $this->assertStringContainsString('GROUP BY entity_test.id', (string) $view->build_info['query'], 'GROUP BY field includes the base table name when grouping on the base field.');
-+    // All fields should be properly quoted.
-+    $this->assertRegExp('/MIN\(.entity_test.\..name.\) AS .entity_test_name./', (string) $view->build_info['query'], 'MIN() function argument should include the base table name.');
-+    $this->assertRegExp('/MIN\(.entity_test.\..id.\) AS .id_1./', (string) $view->build_info['query'], 'MIN() function argument should include the base table name.');
-+    $this->assertRegExp('/GROUP BY .entity_test.\..id.\, \.entity_test_langcode\./', (string) $view->build_info['query'], 'GROUP BY field includes the base table name when grouping on the base field.');
-   }
- 
-   /**
 diff --git a/core/tests/Drupal/KernelTests/Core/Entity/EntityQueryAggregateTest.php b/core/tests/Drupal/KernelTests/Core/Entity/EntityQueryAggregateTest.php
-index 02448d6cee..3a24bd6e06 100644
+index 02448d6cee..c0b1820f94 100644
 --- a/core/tests/Drupal/KernelTests/Core/Entity/EntityQueryAggregateTest.php
 +++ b/core/tests/Drupal/KernelTests/Core/Entity/EntityQueryAggregateTest.php
 @@ -131,10 +131,11 @@ public function testAggregation() {
@@ -62,20 +46,3 @@ index 02448d6cee..3a24bd6e06 100644
      }
  
      // Apply aggregation and groupby on the same query.
-@@ -149,11 +150,13 @@ public function testAggregation() {
-     ]);
- 
-     // Apply aggregation and a condition which matches.
--    $this->queryResult = $this->entityStorage->getAggregateQuery()
-+    $query = $this->entityStorage->getAggregateQuery()
-       ->aggregate('id', 'COUNT')
-       ->groupBy('id')
--      ->conditionAggregate('id', 'COUNT', 8)
--      ->execute();
-+      ->conditionAggregate('id', 'COUNT', 8);
-+    // HAVING (COUNT(entity_test_2.id)
-+    $this->queryResult = $query->execute();
-+    $this->assertEquals('bingo', (string) $query);
-     $this->assertResults([]);
- 
-     // Don't call aggregate to test the implicit aggregate call.
