@@ -1,5 +1,5 @@
 diff --git a/core/lib/Drupal/Core/Entity/Query/Sql/ConditionAggregate.php b/core/lib/Drupal/Core/Entity/Query/Sql/ConditionAggregate.php
-index d0db922895..488612506f 100644
+index d0db922895..75784bf11c 100644
 --- a/core/lib/Drupal/Core/Entity/Query/Sql/ConditionAggregate.php
 +++ b/core/lib/Drupal/Core/Entity/Query/Sql/ConditionAggregate.php
 @@ -38,7 +38,8 @@ public function compile($conditionContainer) {
@@ -7,13 +7,13 @@ index d0db922895..488612506f 100644
          $function = $condition['function'];
          $placeholder = ':db_placeholder_' . $conditionContainer->nextPlaceholder();
 -        $conditionContainer->having("$function($field) {$condition['operator']} $placeholder", [$placeholder => $condition['value']]);
-+        $sql_field_escaped = '[' . substr('.', '].[', $field) . ']';
++        $sql_field_escaped = '[' . str_replace('.', '].[', $field) . ']';
 +        $conditionContainer->having("$function($sql_field_escaped) {$condition['operator']} $placeholder", [$placeholder => $condition['value']]);
        }
      }
    }
 diff --git a/core/lib/Drupal/Core/Entity/Query/Sql/QueryAggregate.php b/core/lib/Drupal/Core/Entity/Query/Sql/QueryAggregate.php
-index 0f7ae5b217..be770cae96 100644
+index 0f7ae5b217..2e2d7a01c1 100644
 --- a/core/lib/Drupal/Core/Entity/Query/Sql/QueryAggregate.php
 +++ b/core/lib/Drupal/Core/Entity/Query/Sql/QueryAggregate.php
 @@ -75,7 +75,8 @@ protected function addAggregate() {
@@ -21,7 +21,7 @@ index 0f7ae5b217..be770cae96 100644
        foreach ($this->aggregate as $aggregate) {
          $sql_field = $this->getSqlField($aggregate['field'], $aggregate['langcode']);
 -        $this->sqlExpressions[$aggregate['alias']] = $aggregate['function'] . "($sql_field)";
-+        $sql_field_escaped = '[' . substr('.', '].[', $sql_field) . ']';
++        $sql_field_escaped = '[' . str_replace('.', '].[', $sql_field) . ']';
 +        $this->sqlExpressions[$aggregate['alias']] = $aggregate['function'] . "($sql_field_escaped)";
        }
      }
