@@ -43,20 +43,37 @@ index 507c40eb5f..447b353b01 100644
  
    /**
 diff --git a/core/tests/Drupal/KernelTests/Core/Entity/EntityQueryAggregateTest.php b/core/tests/Drupal/KernelTests/Core/Entity/EntityQueryAggregateTest.php
-index 02448d6cee..e6fef16b3f 100644
+index 02448d6cee..dff2d18b28 100644
 --- a/core/tests/Drupal/KernelTests/Core/Entity/EntityQueryAggregateTest.php
 +++ b/core/tests/Drupal/KernelTests/Core/Entity/EntityQueryAggregateTest.php
-@@ -131,9 +131,10 @@ public function testAggregation() {
+@@ -131,10 +131,11 @@ public function testAggregation() {
  
      // Apply a simple aggregation for different aggregation functions.
      foreach ($function_expected as $aggregation_function => $expected) {
 -      $this->queryResult = $this->entityStorage->getAggregateQuery()
 -        ->aggregate('id', $aggregation_function)
 -        ->execute();
+-      $this->assertEqual($this->queryResult, $expected);
 +      $query = $this->entityStorage->getAggregateQuery()
 +        ->aggregate('id', $aggregation_function);
 +      $this->queryResult = $query->execute();
-+      $this->assertEquals('bingo', (string) $query);
-       $this->assertEqual($this->queryResult, $expected);
++      $this->assertRegExp('/' . $aggregation_function . '\(.entity_test.\..id.\) AS .id_' . $aggregation_function . './', (string) $query, 'The argument to the aggregation function should be a quoted field.');
++      $this->assertEquals($expected, $this->queryResult);
      }
  
+     // Apply aggregation and groupby on the same query.
+@@ -149,11 +150,12 @@ public function testAggregation() {
+     ]);
+ 
+     // Apply aggregation and a condition which matches.
+-    $this->queryResult = $this->entityStorage->getAggregateQuery()
++    $query = $this->entityStorage->getAggregateQuery()
+       ->aggregate('id', 'COUNT')
+       ->groupBy('id')
+       ->conditionAggregate('id', 'COUNT', 8)
+-      ->execute();
++    $this->queryResult = $query->execute();
++    $this->assertEquals('bingo', (string) $query);
+     $this->assertResults([]);
+ 
+     // Don't call aggregate to test the implicit aggregate call.
