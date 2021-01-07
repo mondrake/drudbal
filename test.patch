@@ -43,7 +43,7 @@ index 507c40eb5f..447b353b01 100644
  
    /**
 diff --git a/core/tests/Drupal/KernelTests/Core/Entity/EntityQueryAggregateTest.php b/core/tests/Drupal/KernelTests/Core/Entity/EntityQueryAggregateTest.php
-index 02448d6cee..9654c3dcfd 100644
+index 02448d6cee..78dbb96ce3 100644
 --- a/core/tests/Drupal/KernelTests/Core/Entity/EntityQueryAggregateTest.php
 +++ b/core/tests/Drupal/KernelTests/Core/Entity/EntityQueryAggregateTest.php
 @@ -131,10 +131,11 @@ public function testAggregation() {
@@ -62,19 +62,19 @@ index 02448d6cee..9654c3dcfd 100644
      }
  
      // Apply aggregation and groupby on the same query.
-@@ -149,11 +150,12 @@ public function testAggregation() {
-     ]);
+@@ -164,11 +165,12 @@ public function testAggregation() {
+     $this->assertResults([]);
  
      // Apply aggregation and a condition which matches.
 -    $this->queryResult = $this->entityStorage->getAggregateQuery()
 +    $query = $this->entityStorage->getAggregateQuery()
-       ->aggregate('id', 'COUNT')
+       ->aggregate('id', 'count')
        ->groupBy('id')
--      ->conditionAggregate('id', 'COUNT', 8)
+-      ->conditionAggregate('id', 'COUNT', 6)
 -      ->execute();
-+      ->conditionAggregate('id', 'COUNT', 8);
++      ->conditionAggregate('id', 'COUNT', 6);
 +    $this->queryResult = $query->execute();
 +    $this->assertEquals('bingo', (string) $query);
-     $this->assertResults([]);
+     $this->assertResults([['id_count' => 6]]);
  
-     // Don't call aggregate to test the implicit aggregate call.
+     // Apply aggregation, a groupby and a condition which matches partially via
