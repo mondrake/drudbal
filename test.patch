@@ -43,7 +43,7 @@ index 507c40eb5f..447b353b01 100644
  
    /**
 diff --git a/core/tests/Drupal/KernelTests/Core/Entity/EntityQueryAggregateTest.php b/core/tests/Drupal/KernelTests/Core/Entity/EntityQueryAggregateTest.php
-index 02448d6cee..dff2d18b28 100644
+index 02448d6cee..9654c3dcfd 100644
 --- a/core/tests/Drupal/KernelTests/Core/Entity/EntityQueryAggregateTest.php
 +++ b/core/tests/Drupal/KernelTests/Core/Entity/EntityQueryAggregateTest.php
 @@ -131,10 +131,11 @@ public function testAggregation() {
@@ -70,8 +70,9 @@ index 02448d6cee..dff2d18b28 100644
 +    $query = $this->entityStorage->getAggregateQuery()
        ->aggregate('id', 'COUNT')
        ->groupBy('id')
-       ->conditionAggregate('id', 'COUNT', 8)
+-      ->conditionAggregate('id', 'COUNT', 8)
 -      ->execute();
++      ->conditionAggregate('id', 'COUNT', 8);
 +    $this->queryResult = $query->execute();
 +    $this->assertEquals('bingo', (string) $query);
      $this->assertResults([]);
