@@ -42,7 +42,8 @@ jobs:
         php-version:
           - "7.4"
         test-args:
-          - "--group Database"
+#          - "--group Database"
+          - "--group Entity"
 #          - "--group Cache,Config"
 #          - "--group field,Field"
 
@@ -142,7 +143,6 @@ jobs:
           - "7.4"
         test-args:
           - "--group Database"
-          - "--group Entity"
 
     steps:
     - name: Install PHP
