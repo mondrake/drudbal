@@ -10,4 +10,4 @@ curl https://www.drupal.org/files/issues/2020-11-23/2992274-13.patch | git apply
 git apply -v drudbal_staging/tests/travis_ci/alt-fix.patch
 
 #3190285 entityQueryAggregate does not escape the field
-curl https://git.drupalcode.org/project/drupal/-/merge_requests/209.diff | git apply -v
+#curl https://git.drupalcode.org/project/drupal/-/merge_requests/209.diff | git apply -v
