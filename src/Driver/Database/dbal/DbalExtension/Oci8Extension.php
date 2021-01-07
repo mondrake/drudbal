@@ -23,7 +23,7 @@ use Doctrine\DBAL\Exception\NotNullConstraintViolationException;
  */
 class Oci8Extension extends AbstractExtension {
 
-  protected static $isDebugging = TRUE;
+//  protected static $isDebugging = TRUE;
 
   const ORACLE_EMPTY_STRING_REPLACEMENT = "\010"; // it's the Backspace, dec=8, hex=8, oct=10.
 
@@ -461,7 +461,7 @@ class Oci8Extension extends AbstractExtension {
    * {@inheritdoc}
    */
   public function alterStatement(&$query, array &$args) {
-//    if ($this->getDebugging()) dump(['pre-alter', $query, $args]);
+    if ($this->getDebugging()) dump(['pre-alter', $query, $args]);
 
     // Reprocess args.
     $new_args = [];
