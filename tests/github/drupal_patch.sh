@@ -11,3 +11,6 @@ git apply -v drudbal_staging/tests/travis_ci/alt-fix.patch
 
 #3190285 entityQueryAggregate does not escape the field
 curl https://git.drupalcode.org/project/drupal/-/merge_requests/209.diff | git apply -v
+
+#3191623 Views aggregate queries do not escape the fields
+curl https://www.drupal.org/files/issues/2021-01-08/3190285-5-test-only.patch | git apply -v
