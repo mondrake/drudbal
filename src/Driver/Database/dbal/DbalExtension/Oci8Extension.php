@@ -747,7 +747,8 @@ PLSQL
     }
     // Special case when text field need to be indexed, BLOB field will not
     // be indexeable.
-    if ($drupal_field_specs['type'] === 'text' && isset($drupal_field_specs['mysql_type']) && $drupal_field_specs['mysql_type'] === 'blob') {
+    //    if ($drupal_field_specs['type'] === 'text' && isset($drupal_field_specs['mysql_type']) && $drupal_field_specs['mysql_type'] === 'blob') {
+    if ($drupal_field_specs['type'] === 'text') {
       $dbal_type = 'string';
       return TRUE;
     }
