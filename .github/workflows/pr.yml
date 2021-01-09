@@ -43,9 +43,9 @@ jobs:
           - "7.4"
         test-args:
 #          - "--group Database"
-          - "--group Entity"
-#          - "--group Cache,Config"
-#          - "--group field,Field"
+#          - "--group Entity"
+          - "--group Cache,Config"
+          - "--group field,Field"
 
     steps:
     - name: Install PHP
@@ -106,9 +106,9 @@ jobs:
         vendor/bin/drush core:status
         vendor/bin/drush core:requirements
 
-#    - name: Run test ${{ matrix.test-args }}
-#      continue-on-error: true
-#      run: vendor/bin/phpunit -c core --color=always ${{ matrix.test-args }}
+    - name: Run test ${{ matrix.test-args }}
+      continue-on-error: true
+      run: vendor/bin/phpunit -c core --color=always ${{ matrix.test-args }}
 
 #    - name: Run test a
 #      continue-on-error: true
@@ -126,6 +126,6 @@ jobs:
 #      continue-on-error: true
 #      run: vendor/bin/phpunit -c core --color=always core/tests/Drupal/KernelTests/Core/Entity/EntityCrudHookTest.php
 
-    - name: Run test e
-      continue-on-error: true
-      run: vendor/bin/phpunit -c core --color=always core/tests/Drupal/KernelTests/Core/Entity/EntityQueryAggregateTest.php
+#    - name: Run test e
+#      continue-on-error: true
+#      run: vendor/bin/phpunit -c core --color=always core/tests/Drupal/KernelTests/Core/Entity/EntityQueryAggregateTest.php
