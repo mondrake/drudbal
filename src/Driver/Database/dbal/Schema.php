@@ -281,6 +281,8 @@ class Schema extends DatabaseSchema {
 
       'numeric:normal'  => 'decimal',
 
+      'datetime:normal' => 'datetime',
+
       'blob:big'        => 'blob',
       'blob:normal'     => 'blob',
     ];

@@ -747,7 +747,7 @@ PLSQL
     }
     // Special case when text field need to be indexed, BLOB field will not
     // be indexeable.
-    if ($drupal_field_specs['type'] === 'text' && isset($drupal_field_specs['mysql_type']) && $drupal_field_specs['mysql_type'] === 'blob') {
+    if ($drupal_field_specs['type'] === 'text') {
       $dbal_type = 'string';
       return TRUE;
     }
@@ -763,9 +763,8 @@ PLSQL
         $dbal_column_options['default'] = empty($drupal_field_specs['default']) ? self::ORACLE_EMPTY_STRING_REPLACEMENT : $drupal_field_specs['default'];  // @todo here check
       }
     }
-    // Special case when text field need to be indexed, BLOB field will not
-    // be indexeable.
-    if ($drupal_field_specs['type'] === 'text' && isset($drupal_field_specs['mysql_type']) && $drupal_field_specs['mysql_type'] === 'blob') {
+    // String field definition may miss the length if it has been altered.
+    if ($dbal_type === 'string' && !isset($drupal_field_specs['length'])) {
       $dbal_column_options['length'] = 4000;
     }
     return $this;
