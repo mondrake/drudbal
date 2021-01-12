@@ -805,7 +805,7 @@ PLSQL
    * {@inheritdoc}
    */
   public function delegateChangeField(&$primary_key_processed_by_extension, DbalSchema $dbal_schema, $drupal_table_name, $field_name, $field_new_name, array $drupal_field_new_specs, array $keys_new_specs, array $dbal_column_options) {
-dump([$primary_key_processed_by_extension, $drupal_table_name, $field_name, $field_new_name, $drupal_field_new_specs, $keys_new_specs, $dbal_column_options]);
+dump(['pkp' => $primary_key_processed_by_extension, 'table' => $drupal_table_name, 'field' => $field_name, 'field-new' => $field_new_name, 'field-new-spec' => $drupal_field_new_specs, 'keys-new-spec' => $keys_new_specs, 'dbal' => $dbal_column_options]);
     $current_schema = $dbal_schema;
     $to_schema = clone $current_schema;
     $dbal_table = $to_schema->getTable($this->connection->getPrefixedTableName($drupal_table_name));
