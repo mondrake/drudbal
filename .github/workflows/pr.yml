@@ -43,10 +43,10 @@ jobs:
           - "7.4"
         test-args:
           - "--group Database"
-          - "--group Entity"
-          - "--group Cache,Config"
-          - "--group field,Field"
-          - "--group file"
+#          - "--group Entity"
+#          - "--group Cache,Config"
+#          - "--group field,Field"
+#          - "--group file"
 
     steps:
     - name: Install PHP
