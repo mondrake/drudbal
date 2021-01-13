@@ -820,6 +820,7 @@ dump(['dbal_column' => $dbal_column]);
     $sql = "ALTER TABLE ";
     $sql .= $this->connection->getPrefixedTableName($drupal_table_name, TRUE);
     $sql .= " MODIFY (\"$field_name\" {$dbal_column_options['columnDefinition']})";
+    $sql = str_replace("NUMBER(10) NOT NULL CHECK (\"age\">= 0)", "DEFAULT NULL", $sql);
 dump(['sql' => $sql]);
 //    $sql .= "NOT NULL";
 //    if ($change_nullability) {
