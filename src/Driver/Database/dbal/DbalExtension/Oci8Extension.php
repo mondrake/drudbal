@@ -23,7 +23,7 @@ use Doctrine\DBAL\Exception\NotNullConstraintViolationException;
  */
 class Oci8Extension extends AbstractExtension {
 
-  protected static $isDebugging = TRUE;
+//  protected static $isDebugging = TRUE;
 
   const ORACLE_EMPTY_STRING_REPLACEMENT = "\010"; // it's the Backspace, dec=8, hex=8, oct=10.
 
@@ -834,7 +834,8 @@ PLSQL
       $sql[] = "ALTER TABLE $db_table MODIFY \"{$dbal_column->getName()}\" NOT NULL";
     }
     if (isset($drupal_field_new_specs['description'])) {
-      $sql[] = "COMMENT ON COLUMN $db_table.\"{$dbal_column->getName()}\" IS '{$drupal_field_new_specs['description']}'";
+      $column_description = str_replace("'", "''", $drupal_field_new_specs['description']);
+      $sql[] = "COMMENT ON COLUMN $db_table.\"{$dbal_column->getName()}\" IS '$column_description'";
     }
 //dump(['sql' => $sql]);
 //    $sql .= "NOT NULL";
