@@ -829,7 +829,7 @@ dump(['dbal_column' => $dbal_column, 'temp_column' => $temp_column]);
     $sql[] = "ALTER TABLE $db_table ADD \"$temp_column\" $column_definition";
     $sql[] = "UPDATE $db_table SET \"$temp_column\" = \"{$dbal_column->getName()}\"";
     $sql[] = "ALTER TABLE $db_table DROP COLUMN \"{$dbal_column->getName()}\"";
-    $sql[] = "RENAME COLUMN $db_table.\"$temp_column\" TO \"$field_name\"";
+    $sql[] = "ALTER TABLE $db_table RENAME COLUMN \"$temp_column\" TO \"$field_name\"";
     if ($not_null) {
       $sql[] = "ALTER TABLE $db_table MODIFY \"{$dbal_column->getName()}\" NOT NULL";
     }
