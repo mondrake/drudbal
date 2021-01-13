@@ -819,7 +819,7 @@ dump(['dbal_column' => $dbal_column]);
 
     $sql = "ALTER TABLE ";
     $sql .= $this->connection->getPrefixedTableName($drupal_table_name, TRUE);
-    $sql .= " MODIFY (\"$field_name\" {$dbal_column_options['column_definition']})";
+    $sql .= " MODIFY (\"$field_name\" {$dbal_column_options['columnDefinition']})";
 dump(['sql' => $sql]);
 //    $sql .= "NOT NULL";
 //    if ($change_nullability) {
