@@ -821,7 +821,7 @@ dump(['dbal_column' => $dbal_column, 'temp_column' => $temp_column]);
 
 //    $sql = "ALTER TABLE " . $this->connection->getPrefixedTableName($drupal_table_name, TRUE) . " MODIFY (\"$field_name\" {$dbal_column_options['columnDefinition']})";
 //    $sql = str_replace("NUMBER(10) NOT NULL CHECK (\"age\">= 0)", "DEFAULT NULL", $sql);
-    $column_definition = str_replace("\"{$dbal_column->getName()}\"", "\"$temp_column\"", $dbal_column_options['columnDefinition'])
+    $column_definition = str_replace("\"{$dbal_column->getName()}\"", "\"$temp_column\"", $dbal_column_options['columnDefinition']);
     $sql[] = "ALTER TABLE $db_table ADD \"$temp_column\" $column_definition";
     $sql[] = "UPDATE $db_table SET \"$temp_column\" = \"{$dbal_column->getName()}\"";
     $sql[] = "ALTER TABLE $db_table DROP COLUMN \"{$dbal_column->getName()}\"";
