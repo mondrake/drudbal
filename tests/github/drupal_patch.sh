@@ -14,3 +14,6 @@ curl https://git.drupalcode.org/project/drupal/-/merge_requests/209.diff | git a
 
 #3191623 Views aggregate queries do not escape the fields
 curl https://www.drupal.org/files/issues/2021-01-08/3190285-5-test-only.patch | git apply -v
+
+#2795567 Use Symfony's VarDumper for easier test debugging with dump()
+curl https://git.drupalcode.org/project/drupal/-/merge_requests/181.diff | git apply -v
