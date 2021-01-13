@@ -805,13 +805,13 @@ PLSQL
    * {@inheritdoc}
    */
   public function delegateChangeField(&$primary_key_processed_by_extension, DbalSchema $dbal_schema, $drupal_table_name, $field_name, $field_new_name, array $drupal_field_new_specs, array $keys_new_specs, array $dbal_column_options) {
-dump(['pkp' => $primary_key_processed_by_extension, 'table' => $drupal_table_name, 'field' => $field_name, 'field-new' => $field_new_name, 'field-new-spec' => $drupal_field_new_specs, 'keys-new-spec' => $keys_new_specs, 'dbal' => $dbal_column_options]);
+//dump(['pkp' => $primary_key_processed_by_extension, 'table' => $drupal_table_name, 'field' => $field_name, 'field-new' => $field_new_name, 'field-new-spec' => $drupal_field_new_specs, 'keys-new-spec' => $keys_new_specs, 'dbal' => $dbal_column_options]);
     $current_schema = $dbal_schema;
     $to_schema = clone $current_schema;
     $dbal_table = $to_schema->getTable($this->connection->getPrefixedTableName($drupal_table_name));
     $dbal_column = $dbal_table->getColumn($field_name); // @todo getdbfieldname
     $temp_column = $this->getLimitedIdentifier(str_replace('-', '', 'tmp' . (new Uuid())->generate()));
-dump(['dbal_column' => $dbal_column, 'temp_column' => $temp_column]);
+//dump(['dbal_column' => $dbal_column, 'temp_column' => $temp_column]);
     $db_table = $this->connection->getPrefixedTableName($drupal_table_name, TRUE);
     $not_null = $drupal_field_new_specs['not null'] ?? FALSE;
 
@@ -833,7 +833,10 @@ dump(['dbal_column' => $dbal_column, 'temp_column' => $temp_column]);
     if ($not_null) {
       $sql[] = "ALTER TABLE $db_table MODIFY \"{$dbal_column->getName()}\" NOT NULL";
     }
-dump(['sql' => $sql]);
+    if (isset($drupal_field_new_specs['description'])) {
+      $sql[] = "COMMENT ON COLUMN $db_table.\"{$dbal_column->getName()}\" IS '{$drupal_field_new_specs['description']}'";
+    }
+//dump(['sql' => $sql]);
 //    $sql .= "NOT NULL";
 //    if ($change_nullability) {
 //      $sql .= array_key_exists('not null', $drupal_field_new_specs) && $drupal_field_new_specs['not null'] ? 'NOT NULL' : 'NULL';
