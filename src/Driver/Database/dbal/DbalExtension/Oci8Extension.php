@@ -810,18 +810,20 @@ dump(['pkp' => $primary_key_processed_by_extension, 'table' => $drupal_table_nam
     $to_schema = clone $current_schema;
     $dbal_table = $to_schema->getTable($this->connection->getPrefixedTableName($drupal_table_name));
     $dbal_column = $dbal_table->getColumn($field_name); // @todo getdbfieldname
+dump(['dbal_column' => $dbal_column]);
 
     $change_nullability = TRUE;
     if (array_key_exists('not null', $drupal_field_new_specs) && $drupal_field_new_specs['not null'] == $dbal_column->getNotnull()) {
       $change_nullability = FALSE;
     }
 
-    $sql = "ALTER TABLE " . $this->connection->getPrefixedTableName($drupal_table_name, TRUE) . " MODIFY (\"$field_name\" NUMBER(10) ";
-    $sql .= "NOT NULL";
+    $sql = "ALTER TABLE " . $this->connection->getPrefixedTableName($drupal_table_name, TRUE) . " MODIFY (\"$field_name\" {$dbal_column_options['column_definition]})";
+dump(['sql' => $sql]);
+//    $sql .= "NOT NULL";
 //    if ($change_nullability) {
 //      $sql .= array_key_exists('not null', $drupal_field_new_specs) && $drupal_field_new_specs['not null'] ? 'NOT NULL' : 'NULL';
 //    }
-    $sql .= ")";
+//    $sql .= ")";
     $this->connection->query($sql);
 
 
