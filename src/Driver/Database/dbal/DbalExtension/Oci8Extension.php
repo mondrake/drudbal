@@ -812,6 +812,7 @@ dump(['pkp' => $primary_key_processed_by_extension, 'table' => $drupal_table_nam
     $dbal_column = $dbal_table->getColumn($field_name); // @todo getdbfieldname
     $temp_column = $this->getLimitedIdentifier('tmp' . (new Uuid())->generate());
 dump(['dbal_column' => $dbal_column, 'temp_column' => $temp_column]);
+    $db_table = $this->connection->getPrefixedTableName($drupal_table_name, TRUE);
 
 //    $change_nullability = TRUE;
 //    if (array_key_exists('not null', $drupal_field_new_specs) && $drupal_field_new_specs['not null'] == $dbal_column->getNotnull()) {
@@ -820,10 +821,10 @@ dump(['dbal_column' => $dbal_column, 'temp_column' => $temp_column]);
 
 //    $sql = "ALTER TABLE " . $this->connection->getPrefixedTableName($drupal_table_name, TRUE) . " MODIFY (\"$field_name\" {$dbal_column_options['columnDefinition']})";
 //    $sql = str_replace("NUMBER(10) NOT NULL CHECK (\"age\">= 0)", "DEFAULT NULL", $sql);
-    $sql[] = "ALTER TABLE \"$dbal_table\" ADD COLUMN \"$temp_col\" {$dbal_column_options['columnDefinition']}";
-    $sql[] = "UPDATE \"$dbal_table\" SET \"$temp_col\" = {$dbal_column->getName()}";
-    $sql[] = "ALTER TABLE \"$dbal_table\" DROP COLUMN {$dbal_column->getName()}";
-    $sql[] = "RENAME COLUMN \"$dbal_table\".\"$temp_col\" TO $field_name";
+    $sql[] = "ALTER TABLE $db_table ADD COLUMN \"$temp_col\" {$dbal_column_options['columnDefinition']}";
+    $sql[] = "UPDATE $db_table SET \"$temp_col\" = {$dbal_column->getName()}";
+    $sql[] = "ALTER TABLE $db_table DROP COLUMN {$dbal_column->getName()}";
+    $sql[] = "RENAME COLUMN $db_table.\"$temp_col\" TO \"$field_name\"";
 dump(['sql' => $sql]);
 //    $sql .= "NOT NULL";
 //    if ($change_nullability) {
