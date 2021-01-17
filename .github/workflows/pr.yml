@@ -79,9 +79,9 @@ jobs:
 
     - name: Composer require DruDbal from local staging
       run: |
-        git -C drudbal_staging checkout -b travisci-run-branch
-        composer config repositories.travisci-run '{"type": "path", "url": "drudbal_staging", "options": {"symlink": false}}'
-        composer require "mondrake/drudbal:dev-travisci-run-branch" --no-progress --ansi
+        git -C drudbal_staging checkout -b test-run-branch
+        composer config repositories.test-run '{"type": "path", "url": "drudbal_staging", "options": {"symlink": false}}'
+        composer require "mondrake/drudbal:dev-test-run-branch" --no-progress --ansi
 
     - name: Patch doctrine/dbal
       run: |
@@ -89,7 +89,7 @@ jobs:
 
     - name: Create Oracle schema
       run: |
-        cp modules/contrib/drudbal/tests/travis_ci/install_* .
+        cp modules/contrib/drudbal/tests/github/install_* .
         php install_oracle.php
 
     - name: Install Drupal
@@ -111,17 +111,17 @@ jobs:
 #      continue-on-error: true
 #      run: vendor/bin/phpunit -c core --color=always ${{ matrix.test-args }}
 
-    - name: Run test a
-      continue-on-error: true
-      run: vendor/bin/phpunit -c core --color=always modules/contrib/drudbal/tests/src/Kernel/SchemaTest.php
-
-#    - name: Run test b
+#    - name: Run test a
 #      continue-on-error: true
-#      run: vendor/bin/phpunit -c core --color=always core/tests/Drupal/KernelTests/Core/Database/InsertTest.php
+#      run: vendor/bin/phpunit -c core --color=always modules/contrib/drudbal/tests/src/Kernel/SchemaTest.php
+
+    - name: Run test b
+      continue-on-error: true
+      run: vendor/bin/phpunit -c core --color=always core/tests/Drupal/KernelTests/Core/Database/InsertTest.php
 
 #    - name: Run test c
 #      continue-on-error: true
-#      run: vendor/bin/phpunit -c core --color=always core/tests/Drupal/KernelTests/Core/Entity/FieldableEntityDefinitionUpdateTest.php
+#      run: vendor/bin/phpunit -c core --color=always core/tests/Drupal/KernelTests/Core/Entity/EntityDefinitionUpdateTest.php
 
 #    - name: Run test d
 #      continue-on-error: true
