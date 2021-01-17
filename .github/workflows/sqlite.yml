@@ -71,13 +71,13 @@ jobs:
 
     - name: Composer require DruDbal from local staging
       run: |
-        git -C drudbal_staging checkout -b travisci-run-branch
-        composer config repositories.travisci-run '{"type": "path", "url": "drudbal_staging", "options": {"symlink": false}}'
-        composer require "mondrake/drudbal:dev-travisci-run-branch" --no-progress --ansi
+        git -C drudbal_staging checkout -b test-run-branch
+        composer config repositories.test-run '{"type": "path", "url": "drudbal_staging", "options": {"symlink": false}}'
+        composer require "mondrake/drudbal:dev-test-run-branch" --no-progress --ansi
 
     - name: Install Drupal
       run: |
-        cp modules/contrib/drudbal/tests/travis_ci/install_* .
+        cp modules/contrib/drudbal/tests/github/install_* .
         # Use the custom installer.
         php install_cli.php
         vendor/bin/drush runserver localhost:8080 &

@@ -835,7 +835,7 @@ PLSQL
     }
     if (isset($drupal_field_new_specs['description'])) {
       $column_description = str_replace("'", "''", $drupal_field_new_specs['description']);
-      $sql[] = "COMMENT ON COLUMN $db_table.\"{$dbal_column->getName()}\" IS \"$column_description\"";
+      $sql[] = "COMMENT ON COLUMN $db_table.\"{$dbal_column->getName()}\" IS '" . $column_description . "'";
     }
 //dump(['sql' => $sql]);
 //    $sql .= "NOT NULL";
