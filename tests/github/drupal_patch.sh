@@ -14,6 +14,3 @@ curl https://www.drupal.org/files/issues/2021-01-08/3190285-5-test-only.patch | 
 
 #2795567 Use Symfony's VarDumper for easier test debugging with dump()
 curl https://git.drupalcode.org/project/drupal/-/merge_requests/181.diff | git apply -v
-
-#3129534 Automatically enable the module that is providing the current database driver
-curl https://www.drupal.org/files/issues/2021-01-14/3129534-81_1.patch | git apply -v
