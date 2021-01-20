@@ -479,6 +479,7 @@ class Oci8Extension extends AbstractExtension {
 
     // Replace empty strings.
     $query = str_replace("''", "'" . self::ORACLE_EMPTY_STRING_REPLACEMENT . "'", $query);
+    $query = str_replace('" () VALUES()', '" () VALUES(:db_insert_placeholder_0, :db_insert_placeholder_1, :db_insert_placeholder_2)', $query);
 
     // REGEXP is not available in Oracle; convert to using REGEXP_LIKE
     // function.

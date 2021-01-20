@@ -40,8 +40,8 @@ using the 'sqlite' DBAL driver.
 'Working' means:
 1. it is possible to install a Drupal site via the installer, selecting
    'Doctrine DBAL' as the database of choice;
-2. it is passing a selection of core PHPUnit tests , executed on Travis CI.
-   The latest patches for the issues listed in 'Related Drupal issues' below
+2. it is passing a selection of core PHPUnit tests , executed on GitHub Actions
+   CI. The latest patches for the issues listed in 'Related Drupal issues' below
    need to be applied to get a clean test run.
 
 ## Installation

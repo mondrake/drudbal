@@ -84,7 +84,7 @@ jobs:
 
     - name: Patch doctrine/dbal
       run: |
-        patch -d vendor/doctrine/dbal -p1 < modules/contrib/drudbal/tests/travis_ci/dbal/oci8/dbal.patch
+        patch -d vendor/doctrine/dbal -p1 < modules/contrib/drudbal/tests/github/dbal/oci8/dbal.patch
 
     - name: Create Oracle schema
       run: |
