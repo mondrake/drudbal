@@ -480,6 +480,12 @@ class Oci8Extension extends AbstractExtension {
     // Replace empty strings.
     $query = str_replace("''", "'" . self::ORACLE_EMPTY_STRING_REPLACEMENT . "'", $query);
 
+    // INSERT INTO table () VALUES () requires the placeholders to be listed,
+    // and no columns list.
+    if (strpos($query, ' () VALUES()') !== FALSE) {
+      $query = str_replace(' () VALUES()', ' VALUES(' . implode(', ', array_keys($args)) . ')', $query);
+    }
+
     // REGEXP is not available in Oracle; convert to using REGEXP_LIKE
     // function.
     $query = preg_replace('/([^\s]+)\s+NOT REGEXP\s+([^\s]+)/', 'NOT REGEXP_LIKE($1, $2)', $query);
