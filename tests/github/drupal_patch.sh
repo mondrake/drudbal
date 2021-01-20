@@ -1,8 +1,5 @@
 #!/bin/sh -e
 
-#2657888 Add Date function support in DTBNG
-curl https://www.drupal.org/files/issues/2657888-18.patch | git apply -v
-
 #2992274 Installer tests fail if contrib driver hides database credentials form fields
 curl https://www.drupal.org/files/issues/2020-11-23/2992274-13.patch | git apply -v
 
