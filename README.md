@@ -51,7 +51,7 @@ under the hood:
 
 1. Requirements:
     * PHP 7.3+
-    * latest Drupal development branch code, 9.1.x
+    * latest Drupal development branch code, 9.2.x
     * codebase built via Composer
 
 2. Get the DruDbal module from Packagist via Composer, it will install Doctrine
@@ -88,7 +88,6 @@ https://github.com/doctrine/dbal/pull/2415       | Add some MySQL platform data 
 Issue                                                           | Description                                                                                                                             |
 ----------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------|
 tbd                                                             | Add tests for Upsert with default values                                                                                     |
-[2657888](https://www.drupal.org/node/2657888)                  | Add Date function support in DTBNG                                                                                      |
 tbd                                                             | Ensure that when INSERTing a NULL value in a database column, SELECTing it back returns NULL and not empty string - for all fetch modes |
 tbd                                                             | UpdateTestBase::runUpdate should reset database schema after updating                                                             |
 [2992274](https://www.drupal.org/project/drupal/issues/2992274) | Installer tests fail if contrib driver hides database credentials form fields                                                           |
