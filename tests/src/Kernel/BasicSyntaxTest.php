@@ -39,7 +39,7 @@ class BasicSyntaxTest extends BasicSyntaxTestBase {
 
     // Test square brackets using the query builder.
     $result = $this->connection->select('test')->fields('test', ['name'])->condition('name', '[square]')->execute();
-    $this->assertIdentical('[square]', $result->fetchField());
+    $this->assertSame('[square]', $result->fetchField());
   }
 
 }
