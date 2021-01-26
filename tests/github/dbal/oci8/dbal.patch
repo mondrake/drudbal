@@ -1,5 +1,5 @@
 diff --git a/src/Platforms/OraclePlatform.php b/src/Platforms/OraclePlatform.php
-index cbbfb07d1..fe64f81aa 100644
+index cbbfb07d1..9ed13db44 100644
 --- a/src/Platforms/OraclePlatform.php
 +++ b/src/Platforms/OraclePlatform.php
 @@ -409,6 +409,33 @@ class OraclePlatform extends AbstractPlatform
@@ -25,9 +25,9 @@ index cbbfb07d1..fe64f81aa 100644
 +                 ind_col.column_name AS column_name,
 +                 ind_col.column_position AS column_pos,
 +                 con.constraint_type AS is_primary
-+            FROM all_ind_columns ind_col
-+       LEFT JOIN all_indexes ind ON ind.owner = ind_col.index_owner AND ind.index_name = ind_col.index_name
-+       LEFT JOIN all_constraints con ON  con.owner = ind_col.index_owner AND con.index_name = ind_col.index_name
++            FROM dba_ind_columns ind_col
++       LEFT JOIN dba_indexes ind ON ind.owner = ind_col.index_owner AND ind.index_name = ind_col.index_name
++       LEFT JOIN dba_constraints con ON  con.owner = ind_col.index_owner AND con.index_name = ind_col.index_name
 +           WHERE ind_col.index_owner = $quotedDatabaseIdentifier
 +        ORDER BY ind_col.table_name, ind_col.index_name, ind_col.column_position
 +SQL;
@@ -59,9 +59,9 @@ index cbbfb07d1..fe64f81aa 100644
 +                 cols.position,
 +                 r_cols.table_name "references_table",
 +                 r_cols.column_name "foreign_column"
-+            FROM all_cons_columns cols
-+       LEFT JOIN all_constraints alc ON alc.owner = cols.owner AND alc.constraint_name = cols.constraint_name
-+       LEFT JOIN all_cons_columns r_cols ON r_cols.owner = alc.r_owner AND r_cols.constraint_name = alc.r_constraint_name AND r_cols.position = cols.position
++            FROM dba_cons_columns cols
++       LEFT JOIN dba_constraints alc ON alc.owner = cols.owner AND alc.constraint_name = cols.constraint_name
++       LEFT JOIN dba_cons_columns r_cols ON r_cols.owner = alc.r_owner AND r_cols.constraint_name = alc.r_constraint_name AND r_cols.position = cols.position
 +           WHERE cols.owner = $quotedDatabaseIdentifier AND alc.constraint_type = 'R'
 +        ORDER BY cols.table_name, cols.constraint_name, cols.position
 +SQL;
@@ -88,8 +88,8 @@ index cbbfb07d1..fe64f81aa 100644
 +        return <<<SQL
 +          SELECT c.*,
 +                 d.comments AS comments
-+            FROM all_tab_columns c
-+       LEFT JOIN all_col_comments d ON d.OWNER = c.OWNER AND d.TABLE_NAME = c.TABLE_NAME AND d.COLUMN_NAME = c.COLUMN_NAME
++            FROM dba_tab_columns c
++       LEFT JOIN dba_col_comments d ON d.OWNER = c.OWNER AND d.TABLE_NAME = c.TABLE_NAME AND d.COLUMN_NAME = c.COLUMN_NAME
 +           WHERE c.owner = $quotedDatabaseIdentifier
 +        ORDER BY c.table_name, c.column_id
 +SQL;
