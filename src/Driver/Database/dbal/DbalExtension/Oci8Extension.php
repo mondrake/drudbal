@@ -815,19 +815,14 @@ PLSQL
     $current_schema = $dbal_schema;
     $to_schema = clone $current_schema;
     $dbal_table = $to_schema->getTable($this->connection->getPrefixedTableName($drupal_table_name));
+    $dbal_primary_key = $dbal_table->getPrimaryKey();
+    $db_primary_key_columns = $dbal_primary_key ? $this->delegateColumnNameList($dbal_primary_key->getColumns()) : [];
     $dbal_column = $dbal_table->getColumn($field_name); // @todo getdbfieldname
     $temp_column = $this->getLimitedIdentifier(str_replace('-', '', 'tmp' . (new Uuid())->generate()));
-//dump(['dbal_column' => $dbal_column, 'temp_column' => $temp_column]);
+dump(['dbal_column' => $dbal_column, 'temp_column' => $temp_column, 'pk' => $db_primary_key_columns]);
     $db_table = $this->connection->getPrefixedTableName($drupal_table_name, TRUE);
     $not_null = $drupal_field_new_specs['not null'] ?? FALSE;
 
-//    $change_nullability = TRUE;
-//    if (array_key_exists('not null', $drupal_field_new_specs) && $drupal_field_new_specs['not null'] == $dbal_column->getNotnull()) {
-//      $change_nullability = FALSE;
-//    }
-
-//    $sql = "ALTER TABLE " . $this->connection->getPrefixedTableName($drupal_table_name, TRUE) . " MODIFY (\"$field_name\" {$dbal_column_options['columnDefinition']})";
-//    $sql = str_replace("NUMBER(10) NOT NULL CHECK (\"age\">= 0)", "DEFAULT NULL", $sql);
     $column_definition = str_replace("\"{$dbal_column->getName()}\"", "\"$temp_column\"", $dbal_column_options['columnDefinition']);
     if ($not_null) {
       $column_definition = str_replace("NOT NULL", "NULL", $column_definition);
@@ -859,45 +854,6 @@ PLSQL
       $this->getDbalConnection()->exec($exec);
     }
 
-
-//    $info = $this->getTableSerialInfo($table);
-
-//    if (!empty($info->sequence_name) && $this->oid($field, FALSE, FALSE) == $info->field_name) {
-//      $this->failsafeDdl('DROP TRIGGER {' . $info->trigger_name . '}');
-//      $this->failsafeDdl('DROP SEQUENCE {' . $info->sequence_name . '}');
-//    }
-
-/*    $this->connection->query("ALTER TABLE " . $this->oid($table, TRUE) . " RENAME COLUMN ". $this->oid($field) . " TO " . $this->oid($field . '_old'));
-    $not_null = isset($spec['not null']) ? $spec['not null'] : FALSE;
-    unset($spec['not null']);
-
-    if (!array_key_exists('size', $spec)) {
-      $spec['size'] = 'normal';
-    }
-
-    $this->addField($table, (string) $field_new, $spec);
-
-    $map = $this->getFieldTypeMap();
-    $this->connection->query("UPDATE " . $this->oid($table, TRUE) . " SET ". $this->oid($field_new) . " = " . $this->oid($field . '_old'));
-
-    if ($not_null) {
-      $this->connection->query("ALTER TABLE " . $this->oid($table, TRUE) . " MODIFY (". $this->oid($field_new) . " NOT NULL)");
-    }
-
-    $this->dropField($table, $field . '_old');
-
-    if (isset($new_keys)) {
-      $this->createKeys($table, $new_keys);
-    }
-
-    if (!empty($info->sequence_name) && $this->oid($field, FALSE, FALSE) == $info->field_name) {
-      $statements = $this->createSerialSql($table, $this->oid($field_new, FALSE, FALSE), $info->sequence_restart);
-      foreach ($statements as $statement) {
-        $this->connection->query($statement);
-      }
-    }
-
-    $this->cleanUpSchema($table);*/
     return TRUE;
   }
 

@@ -111,13 +111,13 @@ jobs:
 #      continue-on-error: true
 #      run: vendor/bin/phpunit -c core --color=always ${{ matrix.test-args }}
 
-#    - name: Run test a
-#      continue-on-error: true
-#      run: vendor/bin/phpunit -c core --color=always modules/contrib/drudbal/tests/src/Kernel/SchemaTest.php
-
-    - name: Run test b
+    - name: Run test a
       continue-on-error: true
-      run: vendor/bin/phpunit -c core --color=always core/tests/Drupal/KernelTests/Core/Database/InsertTest.php
+      run: vendor/bin/phpunit -c core --color=always modules/contrib/drudbal/tests/src/Kernel/SchemaTest.php
+
+#    - name: Run test b
+#      continue-on-error: true
+#      run: vendor/bin/phpunit -c core --color=always core/tests/Drupal/KernelTests/Core/Database/InsertTest.php
 
 #    - name: Run test c
 #      continue-on-error: true

@@ -303,9 +303,6 @@ class Schema extends DatabaseSchema {
     // DBAL Schema will drop the old table and create a new one, so we go for
     // using the manager instead, that allows in-place renaming.
     // @see https://github.com/doctrine/migrations/issues/17
-//    if ($this->dbalExtension->getDebugging()) {
-//      error_log('renameTable ' . $this->connection->getPrefixedTableName($table) . ' to ' . $this->connection->getPrefixedTableName($new_name));
-//    }
     $dbal_schema = $this->dbalSchema();
     $this->dbalSchemaManager->renameTable($this->connection->getPrefixedTableName($table, TRUE), $this->connection->getPrefixedTableName($new_name, TRUE));
     $this->dbalExtension->postRenameTable($dbal_schema, $table, $new_name);
