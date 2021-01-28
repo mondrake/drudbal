@@ -821,13 +821,27 @@ $this->setDebugging(TRUE);
     $dbal_column = $dbal_table->getColumn($field_name); // @todo getdbfieldname
     $temp_column = $this->getLimitedIdentifier(str_replace('-', '', 'tmp' . (new Uuid())->generate()));
     $drop_primary_key = in_array($dbal_column->getName(), $db_primary_key_columns);
-    if ($drop_primary_key) {
-dump(['dbal_column' => $dbal_column->getName(), 'temp_column' => $temp_column, 'pk' => $db_primary_key_columns, 'drop?' =>$drop_primary_key]);
-dump($dbal_table->getIndexes());
-      $this->connection->schema()->dropPrimaryKey($drupal_table_name);
-    }
     $db_table = $this->connection->getPrefixedTableName($drupal_table_name, TRUE);
     $not_null = $drupal_field_new_specs['not null'] ?? FALSE;
+    if ($drop_primary_key) {
+dump(['dbal_column' => $dbal_column->getName(), 'temp_column' => $temp_column, 'pk' => $db_primary_key_columns, 'drop?' =>$drop_primary_key]);
+dump($this->connection->query(<<<SQL
+          SELECT ind_col.table_name as table_name,
+                 ind_col.index_name AS name,
+                 ind.index_type AS type,
+                 decode(ind.uniqueness, 'NONUNIQUE', 0, 'UNIQUE', 1) AS is_unique,
+                 ind_col.column_name AS column_name,
+                 ind_col.column_position AS column_pos,
+                 con.constraint_type AS is_primary
+            FROM all_ind_columns ind_col
+       LEFT JOIN all_indexes ind ON ind.owner = ind_col.index_owner AND ind.index_name = ind_col.index_name
+       LEFT JOIN all_constraints con ON  con.owner = ind_col.index_owner AND con.index_name = ind_col.index_name
+           WHERE ind_col.table_name = "$db_table"
+        ORDER BY ind_col.table_name, ind_col.index_name, ind_col.column_position
+SQL;
+)->fetchAll());
+      $this->connection->schema()->dropPrimaryKey($drupal_table_name);
+    }
 
     $column_definition = str_replace("\"{$dbal_column->getName()}\"", "\"$temp_column\"", $dbal_column_options['columnDefinition']);
     if ($not_null) {
