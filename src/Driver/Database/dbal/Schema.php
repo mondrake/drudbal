@@ -542,6 +542,7 @@ class Schema extends DatabaseSchema {
       return $primary_key_dropped_by_extension;
     }
 
+    // DBAL extension did not pick up, proceed with DBAL.
     $table_full_name = $this->connection->getPrefixedTableName($table);
     if (!$this->dbalSchema()->getTable($table_full_name)->hasPrimaryKey()) {
       return FALSE;
