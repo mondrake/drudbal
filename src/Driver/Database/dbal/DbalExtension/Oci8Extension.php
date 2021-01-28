@@ -821,8 +821,9 @@ $this->setDebugging(TRUE);
     $dbal_column = $dbal_table->getColumn($field_name); // @todo getdbfieldname
     $temp_column = $this->getLimitedIdentifier(str_replace('-', '', 'tmp' . (new Uuid())->generate()));
     $drop_primary_key = in_array($dbal_column->getName(), $db_primary_key_columns);
-dump(['dbal_column' => $dbal_column->getName(), 'temp_column' => $temp_column, 'pk' => $db_primary_key_columns, 'drop?' =>$drop_primary_key]);
     if ($drop_primary_key) {
+dump(['dbal_column' => $dbal_column->getName(), 'temp_column' => $temp_column, 'pk' => $db_primary_key_columns, 'drop?' =>$drop_primary_key]);
+dump($dbal_table->getIndexes());
       $this->connection->schema()->dropPrimaryKey($drupal_table_name);
     }
     $db_table = $this->connection->getPrefixedTableName($drupal_table_name, TRUE);
