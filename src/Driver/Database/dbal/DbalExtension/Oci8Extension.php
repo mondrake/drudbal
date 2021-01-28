@@ -838,7 +838,7 @@ dump($this->connection->query(<<<SQL
        LEFT JOIN all_constraints con ON  con.owner = ind_col.index_owner AND con.index_name = ind_col.index_name
            WHERE ind_col.table_name = "$db_table"
         ORDER BY ind_col.table_name, ind_col.index_name, ind_col.column_position
-SQL;
+SQL
 )->fetchAll());
       $this->connection->schema()->dropPrimaryKey($drupal_table_name);
     }
