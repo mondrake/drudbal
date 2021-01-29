@@ -854,7 +854,7 @@ SQL
       $sql[] = "ALTER TABLE $db_table MODIFY \"{$dbal_column->getName()}\" NOT NULL";
     }
     if ($drop_primary_key) {
-      $sql[] = "ALTER TABLE $db_table ADD CONSTRAINT PRIMARY KEY (\"" . implode('", "', $db_primary_key_columns) . "\")";
+      $sql[] = "ALTER TABLE $db_table ADD CONSTRAINT $db_pk_constraint PRIMARY KEY (\"" . implode('", "', $db_primary_key_columns) . "\")";
     }
     if (isset($drupal_field_new_specs['description'])) {
       $column_description = $this->connection->getDbalPlatform()->quoteStringLiteral($drupal_field_new_specs['description']);
