@@ -813,6 +813,9 @@ PLSQL
   public function delegateChangeField(&$primary_key_processed_by_extension, DbalSchema $dbal_schema, $drupal_table_name, $field_name, $field_new_name, array $drupal_field_new_specs, array $keys_new_specs, array $dbal_column_options) {
 //dump(['pkp' => $primary_key_processed_by_extension, 'table' => $drupal_table_name, 'field' => $field_name, 'field-new' => $field_new_name, 'field-new-spec' => $drupal_field_new_specs, 'keys-new-spec' => $keys_new_specs, 'dbal' => $dbal_column_options]);
 $this->setDebugging(TRUE);
+
+    $primary_key_processed_by_extension = TRUE;
+
     $current_schema = $dbal_schema;
     $to_schema = clone $current_schema;
     $dbal_table = $to_schema->getTable($this->connection->getPrefixedTableName($drupal_table_name));
@@ -839,10 +842,8 @@ dump(['dbal_column' => $dbal_column->getName(), 'temp_column' => $temp_column, '
            WHERE ind.table_name = '$unquoted_db_table' AND con.constraint_type = 'P'
 SQL
       )->fetch();
-dump($result);
       $db_pk_constraint = $result->name;
       $sql[] = "ALTER TABLE $db_table DROP CONSTRAINT $db_pk_constraint";
-//      $this->connection->schema()->dropPrimaryKey($drupal_table_name);
     }
 
     $sql[] = "ALTER TABLE $db_table ADD \"$temp_column\" $column_definition";
@@ -852,9 +853,9 @@ dump($result);
     if ($not_null) {
       $sql[] = "ALTER TABLE $db_table MODIFY \"{$dbal_column->getName()}\" NOT NULL";
     }
-//    if ($drop_primary_key) {
-//      $this->connection->schema()->addPrimaryKey($drupal_table_name);
-//    }
+    if ($drop_primary_key) {
+      $sql[] = "ALTER TABLE $db_table ADD CONSTRAINT PRIMARY KEY (\"" . implode('", "', $db_primary_key_columns) . "\")";
+    }
     if (isset($drupal_field_new_specs['description'])) {
       $column_description = $this->connection->getDbalPlatform()->quoteStringLiteral($drupal_field_new_specs['description']);
       $sql[] = "COMMENT ON COLUMN $db_table.\"{$dbal_column->getName()}\" IS " . $column_description;
