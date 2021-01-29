@@ -940,6 +940,9 @@ interface DbalExtensionInterface {
    * @param bool $primary_key_dropped_by_extension
    *   Passed by reference. Set to true if the extension dropped the primary
    *   key, to FALSE otherwise.
+   * @param bool $primary_key_constraint_name
+   *   Passed by reference. The database name of the object dropped, if
+   *   available.
    * @param \Doctrine\DBAL\Schema\Schema $dbal_schema
    *   The DBAL schema object.
    * @param string $drupal_table_name
@@ -949,7 +952,7 @@ interface DbalExtensionInterface {
    *   TRUE if the extension managed the request, FALSE if it has to be handled
    *   by DBAL.
    */
-  public function delegateDropPrimaryKey(&$primary_key_dropped_by_extension, DbalSchema $dbal_schema, $drupal_table_name);
+  public function delegateDropPrimaryKey(bool &$primary_key_dropped_by_extension, string &$primary_key_asset_name, DbalSchema $dbal_schema, string $drupal_table_name): bool;
 
   /**
    * Drops an index.

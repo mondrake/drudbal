@@ -830,21 +830,11 @@ PLSQL
     if ($not_null) {
       $column_definition = str_replace("NOT NULL", "NULL", $column_definition);
     }
-
-    $sql= [];
     if ($drop_primary_key) {
-//dump(['dbal_column' => $dbal_column->getName(), 'temp_column' => $temp_column, 'pk' => $db_primary_key_columns, 'drop?' =>$drop_primary_key]);
-      $result = $this->connection->query(<<<SQL
-          SELECT ind.index_name AS name
-            FROM all_indexes ind
-       LEFT JOIN all_constraints con ON ind.owner = con.owner AND ind.index_name = con.index_name
-           WHERE ind.table_name = '$unquoted_db_table' AND con.constraint_type = 'P'
-SQL
-      )->fetch();
-      $db_pk_constraint = $result->name;
-      $sql[] = "ALTER TABLE $db_table DROP CONSTRAINT $db_pk_constraint";
+      $this->delegateDropPrimaryKey($primary_key_processed_by_extension, $db_pk_constraint, $dbal_schema, $drupal_table_name);
     }
 
+    $sql = [];
     $sql[] = "ALTER TABLE $db_table ADD \"$temp_column\" $column_definition";
     $sql[] = "UPDATE $db_table SET \"$temp_column\" = \"{$dbal_column->getName()}\"";
     $sql[] = "ALTER TABLE $db_table DROP COLUMN \"{$dbal_column->getName()}\"";
@@ -859,15 +849,6 @@ SQL
       $column_description = $this->connection->getDbalPlatform()->quoteStringLiteral($drupal_field_new_specs['description']);
       $sql[] = "COMMENT ON COLUMN $db_table.\"{$dbal_column->getName()}\" IS " . $column_description;
     }
-//dump(['sql' => $sql]);
-//    $sql .= "NOT NULL";
-//    if ($change_nullability) {
-//      $sql .= array_key_exists('not null', $drupal_field_new_specs) && $drupal_field_new_specs['not null'] ? 'NOT NULL' : 'NULL';
-//    }
-//    $sql .= ")";
-//    foreach ($sql as $exec) {
-//      $this->connection->query($exec);
-//    }
     foreach ($sql as $exec) {
       if ($this->getDebugging()) {
         dump($exec);
@@ -915,7 +896,7 @@ SQL
   /**
    * {@inheritdoc}
    */
-  public function delegateDropPrimaryKey(&$primary_key_dropped_by_extension, DbalSchema $dbal_schema, $drupal_table_name) {
+  public function delegateDropPrimaryKey(bool &$primary_key_dropped_by_extension, string &$primary_key_asset_name, DbalSchema $dbal_schema, string $drupal_table_name): bool {
     $dbal_table = $dbal_schema->getTable($this->connection->getPrefixedTableName($drupal_table_name));
     $db_table = $this->connection->getPrefixedTableName($drupal_table_name, TRUE);
     $unquoted_db_table = $this->connection->getPrefixedTableName($drupal_table_name, FALSE);
@@ -926,7 +907,8 @@ SQL
          WHERE ind.table_name = '$unquoted_db_table' AND con.constraint_type = 'P'
 SQL
     )->fetch();
-    $exec = "ALTER TABLE $db_table DROP CONSTRAINT \"{$db_constraint->name}\"";
+    $primary_key_asset_name = $db_constraint->name;
+    $exec = "ALTER TABLE $db_table DROP CONSTRAINT \"$primary_key_asset_name\"";
     if ($this->getDebugging()) {
       dump($exec);
     }
