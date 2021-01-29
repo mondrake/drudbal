@@ -822,6 +822,7 @@ $this->setDebugging(TRUE);
     $temp_column = $this->getLimitedIdentifier(str_replace('-', '', 'tmp' . (new Uuid())->generate()));
     $drop_primary_key = in_array($dbal_column->getName(), $db_primary_key_columns);
     $db_table = $this->connection->getPrefixedTableName($drupal_table_name, TRUE);
+    $unquoted_db_table = trim($this->connection->getPrefixedTableName($drupal_table_name, TRUE), '"');
     $not_null = $drupal_field_new_specs['not null'] ?? FALSE;
     if ($drop_primary_key) {
 dump(['dbal_column' => $dbal_column->getName(), 'temp_column' => $temp_column, 'pk' => $db_primary_key_columns, 'drop?' =>$drop_primary_key]);
@@ -836,7 +837,7 @@ dump($this->connection->query(<<<SQL
             FROM all_ind_columns ind_col
        LEFT JOIN all_indexes ind ON ind.owner = ind_col.index_owner AND ind.index_name = ind_col.index_name
        LEFT JOIN all_constraints con ON  con.owner = ind_col.index_owner AND con.index_name = ind_col.index_name
-           WHERE ind_col.table_name = '$db_table'
+           WHERE ind_col.table_name = '$unquoted_db_table'
         ORDER BY ind_col.table_name, ind_col.index_name, ind_col.column_position
 SQL
 )->fetchAll());
