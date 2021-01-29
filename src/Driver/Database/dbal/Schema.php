@@ -537,6 +537,7 @@ class Schema extends DatabaseSchema {
 
     // Delegate to DBAL extension.
     $primary_key_dropped_by_extension = FALSE;
+    $primary_key_asset_name = '';
     if ($this->dbalExtension->delegateDropPrimaryKey($primary_key_dropped_by_extension, $primary_key_asset_name, $this->dbalSchema(), $table)) {
       $this->dbalSchemaForceReload();
       return $primary_key_dropped_by_extension;

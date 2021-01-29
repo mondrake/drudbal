@@ -831,6 +831,7 @@ PLSQL
       $column_definition = str_replace("NOT NULL", "NULL", $column_definition);
     }
     if ($drop_primary_key) {
+      $db_pk_constraint = '';
       $this->delegateDropPrimaryKey($primary_key_processed_by_extension, $db_pk_constraint, $dbal_schema, $drupal_table_name);
     }
 
