@@ -534,11 +534,13 @@ class Schema extends DatabaseSchema {
     if (!$this->tableExists($table)) {
       return FALSE;
     }
+$this->dbalExtension->setDebugging(TRUE);
 
     // Delegate to DBAL extension.
     $primary_key_dropped_by_extension = FALSE;
     if ($this->dbalExtension->delegateDropPrimaryKey($primary_key_dropped_by_extension, $this->dbalSchema(), $table)) {
       $this->dbalSchemaForceReload();
+$this->dbalExtension->setDebugging(FALSE);
       return $primary_key_dropped_by_extension;
     }
 

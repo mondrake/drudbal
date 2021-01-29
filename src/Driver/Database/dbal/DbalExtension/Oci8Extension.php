@@ -912,4 +912,27 @@ SQL
     return TRUE;
   }
 
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateDropPrimaryKey(&$primary_key_dropped_by_extension, DbalSchema $dbal_schema, $drupal_table_name) {
+    $dbal_table = $dbal_schema->getTable($this->connection->getPrefixedTableName($drupal_table_name));
+    $db_table = $this->connection->getPrefixedTableName($drupal_table_name, TRUE);
+    $unquoted_db_table = $this->connection->getPrefixedTableName($drupal_table_name, FALSE);
+    $db_constraint = $this->connection->query(<<<SQL
+        SELECT ind.index_name AS name
+          FROM all_indexes ind
+     LEFT JOIN all_constraints con ON ind.owner = con.owner AND ind.index_name = con.index_name
+         WHERE ind.table_name = '$unquoted_db_table' AND con.constraint_type = 'P'
+SQL
+    )->fetch();
+    $exec = "ALTER TABLE $db_table DROP CONSTRAINT \"{$db_constraint->name}\"";
+    if ($this->getDebugging()) {
+      dump($exec);
+    }
+    $this->getDbalConnection()->exec($exec);
+    $primary_key_dropped_by_extension = TRUE;
+    return TRUE;
+  }
+
 }
