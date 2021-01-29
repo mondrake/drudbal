@@ -92,20 +92,20 @@ jobs:
         cp modules/contrib/drudbal/tests/github/install_* .
         php install_oracle.php
 
-    - name: Install Drupal
-      run: |
-        # Use the custom installer.
-        php install_cli.php
-        vendor/bin/drush runserver localhost:8080 &
-        sleep 5s
+#    - name: Install Drupal
+#      run: |
+#        # Use the custom installer.
+#        php install_cli.php
+#        vendor/bin/drush runserver localhost:8080 &
+#        sleep 5s
 
-    - name: Report installation
-      continue-on-error: true
-      run: |
-        php install_report.php
-        vendor/bin/drush pml --type=module --no-core
-        vendor/bin/drush core:status
-        vendor/bin/drush core:requirements
+#    - name: Report installation
+#      continue-on-error: true
+#      run: |
+#        php install_report.php
+#        vendor/bin/drush pml --type=module --no-core
+#        vendor/bin/drush core:status
+#        vendor/bin/drush core:requirements
 
 #    - name: Run test ${{ matrix.test-args }}
 #      continue-on-error: true
