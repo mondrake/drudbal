@@ -166,4 +166,84 @@ class SchemaTest extends SchemaTestBase {
     $this->assertTrue($this->schema->dropTable($table_name), 'Table with uppercase table name dropped');
   }
 
+  public function testSchemaAddFieldDefaultInitial() {
+$this->connection->getDbalConnection()->setDebugging(TRUE);
+    // Test varchar types.
+    foreach ([1, 32, 128, 256, 512] as $length) {
+      $base_field_spec = [
+        'type' => 'varchar',
+        'length' => $length,
+      ];
+      $variations = [
+        ['not null' => FALSE],
+        ['not null' => FALSE, 'default' => '7'],
+        ['not null' => FALSE, 'default' => substr('"thing"', 0, $length)],
+        ['not null' => FALSE, 'default' => substr("\"'hing", 0, $length)],
+        ['not null' => TRUE, 'initial' => 'd'],
+        ['not null' => FALSE, 'default' => NULL],
+        ['not null' => TRUE, 'initial' => 'd', 'default' => '7'],
+      ];
+
+      foreach ($variations as $variation) {
+        $field_spec = $variation + $base_field_spec;
+        $this->assertFieldAdditionRemoval($field_spec);
+      }
+    }
+
+    // Test int and float types.
+    foreach (['int', 'float'] as $type) {
+      foreach (['tiny', 'small', 'medium', 'normal', 'big'] as $size) {
+        $base_field_spec = [
+          'type' => $type,
+          'size' => $size,
+        ];
+        $variations = [
+          ['not null' => FALSE],
+          ['not null' => FALSE, 'default' => 7],
+          ['not null' => TRUE, 'initial' => 1],
+          ['not null' => TRUE, 'initial' => 1, 'default' => 7],
+          ['not null' => TRUE, 'initial_from_field' => 'serial_column'],
+          [
+            'not null' => TRUE,
+            'initial_from_field' => 'test_nullable_field',
+            'initial'  => 100,
+          ],
+        ];
+
+        foreach ($variations as $variation) {
+          $field_spec = $variation + $base_field_spec;
+          $this->assertFieldAdditionRemoval($field_spec);
+        }
+      }
+    }
+
+    // Test numeric types.
+    foreach ([1, 5, 10, 40, 65] as $precision) {
+      foreach ([0, 2, 10, 30] as $scale) {
+        // Skip combinations where precision is smaller than scale.
+        if ($precision <= $scale) {
+          continue;
+        }
+
+        $base_field_spec = [
+          'type' => 'numeric',
+          'scale' => $scale,
+          'precision' => $precision,
+        ];
+        $variations = [
+          ['not null' => FALSE],
+          ['not null' => FALSE, 'default' => 7],
+          ['not null' => TRUE, 'initial' => 1],
+          ['not null' => TRUE, 'initial' => 1, 'default' => 7],
+          ['not null' => TRUE, 'initial_from_field' => 'serial_column'],
+        ];
+
+        foreach ($variations as $variation) {
+          $field_spec = $variation + $base_field_spec;
+          $this->assertFieldAdditionRemoval($field_spec);
+        }
+      }
+    }
+  }
+
 }
