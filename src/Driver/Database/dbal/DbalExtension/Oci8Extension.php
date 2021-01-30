@@ -838,15 +838,17 @@ PLSQL
       $db_primary_key_columns[$key] = $new_db_field;
     }
 
-    $temp_column = $this->getLimitedIdentifier(str_replace('-', '', 'tmp' . (new Uuid())->generate()));
-    $not_null = $drupal_field_new_specs['not null'] ?? FALSE;
-//    $column_definition = str_replace($db_field, "\"$temp_column\"", $dbal_column_options['columnDefinition']);
-    if ($not_null) {
-      $column_definition = str_replace("NOT NULL", "NULL", $column_definition);
-    }
     if ($drop_primary_key) {
       $db_pk_constraint = '';
       $this->delegateDropPrimaryKey($primary_key_processed_by_extension, $db_pk_constraint, $dbal_schema, $drupal_table_name);
+    }
+
+    $temp_column = $this->getLimitedIdentifier(str_replace('-', '', 'tmp' . (new Uuid())->generate()));
+    $not_null = $drupal_field_new_specs['not null'] ?? FALSE;
+//    $column_definition = str_replace($db_field, "\"$temp_column\"", $dbal_column_options['columnDefinition']);
+    $column_definition = $dbal_column_options['columnDefinition'];
+    if ($not_null) {
+      $column_definition = str_replace("NOT NULL", "NULL", $column_definition);
     }
 
     $sql = [];
