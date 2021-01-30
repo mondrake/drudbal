@@ -811,47 +811,58 @@ PLSQL
    * {@inheritdoc}
    */
   public function delegateChangeField(&$primary_key_processed_by_extension, DbalSchema $dbal_schema, $drupal_table_name, $field_name, $field_new_name, array $drupal_field_new_specs, array $keys_new_specs, array $dbal_column_options) {
-//dump(['pkp' => $primary_key_processed_by_extension, 'table' => $drupal_table_name, 'field' => $field_name, 'field-new' => $field_new_name, 'field-new-spec' => $drupal_field_new_specs, 'keys-new-spec' => $keys_new_specs, 'dbal' => $dbal_column_options]);
-    $current_schema = $dbal_schema;
-    $to_schema = clone $current_schema;
-    $dbal_table = $to_schema->getTable($this->connection->getPrefixedTableName($drupal_table_name));
-    $dbal_column = $dbal_table->getColumn($field_name); // @todo getdbfieldname
+    $primary_key_processed_by_extension = TRUE;
+
+    $unquoted_db_table = $this->connection->getPrefixedTableName($drupal_table_name, FALSE);
+    $db_table = '"' . $unquoted_db_table . '"';
+
+    $unquoted_db_field = $this->getDbFieldName($field_name, FALSE);
+    $db_field = '"' . $unquoted_db_field . '"';
+
+    $unquoted_new_db_field = $this->getDbFieldName($field_new_name, FALSE);
+    $new_db_field = '"' . $unquoted_new_db_field . '"';
+
+    $dbal_table = $dbal_schema->getTable($unquoted_db_table);
+    $dbal_primary_key = $dbal_table->hasPrimaryKey() ? $dbal_table->getPrimaryKey() : NULL;
+
+    $db_primary_key_columns = $dbal_primary_key ? $dbal_primary_key->getColumns() : [];
+    $drop_primary_key = !empty($keys_new_specs['primary key']) || in_array($db_field, $db_primary_key_columns);
+    if (!empty($keys_new_specs['primary key'])) {
+      $db_primary_key_columns = $this->connection->schema()->dbalGetFieldList($keys_new_specs['primary key']);
+    }
+    elseif ($drop_primary_key && $unquoted_new_db_field !== $unquoted_db_field) {
+      $key = array_search($db_field, $db_primary_key_columns);
+      $db_primary_key_columns[$key] = $new_db_field;
+    }
+
+    if ($drop_primary_key) {
+      $db_pk_constraint = '';
+      $this->delegateDropPrimaryKey($primary_key_processed_by_extension, $db_pk_constraint, $dbal_schema, $drupal_table_name);
+    }
+
     $temp_column = $this->getLimitedIdentifier(str_replace('-', '', 'tmp' . (new Uuid())->generate()));
-//dump(['dbal_column' => $dbal_column, 'temp_column' => $temp_column]);
-    $db_table = $this->connection->getPrefixedTableName($drupal_table_name, TRUE);
     $not_null = $drupal_field_new_specs['not null'] ?? FALSE;
-
-//    $change_nullability = TRUE;
-//    if (array_key_exists('not null', $drupal_field_new_specs) && $drupal_field_new_specs['not null'] == $dbal_column->getNotnull()) {
-//      $change_nullability = FALSE;
-//    }
-
-//    $sql = "ALTER TABLE " . $this->connection->getPrefixedTableName($drupal_table_name, TRUE) . " MODIFY (\"$field_name\" {$dbal_column_options['columnDefinition']})";
-//    $sql = str_replace("NUMBER(10) NOT NULL CHECK (\"age\">= 0)", "DEFAULT NULL", $sql);
-    $column_definition = str_replace("\"{$dbal_column->getName()}\"", "\"$temp_column\"", $dbal_column_options['columnDefinition']);
+    $column_definition = $dbal_column_options['columnDefinition'];
     if ($not_null) {
       $column_definition = str_replace("NOT NULL", "NULL", $column_definition);
     }
+
+    $sql = [];
     $sql[] = "ALTER TABLE $db_table ADD \"$temp_column\" $column_definition";
-    $sql[] = "UPDATE $db_table SET \"$temp_column\" = \"{$dbal_column->getName()}\"";
-    $sql[] = "ALTER TABLE $db_table DROP COLUMN \"{$dbal_column->getName()}\"";
-    $sql[] = "ALTER TABLE $db_table RENAME COLUMN \"$temp_column\" TO \"$field_name\"";
+    $sql[] = "UPDATE $db_table SET \"$temp_column\" = $db_field";
+    $sql[] = "ALTER TABLE $db_table DROP COLUMN $db_field";
+    $sql[] = "ALTER TABLE $db_table RENAME COLUMN \"$temp_column\" TO $new_db_field";
     if ($not_null) {
-      $sql[] = "ALTER TABLE $db_table MODIFY \"{$dbal_column->getName()}\" NOT NULL";
+      $sql[] = "ALTER TABLE $db_table MODIFY $new_db_field NOT NULL";
+    }
+    if ($db_primary_key_columns) {
+      $db_pk_constraint = $db_pk_constraint ?? $unquoted_db_table . '_PK';
+      $sql[] = "ALTER TABLE $db_table ADD CONSTRAINT $db_pk_constraint PRIMARY KEY (" . implode(', ', $db_primary_key_columns) . ")";
     }
     if (isset($drupal_field_new_specs['description'])) {
       $column_description = $this->connection->getDbalPlatform()->quoteStringLiteral($drupal_field_new_specs['description']);
-      $sql[] = "COMMENT ON COLUMN $db_table.\"{$dbal_column->getName()}\" IS " . $column_description;
+      $sql[] = "COMMENT ON COLUMN $db_table.$new_db_field IS " . $column_description;
     }
-//dump(['sql' => $sql]);
-//    $sql .= "NOT NULL";
-//    if ($change_nullability) {
-//      $sql .= array_key_exists('not null', $drupal_field_new_specs) && $drupal_field_new_specs['not null'] ? 'NOT NULL' : 'NULL';
-//    }
-//    $sql .= ")";
-//    foreach ($sql as $exec) {
-//      $this->connection->query($exec);
-//    }
     foreach ($sql as $exec) {
       if ($this->getDebugging()) {
         dump($exec);
@@ -859,45 +870,6 @@ PLSQL
       $this->getDbalConnection()->exec($exec);
     }
 
-
-//    $info = $this->getTableSerialInfo($table);
-
-//    if (!empty($info->sequence_name) && $this->oid($field, FALSE, FALSE) == $info->field_name) {
-//      $this->failsafeDdl('DROP TRIGGER {' . $info->trigger_name . '}');
-//      $this->failsafeDdl('DROP SEQUENCE {' . $info->sequence_name . '}');
-//    }
-
-/*    $this->connection->query("ALTER TABLE " . $this->oid($table, TRUE) . " RENAME COLUMN ". $this->oid($field) . " TO " . $this->oid($field . '_old'));
-    $not_null = isset($spec['not null']) ? $spec['not null'] : FALSE;
-    unset($spec['not null']);
-
-    if (!array_key_exists('size', $spec)) {
-      $spec['size'] = 'normal';
-    }
-
-    $this->addField($table, (string) $field_new, $spec);
-
-    $map = $this->getFieldTypeMap();
-    $this->connection->query("UPDATE " . $this->oid($table, TRUE) . " SET ". $this->oid($field_new) . " = " . $this->oid($field . '_old'));
-
-    if ($not_null) {
-      $this->connection->query("ALTER TABLE " . $this->oid($table, TRUE) . " MODIFY (". $this->oid($field_new) . " NOT NULL)");
-    }
-
-    $this->dropField($table, $field . '_old');
-
-    if (isset($new_keys)) {
-      $this->createKeys($table, $new_keys);
-    }
-
-    if (!empty($info->sequence_name) && $this->oid($field, FALSE, FALSE) == $info->field_name) {
-      $statements = $this->createSerialSql($table, $this->oid($field_new, FALSE, FALSE), $info->sequence_restart);
-      foreach ($statements as $statement) {
-        $this->connection->query($statement);
-      }
-    }
-
-    $this->cleanUpSchema($table);*/
     return TRUE;
   }
 
@@ -907,6 +879,30 @@ PLSQL
   public function delegateIndexExists(&$result, DbalSchema $dbal_schema, $table_full_name, $drupal_table_name, $drupal_index_name) {
     $index_full_name = $this->getDbIndexName('indexExists', $dbal_schema, $drupal_table_name, $drupal_index_name);
     $result = in_array($index_full_name, array_keys($this->getDbalConnection()->getSchemaManager()->listTableIndexes("\"$table_full_name\"")));
+    return TRUE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateDropPrimaryKey(bool &$primary_key_dropped_by_extension, string &$primary_key_asset_name, DbalSchema $dbal_schema, string $drupal_table_name): bool {
+    $dbal_table = $dbal_schema->getTable($this->connection->getPrefixedTableName($drupal_table_name));
+    $db_table = $this->connection->getPrefixedTableName($drupal_table_name, TRUE);
+    $unquoted_db_table = $this->connection->getPrefixedTableName($drupal_table_name, FALSE);
+    $db_constraint = $this->connection->query(<<<SQL
+        SELECT ind.index_name AS name
+          FROM all_indexes ind
+     LEFT JOIN all_constraints con ON ind.owner = con.owner AND ind.index_name = con.index_name
+         WHERE ind.table_name = '$unquoted_db_table' AND con.constraint_type = 'P'
+SQL
+    )->fetch();
+    $primary_key_asset_name = $db_constraint->name;
+    $exec = "ALTER TABLE $db_table DROP CONSTRAINT \"$primary_key_asset_name\"";
+    if ($this->getDebugging()) {
+      dump($exec);
+    }
+    $this->getDbalConnection()->exec($exec);
+    $primary_key_dropped_by_extension = TRUE;
     return TRUE;
   }
 

@@ -613,7 +613,7 @@ class AbstractExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function delegateDropPrimaryKey(&$primary_key_dropped_by_extension, DbalSchema $dbal_schema, $drupal_table_name) {
+  public function delegateDropPrimaryKey(bool &$primary_key_dropped_by_extension, string &$primary_key_asset_name, DbalSchema $dbal_schema, string $drupal_table_name): bool {
     return FALSE;
   }
 

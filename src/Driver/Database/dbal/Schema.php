@@ -303,9 +303,6 @@ class Schema extends DatabaseSchema {
     // DBAL Schema will drop the old table and create a new one, so we go for
     // using the manager instead, that allows in-place renaming.
     // @see https://github.com/doctrine/migrations/issues/17
-//    if ($this->dbalExtension->getDebugging()) {
-//      error_log('renameTable ' . $this->connection->getPrefixedTableName($table) . ' to ' . $this->connection->getPrefixedTableName($new_name));
-//    }
     $dbal_schema = $this->dbalSchema();
     $this->dbalSchemaManager->renameTable($this->connection->getPrefixedTableName($table, TRUE), $this->connection->getPrefixedTableName($new_name, TRUE));
     $this->dbalExtension->postRenameTable($dbal_schema, $table, $new_name);
@@ -383,8 +380,7 @@ class Schema extends DatabaseSchema {
 
     // Drop primary key if it is due to be changed.
     if (isset($keys_new['primary key']) && $dbal_table->hasPrimaryKey()) {
-      $dbal_table->dropPrimaryKey();
-      $this->dbalExecuteSchemaChange($to_schema);
+      $this->dropPrimaryKey($table);
       $current_schema = $this->dbalSchema();
       $to_schema = clone $current_schema;
       $dbal_table = $to_schema->getTable($this->connection->getPrefixedTableName($table));
@@ -540,11 +536,13 @@ class Schema extends DatabaseSchema {
 
     // Delegate to DBAL extension.
     $primary_key_dropped_by_extension = FALSE;
-    if ($this->dbalExtension->delegateDropPrimaryKey($primary_key_dropped_by_extension, $this->dbalSchema(), $table)) {
+    $primary_key_asset_name = '';
+    if ($this->dbalExtension->delegateDropPrimaryKey($primary_key_dropped_by_extension, $primary_key_asset_name, $this->dbalSchema(), $table)) {
       $this->dbalSchemaForceReload();
       return $primary_key_dropped_by_extension;
     }
 
+    // DBAL extension did not pick up, proceed with DBAL.
     $table_full_name = $this->connection->getPrefixedTableName($table);
     if (!$this->dbalSchema()->getTable($table_full_name)->hasPrimaryKey()) {
       return FALSE;
