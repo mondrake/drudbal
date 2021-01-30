@@ -380,8 +380,7 @@ class Schema extends DatabaseSchema {
 
     // Drop primary key if it is due to be changed.
     if (isset($keys_new['primary key']) && $dbal_table->hasPrimaryKey()) {
-      $dbal_table->dropPrimaryKey();
-      $this->dbalExecuteSchemaChange($to_schema);
+      $this->dropPrimaryKey($table);
       $current_schema = $this->dbalSchema();
       $to_schema = clone $current_schema;
       $dbal_table = $to_schema->getTable($this->connection->getPrefixedTableName($table));

@@ -811,8 +811,6 @@ PLSQL
    * {@inheritdoc}
    */
   public function delegateChangeField(&$primary_key_processed_by_extension, DbalSchema $dbal_schema, $drupal_table_name, $field_name, $field_new_name, array $drupal_field_new_specs, array $keys_new_specs, array $dbal_column_options) {
-//dump(['pkp' => $primary_key_processed_by_extension, 'table' => $drupal_table_name, 'field' => $field_name, 'field-new' => $field_new_name, 'field-new-spec' => $drupal_field_new_specs, 'keys-new-spec' => $keys_new_specs, 'dbal' => $dbal_column_options]);
-
     $primary_key_processed_by_extension = TRUE;
 
     $unquoted_db_table = $this->connection->getPrefixedTableName($drupal_table_name, FALSE);
@@ -865,7 +863,7 @@ PLSQL
     }
     if (isset($drupal_field_new_specs['description'])) {
       $column_description = $this->connection->getDbalPlatform()->quoteStringLiteral($drupal_field_new_specs['description']);
-      $sql[] = "COMMENT ON COLUMN $db_table.\"{$dbal_column->getName()}\" IS " . $column_description;
+      $sql[] = "COMMENT ON COLUMN $db_table.$new_db_field IS " . $column_description;
     }
     foreach ($sql as $exec) {
       if ($this->getDebugging()) {
@@ -875,31 +873,6 @@ PLSQL
     }
 
     return TRUE;
-
-/*dump($this->connection->query(<<<SQL
-          SELECT ind_col.table_name as table_name,
-                 ind_col.index_name AS name,
-                 ind.index_type AS type,
-                 decode(ind.uniqueness, 'NONUNIQUE', 0, 'UNIQUE', 1) AS is_unique,
-                 ind_col.column_name AS column_name,
-                 ind_col.column_position AS column_pos,
-                 con.constraint_type AS is_primary
-            FROM all_ind_columns ind_col
-       LEFT JOIN all_indexes ind ON ind.owner = ind_col.index_owner AND ind.index_name = ind_col.index_name
-       LEFT JOIN all_constraints con ON  con.owner = ind_col.index_owner AND con.index_name = ind_col.index_name
-           WHERE ind_col.table_name = '$unquoted_db_table'
-        ORDER BY ind_col.table_name, ind_col.index_name, ind_col.column_position
-SQL
-)->fetchAll());
-
-
-
-
-
-
-
-
-*/
   }
 
   /**
