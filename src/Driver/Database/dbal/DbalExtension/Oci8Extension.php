@@ -826,11 +826,11 @@ PLSQL
     $dbal_primary_key = $dbal_table->hasPrimaryKey() ? $dbal_table->getPrimaryKey() : NULL;
 
     $db_primary_key_columns = $dbal_primary_key ? $dbal_primary_key->getColumns() : [];
-    $drop_primary_key = !empty($keys_new_specs['primary key']) || in_array($db_field, $db_primary_key_columns);
+    $drop_primary_key = $dbal_table->hasPrimaryKey() && (!empty($keys_new_specs['primary key'])) || in_array($db_field, $db_primary_key_columns));
     if (!empty($keys_new_specs['primary key'])) {
       $db_primary_key_columns = $this->connection->schema()->dbalGetFieldList($keys_new_specs['primary key']);
     }
-    elseif ($drop_primary_key && $unquoted_new_db_field !== $unquoted_db_field) {
+    elseif ($db_primary_key_columns && $unquoted_new_db_field !== $unquoted_db_field) {
       $key = array_search($db_field, $db_primary_key_columns);
       $db_primary_key_columns[$key] = $new_db_field;
     }
