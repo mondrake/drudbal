@@ -821,7 +821,7 @@ PLSQL
     $dbal_primary_key = $dbal_table->hasPrimaryKey() ? $dbal_table->getPrimaryKey() : NULL;
     $db_primary_key_columns = $dbal_primary_key ? $dbal_primary_key->getColumns() : [];
     $drop_primary_key = in_array("\"{$dbal_column->getName()}\"", $db_primary_key_columns);
-    if (!empty($keys_new_specs['primary key']) {
+    if (!empty($keys_new_specs['primary key'])) {
       $db_primary_key_columns = $this->connection->dbalGetFieldList($keys_new_specs['primary key']);
     }
     $dbal_column = $dbal_table->getColumn($field_name); // @todo getdbfieldname
