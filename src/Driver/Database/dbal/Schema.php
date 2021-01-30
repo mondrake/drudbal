@@ -723,7 +723,7 @@ class Schema extends DatabaseSchema {
     if (isset($keys_new['primary key']) && in_array($field_new, $keys_new['primary key'], TRUE)) {
       $this->ensureNotNullPrimaryKey($keys_new['primary key'], [$field_new => $spec]);
     }
-$this->dbalExtension->setDebugging(TRUE);
+
     $dbal_type = $this->getDbalColumnType($spec);
     $dbal_column_options = $this->getDbalColumnOptions('changeField', $field_new, $dbal_type, $spec);
     // DBAL is limited here, if we pass only 'columnDefinition' to
@@ -757,7 +757,6 @@ $this->dbalExtension->setDebugging(TRUE);
         $this->addIndex($table, $index, $fields, $keys_new);
       }
     }
-$this->dbalExtension->setDebugging(FALSE);
   }
 
   /**
