@@ -818,15 +818,24 @@ PLSQL
     $unquoted_db_table = $this->connection->getPrefixedTableName($drupal_table_name, FALSE);
     $db_table = '"' . $unquoted_db_table . '"';
 
+    $unquoted_db_field = $this->getDbFieldName($field_name, FALSE);
+    $db_field = '"' . $unquoted_db_field . '"';
+
+    $unquoted_new_db_field = $this->getDbFieldName($field_new_name, FALSE);
+    $new_db_field = '"' . $unquoted_new_db_field . '"';
+
     $dbal_table = $dbal_schema->getTable($unquoted_db_table);
-    $dbal_column = $dbal_table->getColumn($field_name); // @todo getdbfieldname
+    $dbal_column = $dbal_table->getColumn($unquoted_db_field);
     $dbal_primary_key = $dbal_table->hasPrimaryKey() ? $dbal_table->getPrimaryKey() : NULL;
 
     $db_primary_key_columns = $dbal_primary_key ? $dbal_primary_key->getColumns() : [];
     $drop_primary_key = in_array("\"{$dbal_column->getName()}\"", $db_primary_key_columns);
     if (!empty($keys_new_specs['primary key'])) {
-      $db_pk_constraint = $unquoted_db_table . '_PK';
       $db_primary_key_columns = $this->connection->schema()->dbalGetFieldList($keys_new_specs['primary key']);
+    }
+    elseif ($drop_primary_key && $unquoted_new_db_field !== $unquoted_db_field) {
+      $key = array_search($db_field, $db_primary_key_columns);
+      $db_primary_key_columns[$key] = $new_db_field;
     }
 
     $temp_column = $this->getLimitedIdentifier(str_replace('-', '', 'tmp' . (new Uuid())->generate()));
@@ -849,6 +858,7 @@ PLSQL
       $sql[] = "ALTER TABLE $db_table MODIFY \"{$dbal_column->getName()}\" NOT NULL";
     }
     if ($db_primary_key_columns) {
+      $db_pk_constraint = $db_pk_constraint ?? $unquoted_db_table . '_PK';
       $sql[] = "ALTER TABLE $db_table ADD CONSTRAINT $db_pk_constraint PRIMARY KEY (" . implode(', ', $db_primary_key_columns) . ")";
     }
     if (isset($drupal_field_new_specs['description'])) {
