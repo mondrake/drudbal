@@ -825,11 +825,11 @@ PLSQL
     $new_db_field = '"' . $unquoted_new_db_field . '"';
 
     $dbal_table = $dbal_schema->getTable($unquoted_db_table);
-    $dbal_column = $dbal_table->getColumn($unquoted_db_field);
+//    $dbal_column = $dbal_table->getColumn($unquoted_db_field);
     $dbal_primary_key = $dbal_table->hasPrimaryKey() ? $dbal_table->getPrimaryKey() : NULL;
 
     $db_primary_key_columns = $dbal_primary_key ? $dbal_primary_key->getColumns() : [];
-    $drop_primary_key = in_array("\"{$dbal_column->getName()}\"", $db_primary_key_columns);
+    $drop_primary_key = in_array($db_field, $db_primary_key_columns);
     if (!empty($keys_new_specs['primary key'])) {
       $db_primary_key_columns = $this->connection->schema()->dbalGetFieldList($keys_new_specs['primary key']);
     }
@@ -840,7 +840,7 @@ PLSQL
 
     $temp_column = $this->getLimitedIdentifier(str_replace('-', '', 'tmp' . (new Uuid())->generate()));
     $not_null = $drupal_field_new_specs['not null'] ?? FALSE;
-    $column_definition = str_replace("\"{$dbal_column->getName()}\"", "\"$temp_column\"", $dbal_column_options['columnDefinition']);
+//    $column_definition = str_replace($db_field, "\"$temp_column\"", $dbal_column_options['columnDefinition']);
     if ($not_null) {
       $column_definition = str_replace("NOT NULL", "NULL", $column_definition);
     }
@@ -851,11 +851,11 @@ PLSQL
 
     $sql = [];
     $sql[] = "ALTER TABLE $db_table ADD \"$temp_column\" $column_definition";
-    $sql[] = "UPDATE $db_table SET \"$temp_column\" = \"{$dbal_column->getName()}\"";
-    $sql[] = "ALTER TABLE $db_table DROP COLUMN \"{$dbal_column->getName()}\"";
-    $sql[] = "ALTER TABLE $db_table RENAME COLUMN \"$temp_column\" TO \"$field_name\"";
+    $sql[] = "UPDATE $db_table SET \"$temp_column\" = $db_field";
+    $sql[] = "ALTER TABLE $db_table DROP COLUMN $db_field";
+    $sql[] = "ALTER TABLE $db_table RENAME COLUMN \"$temp_column\" TO $new_db_field";
     if ($not_null) {
-      $sql[] = "ALTER TABLE $db_table MODIFY \"{$dbal_column->getName()}\" NOT NULL";
+      $sql[] = "ALTER TABLE $db_table MODIFY $new_db_field NOT NULL";
     }
     if ($db_primary_key_columns) {
       $db_pk_constraint = $db_pk_constraint ?? $unquoted_db_table . '_PK';
