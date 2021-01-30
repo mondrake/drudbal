@@ -819,10 +819,13 @@ PLSQL
     $to_schema = clone $current_schema;
     $dbal_table = $to_schema->getTable($this->connection->getPrefixedTableName($drupal_table_name));
     $dbal_primary_key = $dbal_table->hasPrimaryKey() ? $dbal_table->getPrimaryKey() : NULL;
-    $db_primary_key_columns = $dbal_primary_key ? $this->delegateColumnNameList($dbal_primary_key->getColumns()) : [];
+    $db_primary_key_columns = $dbal_primary_key ? $dbal_primary_key->getColumns() : [];
+    $drop_primary_key = in_array("\"{$dbal_column->getName()}\"", $db_primary_key_columns);
+    if (!empty($keys_new_specs['primary key']) {
+      $db_primary_key_columns = $this->connection->dbalGetFieldList($keys_new_specs['primary key']);
+    }
     $dbal_column = $dbal_table->getColumn($field_name); // @todo getdbfieldname
     $temp_column = $this->getLimitedIdentifier(str_replace('-', '', 'tmp' . (new Uuid())->generate()));
-    $drop_primary_key = in_array($dbal_column->getName(), $db_primary_key_columns);
     $db_table = $this->connection->getPrefixedTableName($drupal_table_name, TRUE);
     $unquoted_db_table = trim($this->connection->getPrefixedTableName($drupal_table_name, TRUE), '"');
     $not_null = $drupal_field_new_specs['not null'] ?? FALSE;
@@ -844,7 +847,7 @@ PLSQL
       $sql[] = "ALTER TABLE $db_table MODIFY \"{$dbal_column->getName()}\" NOT NULL";
     }
     if ($drop_primary_key) {
-      $sql[] = "ALTER TABLE $db_table ADD CONSTRAINT $db_pk_constraint PRIMARY KEY (\"" . implode('", "', $db_primary_key_columns) . "\")";
+      $sql[] = "ALTER TABLE $db_table ADD CONSTRAINT $db_pk_constraint PRIMARY KEY (" . implode(', ', $db_primary_key_columns) . ")";
     }
     if (isset($drupal_field_new_specs['description'])) {
       $column_description = $this->connection->getDbalPlatform()->quoteStringLiteral($drupal_field_new_specs['description']);
