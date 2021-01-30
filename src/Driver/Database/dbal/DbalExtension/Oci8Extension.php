@@ -815,19 +815,21 @@ PLSQL
 
     $primary_key_processed_by_extension = TRUE;
 
-    $current_schema = $dbal_schema;
-    $to_schema = clone $current_schema;
-    $dbal_table = $to_schema->getTable($this->connection->getPrefixedTableName($drupal_table_name));
+    $unquoted_db_table = $this->connection->getPrefixedTableName($drupal_table_name, FALSE);
+    $db_table = '"' . $unquoted_db_table . '"';
+
+    $dbal_table = $dbal_schema->getTable($unquoted_db_table);
     $dbal_column = $dbal_table->getColumn($field_name); // @todo getdbfieldname
     $dbal_primary_key = $dbal_table->hasPrimaryKey() ? $dbal_table->getPrimaryKey() : NULL;
+
     $db_primary_key_columns = $dbal_primary_key ? $dbal_primary_key->getColumns() : [];
     $drop_primary_key = in_array("\"{$dbal_column->getName()}\"", $db_primary_key_columns);
     if (!empty($keys_new_specs['primary key'])) {
+      $db_pk_constraint = $unquoted_db_table . '_PK';
       $db_primary_key_columns = $this->connection->schema()->dbalGetFieldList($keys_new_specs['primary key']);
     }
+
     $temp_column = $this->getLimitedIdentifier(str_replace('-', '', 'tmp' . (new Uuid())->generate()));
-    $db_table = $this->connection->getPrefixedTableName($drupal_table_name, TRUE);
-    $unquoted_db_table = trim($this->connection->getPrefixedTableName($drupal_table_name, TRUE), '"');
     $not_null = $drupal_field_new_specs['not null'] ?? FALSE;
     $column_definition = str_replace("\"{$dbal_column->getName()}\"", "\"$temp_column\"", $dbal_column_options['columnDefinition']);
     if ($not_null) {
