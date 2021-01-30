@@ -823,7 +823,7 @@ PLSQL
     $db_primary_key_columns = $dbal_primary_key ? $dbal_primary_key->getColumns() : [];
     $drop_primary_key = in_array("\"{$dbal_column->getName()}\"", $db_primary_key_columns);
     if (!empty($keys_new_specs['primary key'])) {
-      $db_primary_key_columns = $this->connection->dbalGetFieldList($keys_new_specs['primary key']);
+      $db_primary_key_columns = $this->connection->schema()->dbalGetFieldList($keys_new_specs['primary key']);
     }
     $temp_column = $this->getLimitedIdentifier(str_replace('-', '', 'tmp' . (new Uuid())->generate()));
     $db_table = $this->connection->getPrefixedTableName($drupal_table_name, TRUE);
