@@ -823,11 +823,10 @@ PLSQL
     $new_db_field = '"' . $unquoted_new_db_field . '"';
 
     $dbal_table = $dbal_schema->getTable($unquoted_db_table);
-//    $dbal_column = $dbal_table->getColumn($unquoted_db_field);
     $dbal_primary_key = $dbal_table->hasPrimaryKey() ? $dbal_table->getPrimaryKey() : NULL;
 
     $db_primary_key_columns = $dbal_primary_key ? $dbal_primary_key->getColumns() : [];
-    $drop_primary_key = in_array($db_field, $db_primary_key_columns);
+    $drop_primary_key = !empty($keys_new_specs['primary key']) || in_array($db_field, $db_primary_key_columns);
     if (!empty($keys_new_specs['primary key'])) {
       $db_primary_key_columns = $this->connection->schema()->dbalGetFieldList($keys_new_specs['primary key']);
     }
@@ -843,7 +842,6 @@ PLSQL
 
     $temp_column = $this->getLimitedIdentifier(str_replace('-', '', 'tmp' . (new Uuid())->generate()));
     $not_null = $drupal_field_new_specs['not null'] ?? FALSE;
-//    $column_definition = str_replace($db_field, "\"$temp_column\"", $dbal_column_options['columnDefinition']);
     $column_definition = $dbal_column_options['columnDefinition'];
     if ($not_null) {
       $column_definition = str_replace("NOT NULL", "NULL", $column_definition);
