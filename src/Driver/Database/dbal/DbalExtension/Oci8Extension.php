@@ -842,7 +842,7 @@ PLSQL
 
     $temp_column = $this->getLimitedIdentifier(str_replace('-', '', 'tmp' . (new Uuid())->generate()));
     $not_null = $drupal_field_new_specs['not null'] ?? FALSE;
-    $column_definition = $dbal_column_options['columnDefinition'];
+    $column_definition = str_replace($db_field, "\"$temp_column\"", $dbal_column_options['columnDefinition']);
     if ($not_null) {
       $column_definition = str_replace("NOT NULL", "NULL", $column_definition);
     }
@@ -855,7 +855,7 @@ PLSQL
     if ($not_null) {
       $sql[] = "ALTER TABLE $db_table MODIFY $new_db_field NOT NULL";
     }
-    if ($db_primary_key_columns) {
+    if ($drop_primary_key && $db_primary_key_columns) {
       $db_pk_constraint = $db_pk_constraint ?? $unquoted_db_table . '_PK';
       $sql[] = "ALTER TABLE $db_table ADD CONSTRAINT $db_pk_constraint PRIMARY KEY (" . implode(', ', $db_primary_key_columns) . ")";
     }
