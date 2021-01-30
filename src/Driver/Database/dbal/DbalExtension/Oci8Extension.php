@@ -846,7 +846,7 @@ PLSQL
     if ($not_null) {
       $sql[] = "ALTER TABLE $db_table MODIFY \"{$dbal_column->getName()}\" NOT NULL";
     }
-    if ($drop_primary_key) {
+    if ($db_primary_key_columns) {
       $sql[] = "ALTER TABLE $db_table ADD CONSTRAINT $db_pk_constraint PRIMARY KEY (" . implode(', ', $db_primary_key_columns) . ")";
     }
     if (isset($drupal_field_new_specs['description'])) {
