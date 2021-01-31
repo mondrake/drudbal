@@ -247,6 +247,7 @@ $this->connection->getDbalExtension()->setDebugging(TRUE);
   }
 
   public function testSchemaChangeFieldDefaultInitial() {
+$this->counter=0;
 $this->connection->getDbalExtension()->setDebugging(TRUE);
     $field_specs = [
       ['type' => 'int', 'size' => 'normal', 'not null' => FALSE],
