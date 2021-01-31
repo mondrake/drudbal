@@ -823,10 +823,11 @@ PLSQL
     $new_db_field = '"' . $unquoted_new_db_field . '"';
 
     $dbal_table = $dbal_schema->getTable($unquoted_db_table);
-    $dbal_primary_key = $dbal_table->hasPrimaryKey() ? $dbal_table->getPrimaryKey() : NULL;
+    $has_primary_key = $dbal_table->hasPrimaryKey();
+    $dbal_primary_key = $has_primary_key ? $dbal_table->getPrimaryKey() : NULL;
 
     $db_primary_key_columns = $dbal_primary_key ? $dbal_primary_key->getColumns() : [];
-    $drop_primary_key = $dbal_table->hasPrimaryKey() && (!empty($keys_new_specs['primary key']) || in_array($db_field, $db_primary_key_columns));
+    $drop_primary_key = $has_primary_key && (!empty($keys_new_specs['primary key']) || in_array($db_field, $db_primary_key_columns));
     if (!empty($keys_new_specs['primary key'])) {
       $db_primary_key_columns = $this->connection->schema()->dbalGetFieldList($keys_new_specs['primary key']);
     }
@@ -838,11 +839,12 @@ PLSQL
     if ($drop_primary_key) {
       $db_pk_constraint = '';
       $this->delegateDropPrimaryKey($primary_key_processed_by_extension, $db_pk_constraint, $dbal_schema, $drupal_table_name);
+      $has_primary_key = FALSE;
     }
 
     $temp_column = $this->getLimitedIdentifier(str_replace('-', '', 'tmp' . (new Uuid())->generate()));
     $not_null = $drupal_field_new_specs['not null'] ?? FALSE;
-    $column_definition = $dbal_column_options['columnDefinition'];
+    $column_definition = str_replace($db_field, "\"$temp_column\"", $dbal_column_options['columnDefinition']);
     if ($not_null) {
       $column_definition = str_replace("NOT NULL", "NULL", $column_definition);
     }
@@ -855,7 +857,7 @@ PLSQL
     if ($not_null) {
       $sql[] = "ALTER TABLE $db_table MODIFY $new_db_field NOT NULL";
     }
-    if ($db_primary_key_columns) {
+    if (!$has_primary_key && $db_primary_key_columns) {
       $db_pk_constraint = $db_pk_constraint ?? $unquoted_db_table . '_PK';
       $sql[] = "ALTER TABLE $db_table ADD CONSTRAINT $db_pk_constraint PRIMARY KEY (" . implode(', ', $db_primary_key_columns) . ")";
     }
@@ -863,6 +865,7 @@ PLSQL
       $column_description = $this->connection->getDbalPlatform()->quoteStringLiteral($drupal_field_new_specs['description']);
       $sql[] = "COMMENT ON COLUMN $db_table.$new_db_field IS " . $column_description;
     }
+
     foreach ($sql as $exec) {
       if ($this->getDebugging()) {
         dump($exec);
