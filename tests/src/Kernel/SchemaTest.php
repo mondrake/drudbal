@@ -167,7 +167,8 @@ class SchemaTest extends SchemaTestBase {
   }
 
   public function testSchemaAddFieldDefaultInitial() {
-$this->connection->getDbalExtension()->setDebugging(TRUE);
+$this->counter = 0;
+//$this->connection->getDbalExtension()->setDebugging(TRUE);
     // Test varchar types.
     foreach ([1, 32, 128, 256, 512] as $length) {
       $base_field_spec = [
