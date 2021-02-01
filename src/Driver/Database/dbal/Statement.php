@@ -224,6 +224,8 @@ class Statement implements \IteratorAggregate, StatementInterface {
    * {@inheritdoc}
    */
   public function execute($args = [], $options = []) {
+    $args = $args ?? [];
+
     // Prepare the lower-level statement if it's not been prepared already.
     if (!$this->dbalStatement) {
       // Replace named placeholders with positional ones if needed.

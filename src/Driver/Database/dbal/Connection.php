@@ -9,7 +9,9 @@ use Doctrine\DBAL\Exception as DbalException;
 use Doctrine\DBAL\DriverManager as DbalDriverManager;
 use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
 use Doctrine\DBAL\ExpandArrayParameters;
+use Doctrine\DBAL\Platforms\AbstractPlatform as DbalAbstractPlatform;
 use Doctrine\DBAL\SQL\Parser;
+use Drupal\Component\Uuid\Php as Uuid;
 use Drupal\Core\Database\Connection as DatabaseConnection;
 use Drupal\Core\Database\ConnectionNotDefinedException;
 use Drupal\Core\Database\Database;
@@ -176,6 +178,20 @@ class Connection extends DatabaseConnection {
   /**
    * {@inheritdoc}
    */
+  public function quoteIdentifiers($sql) {
+    preg_match_all('/(\[(.+?)\])/', $sql, $matches);
+    $ids = [];
+    $i = 0;
+    foreach($matches[1] as $m) {
+      $ids[$m] = $this->getDbalExtension()->getDbFieldName($matches[2][$i], TRUE);
+      $i++;
+    }
+    return strtr($sql, $ids);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function prefixTables($sql) {
     $matches = [];
     preg_match_all('/{(\S*)}/', $sql, $matches, PREG_SET_ORDER, 0);
@@ -184,10 +200,8 @@ class Connection extends DatabaseConnection {
       if (isset($this->dbTables['{' . $table . '}'])) {
         continue;
       }
-      // Per-table prefixes are deprecated as of Drupal 8.2 so let's not get
-      // in the complexity of trying to manage that. Assume a single default
-      // prefix.
-      $this->dbTables['{' . $table . '}'] = $this->identifierQuotes[0] . $this->dbalExtension->getDbTableName($this->prefixes['default'], $table) . $this->identifierQuotes[1];
+      $prefix = $this->prefixes[$table] ?? $this->prefixes['default'];
+      $this->dbTables['{' . $table . '}'] = $this->identifierQuotes[0] . $this->dbalExtension->getDbTableName($prefix, $table) . $this->identifierQuotes[1];
     }
     return str_replace(array_keys($this->dbTables), array_values($this->dbTables), $sql);
   }
@@ -228,6 +242,7 @@ class Connection extends DatabaseConnection {
       // In either case, we want to end up with an executed statement object,
       // which we pass to Statement::execute.
       if ($query instanceof StatementInterface) {
+        @trigger_error('Passing a StatementInterface object as a $query argument to Drupal\Core\Database\Connection::query is deprecated in drupal:9.2.0 and is removed in drupal:10.0.0. Call the execute method from the StatementInterface object directly instead. See https://www.drupal.org/node/3154439', E_USER_DEPRECATED);
         $stmt = $query;
         $stmt->execute(NULL, $options);
       }
@@ -442,9 +457,7 @@ class Connection extends DatabaseConnection {
    * {@inheritdoc}
    */
   public function queryTemporary($query, array $args = [], array $options = []) {
-    $tablename = $this->generateTemporaryTableName();
-    $this->dbalExtension->delegateQueryTemporary($tablename, $query, $args, $options);
-    return $tablename;
+    return $this->dbalExtension->delegateQueryTemporary($query, $args, $options);
   }
 
   /**
@@ -494,7 +507,8 @@ class Connection extends DatabaseConnection {
    * {@inheritdoc}
    */
   public function nextId($existing_id = 0) {
-    return $this->dbalExtension->delegateNextId($existing_id);
+    $id = is_numeric($existing_id ?? 0) ? ($existing_id ?? 0) : 0;
+    return $this->dbalExtension->delegateNextId($id);
   }
 
   /**
@@ -506,6 +520,20 @@ class Connection extends DatabaseConnection {
       $query = $this->quoteIdentifiers($query);
     }
     return new $this->statementClass($this, $query, $options['pdo'] ?? []);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function escapeField($field) {
+    return $this->getDbalExtension()->getDbFieldName($field, TRUE);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function escapeAlias($field) {
+    return $this->getDbalExtension()->getDbAlias($field, TRUE);
   }
 
   /**
@@ -653,6 +681,16 @@ class Connection extends DatabaseConnection {
    */
   public function getDbalExtension() {
     return $this->dbalExtension;
+  }
+
+  /**
+   * Gets the DBAL platform.
+   *
+   * @return \Doctrine\DBAL\Platforms\AbstractPlatform
+   *   The DBAL platform for this connection.
+   */
+  public function getDbalPlatform(): DbalAbstractPlatform {
+    return $this->dbalPlatform;
   }
 
   /**

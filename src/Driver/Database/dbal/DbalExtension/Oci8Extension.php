@@ -23,7 +23,9 @@ use Doctrine\DBAL\Exception\NotNullConstraintViolationException;
  */
 class Oci8Extension extends AbstractExtension {
 
-  const ORACLE_EMPTY_STRING_REPLACEMENT = "\010";
+  // protected static $isDebugging = TRUE;
+
+  const ORACLE_EMPTY_STRING_REPLACEMENT = "\010"; // it's the Backspace, dec=8, hex=8, oct=10.
 
   /**
    * A map of condition operators to SQLite operators.
@@ -35,46 +37,7 @@ class Oci8Extension extends AbstractExtension {
     'NOT LIKE' => ['postfix' => " ESCAPE '\\'"],
   ];
 
-  /**
-   * A list of Oracle keywords that collide with Drupal.
-   *
-   * @var string[]
-   */
-  protected static $oracleKeywords = [
-    'access',
-    'check',
-    'cluster',
-    'comment',
-    'compress',
-    'current',
-    'date',
-    'file',
-    'increment',
-    'initial',
-    'level',
-    'lock',
-    'mode',
-    'offset',
-    'option',
-    'pctfree',
-    'public',
-    'range',
-    'raw',
-    'resource',
-    'row',
-    'rowid',
-    'rownum',
-    'rows',
-    'session',
-    'size',
-    'start',
-    'successful',
-    'table',
-    'uid',
-    'user',
-  ];
-
-  protected $oracleKeywordTokens;
+  private $tempTables = [];
 
   /**
    * Map of database identifiers.
@@ -84,31 +47,34 @@ class Oci8Extension extends AbstractExtension {
    *
    * @var string[]
    */
-  protected $dbIdentifiersMap = [];
+  private $dbIdentifiersMap = [];
 
   /**
-   * Constructs an Oci8Extension object.
-   *
-   * @param \Drupal\drudbal\Driver\Database\dbal\Connection $drudbal_connection
-   *   The Drupal database connection object for this extension.
-   * @param \Doctrine\DBAL\Connection $dbal_connection
-   *   The DBAL connection.
-   * @param string $statement_class
-   *   The StatementInterface class to be used.
+   * Destructs an Oci8 extension object.
    */
-  public function __construct(DruDbalConnection $drudbal_connection, DbalConnection $dbal_connection, $statement_class) {
-    parent::__construct($drudbal_connection, $dbal_connection, $statement_class);
-    $this->oracleKeywordTokens = implode('|', static::$oracleKeywords);
+  public function __destruct() {
+    foreach ($this->tempTables as $db_table) {
+      try {
+        $this->dbalConnection->exec("TRUNCATE TABLE $db_table");
+        $this->dbalConnection->exec("DROP TABLE $db_table");
+      }
+      catch (\Exception $e) {
+        throw new \RuntimeException("Missing temp table $db_table", $e->getCode(), $e);
+      }
+    }
+    parent::__destruct();
   }
 
   /**
    * Database asset name resolution methods.
    */
 
-  protected function getLimitedIdentifier(string $identifier, int $max_length = 30): string {
+  private function getLimitedIdentifier(string $identifier, int $max_length = 30): string {
     if (strlen($identifier) > $max_length) {
       $identifier_crc = hash('crc32b', $identifier);
-      return substr($identifier, 0, $max_length - 8) . $identifier_crc;
+      $limited_identifier = substr($identifier, 0, $max_length - 8) . $identifier_crc;
+      $this->dbIdentifiersMap[$limited_identifier] = $identifier;
+      return $limited_identifier;
     }
     return $identifier;
   }
@@ -124,7 +90,6 @@ class Oci8Extension extends AbstractExtension {
       $identifier_crc = hash('crc32b', $prefixed_table_name);
       $prefixed_table_name = substr($prefixed_table_name, 0, 16) . $identifier_crc;
     }
-    $prefixed_table_name = '"' . $prefixed_table_name . '"';
     return $prefixed_table_name;
   }
 
@@ -134,41 +99,65 @@ class Oci8Extension extends AbstractExtension {
   public function getDbFullQualifiedTableName($drupal_table_name) {
     $options = $this->connection->getConnectionOptions();
     $prefix = $this->connection->tablePrefix($drupal_table_name);
-    return $options['username'] . '.' . $this->getDbTableName($prefix . $drupal_table_name);
+    return $options['username'] . '."' . $this->getDbTableName($prefix, $drupal_table_name) . '"';
   }
 
   /**
    * {@inheritdoc}
    */
   public function getDbFieldName($field_name, bool $quoted = TRUE) {
-    $field_name_short = $this->getLimitedIdentifier($field_name);
-    if ($field_name !== $field_name_short) {
-      $this->dbIdentifiersMap[$field_name_short] = $field_name;
-      return $field_name_short;
+    if ($field_name === NULL || $field_name === '') {
+      return '';
     }
-    elseif (in_array($field_name, static::$oracleKeywords)) {
-      return '"' . $field_name . '"';
+
+    if (strpos($field_name, '.') !== FALSE) {
+      [$table_tmp, $field_tmp] = explode('.', $field_name);
+      $table = $this->getLimitedIdentifier($table_tmp);
+      $field = $this->getLimitedIdentifier($field_tmp);
     }
     else {
-      return $field_name;
+      $field = $this->getLimitedIdentifier($field_name);
     }
+
+    $identifier = '';
+    if (isset($table)) {
+      $identifier .= $quoted ? '"' . $table . '".' : $table . '.';
+    }
+
+    $identifier .= $quoted ? '"' . $field . '"' : $field;
+
+    return $identifier;
   }
 
   /**
    * {@inheritdoc}
    */
   public function getDbAlias($alias, bool $quoted = TRUE) {
-    $alias_short = $this->getLimitedIdentifier($alias);
-    if ($alias !== $alias_short) {
-      $this->dbIdentifiersMap[$alias_short] = $alias;
-      return $alias_short;
+    if ($alias === NULL || $alias === '') {
+      return '';
     }
-    elseif (in_array($alias, static::$oracleKeywords)) {
-      return '"' . $alias . '"';
-    }
-    else {
+
+    if (substr($alias, 0, 1) === '"') {
       return $alias;
     }
+
+    if (strpos($alias, '.') !== FALSE) {
+      [$table_tmp, $alias_tmp] = explode('.', $alias);
+      $table = $this->getLimitedIdentifier($table_tmp);
+      $alias = $this->getLimitedIdentifier($alias_tmp);
+    }
+    else {
+      $alias = $this->getLimitedIdentifier($alias);
+    }
+
+    $identifier = '';
+    if (isset($table)) {
+      $identifier .= $quoted ? '"' . $table . '".' : $table . '.';
+    }
+
+    $identifier .= $quoted ? '"' . $alias . '"' : $alias;
+
+    return $identifier;
   }
 
   /**
@@ -181,17 +170,17 @@ class Oci8Extension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function getDbIndexName($context, DbalSchema $dbal_schema, $drupal_table_name, $index_name, array $table_prefix_info) {
+  public function getDbIndexName(string $context, DbalSchema $dbal_schema, string $drupal_table_name, string $drupal_index_name): string {
     // If checking for index existence or dropping, see if an index exists
     // with the Drupal name, regardless of prefix. It may be a table was
     // renamed so the prefix is no longer relevant.
     if (in_array($context, ['indexExists', 'dropIndex'])) {
-      $dbal_table = $dbal_schema->getTable($this->connection->getPrefixedTableName($drupal_table_name));
+      $dbal_table = $dbal_schema->getTable($this->connection->getPrefixedTableName($drupal_table_name, TRUE));
       foreach ($dbal_table->getIndexes() as $index) {
         $index_full_name = $index->getName();
         $matches = [];
         if (preg_match('/.*____(.+)/', $index_full_name, $matches)) {
-          if ($matches[1] === hash('crc32b', $index_name)) {
+          if ($matches[1] === hash('crc32b', $drupal_index_name)) {
             return strtolower($index_full_name);
           }
         }
@@ -202,7 +191,7 @@ class Oci8Extension extends AbstractExtension {
       // To keep things... short, use a CRC32 hash of a UUID and one of the
       // Drupal index name as the db name of the index.
       $uuid = new Uuid();
-      return 'IDX_' . hash('crc32b', $uuid->generate()) . '____' . hash('crc32b', $index_name);
+      return 'IDX_' . hash('crc32b', $uuid->generate()) . '____' . hash('crc32b', $drupal_index_name);
     }
   }
 
@@ -243,20 +232,20 @@ class Oci8Extension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateNextId($existing_id = 0) {
+  public function delegateNextId(int $existing_id = 0): int {
     // @codingStandardsIgnoreLine
     $trn = $this->connection->startTransaction();
-    $affected = $this->connection->query('UPDATE {sequences} SET value = GREATEST(value, :existing_id) + 1', [
+    $affected = $this->connection->query('UPDATE {sequences} SET [value] = GREATEST([value], :existing_id) + 1', [
       ':existing_id' => $existing_id,
     ], ['return' => Database::RETURN_AFFECTED]);
     if (!$affected) {
-      $this->connection->query('INSERT INTO {sequences} (value) VALUES (:existing_id + 1)', [
-        ':existing_id' => $existing_id,
+      $this->connection->query('INSERT INTO {sequences} ([value]) VALUES (:new_id)', [
+        ':new_id' => $existing_id + 1,
       ]);
     }
     // The transaction gets committed when the transaction object gets destroyed
     // because it gets out of scope.
-    return $this->connection->query('SELECT value FROM {sequences}')->fetchField();
+    return (int) $this->connection->query('SELECT [value] FROM {sequences}')->fetchField();
   }
 
   /**
@@ -268,24 +257,42 @@ class Oci8Extension extends AbstractExtension {
   }
 
   /**
+   * Generates a temporary table name.
+   *
+   * @return string
+   *   A table name.
+   */
+  protected function generateTemporaryTableName() {
+    return $this->getLimitedIdentifier(parent::generateTemporaryTableName(), 24);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateQueryTemporary(string $query, array $args = [], array $options = []): string {
+    $table_name = $this->generateTemporaryTableName();
+    $this->connection->query("CREATE GLOBAL TEMPORARY TABLE \"$table_name\" ON COMMIT PRESERVE ROWS AS $query", $args, $options);
+
+    // @todo Oracle 18 allows session scoped temporary tables, but until then
+    //   we need to store away the table being created and drop it during
+    //   destruction.
+    $this->tempTables[$table_name] = '"' . $table_name . '"';
+
+    // Temp tables should not be prefixed.
+    $prefixes = $this->connection->getPrefixes();
+    $prefixes[$table_name] = '';
+    $this->connection->setPrefixPublic($prefixes);
+
+    return $table_name;
+  }
+
+  /**
    * {@inheritdoc}
    */
   public function delegateQueryExceptionProcess($query, array $args, array $options, $message, \Exception $e) {
     if ($e instanceof DatabaseExceptionWrapper) {
       $e = $e->getPrevious();
     }
-$exc_class = get_class($e);
-if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException' && $this->getDebugging()) {
-  $backtrace = debug_backtrace();
-  error_log("\n***** Exception    : " . $exc_class);
-  error_log('***** Message      : ' . $message);
-  error_log('***** getCode      : ' . $e->getCode());
-  error_log('***** getErrorCode : ' . $e->getErrorCode());
-  error_log('***** getSQLState  : ' . $e->getSQLState());
-  error_log('***** Query        : ' . $query);
-  error_log('***** Query args   : ' . var_export($args, TRUE));
-  error_log("***** Backtrace    : \n" . $this->formatBacktrace($backtrace));
-}
     if ($e instanceof UniqueConstraintViolationException) {
       throw new IntegrityConstraintViolationException($message, $e->getCode(), $e);
     }
@@ -293,7 +300,7 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException' && $this-
       throw new IntegrityConstraintViolationException($message, $e->getCode(), $e);
     }
     elseif ($e instanceof DbalDriverException) {
-      switch ($e->getErrorCode()) {
+      switch ($e->getCode()) {
         // ORA-01407 cannot update (string) to NULL.
         case 1407:
           throw new IntegrityConstraintViolationException($message, $e->getCode(), $e);
@@ -303,6 +310,16 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException' && $this-
           throw new DatabaseExceptionWrapper($message, 0, $e);
 
         default:
+          /*if ($this->getDebugging()) {
+            $backtrace = debug_backtrace();
+            error_log("\n***** Exception    : " . get_class($e));
+            error_log('***** Message      : ' . $message);
+            error_log('***** getCode      : ' . $e->getCode());
+            error_log('***** getSQLState  : ' . $e->getSQLState());
+            error_log('***** Query        : ' . $query);
+            error_log('***** Query args   : ' . var_export($args, TRUE));
+            error_log("***** Backtrace    : \n" . $this->formatBacktrace($backtrace));
+          }*/
           throw new DatabaseExceptionWrapper($message, 0, $e);
 
       }
@@ -310,6 +327,21 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException' && $this-
     else {
       throw new DatabaseExceptionWrapper($message, 0, $e);
     }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function handleDropTableException(\Exception $e, string $drupal_table_name, string $db_table_name): void {
+    // ORA-14452: attempt to create, alter or drop an index on temporary table
+    // already in use.
+    if ($e->getCode() == 14452) {
+      // In this case the table is temporary, and will be removed by the
+      // destructor.
+      return;
+    }
+
+    throw new DatabaseExceptionWrapper("Failed dropping table '$drupal_table_name', (on DBMS: '$db_table_name')", $e->getCode(), $e);
   }
 
   /**
@@ -339,16 +371,16 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException' && $this-
         $call['function'] = 'main';
       }
 
-/*      if (isset($trace['args'])) {
-        foreach ($trace['args'] as $arg) {
-          if (is_scalar($arg)) {
-            $call['args'][] = is_string($arg) ? '\'' . $arg . '\'' : $arg;
-          }
-          else {
-            $call['args'][] = ucfirst(gettype($arg));
-          }
-        }
-      }*/
+      /*      if (isset($trace['args'])) {
+              foreach ($trace['args'] as $arg) {
+                if (is_scalar($arg)) {
+                  $call['args'][] = is_string($arg) ? '\'' . $arg . '\'' : $arg;
+                }
+                else {
+                  $call['args'][] = ucfirst(gettype($arg));
+                }
+              }
+            }*/
 
       $line = '';
       if (isset($trace['line'])) {
@@ -429,86 +461,42 @@ if ($exc_class !== 'Doctrine\\DBAL\\Exception\\TableNotFoundException' && $this-
    * {@inheritdoc}
    */
   public function alterStatement(&$query, array &$args) {
-if ($this->getDebugging()) error_log('pre-alter: ' . $query . ' : ' . var_export($args, TRUE));
+//    if ($this->getDebugging()) dump(['pre-alter', $query, $args]);
 
-    // Modify placeholders and statement in case of placeholders with
-    // reserved keywords or exceeding Oracle limits, and for empty strings.
-    if (count($args)) {
-      $temp_args = [];
-      foreach ($args as $placeholder => $value) {
-        $temp_pl = ltrim($placeholder, ':');
-        $temp_pl_short = $this->getLimitedIdentifier($temp_pl, 29);
-if ($this->getDebugging()) error_log('temp_pl: ' . $temp_pl);
-if ($this->getDebugging()) error_log('temp_pl_short: ' . $temp_pl_short);
-        $key = $placeholder;
-        if (in_array($temp_pl, static::$oracleKeywords, TRUE)) {
-          $key = $placeholder . '____oracle';
-          $query = str_replace($placeholder, $key, $query);
-        }
-        elseif ($temp_pl !== $temp_pl_short) {
-          $key = ':' . $temp_pl_short;
-          $query = str_replace($placeholder, $key, $query);
-        }
-        $temp_args[$key] = $value === '' ? self::ORACLE_EMPTY_STRING_REPLACEMENT : $value;  // @todo here check
+    // Reprocess args.
+    $new_args = [];
+    foreach ($args as $placeholder => $value) {
+      // Rename placeholders that are reserved keywords.
+      if ($this->connection->getDbalPlatform()->getReservedKeywordsList()->isKeyword(substr($placeholder, 1))) {
+        $new_placeholder = $placeholder . 'x';
+        $query = str_replace($placeholder, $new_placeholder, $query);
+        $placeholder = $new_placeholder;
       }
-      $args = $temp_args;
+      // Modify arguments for empty strings.
+      $new_args[$placeholder] = $value === '' ? self::ORACLE_EMPTY_STRING_REPLACEMENT : $value;  // @todo here check
     }
+    $args = $new_args;
 
     // Replace empty strings.
     $query = str_replace("''", "'" . self::ORACLE_EMPTY_STRING_REPLACEMENT . "'", $query);
 
-    // Enclose any identifier that is a reserved keyword for Oracle in double
-    // quotes.
-    $query = preg_replace('/([\s\.(])(' . $this->oracleKeywordTokens . ')([\s,)])/', '$1"$2"$3', $query);
-
-    // RAND() is not available in Oracle; convert to using
-    // DBMS_RANDOM.VALUE function.
-    $query = str_replace('RAND()', 'DBMS_RANDOM.VALUE', $query);
+    // INSERT INTO table () VALUES () requires the placeholders to be listed,
+    // and no columns list.
+    if (strpos($query, ' () VALUES()') !== FALSE) {
+      $query = str_replace(' () VALUES()', ' VALUES(' . implode(', ', array_keys($args)) . ')', $query);
+    }
 
     // REGEXP is not available in Oracle; convert to using REGEXP_LIKE
     // function.
+    $query = preg_replace('/([^\s]+)\s+NOT REGEXP\s+([^\s]+)/', 'NOT REGEXP_LIKE($1, $2)', $query);
     $query = preg_replace('/([^\s]+)\s+REGEXP\s+([^\s]+)/', 'REGEXP_LIKE($1, $2)', $query);
-
-    // CONCAT_WS is not available in Oracle; convert to using || operator.
-    $matches = [];
-    if (preg_match_all('/(?:[\s\(])(CONCAT_WS\(([^\)]*)\))/', $query, $matches, PREG_OFFSET_CAPTURE)) {
-      $concat_ws_replacements = [];
-      foreach ($matches[2] as $match) {
-        $concat_ws_parms_matches = [];
-        preg_match_all('/(\'(?:\\\\\\\\)+\'|\'(?:[^\'\\\\]|\\\\\'?|\'\')*\')|([^\'"\s,]+)/', $match[0], $concat_ws_parms_matches);
-        $parms = $concat_ws_parms_matches[0];
-        $sep = $parms[0];
-        $repl = '';
-        for ($i = 1, $first = FALSE; $i < count($parms); $i++) {
-          if ($parms[$i] === 'NULL') { // @todo check case insensitive
-            continue;
-          }
-          if (array_key_exists($parms[$i], $args) && $args[$parms[$i]] === NULL) {
-            unset($args[$parms[$i]]);
-            continue;
-          }
-          if (array_key_exists($parms[$i], $args) && $args[$parms[$i]] === self::ORACLE_EMPTY_STRING_REPLACEMENT) {
-            $args[$parms[$i]] = '';
-          }
-          if ($first) {
-            $repl .= ' || ' . $sep . ' || ';
-          }
-          $repl .= $parms[$i];
-          $first = TRUE;
-        }
-        $concat_ws_replacements[] = "($repl)";
-      }
-      for ($i = count($concat_ws_replacements) - 1; $i >= 0; $i--) {
-        $query = substr_replace($query, $concat_ws_replacements[$i], $matches[1][$i][1], strlen($matches[1][$i][0]));
-      }
-    };
 
     // In case of missing from, Oracle requires FROM DUAL.
     if (strpos($query, 'SELECT ') === 0 && strpos($query, ' FROM ') === FALSE) {
       $query .= ' FROM DUAL';
     }
 
-if ($this->getDebugging()) error_log($query . ' : ' . var_export($args, TRUE));
+    if ($this->getDebugging()) dump(['post-alter', $query, $args]);
     return $this;
   }
 
@@ -526,7 +514,19 @@ if ($this->getDebugging()) error_log($query . ' : ' . var_export($args, TRUE));
       if (isset($this->dbIdentifiersMap[$column])) {
         $column = $this->dbIdentifiersMap[$column];
       }
-      $result[$column] = $value === self::ORACLE_EMPTY_STRING_REPLACEMENT ? '' : (string) $value;
+      switch ($value) {
+        case self::ORACLE_EMPTY_STRING_REPLACEMENT:
+          $result[$column] = '';
+          break;
+
+        case NULL:
+          $result[$column] = NULL;
+          break;
+
+        default:
+          $result[$column] = (string) $value;
+
+      }
     }
     return $result;
   }
@@ -540,12 +540,7 @@ if ($this->getDebugging()) error_log($query . ' : ' . var_export($args, TRUE));
    */
   public function getSequenceNameForInsert($drupal_table_name) {
     $table_name = $this->connection->getPrefixedTableName($drupal_table_name);
-    if (substr($table_name, 0, 1) === '"') {
-      return '"' . rtrim(ltrim($table_name, '"'), '"') . '_SEQ"';
-    }
-    else {
-      return $table_name . '_SEQ';
-    }
+    return "\"{$table_name}_SEQ\"";
   }
 
   /**
@@ -567,11 +562,121 @@ if ($this->getDebugging()) error_log($query . ' : ' . var_export($args, TRUE));
   /**
    * {@inheritdoc}
    */
-  public function runInstallTasks() {
+  public function runInstallTasks(): array {
     $results = [
       'fail' => [],
       'pass' => [],
     ];
+
+    // Install a CONCAT_WS function.
+    try {
+      $this->dbalConnection->exec(<<<PLSQL
+CREATE OR REPLACE FUNCTION CONCAT_WS(p_delim IN VARCHAR2
+                                    , p_str1 IN VARCHAR2 DEFAULT NULL
+                                    , p_str2 IN VARCHAR2 DEFAULT NULL
+                                    , p_str3 IN VARCHAR2 DEFAULT NULL
+                                    , p_str4 IN VARCHAR2 DEFAULT NULL
+                                    , p_str5 IN VARCHAR2 DEFAULT NULL
+                                    , p_str6 IN VARCHAR2 DEFAULT NULL
+                                    , p_str7 IN VARCHAR2 DEFAULT NULL
+                                    , p_str8 IN VARCHAR2 DEFAULT NULL
+                                    , p_str9 IN VARCHAR2 DEFAULT NULL
+                                    , p_str10 IN VARCHAR2 DEFAULT NULL
+                                    , p_str11 IN VARCHAR2 DEFAULT NULL
+                                    , p_str12 IN VARCHAR2 DEFAULT NULL
+                                    , p_str13 IN VARCHAR2 DEFAULT NULL
+                                    , p_str14 IN VARCHAR2 DEFAULT NULL
+                                    , p_str15 IN VARCHAR2 DEFAULT NULL
+                                    , p_str16 IN VARCHAR2 DEFAULT NULL
+                                    , p_str17 IN VARCHAR2 DEFAULT NULL
+                                    , p_str18 IN VARCHAR2 DEFAULT NULL
+                                    , p_str19 IN VARCHAR2 DEFAULT NULL
+                                    , p_str20 IN VARCHAR2 DEFAULT NULL) RETURN VARCHAR2 IS
+    TYPE t_str IS VARRAY (20) OF VARCHAR2(4000);
+    l_str_list t_str := t_str(p_str1
+        , p_str2
+        , p_str3
+        , p_str4
+        , p_str5
+        , p_str6
+        , p_str7
+        , p_str8
+        , p_str9
+        , p_str10
+        , p_str11
+        , p_str12
+        , p_str13
+        , p_str14
+        , p_str15
+        , p_str16
+        , p_str17
+        , p_str18
+        , p_str19
+        , p_str20);
+    i          INTEGER;
+    l_result   VARCHAR2(4000);
+BEGIN
+    FOR i IN l_str_list.FIRST .. l_str_list.LAST
+        LOOP
+            l_result := l_result
+                || CASE
+                       WHEN l_str_list(i) IS NOT NULL
+                           THEN p_delim
+                            END
+                || CASE
+                       WHEN l_str_list(i) = CHR(8)
+                           THEN NULL
+                       ELSE l_str_list(i)
+                            END;
+        END LOOP;
+    RETURN LTRIM(l_result, p_delim);
+END;
+PLSQL
+      );
+    }
+    catch (\Exception $e) {
+      $results['fail'][] = t("Failed installation of the CONCAT_WS function: " . $e->getMessage());
+    }
+
+    // Install a GREATEST function.
+    try {
+      $this->dbalConnection->exec(<<<PLSQL
+create or replace function greatest(p1 number, p2 number, p3 number default null)
+return number
+as
+begin
+  if p3 is null then
+    if p1 > p2 or p2 is null then
+     return p1;
+    else
+     return p2;
+    end if;
+  else
+   return greatest(p1,greatest(p2,p3));
+  end if;
+end;
+PLSQL
+      );
+    }
+    catch (\Exception $e) {
+      $results['fail'][] = t("Failed installation of the GREATEST function: " . $e->getMessage());
+    }
+
+    // Install a RAND function.
+    try {
+      $this->dbalConnection->exec(<<<PLSQL
+create or replace function rand
+return number
+as
+begin
+  return dbms_random.random;
+end;
+PLSQL
+      );
+    }
+    catch (\Exception $e) {
+      $results['fail'][] = t("Failed installation of the RAND function: " . $e->getMessage());
+    }
 
     return $results;
   }
@@ -588,7 +693,7 @@ if ($this->getDebugging()) error_log($query . ' : ' . var_export($args, TRUE));
     // Instead, we try to select from the table in question.  If it fails,
     // the most likely reason is that it does not exist.
     try {
-      $this->getDbalConnection()->query("SELECT 1 FROM " . $this->connection->getPrefixedTableName($drupal_table_name) . " WHERE ROWNUM <= 1");
+      $this->getDbalConnection()->query("SELECT 1 FROM " . $this->connection->getPrefixedTableName($drupal_table_name, TRUE) . " WHERE ROWNUM <= 1");
       $result = TRUE;
     }
     catch (\Exception $e) {
@@ -604,8 +709,9 @@ if ($this->getDebugging()) error_log($query . ' : ' . var_export($args, TRUE));
     // The DBAL Schema manager is quite slow here.
     // Instead, we try to select from the table and field in question. If it
     // fails, the most likely reason is that it does not exist.
+    $db_field = $this->getDbFieldName($field_name, TRUE);
     try {
-      $this->getDbalConnection()->query("SELECT $field_name FROM " . $this->connection->getPrefixedTableName($drupal_table_name) . " WHERE ROWNUM <= 1");
+      $this->getDbalConnection()->query("SELECT $db_field FROM " . $this->connection->getPrefixedTableName($drupal_table_name, TRUE) . " WHERE ROWNUM <= 1");
       $result = TRUE;
     }
     catch (\Exception $e) {
@@ -629,6 +735,17 @@ if ($this->getDebugging()) error_log($query . ' : ' . var_export($args, TRUE));
   /**
    * {@inheritdoc}
    */
+  public function delegateColumnNameList(array $columns) {
+    $column_names = [];
+    foreach ($columns as $dbal_column_name) {
+      $column_names[] = trim($dbal_column_name, '"');
+    }
+    return $column_names;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function delegateGetDbalColumnType(&$dbal_type, array $drupal_field_specs) {
     if (isset($drupal_field_specs['type']) && $drupal_field_specs['type'] === 'blob') {
       $dbal_type = 'text';
@@ -636,7 +753,7 @@ if ($this->getDebugging()) error_log($query . ' : ' . var_export($args, TRUE));
     }
     // Special case when text field need to be indexed, BLOB field will not
     // be indexeable.
-    if ($drupal_field_specs['type'] === 'text' && isset($drupal_field_specs['mysql_type']) && $drupal_field_specs['mysql_type'] === 'blob') {
+    if ($drupal_field_specs['type'] === 'text') {
       $dbal_type = 'string';
       return TRUE;
     }
@@ -652,9 +769,8 @@ if ($this->getDebugging()) error_log($query . ' : ' . var_export($args, TRUE));
         $dbal_column_options['default'] = empty($drupal_field_specs['default']) ? self::ORACLE_EMPTY_STRING_REPLACEMENT : $drupal_field_specs['default'];  // @todo here check
       }
     }
-    // Special case when text field need to be indexed, BLOB field will not
-    // be indexeable.
-    if ($drupal_field_specs['type'] === 'text' && isset($drupal_field_specs['mysql_type']) && $drupal_field_specs['mysql_type'] === 'blob') {
+    // String field definition may miss the length if it has been altered.
+    if ($dbal_type === 'string' && !isset($drupal_field_specs['length'])) {
       $dbal_column_options['length'] = 4000;
     }
     return $this;
@@ -695,62 +811,101 @@ if ($this->getDebugging()) error_log($query . ' : ' . var_export($args, TRUE));
    * {@inheritdoc}
    */
   public function delegateChangeField(&$primary_key_processed_by_extension, DbalSchema $dbal_schema, $drupal_table_name, $field_name, $field_new_name, array $drupal_field_new_specs, array $keys_new_specs, array $dbal_column_options) {
-    $current_schema = $dbal_schema;
-    $to_schema = clone $current_schema;
-    $dbal_table = $to_schema->getTable($this->connection->getPrefixedTableName($drupal_table_name));
-    $dbal_column = $dbal_table->getColumn($field_name); // @todo getdbfieldname
+    $primary_key_processed_by_extension = TRUE;
 
-    $change_nullability = TRUE;
-    if (array_key_exists('not null', $drupal_field_new_specs) && $drupal_field_new_specs['not null'] == $dbal_column->getNotnull()) {
-      $change_nullability = FALSE;
+    $unquoted_db_table = $this->connection->getPrefixedTableName($drupal_table_name, FALSE);
+    $db_table = '"' . $unquoted_db_table . '"';
+
+    $unquoted_db_field = $this->getDbFieldName($field_name, FALSE);
+    $db_field = '"' . $unquoted_db_field . '"';
+
+    $unquoted_new_db_field = $this->getDbFieldName($field_new_name, FALSE);
+    $new_db_field = '"' . $unquoted_new_db_field . '"';
+
+    $dbal_table = $dbal_schema->getTable($unquoted_db_table);
+    $has_primary_key = $dbal_table->hasPrimaryKey();
+    $dbal_primary_key = $has_primary_key ? $dbal_table->getPrimaryKey() : NULL;
+
+    $db_primary_key_columns = $dbal_primary_key ? $dbal_primary_key->getColumns() : [];
+    $drop_primary_key = $has_primary_key && (!empty($keys_new_specs['primary key']) || in_array($db_field, $db_primary_key_columns));
+    if (!empty($keys_new_specs['primary key'])) {
+      $db_primary_key_columns = $this->connection->schema()->dbalGetFieldList($keys_new_specs['primary key']);
+    }
+    elseif ($db_primary_key_columns && $unquoted_new_db_field !== $unquoted_db_field) {
+      $key = array_search($db_field, $db_primary_key_columns);
+      $db_primary_key_columns[$key] = $new_db_field;
     }
 
-    $sql = "ALTER TABLE " . $this->connection->getPrefixedTableName($drupal_table_name) . " MODIFY ($field_name NUMBER(10) ";
-    if ($change_nullability) {
-      $sql .= array_key_exists('not null', $drupal_field_new_specs) && $drupal_field_new_specs['not null'] ? 'NOT NULL' : 'NULL';
-    }
-    $sql .= ")";
-    $this->connection->query($sql);
-
-
-//    $info = $this->getTableSerialInfo($table);
-
-//    if (!empty($info->sequence_name) && $this->oid($field, FALSE, FALSE) == $info->field_name) {
-//      $this->failsafeDdl('DROP TRIGGER {' . $info->trigger_name . '}');
-//      $this->failsafeDdl('DROP SEQUENCE {' . $info->sequence_name . '}');
-//    }
-
-/*    $this->connection->query("ALTER TABLE " . $this->oid($table, TRUE) . " RENAME COLUMN ". $this->oid($field) . " TO " . $this->oid($field . '_old'));
-    $not_null = isset($spec['not null']) ? $spec['not null'] : FALSE;
-    unset($spec['not null']);
-
-    if (!array_key_exists('size', $spec)) {
-      $spec['size'] = 'normal';
+    if ($drop_primary_key) {
+      $db_pk_constraint = '';
+      $this->delegateDropPrimaryKey($primary_key_processed_by_extension, $db_pk_constraint, $dbal_schema, $drupal_table_name);
+      $has_primary_key = FALSE;
     }
 
-    $this->addField($table, (string) $field_new, $spec);
-
-    $map = $this->getFieldTypeMap();
-    $this->connection->query("UPDATE " . $this->oid($table, TRUE) . " SET ". $this->oid($field_new) . " = " . $this->oid($field . '_old'));
-
+    $temp_column = $this->getLimitedIdentifier(str_replace('-', '', 'tmp' . (new Uuid())->generate()));
+    $not_null = $drupal_field_new_specs['not null'] ?? FALSE;
+    $column_definition = str_replace($db_field, "\"$temp_column\"", $dbal_column_options['columnDefinition']);
     if ($not_null) {
-      $this->connection->query("ALTER TABLE " . $this->oid($table, TRUE) . " MODIFY (". $this->oid($field_new) . " NOT NULL)");
+      $column_definition = str_replace("NOT NULL", "NULL", $column_definition);
     }
 
-    $this->dropField($table, $field . '_old');
-
-    if (isset($new_keys)) {
-      $this->createKeys($table, $new_keys);
+    $sql = [];
+    $sql[] = "ALTER TABLE $db_table ADD \"$temp_column\" $column_definition";
+    $sql[] = "UPDATE $db_table SET \"$temp_column\" = $db_field";
+    $sql[] = "ALTER TABLE $db_table DROP COLUMN $db_field";
+    $sql[] = "ALTER TABLE $db_table RENAME COLUMN \"$temp_column\" TO $new_db_field";
+    if ($not_null) {
+      $sql[] = "ALTER TABLE $db_table MODIFY $new_db_field NOT NULL";
+    }
+    if (!$has_primary_key && $db_primary_key_columns) {
+      $db_pk_constraint = $db_pk_constraint ?? $unquoted_db_table . '_PK';
+      $sql[] = "ALTER TABLE $db_table ADD CONSTRAINT $db_pk_constraint PRIMARY KEY (" . implode(', ', $db_primary_key_columns) . ")";
+    }
+    if (isset($drupal_field_new_specs['description'])) {
+      $column_description = $this->connection->getDbalPlatform()->quoteStringLiteral($drupal_field_new_specs['description']);
+      $sql[] = "COMMENT ON COLUMN $db_table.$new_db_field IS " . $column_description;
     }
 
-    if (!empty($info->sequence_name) && $this->oid($field, FALSE, FALSE) == $info->field_name) {
-      $statements = $this->createSerialSql($table, $this->oid($field_new, FALSE, FALSE), $info->sequence_restart);
-      foreach ($statements as $statement) {
-        $this->connection->query($statement);
+    foreach ($sql as $exec) {
+      if ($this->getDebugging()) {
+        dump($exec);
       }
+      $this->getDbalConnection()->exec($exec);
     }
 
-    $this->cleanUpSchema($table);*/
+    return TRUE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateIndexExists(&$result, DbalSchema $dbal_schema, $table_full_name, $drupal_table_name, $drupal_index_name) {
+    $index_full_name = $this->getDbIndexName('indexExists', $dbal_schema, $drupal_table_name, $drupal_index_name);
+    $result = in_array($index_full_name, array_keys($this->getDbalConnection()->getSchemaManager()->listTableIndexes("\"$table_full_name\"")));
+    return TRUE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateDropPrimaryKey(bool &$primary_key_dropped_by_extension, string &$primary_key_asset_name, DbalSchema $dbal_schema, string $drupal_table_name): bool {
+    $dbal_table = $dbal_schema->getTable($this->connection->getPrefixedTableName($drupal_table_name));
+    $db_table = $this->connection->getPrefixedTableName($drupal_table_name, TRUE);
+    $unquoted_db_table = $this->connection->getPrefixedTableName($drupal_table_name, FALSE);
+    $db_constraint = $this->connection->query(<<<SQL
+        SELECT ind.index_name AS name
+          FROM all_indexes ind
+     LEFT JOIN all_constraints con ON ind.owner = con.owner AND ind.index_name = con.index_name
+         WHERE ind.table_name = '$unquoted_db_table' AND con.constraint_type = 'P'
+SQL
+    )->fetch();
+    $primary_key_asset_name = $db_constraint->name;
+    $exec = "ALTER TABLE $db_table DROP CONSTRAINT \"$primary_key_asset_name\"";
+    if ($this->getDebugging()) {
+      dump($exec);
+    }
+    $this->getDbalConnection()->exec($exec);
+    $primary_key_dropped_by_extension = TRUE;
     return TRUE;
   }
 

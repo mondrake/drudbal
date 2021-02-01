@@ -83,7 +83,7 @@ class Schema extends DatabaseSchema {
     // Create table via DBAL.
     $current_schema = $this->dbalSchema();
     $to_schema = clone $current_schema;
-    $new_table = $to_schema->createTable($this->connection->getPrefixedTableName($name));
+    $new_table = $to_schema->createTable($this->connection->getPrefixedTableName($name, TRUE));
 
     // Add table comment.
     if (!empty($table['description'])) {
@@ -281,6 +281,8 @@ class Schema extends DatabaseSchema {
 
       'numeric:normal'  => 'decimal',
 
+      'datetime:normal' => 'datetime',
+
       'blob:big'        => 'blob',
       'blob:normal'     => 'blob',
     ];
@@ -301,11 +303,8 @@ class Schema extends DatabaseSchema {
     // DBAL Schema will drop the old table and create a new one, so we go for
     // using the manager instead, that allows in-place renaming.
     // @see https://github.com/doctrine/migrations/issues/17
-    if ($this->dbalExtension->getDebugging()) {
-      error_log('renameTable ' . $this->connection->getPrefixedTableName($table) . ' to ' . $this->connection->getPrefixedTableName($new_name));
-    }
     $dbal_schema = $this->dbalSchema();
-    $this->dbalSchemaManager->renameTable($this->connection->getPrefixedTableName($table), $this->connection->getPrefixedTableName($new_name));
+    $this->dbalSchemaManager->renameTable($this->connection->getPrefixedTableName($table, TRUE), $this->connection->getPrefixedTableName($new_name, TRUE));
     $this->dbalExtension->postRenameTable($dbal_schema, $table, $new_name);
     $this->dbalSchemaForceReload();
   }
@@ -328,7 +327,12 @@ class Schema extends DatabaseSchema {
     $table_full_name = $this->connection->getPrefixedTableName($table);
     $current_schema = $this->dbalSchema();
     // Need to pass the quoted table name here.
-    $this->dbalSchemaManager->dropTable($this->connection->getPrefixedTableName($table, TRUE));
+    try {
+      $this->dbalSchemaManager->dropTable($this->connection->getPrefixedTableName($table, TRUE));
+    }
+    catch (\Exception $e) {
+      $this->dbalExtension->handleDropTableException($e, $table, $table_full_name);
+    }
 
     // After dropping the table physically, still need to reflect it in the
     // DBAL schema.
@@ -376,8 +380,7 @@ class Schema extends DatabaseSchema {
 
     // Drop primary key if it is due to be changed.
     if (isset($keys_new['primary key']) && $dbal_table->hasPrimaryKey()) {
-      $dbal_table->dropPrimaryKey();
-      $this->dbalExecuteSchemaChange($to_schema);
+      $this->dropPrimaryKey($table);
       $current_schema = $this->dbalSchema();
       $to_schema = clone $current_schema;
       $dbal_table = $to_schema->getTable($this->connection->getPrefixedTableName($table));
@@ -426,11 +429,11 @@ class Schema extends DatabaseSchema {
     }
     if (isset($spec['initial_from_field'])) {
       if (isset($spec['initial'])) {
-        $expression = 'COALESCE(' . $spec['initial_from_field'] . ', :default_initial_value)';
+        $expression = 'COALESCE([' . $spec['initial_from_field'] . '], :default_initial_value)';
         $arguments = [':default_initial_value' => $spec['initial']];
       }
       else {
-        $expression = $spec['initial_from_field'];
+        $expression = '[' . $spec['initial_from_field'] . ']';
         $arguments = [];
       }
       $this->connection->update($table)
@@ -492,7 +495,7 @@ class Schema extends DatabaseSchema {
     }
 
     // DBAL extension did not pick up, proceed with DBAL.
-    $index_full_name = $this->dbalExtension->getDbIndexName('indexExists', $this->dbalSchema(), $table, $name, $this->getPrefixInfo($table));
+    $index_full_name = $this->dbalExtension->getDbIndexName('indexExists', $this->dbalSchema(), $table, $name);
     return in_array($index_full_name, array_keys($this->dbalSchemaManager->listTableIndexes($table_full_name)));
     // @todo it would be preferred to do
     // return $this->dbalSchema()->getTable($this->connection->getPrefixedTableName($table))->hasIndex($index_full_name);
@@ -533,11 +536,13 @@ class Schema extends DatabaseSchema {
 
     // Delegate to DBAL extension.
     $primary_key_dropped_by_extension = FALSE;
-    if ($this->dbalExtension->delegateDropPrimaryKey($primary_key_dropped_by_extension, $this->dbalSchema(), $table)) {
+    $primary_key_asset_name = '';
+    if ($this->dbalExtension->delegateDropPrimaryKey($primary_key_dropped_by_extension, $primary_key_asset_name, $this->dbalSchema(), $table)) {
       $this->dbalSchemaForceReload();
       return $primary_key_dropped_by_extension;
     }
 
+    // DBAL extension did not pick up, proceed with DBAL.
     $table_full_name = $this->connection->getPrefixedTableName($table);
     if (!$this->dbalSchema()->getTable($table_full_name)->hasPrimaryKey()) {
       return FALSE;
@@ -559,7 +564,8 @@ class Schema extends DatabaseSchema {
     try {
       $this->dbalSchemaForceReload();
       $primary_key = $this->dbalSchema()->getTable($this->connection->getPrefixedTableName($table))->getPrimaryKey();
-      return $primary_key ? $primary_key->getColumns() : [];
+      $columns = $primary_key ? $this->dbalExtension->delegateColumnNameList($primary_key->getColumns()) : [];
+      return $columns;
     }
     catch (DbalException $e) {
       return [];
@@ -581,14 +587,8 @@ class Schema extends DatabaseSchema {
     ];
 
     try {
-      $this->dbalSchemaForceReload();
-
       // Primary key.
-      $primary_key = $this->dbalSchema()->getTable($this->connection->getPrefixedTableName($table))->getPrimaryKey();
-      $columns = $primary_key ? $primary_key->getColumns() : [];
-      foreach ($columns as $column) {
-        $index_schema['primary key'][] = $column;
-      }
+      $index_schema['primary key'] = $this->findPrimaryKeyColumns($table);
 
       // Indexes.
       foreach ($this->dbalSchema()->getTable($this->connection->getPrefixedTableName($table))->getIndexes() as $index) {
@@ -596,9 +596,8 @@ class Schema extends DatabaseSchema {
           continue;
         }
         $type = $index->isUnique() ?  'unique keys' : 'indexes';
-        foreach ($index->getColumns() as $column) {
-          $index_schema[$type][$this->dbalExtension->getDrupalIndexName($table, $index->getName())][] = $column;
-        }
+        $columns = $this->dbalExtension->delegateColumnNameList($index->getColumns());
+        $index_schema[$type][$this->dbalExtension->getDrupalIndexName($table, $index->getName())] = $columns;
       }
     }
     catch (DbalException $e) {
@@ -620,7 +619,7 @@ class Schema extends DatabaseSchema {
     }
 
     $table_full_name = $this->connection->getPrefixedTableName($table);
-    $index_full_name = $this->dbalExtension->getDbIndexName('addUniqueKey', $this->dbalSchema(), $table, $name, $this->getPrefixInfo($table));
+    $index_full_name = $this->dbalExtension->getDbIndexName('addUniqueKey', $this->dbalSchema(), $table, $name);
 
     // Delegate to DBAL extension.
     if ($this->dbalExtension->delegateAddUniqueKey($this->dbalSchema(), $table_full_name, $index_full_name, $table, $name, $fields)) {
@@ -653,7 +652,7 @@ class Schema extends DatabaseSchema {
     }
 
     $table_full_name = $this->connection->getPrefixedTableName($table);
-    $index_full_name = $this->dbalExtension->getDbIndexName('addIndex', $this->dbalSchema(), $table, $name, $this->getPrefixInfo($table));
+    $index_full_name = $this->dbalExtension->getDbIndexName('addIndex', $this->dbalSchema(), $table, $name);
 
     // Delegate to DBAL extension.
     if ($this->dbalExtension->delegateAddIndex($this->dbalSchema(), $table_full_name, $index_full_name, $table, $name, $fields, $spec)) {
@@ -689,7 +688,7 @@ class Schema extends DatabaseSchema {
     }
 
     $table_full_name = $this->connection->getPrefixedTableName($table);
-    $index_full_name = $this->dbalExtension->getDbIndexName('dropIndex', $this->dbalSchema(), $table, $name, $this->getPrefixInfo($table));
+    $index_full_name = $this->dbalExtension->getDbIndexName('dropIndex', $this->dbalSchema(), $table, $name);
 
     // Delegate to DBAL extension.
     if ($this->dbalExtension->delegateDropIndex($this->dbalSchema(), $table_full_name, $index_full_name, $table, $name)) {
@@ -889,7 +888,7 @@ class Schema extends DatabaseSchema {
   protected function dbalExecuteSchemaChange(DbalSchema $to_schema) {
     foreach ($this->dbalSchema()->getMigrateToSql($to_schema, $this->dbalPlatform) as $sql) {
       if ($this->dbalExtension->getDebugging()) {
-        error_log($sql);
+        dump($sql);
       }
       $this->connection->getDbalConnection()->exec($sql);
     }

@@ -9,6 +9,7 @@ use Doctrine\DBAL\Schema\Column as DbalColumn;
 use Doctrine\DBAL\Schema\Schema as DbalSchema;
 use Doctrine\DBAL\Schema\Table as DbalTable;
 use Doctrine\DBAL\Statement as DbalStatement;
+use Drupal\Component\Uuid\Php as Uuid;
 use Drupal\drudbal\Driver\Database\dbal\Connection as DruDbalConnection;
 
 /**
@@ -183,14 +184,24 @@ class AbstractExtension implements DbalExtensionInterface {
    * {@inheritdoc}
    */
   public function getDbFieldName($field_name, bool $quoted = TRUE) {
-    return $quoted ? $this->connection->escapeField($field_name) : $field_name;
+    if ($quoted && $field_name !== NULL && $field_name !== '' && substr($field_name, 0, 1) !== '"') {
+      return '"' . str_replace('.', '"."', $field_name) . '"';
+    }
+    else {
+      return $field_name;
+    }
   }
 
   /**
    * {@inheritdoc}
    */
   public function getDbAlias($alias, bool $quoted = TRUE) {
-    return $quoted ? $this->connection->escapeField($alias) : $alias;
+    if ($quoted && $alias !== NULL && $alias !== '' && substr($alias, 0, 1) !== '"') {
+      return '"' . str_replace('.', '"."', $alias) . '"';
+    }
+    else {
+      return $alias;
+    }
   }
 
   /**
@@ -203,8 +214,8 @@ class AbstractExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function getDbIndexName($context, DbalSchema $dbal_schema, $drupal_table_name, $index_name, array $table_prefix_info) {
-    return $index_name;
+  public function getDbIndexName(string $context, DbalSchema $dbal_schema, string $drupal_table_name, string $drupal_index_name): string {
+    return $drupal_index_name;
   }
 
   /**
@@ -263,7 +274,7 @@ class AbstractExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function delegateNextId($existing_id = 0) {
+  public function delegateNextId(int $existing_id = 0): int {
     throw new \LogicException("Method " . __METHOD__ . " not implemented for '" . $this->dbalConnection->getDriver()->getName() . "'");
   }
 
@@ -275,9 +286,19 @@ class AbstractExtension implements DbalExtensionInterface {
   }
 
   /**
+   * Generates a temporary table name.
+   *
+   * @return string
+   *   A table name.
+   */
+  protected function generateTemporaryTableName() {
+    return "tmp_tab_" . str_replace('-', '_', (new Uuid())->generate());
+  }
+
+  /**
    * {@inheritdoc}
    */
-  public function delegateQueryTemporary($drupal_table_name, $query, array $args = [], array $options = []) {
+  public function delegateQueryTemporary(string $query, array $args = [], array $options = []): string {
     throw new \LogicException("Method " . __METHOD__ . " not implemented for '" . $this->dbalConnection->getDriver()->getName() . "'");
   }
 
@@ -434,7 +455,7 @@ class AbstractExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function runInstallTasks() {
+  public function runInstallTasks(): array {
     throw new \LogicException("Method " . __METHOD__ . " not implemented for '" . $this->dbalConnection->getDriver()->getName() . "'");
   }
 
@@ -447,6 +468,13 @@ class AbstractExtension implements DbalExtensionInterface {
    */
   public function alterDefaultSchema(&$default_schema) {
     return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateColumnNameList(array $columns) {
+    return $columns;
   }
 
   /**
@@ -585,7 +613,7 @@ class AbstractExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function delegateDropPrimaryKey(&$primary_key_dropped_by_extension, DbalSchema $dbal_schema, $drupal_table_name) {
+  public function delegateDropPrimaryKey(bool &$primary_key_dropped_by_extension, string &$primary_key_asset_name, DbalSchema $dbal_schema, string $drupal_table_name): bool {
     return FALSE;
   }
 
@@ -607,7 +635,10 @@ class AbstractExtension implements DbalExtensionInterface {
    * {@inheritdoc}
    */
   public function delegateGetColumnComment(DbalSchema $dbal_schema, $drupal_table_name, $column) {
-    if ($this->getDbalConnection()->getDatabasePlatform()->supportsInlineColumnComments()) {
+    if (
+      $this->getDbalConnection()->getDatabasePlatform()->supportsInlineColumnComments() ||
+      $this->getDbalConnection()->getDatabasePlatform()->supportsCommentOnStatement()
+    ) {
       return $dbal_schema->getTable($this->connection->getPrefixedTableName($drupal_table_name))->getColumn($column)->getComment();
     }
     else {

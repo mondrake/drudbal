@@ -1,9 +1,10 @@
 # DruDbal
-(Updated: March 30, 2020)
-
 [![MySql Testing](https://github.com/mondrake/drudbal/workflows/MySql%20Testing/badge.svg)](https://github.com/mondrake/drudbal/actions?query=workflow%3A%22MySql+Testing%22)
 [![SQLite Testing](https://github.com/mondrake/drudbal/workflows/SQLite%20Testing/badge.svg)](https://github.com/mondrake/drudbal/actions?query=workflow%3A%22SQLite+Testing%22)
+[![Oracle Testing](https://github.com/mondrake/drudbal/workflows/Oracle%20Testing/badge.svg)](https://github.com/mondrake/drudbal/actions?query=workflow%3A%22Oracle+Testing%22)
 [![License](https://img.shields.io/github/license/mondrake/drudbal.svg)](https://packagist.org/packages/mondrake/drudbal)
+
+(This README updated March 30, 2020)
 
 An __experimental__ Drupal driver for Doctrine DBAL. __Do not use if not for trial. No support, sorry :)__
 
@@ -39,8 +40,8 @@ using the 'sqlite' DBAL driver.
 'Working' means:
 1. it is possible to install a Drupal site via the installer, selecting
    'Doctrine DBAL' as the database of choice;
-2. it is passing a selection of core PHPUnit tests , executed on Travis CI.
-   The latest patches for the issues listed in 'Related Drupal issues' below
+2. it is passing a selection of core PHPUnit tests , executed on GitHub Actions
+   CI. The latest patches for the issues listed in 'Related Drupal issues' below
    need to be applied to get a clean test run.
 
 ## Installation
@@ -50,7 +51,7 @@ under the hood:
 
 1. Requirements:
     * PHP 7.3+
-    * latest Drupal development branch code, 9.1.x
+    * latest Drupal development branch code, 9.2.x
     * codebase built via Composer
 
 2. Get the DruDbal module from Packagist via Composer, it will install Doctrine
@@ -87,7 +88,6 @@ https://github.com/doctrine/dbal/pull/2415       | Add some MySQL platform data 
 Issue                                                           | Description                                                                                                                             |
 ----------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------|
 tbd                                                             | Add tests for Upsert with default values                                                                                     |
-[2657888](https://www.drupal.org/node/2657888)                  | Add Date function support in DTBNG                                                                                      |
 tbd                                                             | Ensure that when INSERTing a NULL value in a database column, SELECTing it back returns NULL and not empty string - for all fetch modes |
 tbd                                                             | UpdateTestBase::runUpdate should reset database schema after updating                                                             |
 [2992274](https://www.drupal.org/project/drupal/issues/2992274) | Installer tests fail if contrib driver hides database credentials form fields                                                           |

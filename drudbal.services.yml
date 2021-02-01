@@ -1,0 +1,5 @@
+services:
+  dbal.views.date_sql:
+    class: Drupal\drudbal\Plugin\views\query\DrudbalDateSql
+    arguments: ['@database']
+    public: false

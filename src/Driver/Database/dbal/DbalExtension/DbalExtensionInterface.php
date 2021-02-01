@@ -125,15 +125,13 @@ interface DbalExtensionInterface {
    *   The DBAL schema object.
    * @param string $drupal_table_name
    *   A string with the Drupal name of the table.
-   * @param string $index_name
+   * @param string $drupal_index_name
    *   A string with the Drupal name of the index.
-   * @param array $table_prefix_info
-   *   A keyed array with information about the schema, table name and prefix.
    *
    * @return string
    *   A string with the name of the index to be used in the DBMS.
    */
-  public function getDbIndexName($context, DbalSchema $dbal_schema, $drupal_table_name, $index_name, array $table_prefix_info);
+  public function getDbIndexName(string $context, DbalSchema $dbal_schema, string $drupal_table_name, string $drupal_index_name): string;
 
   /**
    * Get the Drupal index name, from a database-level index name.
@@ -255,7 +253,7 @@ interface DbalExtensionInterface {
    *   An integer number larger than any number returned by earlier calls and
    *   also larger than the $existing_id if one was passed in.
    */
-  public function delegateNextId($existing_id = 0);
+  public function delegateNextId(int $existing_id = 0): int;
 
   /**
    * Handles a DbalExceptions thrown by Connection::query().
@@ -318,7 +316,7 @@ interface DbalExtensionInterface {
    *   A database query result resource, or NULL if the query was not executed
    *   correctly.
    */
-  public function delegateQueryTemporary($drupal_table_name, $query, array $args = [], array $options = []);
+  public function delegateQueryTemporary(string $query, array $args = [], array $options = []): string;
 
   /**
    * Handles exceptions thrown by Connection::popCommittableTransactions().
@@ -557,7 +555,7 @@ interface DbalExtensionInterface {
    * @return array
    *   An array of pass/fail installation messages.
    */
-  public function runInstallTasks();
+  public function runInstallTasks(): array;
 
   /**
    * Schema delegated methods.
@@ -572,6 +570,17 @@ interface DbalExtensionInterface {
    * @return $this
    */
   public function alterDefaultSchema(&$default_schema);
+
+  /**
+   * Returns a list of columns, based on a list retrieved by DBAL.
+   *
+   * @param string[] $columns
+   *   An array of column names (as retrieved from the DBMS).
+   *
+   * @return string[]
+   *   An array of column names (as known by Drupal).
+   */
+  public function delegateColumnNameList(array $columns);
 
   /**
    * Returns a list of all tables in the current database.
@@ -931,6 +940,9 @@ interface DbalExtensionInterface {
    * @param bool $primary_key_dropped_by_extension
    *   Passed by reference. Set to true if the extension dropped the primary
    *   key, to FALSE otherwise.
+   * @param bool $primary_key_constraint_name
+   *   Passed by reference. The database name of the object dropped, if
+   *   available.
    * @param \Doctrine\DBAL\Schema\Schema $dbal_schema
    *   The DBAL schema object.
    * @param string $drupal_table_name
@@ -940,7 +952,7 @@ interface DbalExtensionInterface {
    *   TRUE if the extension managed the request, FALSE if it has to be handled
    *   by DBAL.
    */
-  public function delegateDropPrimaryKey(&$primary_key_dropped_by_extension, DbalSchema $dbal_schema, $drupal_table_name);
+  public function delegateDropPrimaryKey(bool &$primary_key_dropped_by_extension, string &$primary_key_asset_name, DbalSchema $dbal_schema, string $drupal_table_name): bool;
 
   /**
    * Drops an index.

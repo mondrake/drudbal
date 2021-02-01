@@ -181,7 +181,7 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
       'init_commands' => [],
     ];
     $connection_options['init_commands'] += [
-      'sql_mode' => "SET sql_mode = 'ANSI,STRICT_TRANS_TABLES,STRICT_ALL_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,ONLY_FULL_GROUP_BY'",
+      'sql_mode' => "SET sql_mode = 'ANSI,TRADITIONAL'",
     ];
     // Execute initial commands.
     foreach ($connection_options['init_commands'] as $sql) {
@@ -209,7 +209,7 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateNextId($existing_id = 0) {
+  public function delegateNextId(int $existing_id = 0): int {
     $new_id = $this->connection->query('INSERT INTO {sequences} () VALUES ()', [], ['return' => Database::RETURN_INSERT_ID]);
     // This should only happen after an import or similar event.
     if ($existing_id >= $new_id) {
@@ -313,8 +313,10 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateQueryTemporary($drupal_table_name, $query, array $args = [], array $options = []) {
-    return $this->connection->query('CREATE TEMPORARY TABLE {' . $drupal_table_name . '} Engine=MEMORY ' . $query, $args, $options);
+  public function delegateQueryTemporary(string $query, array $args = [], array $options = []): string {
+    $table_name = $this->generateTemporaryTableName();
+    $this->connection->query('CREATE TEMPORARY TABLE {' . $table_name . '} Engine=MEMORY ' . $query, $args, $options);
+    return $table_name;
   }
 
   /**
@@ -515,7 +517,7 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function runInstallTasks() {
+  public function runInstallTasks(): array {
     $results = [
       'fail' => [],
       'pass' => [],

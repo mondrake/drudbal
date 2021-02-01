@@ -1,8 +1,10 @@
-name: Pull Request Testing
+name: Oracle Testing
 
 on:
-  pull_request:
+  push:
     branches: [ master ]
+  schedule:
+    - cron: "0 6 * * 2"
 
 env:
     DRUDBAL_DRUPAL_VERSION: "9.2.x"
@@ -16,7 +18,6 @@ env:
       "Drupal\\KernelTests\\Core\\Cache\\ApcuBackendTest",
       "Drupal\\KernelTests\\Core\\Cache\\EndOfTransactionQueriesTest"
     ]'
-    DRUPAL_TEST_RESULTS_DB: "sites/test_results.sqlite"
 
 jobs:
 
@@ -43,10 +44,11 @@ jobs:
           - "7.4"
         test-args:
           - "--group Database"
-#          - "--group Entity"
+          - "--group Entity"
 #          - "--group Cache,Config"
 #          - "--group field,Field"
 #          - "--group file"
+#          - "--group views"
 
     steps:
     - name: Install PHP
@@ -67,9 +69,6 @@ jobs:
 
     - name: Patch Drupal
       run: ./drudbal_staging/tests/github/drupal_patch.sh
-
-#    - name: Test Drupal patch
-#      run: git apply -v drudbal_staging/test.patch
 
     - name: Install Composer dependencies
       run: |
@@ -92,41 +91,20 @@ jobs:
         cp modules/contrib/drudbal/tests/github/install_* .
         php install_oracle.php
 
-#    - name: Install Drupal
-#      run: |
-#        # Use the custom installer.
-#        php install_cli.php
-#        vendor/bin/drush runserver localhost:8080 &
-#        sleep 5s
+    - name: Install Drupal
+      run: |
+        # Use the custom installer.
+        php install_cli.php
+        vendor/bin/drush runserver localhost:8080 &
+        sleep 5s
 
-#    - name: Report installation
-#      continue-on-error: true
-#      run: |
-#        php install_report.php
-#        vendor/bin/drush pml --type=module --no-core
-#        vendor/bin/drush core:status
-#        vendor/bin/drush core:requirements
-
-#    - name: Run test ${{ matrix.test-args }}
-#      continue-on-error: true
-#      run: vendor/bin/phpunit -c core --color=always ${{ matrix.test-args }}
-
-    - name: Run test a
+    - name: Report installation
       continue-on-error: true
-      run: vendor/bin/phpunit -c core --color=always modules/contrib/drudbal/tests/src/Kernel/SchemaTest.php
+      run: |
+        php install_report.php
+        vendor/bin/drush core:status
+        vendor/bin/drush core:requirements
+        vendor/bin/drush pml --type=module --no-core
 
-    - name: Run test b
-      continue-on-error: true
-      run: vendor/bin/phpunit -c core --color=always core/tests/Drupal/KernelTests/Core/Database/InsertTest.php
-
-#    - name: Run test c
-#      continue-on-error: true
-#      run: vendor/bin/phpunit -c core --color=always core/tests/Drupal/KernelTests/Core/Entity/EntityDefinitionUpdateTest.php
-
-#    - name: Run test d
-#      continue-on-error: true
-#      run: vendor/bin/phpunit -c core --color=always core/tests/Drupal/KernelTests/Core/Entity/EntityCrudHookTest.php
-
-#    - name: Run test e
-#      continue-on-error: true
-#      run: vendor/bin/phpunit -c core --color=always core/tests/Drupal/KernelTests/Core/Entity/EntityQueryAggregateTest.php
+    - name: Run test ${{ matrix.test-args }}
+      run: vendor/bin/phpunit -c core --color=always ${{ matrix.test-args }}

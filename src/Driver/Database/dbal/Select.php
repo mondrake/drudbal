@@ -45,8 +45,8 @@ class Select extends QuerySelect {
     }
     foreach ($this->fields as $field) {
       $field_prefix = isset($field['table']) ? $dbal_extension->getDbAlias($this->connection->escapeTable($field['table'])) . '.' : '';
-      $escaped_field_field = $this->connection->escapeField($dbal_extension->getDbFieldName($field['field']));
-      $escaped_field_alias = $this->connection->escapeAlias($dbal_extension->getDbFieldName($field['alias']));
+      $escaped_field_field = $this->connection->escapeField($field['field']);
+      $escaped_field_alias = $this->connection->escapeAlias($field['alias']);
       $dbal_query->addSelect($field_prefix . $escaped_field_field . ' AS ' . $escaped_field_alias);
     }
     foreach ($this->expressions as $expression) {
@@ -117,10 +117,10 @@ class Select extends QuerySelect {
       $fields = $this->getFields();
       foreach ($this->group as $expression) {
         if (strpos($expression, '.') === FALSE && isset($fields[$expression])) {
-          $dbal_query->addGroupBy($fields[$expression]['table'] . '.' . $fields[$expression]['field']);
+          $dbal_query->addGroupBy($this->connection->escapeAlias($fields[$expression]['table']) . '.' . $this->connection->escapeAlias($fields[$expression]['field']));
         }
         else {
-          $dbal_query->addGroupBy($expression);
+          $dbal_query->addGroupBy($this->connection->escapeAlias($expression));
         }
       }
     }
@@ -128,7 +128,7 @@ class Select extends QuerySelect {
     // HAVING
     // @todo this uses Drupal Condition API. Use DBAL expressions instead?
     if (count($this->having)) {
-      $dbal_query->having($dbal_extension->resolveAliases((string) $this->having));
+      $dbal_query->having((string) $this->having);
     }
 
     // UNION is not supported by DBAL. Need to delegate to the DBAL extension.
@@ -136,7 +136,7 @@ class Select extends QuerySelect {
     // ORDER BY
     if ($this->order) {
       foreach ($this->order as $field => $direction) {
-        $dbal_query->addOrderBy($dbal_extension->resolveAliases($this->connection->escapeField($field)), $direction);
+        $dbal_query->addOrderBy($dbal_extension->getDbAlias($field), $direction);
       }
     }
 

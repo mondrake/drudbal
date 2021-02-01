@@ -195,7 +195,7 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function getDbIndexName($context, DbalSchema $dbal_schema, $drupal_table_name, $index_name, array $table_prefix_info) {
+  public function getDbIndexName(string $context, DbalSchema $dbal_schema, string $drupal_table_name, string $drupal_index_name): string {
     // If checking for index existence or dropping, see if an index exists
     // with the Drupal name, regardless of prefix. A table can be renamed so
     // that the prefix is no longer relevant.
@@ -205,7 +205,7 @@ class PDOSqliteExtension extends AbstractExtension {
         $index_full_name = $index->getName();
         $matches = [];
         if (preg_match('/.*____(.+)/', $index_full_name, $matches)) {
-          if ($matches[1] === $index_name) {
+          if ($matches[1] === $drupal_index_name) {
             return $index_full_name;
           }
         }
@@ -217,7 +217,7 @@ class PDOSqliteExtension extends AbstractExtension {
       // dependent (otherwise indexes need to be recreated if the table gets
       // renamed).
       $uuid = new Uuid();
-      return 'idx_' . str_replace('-', '', $uuid->generate()) . '____' . $index_name;
+      return 'idx_' . str_replace('-', '', $uuid->generate()) . '____' . $drupal_index_name;
     }
   }
 
@@ -335,7 +335,8 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateNextId($existing_id = 0) {
+  public function delegateNextId(int $existing_id = 0): int {
+
     // @codingStandardsIgnoreLine
     $trn = $this->connection->startTransaction();
     // We can safely use literal queries here instead of the slower query
@@ -369,11 +370,16 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateQueryTemporary($drupal_table_name, $query, array $args = [], array $options = []) {
+  public function delegateQueryTemporary(string $query, array $args = [], array $options = []): string {
+    $table_name = $this->generateTemporaryTableName();
+    $this->connection->query('CREATE TEMPORARY TABLE ' . $table_name . ' AS ' . $query, $args, $options);
+
+    // Temp tables should not be prefixed.
     $prefixes = $this->connection->getPrefixes();
-    $prefixes[$drupal_table_name] = '';
+    $prefixes[$table_name] = '';
     $this->connection->setPrefixPublic($prefixes);
-    return $this->connection->query('CREATE TEMPORARY TABLE ' . $drupal_table_name . ' AS ' . $query, $args, $options);
+
+    return $table_name;
   }
 
   /**
@@ -544,9 +550,6 @@ class PDOSqliteExtension extends AbstractExtension {
         }
       }
     }
-    if ($this->getDebugging()) {
-      error_log($query . ' : ' . var_export($args, TRUE));
-    }
     return $this;
   }
 
@@ -623,7 +626,7 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function runInstallTasks() {
+  public function runInstallTasks(): array {
     $results = [
       'fail' => [],
       'pass' => [],
@@ -921,7 +924,7 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateDropPrimaryKey(&$primary_key_dropped_by_extension, DbalSchema $dbal_schema, $drupal_table_name) {
+  public function delegateDropPrimaryKey(bool &$primary_key_dropped_by_extension, string &$primary_key_asset_name, DbalSchema $dbal_schema, string $drupal_table_name): bool {
     $old_schema = $this->buildTableSpecFromDbalSchema($dbal_schema, $drupal_table_name);
     $new_schema = $old_schema;
     $mapping = [];
