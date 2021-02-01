@@ -11,11 +11,6 @@ use Drupal\Core\Database\RowCountException;
 use Drupal\Core\Database\StatementInterface;
 use Drupal\drudbal\Driver\Database\dbal\Connection as DruDbalConnection;
 
-// @todo organize better prefetch vs normal
-// @todo DBAL 2.6.0:
-// Normalize method signatures for `fetch()` and `fetchAll()`, ensuring compatibility with the `PDOStatement` signature
-// `ResultStatement#fetchAll()` must define 3 arguments in order to be compatible with `PDOStatement#fetchAll()`
-
 /**
  * DruDbal implementation of \Drupal\Core\Database\Statement.
  *
