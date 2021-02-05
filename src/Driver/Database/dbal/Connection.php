@@ -751,6 +751,9 @@ class Connection extends DatabaseConnection {
 
     $uri = $uri->withPath('/' . $connection_options['database']);
 
+    // Add the 'module' key to the URI.
+    $uri = Uri::withQueryValue($uri, 'module', 'drudbal');
+
     // Add the 'dbal_driver' key to the URI.
     if (!empty($connection_options['dbal_driver'])) {
       $uri = Uri::withQueryValue($uri, 'dbal_driver', $connection_options['dbal_driver']);

@@ -12,9 +12,6 @@ use Drupal\Core\Database\Schema as DatabaseSchema;
 use Drupal\Core\Database\SchemaObjectDoesNotExistException;
 use Drupal\Core\Database\SchemaObjectExistsException;
 
-// @todo DBAL 2.7:
-// implemented mysql column-level collation, check
-
 /**
  * DruDbal implementation of \Drupal\Core\Database\Schema.
  *
