@@ -221,7 +221,7 @@ $this->counter = 0;
     }
 
     // Test numeric types.
-    foreach ([1, 5, 10, 40, 65] as $precision) {
+    foreach ([1, 5, 10, 38] as $precision) {
       foreach ([0, 2, 10, 30] as $scale) {
         // Skip combinations where precision is smaller than scale.
         if ($precision <= $scale) {
