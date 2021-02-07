@@ -191,7 +191,7 @@ $this->counter = 0;
         $this->assertFieldAdditionRemoval($field_spec);
       }
     }
-$this->connection->getDbalExtension()->setDebugging(TRUE);
+//$this->connection->getDbalExtension()->setDebugging(TRUE);
     // Test int and float types.
     foreach (['int', 'float'] as $type) {
       foreach (['tiny', 'small', 'medium', 'normal', 'big'] as $size) {
@@ -213,6 +213,7 @@ $this->connection->getDbalExtension()->setDebugging(TRUE);
         ];
 
         foreach ($variations as $variation) {
+dump([$this->counter, $type, $size, $variation]);
           $field_spec = $variation + $base_field_spec;
           $this->assertFieldAdditionRemoval($field_spec);
         }
