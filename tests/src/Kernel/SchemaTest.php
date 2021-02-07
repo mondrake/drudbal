@@ -169,7 +169,7 @@ class SchemaTest extends SchemaTestBase {
 
   public function testSchemaAddFieldDefaultInitial() {
 $this->counter = 0;
-//$this->connection->getDbalExtension()->setDebugging(TRUE);
+$this->connection->getDbalExtension()->setDebugging(TRUE);
     // Test varchar types.
     foreach ([1, 32, 128, 256, 512] as $length) {
       $base_field_spec = [
@@ -273,12 +273,14 @@ $this->connection->getDbalExtension()->setDebugging(TRUE);
     // Finally, check each column and try to insert invalid values into them.
     foreach ($table_spec['fields'] as $column_name => $column_spec) {
       $this->assertTrue($this->schema->fieldExists($table_name, $column_name), new FormattableMarkup('Unsigned @type column was created.', ['@type' => $column_spec['type']]));
-      $this->assertFalse($this->tryUnsignedInsert($table_name, $column_name), new FormattableMarkup('Unsigned @type column rejected a negative value.', ['@type' => $column_spec['type']]));
+      if ($column_name !== 'serial_column') {
+        $this->assertFalse($this->tryUnsignedInsert($table_name, $column_name), new FormattableMarkup('Unsigned @type column rejected a negative value.', ['@type' => $column_spec['type']]));
+      }
     }
   }
 
   protected function assertFieldCharacteristics($table_name, $field_name, $field_spec) {
-$this->connection->getDbalExtension()->setDebugging(TRUE);
+//$this->connection->getDbalExtension()->setDebugging(TRUE);
     // Check that the initial value has been registered.
     if (isset($field_spec['initial'])) {
       // There should be no row with a value different then $field_spec['initial'].
