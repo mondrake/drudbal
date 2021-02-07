@@ -249,7 +249,6 @@ $this->connection->getDbalExtension()->setDebugging(TRUE);
   }
 
   public function testUnsignedColumns() {
-$this->connection->getDbalExtension()->setDebugging(TRUE);
     // First create the table with just a serial column.
     $table_name = 'unsigned_table';
     $table_spec = [
