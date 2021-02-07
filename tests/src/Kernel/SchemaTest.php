@@ -213,7 +213,7 @@ $this->counter = 0;
         ];
 
         foreach ($variations as $variation) {
-dump([$this->counter, $type, $size, $variation]);
+//dump([$this->counter, $type, $size, $variation]);
           $field_spec = $variation + $base_field_spec;
           $this->assertFieldAdditionRemoval($field_spec);
         }
@@ -242,6 +242,7 @@ dump([$this->counter, $type, $size, $variation]);
         ];
 
         foreach ($variations as $variation) {
+dump([$this->counter, $precision, $scale, $variation]);
           $field_spec = $variation + $base_field_spec;
           $this->assertFieldAdditionRemoval($field_spec);
         }
