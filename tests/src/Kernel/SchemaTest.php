@@ -4,6 +4,7 @@ namespace Drupal\Tests\drudbal\Kernel;
 
 use Drupal\Core\Database\Database;
 use Drupal\KernelTests\Core\Database\SchemaTest as SchemaTestBase;
+use Drupal\Component\Render\FormattableMarkup;
 
 /**
  * Tests table creation and modification via the schema API.
@@ -275,4 +276,62 @@ $this->connection->getDbalExtension()->setDebugging(TRUE);
       $this->assertFalse($this->tryUnsignedInsert($table_name, $column_name), new FormattableMarkup('Unsigned @type column rejected a negative value.', ['@type' => $column_spec['type']]));
     }
   }
+
+  protected function assertFieldCharacteristics($table_name, $field_name, $field_spec) {
+$this->connection->getDbalExtension()->setDebugging(TRUE);
+    // Check that the initial value has been registered.
+    if (isset($field_spec['initial'])) {
+      // There should be no row with a value different then $field_spec['initial'].
+      $count = $this->connection
+        ->select($table_name)
+        ->fields($table_name, ['serial_column'])
+        ->condition($field_name, $field_spec['initial'], '<>')
+        ->countQuery()
+        ->execute()
+        ->fetchField();
+      $this->assertEqual(0, $count, 'Initial values filled out.');
+    }
+
+    // Check that the initial value from another field has been registered.
+    if (isset($field_spec['initial_from_field']) && !isset($field_spec['initial'])) {
+      // There should be no row with a value different than
+      // $field_spec['initial_from_field'].
+      $count = $this->connection
+        ->select($table_name)
+        ->fields($table_name, ['serial_column'])
+        ->where("[$table_name].[{$field_spec['initial_from_field']}] <> [$table_name].[$field_name]")
+        ->countQuery()
+        ->execute()
+        ->fetchField();
+      $this->assertEqual(0, $count, 'Initial values from another field filled out.');
+    }
+    elseif (isset($field_spec['initial_from_field']) && isset($field_spec['initial'])) {
+      // There should be no row with a value different than '100'.
+      $count = $this->connection
+        ->select($table_name)
+        ->fields($table_name, ['serial_column'])
+        ->condition($field_name, 100, '<>')
+        ->countQuery()
+        ->execute()
+        ->fetchField();
+      $this->assertEqual(0, $count, 'Initial values from another field or a default value filled out.');
+    }
+
+    // Check that the default value has been registered.
+    if (isset($field_spec['default'])) {
+      // Try inserting a row, and check the resulting value of the new column.
+      $id = $this->connection
+        ->insert($table_name)
+        ->useDefaults(['serial_column'])
+        ->execute();
+      $field_value = $this->connection
+        ->select($table_name)
+        ->fields($table_name, [$field_name])
+        ->condition('serial_column', $id)
+        ->execute()
+        ->fetchField();
+      $this->assertEqual($field_spec['default'], $field_value, 'Default value registered.');
+    }
+  }
+
 }

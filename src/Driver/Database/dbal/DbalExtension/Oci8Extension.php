@@ -793,14 +793,6 @@ PLSQL
    * {@inheritdoc}
    */
   public function alterDbalColumnDefinition($context, &$dbal_column_definition, array &$dbal_column_options, $dbal_type, array $drupal_field_specs, $field_name) {
-    // Explicitly escape single quotes in default value.
-    $matches = [];
-    preg_match_all('/(.+ DEFAULT \')(.+)(\'.*)/', $dbal_column_definition, $matches, PREG_SET_ORDER, 0);
-    if (!empty($matches)) {
-      $parts = $matches[0];
-      $dbal_column_definition = $parts[1] . str_replace("'", "''", $parts[2]) . $parts[3];
-    }
-
     // @todo just setting 'unsigned' to true does not enforce values >=0 in the
     // field in Oracle, so add a CHECK >= 0 constraint.
     // @todo open a DBAL issue, this is also in SQLite
