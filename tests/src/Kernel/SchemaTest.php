@@ -247,4 +247,32 @@ $this->counter = 0;
     }
   }
 
+  public function testUnsignedColumns() {
+$this->connection->getDbalExtension()->setDebugging(TRUE);
+    // First create the table with just a serial column.
+    $table_name = 'unsigned_table';
+    $table_spec = [
+      'fields' => ['serial_column' => ['type' => 'serial', 'unsigned' => TRUE, 'not null' => TRUE]],
+      'primary key' => ['serial_column'],
+    ];
+    $this->schema->createTable($table_name, $table_spec);
+
+    // Now set up columns for the other types.
+    $types = ['int', 'float', 'numeric'];
+    foreach ($types as $type) {
+      $column_spec = ['type' => $type, 'unsigned' => TRUE];
+      if ($type == 'numeric') {
+        $column_spec += ['precision' => 10, 'scale' => 0];
+      }
+      $column_name = $type . '_column';
+      $table_spec['fields'][$column_name] = $column_spec;
+      $this->schema->addField($table_name, $column_name, $column_spec);
+    }
+
+    // Finally, check each column and try to insert invalid values into them.
+    foreach ($table_spec['fields'] as $column_name => $column_spec) {
+      $this->assertTrue($this->schema->fieldExists($table_name, $column_name), new FormattableMarkup('Unsigned @type column was created.', ['@type' => $column_spec['type']]));
+      $this->assertFalse($this->tryUnsignedInsert($table_name, $column_name), new FormattableMarkup('Unsigned @type column rejected a negative value.', ['@type' => $column_spec['type']]));
+    }
+  }
 }

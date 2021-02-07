@@ -766,7 +766,13 @@ PLSQL
   public function alterDbalColumnOptions($context, array &$dbal_column_options, $dbal_type, array $drupal_field_specs, $field_name) {
     if (isset($drupal_field_specs['type']) && in_array($drupal_field_specs['type'], ['char', 'varchar', 'varchar_ascii', 'text', 'blob'])) {
       if (array_key_exists('default', $drupal_field_specs)) {
-        $dbal_column_options['default'] = empty($drupal_field_specs['default']) ? self::ORACLE_EMPTY_STRING_REPLACEMENT : $drupal_field_specs['default'];  // @todo here check
+        // Empty string must be replaced as in Oracle that equals to NULL.
+        $default = $drupal_field_specs['default'] === '' ? self::ORACLE_EMPTY_STRING_REPLACEMENT : $drupal_field_specs['default'];
+        if ($default) {
+          // Single quote must be doubled.
+          $default = str_replace("'", "''", $default);
+        }
+        $dbal_column_options['default'] = $default;
       }
     }
     // String field definition may miss the length if it has been altered.
