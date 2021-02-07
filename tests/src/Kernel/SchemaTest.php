@@ -205,11 +205,11 @@ $this->counter = 0;
           ['not null' => TRUE, 'initial' => 1],
           ['not null' => TRUE, 'initial' => 1, 'default' => 7],
           ['not null' => TRUE, 'initial_from_field' => 'serial_column'],
-          [
+  /*        [
             'not null' => TRUE,
             'initial_from_field' => 'test_nullable_field',
             'initial'  => 100,
-          ],
+          ],*/
         ];
 
         foreach ($variations as $variation) {
