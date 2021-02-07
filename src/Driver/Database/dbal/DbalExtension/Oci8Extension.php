@@ -768,10 +768,10 @@ PLSQL
       if (array_key_exists('default', $drupal_field_specs)) {
         // Empty string must be replaced as in Oracle that equals to NULL.
         $default = $drupal_field_specs['default'] === '' ? self::ORACLE_EMPTY_STRING_REPLACEMENT : $drupal_field_specs['default'];
-        if ($default) {
+//        if ($default) {
           // Single quote must be doubled.
-          $default = str_replace("'", "''", $default);
-        }
+//          $default = str_replace("'", "''", $default);
+//        }
         $dbal_column_options['default'] = $default;
       }
     }
