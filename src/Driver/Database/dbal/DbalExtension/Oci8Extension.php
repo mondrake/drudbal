@@ -768,10 +768,6 @@ PLSQL
       if (array_key_exists('default', $drupal_field_specs)) {
         // Empty string must be replaced as in Oracle that equals to NULL.
         $default = $drupal_field_specs['default'] === '' ? self::ORACLE_EMPTY_STRING_REPLACEMENT : $drupal_field_specs['default'];
-//        if ($default) {
-          // Single quote must be doubled.
-//          $default = str_replace("'", "''", $default);
-//        }
         $dbal_column_options['default'] = $default;
       }
     }
@@ -803,6 +799,36 @@ PLSQL
     }
 
     return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function initAddedField(string $drupal_table_name, string $drupal_field_name, array $drupal_field_specs): void {
+    if (isset($drupal_field_specs['initial_from_field'])) {
+      if (isset($drupal_field_specs['initial'])) {
+        if (in_array($drupal_field_specs['type'], ['float', 'numeric', 'serial', 'int'])) {
+          $expression = "COALESCE([{$drupal_field_specs['initial_from_field']}], {$drupal_field_specs['initial']}";
+          $arguments = [];
+        }
+        else {
+          $expression = "COALESCE([{$drupal_field_specs['initial_from_field']}], :default_initial_value)";
+          $arguments = [':default_initial_value' => $drupal_field_specs['initial']];
+        }
+      }
+      else {
+        $expression = "[{$drupal_field_specs['initial_from_field']}]";
+        $arguments = [];
+      }
+      $this->connection->update($drupal_table_name)
+        ->expression($drupal_field_name, $expression, $arguments)
+        ->execute();
+    }
+    elseif (isset($drupal_field_specs['initial'])) {
+      $this->connection->update($drupal_table_name)
+        ->fields([$drupal_field_name => $drupal_field_specs['initial']])
+        ->execute();
+    }
   }
 
   /**
