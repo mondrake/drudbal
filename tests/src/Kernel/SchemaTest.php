@@ -4,6 +4,7 @@ namespace Drupal\Tests\drudbal\Kernel;
 
 use Drupal\Core\Database\Database;
 use Drupal\KernelTests\Core\Database\SchemaTest as SchemaTestBase;
+use Drupal\Component\Render\FormattableMarkup;
 
 /**
  * Tests table creation and modification via the schema API.
@@ -13,9 +14,10 @@ use Drupal\KernelTests\Core\Database\SchemaTest as SchemaTestBase;
 class SchemaTest extends SchemaTestBase {
 
   /**
-   * @covers \Drupal\Core\Database\Driver\mysql\Schema::introspectIndexSchema
-   * @covers \Drupal\Core\Database\Driver\pgsql\Schema::introspectIndexSchema
-   * @covers \Drupal\Core\Database\Driver\sqlite\Schema::introspectIndexSchema
+   * @covers \Drupal\drudbal\Driver\Database\dbal\Schema::introspectIndexSchema
+   *
+   * In this override, we need to change Oracle index names, since they cannot
+   * exceed the 30 chars limit in Oracle 11.
    */
   public function testIntrospectIndexSchema() {
     $table_specification = [
@@ -166,9 +168,13 @@ class SchemaTest extends SchemaTestBase {
     $this->assertTrue($this->schema->dropTable($table_name), 'Table with uppercase table name dropped');
   }
 
+  /**
+   * Tests adding columns to an existing table with default and initial value.
+   *
+   * In this override, we need to change maximum precision in Oracle, that is
+   * 38, differently from other core databases.
+   */
   public function testSchemaAddFieldDefaultInitial() {
-$this->counter = 0;
-//$this->connection->getDbalExtension()->setDebugging(TRUE);
     // Test varchar types.
     foreach ([1, 32, 128, 256, 512] as $length) {
       $base_field_spec = [
@@ -219,7 +225,15 @@ $this->counter = 0;
     }
 
     // Test numeric types.
-    foreach ([1, 5, 10, 40, 65] as $precision) {
+    switch ($this->connection->databaseType()) {
+      case 'oracle':
+        $precisions = [1, 5, 10, 38];
+        break;
+        
+      default:
+        $precisions = [1, 5, 10, 40, 65];
+    }
+    foreach ($precisions as $precision) {
       foreach ([0, 2, 10, 30] as $scale) {
         // Skip combinations where precision is smaller than scale.
         if ($precision <= $scale) {
@@ -243,6 +257,43 @@ $this->counter = 0;
           $field_spec = $variation + $base_field_spec;
           $this->assertFieldAdditionRemoval($field_spec);
         }
+      }
+    }
+  }
+
+  /**
+   * Tests creating unsigned columns and data integrity thereof.
+   *
+   * In this override, we avoid testing insert on the serial column that in
+   * Drupal core raises an exception, but not in Oracle where a trigger forces
+   * the value to be next-in-sequence regardless of what is passed in.
+   */
+  public function testUnsignedColumns() {
+    // First create the table with just a serial column.
+    $table_name = 'unsigned_table';
+    $table_spec = [
+      'fields' => ['serial_column' => ['type' => 'serial', 'unsigned' => TRUE, 'not null' => TRUE]],
+      'primary key' => ['serial_column'],
+    ];
+    $this->schema->createTable($table_name, $table_spec);
+
+    // Now set up columns for the other types.
+    $types = ['int', 'float', 'numeric'];
+    foreach ($types as $type) {
+      $column_spec = ['type' => $type, 'unsigned' => TRUE];
+      if ($type == 'numeric') {
+        $column_spec += ['precision' => 10, 'scale' => 0];
+      }
+      $column_name = $type . '_column';
+      $table_spec['fields'][$column_name] = $column_spec;
+      $this->schema->addField($table_name, $column_name, $column_spec);
+    }
+
+    // Finally, check each column and try to insert invalid values into them.
+    foreach ($table_spec['fields'] as $column_name => $column_spec) {
+      $this->assertTrue($this->schema->fieldExists($table_name, $column_name), new FormattableMarkup('Unsigned @type column was created.', ['@type' => $column_spec['type']]));
+      if ($column_name !== 'serial_column') {
+        $this->assertFalse($this->tryUnsignedInsert($table_name, $column_name), new FormattableMarkup('Unsigned @type column rejected a negative value.', ['@type' => $column_spec['type']]));
       }
     }
   }

@@ -394,7 +394,7 @@ class Oci8Extension extends AbstractExtension {
   }
 
   /**
-   * PlatformSql delegated methods.
+   * DrudbalDateSql delegated methods.
    */
 
   /**
@@ -766,7 +766,9 @@ PLSQL
   public function alterDbalColumnOptions($context, array &$dbal_column_options, $dbal_type, array $drupal_field_specs, $field_name) {
     if (isset($drupal_field_specs['type']) && in_array($drupal_field_specs['type'], ['char', 'varchar', 'varchar_ascii', 'text', 'blob'])) {
       if (array_key_exists('default', $drupal_field_specs)) {
-        $dbal_column_options['default'] = empty($drupal_field_specs['default']) ? self::ORACLE_EMPTY_STRING_REPLACEMENT : $drupal_field_specs['default'];  // @todo here check
+        // Empty string must be replaced as in Oracle that equals to NULL.
+        $default = $drupal_field_specs['default'] === '' ? self::ORACLE_EMPTY_STRING_REPLACEMENT : $drupal_field_specs['default'];
+        $dbal_column_options['default'] = $default;
       }
     }
     // String field definition may miss the length if it has been altered.
@@ -787,14 +789,6 @@ PLSQL
    * {@inheritdoc}
    */
   public function alterDbalColumnDefinition($context, &$dbal_column_definition, array &$dbal_column_options, $dbal_type, array $drupal_field_specs, $field_name) {
-    // Explicitly escape single quotes in default value.
-    $matches = [];
-    preg_match_all('/(.+ DEFAULT \')(.+)(\'.*)/', $dbal_column_definition, $matches, PREG_SET_ORDER, 0);
-    if (!empty($matches)) {
-      $parts = $matches[0];
-      $dbal_column_definition = $parts[1] . str_replace("'", "''", $parts[2]) . $parts[3];
-    }
-
     // @todo just setting 'unsigned' to true does not enforce values >=0 in the
     // field in Oracle, so add a CHECK >= 0 constraint.
     // @todo open a DBAL issue, this is also in SQLite
@@ -805,6 +799,36 @@ PLSQL
     }
 
     return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function initAddedField(string $drupal_table_name, string $drupal_field_name, array $drupal_field_specs): void {
+    if (isset($drupal_field_specs['initial_from_field'])) {
+      if (isset($drupal_field_specs['initial'])) {
+        if (in_array($drupal_field_specs['type'], ['float', 'numeric', 'serial', 'int'])) {
+          $expression = "COALESCE([{$drupal_field_specs['initial_from_field']}], {$drupal_field_specs['initial']})";
+          $arguments = [];
+        }
+        else {
+          $expression = "COALESCE([{$drupal_field_specs['initial_from_field']}], :default_initial_value)";
+          $arguments = [':default_initial_value' => $drupal_field_specs['initial']];
+        }
+      }
+      else {
+        $expression = "[{$drupal_field_specs['initial_from_field']}]";
+        $arguments = [];
+      }
+      $this->connection->update($drupal_table_name)
+        ->expression($drupal_field_name, $expression, $arguments)
+        ->execute();
+    }
+    elseif (isset($drupal_field_specs['initial'])) {
+      $this->connection->update($drupal_table_name)
+        ->fields([$drupal_field_name => $drupal_field_specs['initial']])
+        ->execute();
+    }
   }
 
   /**

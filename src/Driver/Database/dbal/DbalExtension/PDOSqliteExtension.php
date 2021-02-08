@@ -390,7 +390,7 @@ class PDOSqliteExtension extends AbstractExtension {
   }
 
   /**
-   * PlatformSql delegated methods.
+   * DrudbalDateSql delegated methods.
    */
 
   /**
