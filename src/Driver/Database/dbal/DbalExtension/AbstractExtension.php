@@ -571,7 +571,7 @@ class AbstractExtension implements DbalExtensionInterface {
         $arguments = [':default_initial_value' => $drupal_field_specs['initial']];
       }
       else {
-        $expression = $drupal_field_specs['initial_from_field'];
+        $expression = "[{$drupal_field_specs['initial_from_field']}]";
         $arguments = [];
       }
       $this->connection->update($drupal_table_name)
