@@ -567,7 +567,7 @@ class AbstractExtension implements DbalExtensionInterface {
   public function initAddedField(string $drupal_table_name, string $drupal_field_name, array $drupal_field_specs): void {
     if (isset($drupal_field_specs['initial_from_field'])) {
       if (isset($drupal_field_specs['initial'])) {
-        $expression = 'COALESCE(' . $drupal_field_specs['initial_from_field'] . ', :default_initial_value)';
+        $expression = "COALESCE([{$drupal_field_specs['initial_from_field']}], :default_initial_value)";
         $arguments = [':default_initial_value' => $drupal_field_specs['initial']];
       }
       else {
