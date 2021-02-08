@@ -247,7 +247,7 @@ $this->connection->getDbalExtension()->setDebugging(TRUE);
 /*    }
     catch (\Exception $e) {
       return FALSE;
-    }*(
+    }*/
   }
 
   /**
