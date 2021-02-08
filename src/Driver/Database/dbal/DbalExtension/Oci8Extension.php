@@ -808,7 +808,7 @@ PLSQL
     if (isset($drupal_field_specs['initial_from_field'])) {
       if (isset($drupal_field_specs['initial'])) {
         if (in_array($drupal_field_specs['type'], ['float', 'numeric', 'serial', 'int'])) {
-          $expression = "COALESCE([{$drupal_field_specs['initial_from_field']}], {$drupal_field_specs['initial']}";
+          $expression = "COALESCE([{$drupal_field_specs['initial_from_field']}], {$drupal_field_specs['initial']})";
           $arguments = [];
         }
         else {
