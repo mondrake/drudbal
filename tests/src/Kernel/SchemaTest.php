@@ -14,9 +14,10 @@ use Drupal\Component\Render\FormattableMarkup;
 class SchemaTest extends SchemaTestBase {
 
   /**
-   * @covers \Drupal\Core\Database\Driver\mysql\Schema::introspectIndexSchema
-   * @covers \Drupal\Core\Database\Driver\pgsql\Schema::introspectIndexSchema
-   * @covers \Drupal\Core\Database\Driver\sqlite\Schema::introspectIndexSchema
+   * @covers \Drupal\drudbal\Driver\Database\dbal\Schema::introspectIndexSchema
+   *
+   * In this override, we need to change Oracle index names, since they cannot
+   * exceed the 30 chars limit in Oracle 11.
    */
   public function testIntrospectIndexSchema() {
     $table_specification = [
@@ -167,9 +168,13 @@ class SchemaTest extends SchemaTestBase {
     $this->assertTrue($this->schema->dropTable($table_name), 'Table with uppercase table name dropped');
   }
 
+  /**
+   * Tests adding columns to an existing table with default and initial value.
+   *
+   * In this override, we need to change maximum precision in Oracle, that is
+   * 38, differently from other core databases.
+   */
   public function testSchemaAddFieldDefaultInitial() {
-$this->counter = 0;
-
     // Test varchar types.
     foreach ([1, 32, 128, 256, 512] as $length) {
       $base_field_spec = [
@@ -191,7 +196,7 @@ $this->counter = 0;
         $this->assertFieldAdditionRemoval($field_spec);
       }
     }
-//$this->connection->getDbalExtension()->setDebugging(TRUE);
+
     // Test int and float types.
     foreach (['int', 'float'] as $type) {
       foreach (['tiny', 'small', 'medium', 'normal', 'big'] as $size) {
@@ -205,15 +210,14 @@ $this->counter = 0;
           ['not null' => TRUE, 'initial' => 1],
           ['not null' => TRUE, 'initial' => 1, 'default' => 7],
           ['not null' => TRUE, 'initial_from_field' => 'serial_column'],
-  /*        [
+          [
             'not null' => TRUE,
             'initial_from_field' => 'test_nullable_field',
             'initial'  => 100,
-          ],*/
+          ],
         ];
 
         foreach ($variations as $variation) {
-//dump([$this->counter, $type, $size, $variation]);
           $field_spec = $variation + $base_field_spec;
           $this->assertFieldAdditionRemoval($field_spec);
         }
@@ -221,7 +225,15 @@ $this->counter = 0;
     }
 
     // Test numeric types.
-    foreach ([1, 5, 10, 38] as $precision) {
+    switch ($this->connection->databaseType()) {
+      case 'oracle':
+        $precisions = [1, 5, 10, 38];
+        break;
+        
+      default:
+        $precisions = [1, 5, 10, 40, 65];
+    }
+    foreach ($precisions as $precision) {
       foreach ([0, 2, 10, 30] as $scale) {
         // Skip combinations where precision is smaller than scale.
         if ($precision <= $scale) {
@@ -242,7 +254,6 @@ $this->counter = 0;
         ];
 
         foreach ($variations as $variation) {
-dump([$this->counter, $precision, $scale, $variation]);
           $field_spec = $variation + $base_field_spec;
           $this->assertFieldAdditionRemoval($field_spec);
         }
@@ -250,6 +261,13 @@ dump([$this->counter, $precision, $scale, $variation]);
     }
   }
 
+  /**
+   * Tests creating unsigned columns and data integrity thereof.
+   *
+   * In this override, we avoid testing insert on the serial column that in
+   * Drupal core raises an exception, but not in Oracle where a trigger forces
+   * the value to be next-in-sequence regardless of what is passed in.
+   */
   public function testUnsignedColumns() {
     // First create the table with just a serial column.
     $table_name = 'unsigned_table';

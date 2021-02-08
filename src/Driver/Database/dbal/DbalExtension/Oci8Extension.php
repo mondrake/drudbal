@@ -394,7 +394,7 @@ class Oci8Extension extends AbstractExtension {
   }
 
   /**
-   * PlatformSql delegated methods.
+   * DrudbalDateSql delegated methods.
    */
 
   /**

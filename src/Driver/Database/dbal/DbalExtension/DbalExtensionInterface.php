@@ -337,7 +337,7 @@ interface DbalExtensionInterface {
   public function delegateReleaseSavepointExceptionProcess(DbalDriverException $e);
 
   /**
-   * PlatformSql delegated methods.
+   * DrudbalDateSql delegated methods.
    */
 
   /**
@@ -778,6 +778,18 @@ interface DbalExtensionInterface {
    *   by DBAL.
    */
   public function delegateAddField(&$primary_key_processed_by_extension, DbalSchema $dbal_schema, $drupal_table_name, $field_name, array $drupal_field_specs, array $keys_new_specs, array $dbal_column_options);
+
+  /**
+   * Initializes a field newly added to a table.
+   *
+   * @param string $drupal_table_name
+   *   The Drupal name of the table.
+   * @param string $field_name
+   *   The Drupal name of the field.
+   * @param array $drupal_field_specs
+   *   The field specification array, as taken from a schema definition.
+   */
+  public function initAddedField(string $drupal_table_name, string $drupal_field_name, array $drupal_field_specs): void;
 
   /**
    * Drops a field from a table.
