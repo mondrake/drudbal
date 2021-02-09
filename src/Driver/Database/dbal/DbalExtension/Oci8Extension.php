@@ -844,9 +844,9 @@ PLSQL
       $sql[] = "ALTER TABLE $db_table ADD CONSTRAINT $db_pk_constraint PRIMARY KEY (" . implode(', ', $db_primary_key_columns) . ")";
     }
 
-    if (isset($drupal_field_new_specs['description'])) {
-      $column_description = $this->connection->getDbalPlatform()->quoteStringLiteral($drupal_field_new_specs['description']);
-      $sql[] = "COMMENT ON COLUMN $db_table.$new_db_field IS " . $column_description;
+    if (isset($drupal_field_specs['description'])) {
+      $column_description = $this->connection->getDbalPlatform()->quoteStringLiteral($drupal_field_specs['description']);
+      $sql[] = "COMMENT ON COLUMN $db_table.$db_field IS " . $column_description;
     }
 
     foreach ($sql as $exec) {
