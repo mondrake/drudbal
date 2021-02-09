@@ -884,12 +884,14 @@ PLSQL
 
     if ($drupal_field_new_specs['type'] === 'serial') {
       $sql = array_merge($sql, $this->connection->getDbalPlatform()->getCreateAutoincrementSql($new_db_field, $db_table));
+      $has_primary_key = TRUE;
     }
 
     if (!$has_primary_key && $db_primary_key_columns) {
       $db_pk_constraint = $db_pk_constraint ?? $unquoted_db_table . '_PK';
       $sql[] = "ALTER TABLE $db_table ADD CONSTRAINT $db_pk_constraint PRIMARY KEY (" . implode(', ', $db_primary_key_columns) . ")";
     }
+
     if (isset($drupal_field_new_specs['description'])) {
       $column_description = $this->connection->getDbalPlatform()->quoteStringLiteral($drupal_field_new_specs['description']);
       $sql[] = "COMMENT ON COLUMN $db_table.$new_db_field IS " . $column_description;
