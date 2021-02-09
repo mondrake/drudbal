@@ -882,7 +882,7 @@ PLSQL
       $sql[] = "ALTER TABLE $db_table MODIFY $new_db_field NOT NULL";
     }
 
-    if ($drupal_field_new_specs['not null'] === 'serial') {
+    if ($drupal_field_new_specs['type'] === 'serial') {
       $sql = array_merge($sql, $this->connection->getDbalPlatform()->getCreateAutoincrementSql($unquoted_new_db_field, $unquoted_db_table));
     }
 
