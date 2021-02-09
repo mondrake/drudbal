@@ -881,6 +881,11 @@ PLSQL
     if ($not_null) {
       $sql[] = "ALTER TABLE $db_table MODIFY $new_db_field NOT NULL";
     }
+
+    if ($drupal_field_new_specs['not null'] === 'serial') {
+      $sql = array_merge($sql, $this->connection->getDbalPlatform()->getCreateAutoincrementSql($unquoted_new_db_field, $unquoted_db_table));
+    }
+
     if (!$has_primary_key && $db_primary_key_columns) {
       $db_pk_constraint = $db_pk_constraint ?? $unquoted_db_table . '_PK';
       $sql[] = "ALTER TABLE $db_table ADD CONSTRAINT $db_pk_constraint PRIMARY KEY (" . implode(', ', $db_primary_key_columns) . ")";

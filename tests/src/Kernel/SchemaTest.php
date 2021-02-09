@@ -122,7 +122,6 @@ $this->connection->getDbalExtension()->setDebugging(TRUE);
     $this->checkSchemaComment('Added column description.', 'test_table', 'test_serial');
 
     // Change the new field to a serial column.
-dump($this->connection->query('SELECT * FROM {test_table}')->fetchAll());
     $this->schema->changeField('test_table', 'test_serial', 'test_serial', ['type' => 'serial', 'not null' => TRUE, 'description' => 'Changed column description.'], ['primary key' => ['test_serial']]);
 
     // Assert that the column comment has been set.
@@ -133,6 +132,7 @@ dump($this->connection->query('SELECT * FROM {test_table}')->fetchAll());
     $this->assertTrue($this->tryInsert(), 'Insert with a serial succeeded.');
     $max2 = $this->connection->query('SELECT MAX([test_serial]) FROM {test_table}')->fetchField();
     $this->assertTrue($max2 > $max1, 'The serial is monotone.');
+dump($this->connection->query('SELECT * FROM {test_table}')->fetchAll());
 
     $count = $this->connection->query('SELECT COUNT(*) FROM {test_table}')->fetchField();
     $this->assertEqual(2, $count, 'There were two rows.');
