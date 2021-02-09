@@ -818,9 +818,7 @@ PLSQL
     $dbal_primary_key = $has_primary_key ? $dbal_table->getPrimaryKey() : NULL;
 
     $drop_primary_key = $has_primary_key && !empty($keys_new_specs['primary key']);
-    if (!empty($keys_new_specs['primary key'])) {
-      $db_primary_key_columns = $this->connection->schema()->dbalGetFieldList($keys_new_specs['primary key']);
-    }
+    $db_primary_key_columns = !empty($keys_new_specs['primary key']) ? $this->connection->schema()->dbalGetFieldList($keys_new_specs['primary key']) : [];
 
     if ($drop_primary_key) {
       $db_pk_constraint = '';
