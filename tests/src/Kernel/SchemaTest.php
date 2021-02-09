@@ -126,13 +126,11 @@ $this->connection->getDbalExtension()->setDebugging(TRUE);
 
     // Assert that the column comment has been set.
     $this->checkSchemaComment('Changed column description.', 'test_table', 'test_serial');
-dump($this->connection->query('SELECT * FROM {test_table}')->fetchAll());
     $this->assertTrue($this->tryInsert(), 'Insert with a serial succeeded.');
     $max1 = $this->connection->query('SELECT MAX([test_serial]) FROM {test_table}')->fetchField();
     $this->assertTrue($this->tryInsert(), 'Insert with a serial succeeded.');
     $max2 = $this->connection->query('SELECT MAX([test_serial]) FROM {test_table}')->fetchField();
     $this->assertTrue($max2 > $max1, 'The serial is monotone.');
-dump($this->connection->query('SELECT * FROM {test_table}')->fetchAll());
 
     $count = $this->connection->query('SELECT COUNT(*) FROM {test_table}')->fetchField();
     $this->assertEqual(2, $count, 'There were two rows.');
@@ -218,7 +216,7 @@ dump($this->connection->query('SELECT * FROM {test_table}')->fetchAll());
     }
 
     // Use database specific data type and ensure that table is created.
-    $table_specification = [
+/*    $table_specification = [
       'description' => 'Schema table description.',
       'fields' => [
         'timestamp'  => [
@@ -235,7 +233,7 @@ dump($this->connection->query('SELECT * FROM {test_table}')->fetchAll());
     }
     catch (\Exception $e) {
     }
-    $this->assertTrue($this->schema->tableExists('test_timestamp'), 'Table with database specific datatype was created.');
+    $this->assertTrue($this->schema->tableExists('test_timestamp'), 'Table with database specific datatype was created.');*/
   }
 
   /**
@@ -455,7 +453,7 @@ $this->markTestSkipped('temp');
       case 'oracle':
         $precisions = [1, 5, 10, 38];
         break;
-        
+
       default:
         $precisions = [1, 5, 10, 40, 65];
     }
