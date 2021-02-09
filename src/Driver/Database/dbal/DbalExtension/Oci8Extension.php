@@ -828,6 +828,8 @@ PLSQL
       $has_primary_key = FALSE;
     }
 
+    $column_definition = $dbal_column_options['columnDefinition'];
+
     $sql = [];
     $sql[] = "ALTER TABLE $db_table ADD $db_field $column_definition";
 
