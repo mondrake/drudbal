@@ -300,7 +300,7 @@ class Statement implements \IteratorAggregate, StatementInterface {
 
     if (!empty($logger)) {
       $query_end = microtime(TRUE);
-      $logger->log($this, $args, $query_end - $query_start);
+      $logger->log($this, $args, $query_end - $query_start, $query_start);
     }
 
     return TRUE;
@@ -359,7 +359,8 @@ class Statement implements \IteratorAggregate, StatementInterface {
           return (object) $row;
 
         case \PDO::FETCH_CLASS:
-          $class_obj = new $this->fetchClass();
+          $constructor_arguments = $this->fetchOptions['constructor_args'] ?? [];
+          $class_obj = new $this->fetchClass(...$constructor_arguments);
           foreach ($row as $column => $value) {
             $class_obj->$column = $value;
           }
@@ -596,7 +597,7 @@ class Statement implements \IteratorAggregate, StatementInterface {
   /**
    * {@inheritdoc}
    */
-  public function fetchObject($class_name = NULL, $constructor_args = []) {
+  public function fetchObject(string $class_name = NULL, array $constructor_arguments = NULL) {
     // Handle via prefetched data if needed.
     if ($this->dbh->getDbalExtension()->onSelectPrefetchAllData()) {
       if (isset($this->currentRow)) {
@@ -608,7 +609,7 @@ class Statement implements \IteratorAggregate, StatementInterface {
           $this->fetchStyle = \PDO::FETCH_CLASS;
           $this->fetchOptions = [
             'class' => $class_name,
-            'constructor_args' => $constructor_args,
+            'constructor_args' => $constructor_arguments,
           ];
           // Grab the row in the format specified above.
           $result = $this->current();
@@ -626,6 +627,13 @@ class Statement implements \IteratorAggregate, StatementInterface {
       }
     }
     else {
+      if (isset($class_name)) {
+        $this->fetchStyle = \PDO::FETCH_CLASS;
+        $this->fetchOptions = [
+          'class' => $class_name,
+          'constructor_args' => $constructor_arguments,
+        ];
+      }
       return $this->fetch($class_name ?? \PDO::FETCH_OBJ);
     }
   }
