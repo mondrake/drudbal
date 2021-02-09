@@ -72,7 +72,7 @@ $this->connection->getDbalExtension()->setDebugging(TRUE);
     }
 
     // An insert without a value for the column 'test_table' should fail.
-//    $this->assertFalse($this->tryInsert(), 'Insert without a default failed.');
+    $this->assertFalse($this->tryInsert(), 'Insert without a default failed.');
 
     // Add a default value to the column.
     $this->schema->changeField('test_table', 'test_field', 'test_field', ['type' => 'int', 'not null' => TRUE, 'default' => 0]);
@@ -82,7 +82,7 @@ $this->connection->getDbalExtension()->setDebugging(TRUE);
     // Remove the default.
     $this->schema->changeField('test_table', 'test_field', 'test_field', ['type' => 'int', 'not null' => TRUE]);
     // The insert should fail again.
-//    $this->assertFalse($this->tryInsert(), 'Insert without a default failed.');
+    $this->assertFalse($this->tryInsert(), 'Insert without a default failed.');
 
     // Test for fake index and test for the boolean result of indexExists().
     $index_exists = $this->schema->indexExists('test_table', 'test_field');
@@ -102,7 +102,7 @@ $this->connection->getDbalExtension()->setDebugging(TRUE);
 
     // We need the default so that we can insert after the rename.
     $this->schema->changeField('test_table2', 'test_field', 'test_field', ['type' => 'int', 'not null' => TRUE, 'default' => 0]);
-//    $this->assertFalse($this->tryInsert(), 'Insert into the old table failed.');
+    $this->assertFalse($this->tryInsert(), 'Insert into the old table failed.');
     $this->assertTrue($this->tryInsert('test_table2'), 'Insert into the new table succeeded.');
 
     // We should have successfully inserted exactly two rows.
@@ -122,11 +122,12 @@ $this->connection->getDbalExtension()->setDebugging(TRUE);
     $this->checkSchemaComment('Added column description.', 'test_table', 'test_serial');
 
     // Change the new field to a serial column.
+dump($this->connection->query('SELECT * FROM {test_table}')->fetchAll());
     $this->schema->changeField('test_table', 'test_serial', 'test_serial', ['type' => 'serial', 'not null' => TRUE, 'description' => 'Changed column description.'], ['primary key' => ['test_serial']]);
 
     // Assert that the column comment has been set.
     $this->checkSchemaComment('Changed column description.', 'test_table', 'test_serial');
-
+dump($this->connection->query('SELECT * FROM {test_table}')->fetchAll());
     $this->assertTrue($this->tryInsert(), 'Insert with a serial succeeded.');
     $max1 = $this->connection->query('SELECT MAX([test_serial]) FROM {test_table}')->fetchField();
     $this->assertTrue($this->tryInsert(), 'Insert with a serial succeeded.');
@@ -235,19 +236,6 @@ $this->connection->getDbalExtension()->setDebugging(TRUE);
     catch (\Exception $e) {
     }
     $this->assertTrue($this->schema->tableExists('test_timestamp'), 'Table with database specific datatype was created.');
-  }
-
-  public function tryInsert($table = 'test_table') {
-    //try {
-      $this->connection
-        ->insert($table)
-        ->fields(['id' => mt_rand(10, 20)])
-        ->execute();
-      return TRUE;
-/*    }
-    catch (\Exception $e) {
-      return FALSE;
-    }*/
   }
 
   /**
