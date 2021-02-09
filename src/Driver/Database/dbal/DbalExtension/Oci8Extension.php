@@ -883,7 +883,7 @@ PLSQL
     }
 
     if ($drupal_field_new_specs['type'] === 'serial') {
-      $sql = array_merge($sql, $this->connection->getDbalPlatform()->getCreateAutoincrementSql($unquoted_new_db_field, $unquoted_db_table));
+      $sql = array_merge($sql, $this->connection->getDbalPlatform()->getCreateAutoincrementSql($new_db_field, $db_table));
     }
 
     if (!$has_primary_key && $db_primary_key_columns) {
