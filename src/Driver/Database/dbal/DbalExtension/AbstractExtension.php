@@ -310,7 +310,7 @@ class AbstractExtension implements DbalExtensionInterface {
   }
 
   /**
-   * PlatformSql delegated methods.
+   * DrudbalDateSql delegated methods.
    */
 
   /**
@@ -559,6 +559,30 @@ class AbstractExtension implements DbalExtensionInterface {
    */
   public function delegateAddField(&$primary_key_processed_by_extension, DbalSchema $dbal_schema, $drupal_table_name, $field_name, array $drupal_field_specs, array $keys_new_specs, array $dbal_column_options) {
     return FALSE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function initAddedField(string $drupal_table_name, string $drupal_field_name, array $drupal_field_specs): void {
+    if (isset($drupal_field_specs['initial_from_field'])) {
+      if (isset($drupal_field_specs['initial'])) {
+        $expression = "COALESCE([{$drupal_field_specs['initial_from_field']}], :default_initial_value)";
+        $arguments = [':default_initial_value' => $drupal_field_specs['initial']];
+      }
+      else {
+        $expression = "[{$drupal_field_specs['initial_from_field']}]";
+        $arguments = [];
+      }
+      $this->connection->update($drupal_table_name)
+        ->expression($drupal_field_name, $expression, $arguments)
+        ->execute();
+    }
+    elseif (isset($drupal_field_specs['initial'])) {
+      $this->connection->update($drupal_table_name)
+        ->fields([$drupal_field_name => $drupal_field_specs['initial']])
+        ->execute();
+    }
   }
 
   /**

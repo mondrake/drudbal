@@ -44,7 +44,7 @@ jobs:
           - "7.4"
         test-args:
           - "--group Database"
-          - "--group Entity"
+#          - "--group Entity"
 #          - "--group Cache,Config"
 #          - "--group field,Field"
 #          - "--group file"

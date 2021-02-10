@@ -350,7 +350,7 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
   }
 
   /**
-   * PlatformSql delegated methods.
+   * DrudbalDateSql delegated methods.
    */
 
   /**

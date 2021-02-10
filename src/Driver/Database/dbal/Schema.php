@@ -419,24 +419,8 @@ class Schema extends DatabaseSchema {
     }
 
     // Apply the initial value if set.
-    if (isset($spec['initial'])) {
-      $this->connection->update($table)
-        ->fields([$field => $spec['initial']])
-        ->execute();
-    }
-    if (isset($spec['initial_from_field'])) {
-      if (isset($spec['initial'])) {
-        $expression = 'COALESCE([' . $spec['initial_from_field'] . '], :default_initial_value)';
-        $arguments = [':default_initial_value' => $spec['initial']];
-      }
-      else {
-        $expression = '[' . $spec['initial_from_field'] . ']';
-        $arguments = [];
-      }
-      $this->connection->update($table)
-        ->expression($field, $expression, $arguments)
-        ->execute();
-    }
+    $this->dbalExtension->initAddedField($table, $field, $spec);
+
     if ($fixnull) {
       $spec['not null'] = TRUE;
       $this->changeField($table, $field, $field, $spec);

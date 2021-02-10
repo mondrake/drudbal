@@ -394,7 +394,7 @@ class Oci8Extension extends AbstractExtension {
   }
 
   /**
-   * PlatformSql delegated methods.
+   * DrudbalDateSql delegated methods.
    */
 
   /**
@@ -747,6 +747,10 @@ PLSQL
    * {@inheritdoc}
    */
   public function delegateGetDbalColumnType(&$dbal_type, array $drupal_field_specs) {
+    if (isset($drupal_field_specs['oracle_type'])) {
+      $dbal_type = $this->dbalConnection->getDatabasePlatform()->getDoctrineTypeMapping($drupal_field_specs['oracle_type']);
+      return TRUE;
+    }
     if (isset($drupal_field_specs['type']) && $drupal_field_specs['type'] === 'blob') {
       $dbal_type = 'text';
       return TRUE;
@@ -766,7 +770,9 @@ PLSQL
   public function alterDbalColumnOptions($context, array &$dbal_column_options, $dbal_type, array $drupal_field_specs, $field_name) {
     if (isset($drupal_field_specs['type']) && in_array($drupal_field_specs['type'], ['char', 'varchar', 'varchar_ascii', 'text', 'blob'])) {
       if (array_key_exists('default', $drupal_field_specs)) {
-        $dbal_column_options['default'] = empty($drupal_field_specs['default']) ? self::ORACLE_EMPTY_STRING_REPLACEMENT : $drupal_field_specs['default'];  // @todo here check
+        // Empty string must be replaced as in Oracle that equals to NULL.
+        $default = $drupal_field_specs['default'] === '' ? self::ORACLE_EMPTY_STRING_REPLACEMENT : $drupal_field_specs['default'];
+        $dbal_column_options['default'] = $default;
       }
     }
     // String field definition may miss the length if it has been altered.
@@ -787,14 +793,6 @@ PLSQL
    * {@inheritdoc}
    */
   public function alterDbalColumnDefinition($context, &$dbal_column_definition, array &$dbal_column_options, $dbal_type, array $drupal_field_specs, $field_name) {
-    // Explicitly escape single quotes in default value.
-    $matches = [];
-    preg_match_all('/(.+ DEFAULT \')(.+)(\'.*)/', $dbal_column_definition, $matches, PREG_SET_ORDER, 0);
-    if (!empty($matches)) {
-      $parts = $matches[0];
-      $dbal_column_definition = $parts[1] . str_replace("'", "''", $parts[2]) . $parts[3];
-    }
-
     // @todo just setting 'unsigned' to true does not enforce values >=0 in the
     // field in Oracle, so add a CHECK >= 0 constraint.
     // @todo open a DBAL issue, this is also in SQLite
@@ -805,6 +803,94 @@ PLSQL
     }
 
     return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateAddField(&$primary_key_processed_by_extension, DbalSchema $dbal_schema, $drupal_table_name, $field_name, array $drupal_field_specs, array $keys_new_specs, array $dbal_column_options) {
+    $primary_key_processed_by_extension = TRUE;
+
+    $unquoted_db_table = $this->connection->getPrefixedTableName($drupal_table_name, FALSE);
+    $db_table = '"' . $unquoted_db_table . '"';
+
+    $unquoted_db_field = $this->getDbFieldName($field_name, FALSE);
+    $db_field = '"' . $unquoted_db_field . '"';
+
+    $dbal_table = $dbal_schema->getTable($unquoted_db_table);
+    $has_primary_key = $dbal_table->hasPrimaryKey();
+    $dbal_primary_key = $has_primary_key ? $dbal_table->getPrimaryKey() : NULL;
+
+    $drop_primary_key = $has_primary_key && !empty($keys_new_specs['primary key']);
+    $db_primary_key_columns = !empty($keys_new_specs['primary key']) ? $this->connection->schema()->dbalGetFieldList($keys_new_specs['primary key']) : [];
+
+    if ($drop_primary_key) {
+      $db_pk_constraint = '';
+      $this->delegateDropPrimaryKey($primary_key_processed_by_extension, $db_pk_constraint, $dbal_schema, $drupal_table_name);
+      $has_primary_key = FALSE;
+    }
+
+    $column_definition = $dbal_column_options['columnDefinition'];
+
+    $sql = [];
+    $sql[] = "ALTER TABLE $db_table ADD $db_field $column_definition";
+
+    if ($drupal_field_specs['type'] === 'serial') {
+      $autoincrement_sql = $this->connection->getDbalPlatform()->getCreateAutoincrementSql($db_field, $db_table);
+      // Remove the auto primary key generation, which is the first element in
+      // the array.
+      array_shift($autoincrement_sql);
+      $sql = array_merge($sql, $autoincrement_sql);
+    }
+
+    if (!$has_primary_key && $db_primary_key_columns) {
+      $db_pk_constraint = $db_pk_constraint ?? $unquoted_db_table . '_PK';
+      $sql[] = "ALTER TABLE $db_table ADD CONSTRAINT $db_pk_constraint PRIMARY KEY (" . implode(', ', $db_primary_key_columns) . ")";
+    }
+
+    if (isset($drupal_field_specs['description'])) {
+      $column_description = $this->connection->getDbalPlatform()->quoteStringLiteral($drupal_field_specs['description']);
+      $sql[] = "COMMENT ON COLUMN $db_table.$db_field IS " . $column_description;
+    }
+
+    foreach ($sql as $exec) {
+      if ($this->getDebugging()) {
+        dump($exec);
+      }
+      $this->getDbalConnection()->exec($exec);
+    }
+
+    return TRUE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function initAddedField(string $drupal_table_name, string $drupal_field_name, array $drupal_field_specs): void {
+    if (isset($drupal_field_specs['initial_from_field'])) {
+      if (isset($drupal_field_specs['initial'])) {
+        if (in_array($drupal_field_specs['type'], ['float', 'numeric', 'serial', 'int'])) {
+          $expression = "COALESCE([{$drupal_field_specs['initial_from_field']}], {$drupal_field_specs['initial']})";
+          $arguments = [];
+        }
+        else {
+          $expression = "COALESCE([{$drupal_field_specs['initial_from_field']}], :default_initial_value)";
+          $arguments = [':default_initial_value' => $drupal_field_specs['initial']];
+        }
+      }
+      else {
+        $expression = "[{$drupal_field_specs['initial_from_field']}]";
+        $arguments = [];
+      }
+      $this->connection->update($drupal_table_name)
+        ->expression($drupal_field_name, $expression, $arguments)
+        ->execute();
+    }
+    elseif (isset($drupal_field_specs['initial'])) {
+      $this->connection->update($drupal_table_name)
+        ->fields([$drupal_field_name => $drupal_field_specs['initial']])
+        ->execute();
+    }
   }
 
   /**
@@ -857,10 +943,20 @@ PLSQL
     if ($not_null) {
       $sql[] = "ALTER TABLE $db_table MODIFY $new_db_field NOT NULL";
     }
+
+    if ($drupal_field_new_specs['type'] === 'serial') {
+      $autoincrement_sql = $this->connection->getDbalPlatform()->getCreateAutoincrementSql($new_db_field, $db_table);
+      // Remove the auto primary key generation, which is the first element in
+      // the array.
+      array_shift($autoincrement_sql);
+      $sql = array_merge($sql, $autoincrement_sql);
+    }
+
     if (!$has_primary_key && $db_primary_key_columns) {
       $db_pk_constraint = $db_pk_constraint ?? $unquoted_db_table . '_PK';
       $sql[] = "ALTER TABLE $db_table ADD CONSTRAINT $db_pk_constraint PRIMARY KEY (" . implode(', ', $db_primary_key_columns) . ")";
     }
+
     if (isset($drupal_field_new_specs['description'])) {
       $column_description = $this->connection->getDbalPlatform()->quoteStringLiteral($drupal_field_new_specs['description']);
       $sql[] = "COMMENT ON COLUMN $db_table.$new_db_field IS " . $column_description;

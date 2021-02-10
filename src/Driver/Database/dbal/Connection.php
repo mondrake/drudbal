@@ -88,13 +88,6 @@ class Connection extends DatabaseConnection {
   protected $dbalPlatform;
 
   /**
-   * The platform SQL provider.
-   *
-   * @var \Drupal\Core\Database\PlatformSql|null
-   */
-  protected $platformSql;
-
-  /**
    * The platform SQL parser.
    *
    * @var \Doctrine\DBAL\SQL\Parser|null
@@ -158,21 +151,6 @@ class Connection extends DatabaseConnection {
    */
   public function clientVersion() {
     return $this->dbalExtension->delegateClientVersion();
-  }
-
-  /**
-   * Returns a PlatformSql object to retrieve platform specific SQL snippets.
-   *
-   * This method will lazy-load the appropriate class.
-   *
-   * @return \Drupal\Core\Database\PlatformSql
-   *   The PlatformSql object for this connection.
-   */
-  public function getPlatformSql() {
-    if (empty($this->platformSql)) {
-      $this->platformSql = new PlatformSql($this);
-    }
-    return $this->platformSql;
   }
 
   /**
