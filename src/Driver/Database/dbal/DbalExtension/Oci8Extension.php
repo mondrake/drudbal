@@ -747,6 +747,10 @@ PLSQL
    * {@inheritdoc}
    */
   public function delegateGetDbalColumnType(&$dbal_type, array $drupal_field_specs) {
+    if (isset($drupal_field_specs['oracle_type'])) {
+      $dbal_type = $this->dbalConnection->getDatabasePlatform()->getDoctrineTypeMapping($drupal_field_specs['oracle_type']);
+      return TRUE;
+    }
     if (isset($drupal_field_specs['type']) && $drupal_field_specs['type'] === 'blob') {
       $dbal_type = 'text';
       return TRUE;
@@ -799,6 +803,64 @@ PLSQL
     }
 
     return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateAddField(&$primary_key_processed_by_extension, DbalSchema $dbal_schema, $drupal_table_name, $field_name, array $drupal_field_specs, array $keys_new_specs, array $dbal_column_options) {
+    $primary_key_processed_by_extension = TRUE;
+
+    $unquoted_db_table = $this->connection->getPrefixedTableName($drupal_table_name, FALSE);
+    $db_table = '"' . $unquoted_db_table . '"';
+
+    $unquoted_db_field = $this->getDbFieldName($field_name, FALSE);
+    $db_field = '"' . $unquoted_db_field . '"';
+
+    $dbal_table = $dbal_schema->getTable($unquoted_db_table);
+    $has_primary_key = $dbal_table->hasPrimaryKey();
+    $dbal_primary_key = $has_primary_key ? $dbal_table->getPrimaryKey() : NULL;
+
+    $drop_primary_key = $has_primary_key && !empty($keys_new_specs['primary key']);
+    $db_primary_key_columns = !empty($keys_new_specs['primary key']) ? $this->connection->schema()->dbalGetFieldList($keys_new_specs['primary key']) : [];
+
+    if ($drop_primary_key) {
+      $db_pk_constraint = '';
+      $this->delegateDropPrimaryKey($primary_key_processed_by_extension, $db_pk_constraint, $dbal_schema, $drupal_table_name);
+      $has_primary_key = FALSE;
+    }
+
+    $column_definition = $dbal_column_options['columnDefinition'];
+
+    $sql = [];
+    $sql[] = "ALTER TABLE $db_table ADD $db_field $column_definition";
+
+    if ($drupal_field_specs['type'] === 'serial') {
+      $autoincrement_sql = $this->connection->getDbalPlatform()->getCreateAutoincrementSql($db_field, $db_table);
+      // Remove the auto primary key generation, which is the first element in
+      // the array.
+      array_shift($autoincrement_sql);
+      $sql = array_merge($sql, $autoincrement_sql);
+    }
+
+    if (!$has_primary_key && $db_primary_key_columns) {
+      $db_pk_constraint = $db_pk_constraint ?? $unquoted_db_table . '_PK';
+      $sql[] = "ALTER TABLE $db_table ADD CONSTRAINT $db_pk_constraint PRIMARY KEY (" . implode(', ', $db_primary_key_columns) . ")";
+    }
+
+    if (isset($drupal_field_specs['description'])) {
+      $column_description = $this->connection->getDbalPlatform()->quoteStringLiteral($drupal_field_specs['description']);
+      $sql[] = "COMMENT ON COLUMN $db_table.$db_field IS " . $column_description;
+    }
+
+    foreach ($sql as $exec) {
+      if ($this->getDebugging()) {
+        dump($exec);
+      }
+      $this->getDbalConnection()->exec($exec);
+    }
+
+    return TRUE;
   }
 
   /**
@@ -881,10 +943,20 @@ PLSQL
     if ($not_null) {
       $sql[] = "ALTER TABLE $db_table MODIFY $new_db_field NOT NULL";
     }
+
+    if ($drupal_field_new_specs['type'] === 'serial') {
+      $autoincrement_sql = $this->connection->getDbalPlatform()->getCreateAutoincrementSql($new_db_field, $db_table);
+      // Remove the auto primary key generation, which is the first element in
+      // the array.
+      array_shift($autoincrement_sql);
+      $sql = array_merge($sql, $autoincrement_sql);
+    }
+
     if (!$has_primary_key && $db_primary_key_columns) {
       $db_pk_constraint = $db_pk_constraint ?? $unquoted_db_table . '_PK';
       $sql[] = "ALTER TABLE $db_table ADD CONSTRAINT $db_pk_constraint PRIMARY KEY (" . implode(', ', $db_primary_key_columns) . ")";
     }
+
     if (isset($drupal_field_new_specs['description'])) {
       $column_description = $this->connection->getDbalPlatform()->quoteStringLiteral($drupal_field_new_specs['description']);
       $sql[] = "COMMENT ON COLUMN $db_table.$new_db_field IS " . $column_description;
