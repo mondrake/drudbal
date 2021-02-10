@@ -17,7 +17,6 @@ class SchemaTest extends SchemaTestBase {
    * Tests database interactions.
    */
   public function testSchema() {
-$this->connection->getDbalExtension()->setDebugging(TRUE);
     // Try creating a table.
     $table_specification = [
       'description' => 'Schema table description may contain "quotes" and could be long—very long indeed.',
@@ -216,13 +215,14 @@ $this->connection->getDbalExtension()->setDebugging(TRUE);
     }
 
     // Use database specific data type and ensure that table is created.
-/*    $table_specification = [
+    $table_specification = [
       'description' => 'Schema table description.',
       'fields' => [
         'timestamp'  => [
           'mysql_type' => 'timestamp',
           'pgsql_type' => 'timestamp',
           'sqlite_type' => 'datetime',
+          'oracle_type' => 'date',
           'not null' => FALSE,
           'default' => NULL,
         ],
@@ -233,7 +233,7 @@ $this->connection->getDbalExtension()->setDebugging(TRUE);
     }
     catch (\Exception $e) {
     }
-    $this->assertTrue($this->schema->tableExists('test_timestamp'), 'Table with database specific datatype was created.');*/
+    $this->assertTrue($this->schema->tableExists('test_timestamp'), 'Table with database specific datatype was created.');
   }
 
   /**
