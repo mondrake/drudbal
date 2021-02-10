@@ -398,7 +398,6 @@ class SchemaTest extends SchemaTestBase {
    * 38, differently from other core databases.
    */
   public function testSchemaAddFieldDefaultInitial() {
-$this->markTestSkipped('temp');
     // Test varchar types.
     foreach ([1, 32, 128, 256, 512] as $length) {
       $base_field_spec = [
@@ -493,7 +492,6 @@ $this->markTestSkipped('temp');
    * the value to be next-in-sequence regardless of what is passed in.
    */
   public function testUnsignedColumns() {
-$this->markTestSkipped('temp');
     // First create the table with just a serial column.
     $table_name = 'unsigned_table';
     $table_spec = [

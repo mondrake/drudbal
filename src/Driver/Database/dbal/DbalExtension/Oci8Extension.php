@@ -747,6 +747,10 @@ PLSQL
    * {@inheritdoc}
    */
   public function delegateGetDbalColumnType(&$dbal_type, array $drupal_field_specs) {
+    if (isset($drupal_field_specs['oracle_type'])) {
+      $dbal_type = $this->dbalConnection->getDatabasePlatform()->getDoctrineTypeMapping($drupal_field_specs['oracle_type']);
+      return TRUE;
+    }
     if (isset($drupal_field_specs['type']) && $drupal_field_specs['type'] === 'blob') {
       $dbal_type = 'text';
       return TRUE;
