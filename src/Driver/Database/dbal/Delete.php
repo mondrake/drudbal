@@ -25,7 +25,13 @@ class Delete extends QueryDelete {
    * {@inheritdoc}
    */
   public function execute() {
-    return $this->connection->query((string) $this, $this->dbalQuery->getParameters(), $this->queryOptions);
+    $stmt = $this->connection->prepareStatement((string) $this, $this->queryOptions);
+    try {
+      return $stmt->execute($this->dbalQuery->getParameters(), $this->queryOptions);
+    }
+    catch (\Exception $e) {
+      $this->connection->exceptionHandler()->handleExecutionException($e, $stmt, $this->dbalQuery->getParameters(), $this->queryOptions);
+    }
   }
 
   /**
