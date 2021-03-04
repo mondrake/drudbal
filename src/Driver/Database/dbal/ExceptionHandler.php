@@ -16,6 +16,23 @@ use Drupal\Core\Database\StatementInterface;
 class ExceptionHandler extends DatabaseExceptionHandler {
 
   /**
+   * The DruDbal connection.
+   *
+   * @var \Drupal\drudbal\Driver\Database\dbal\Connection
+   */
+  protected $connection;
+
+  /**
+   * Constructs a DruDbal exception object.
+   *
+   * @param \Drupal\drudbal\Driver\Database\dbal\Connection $drudbal_connection
+   *   The Drupal database connection object for this extension.
+   */
+  public function __construct(Connection $connection) {
+    $this->connection = $connection;
+  }
+
+  /**
    * {@inheritdoc}
    */
   public function handleExecutionException(\Exception $exception, StatementInterface $statement, array $arguments = [], array $options = []): void {
@@ -25,7 +42,7 @@ class ExceptionHandler extends DatabaseExceptionHandler {
 
     $query_string = $statement->getQueryString();
     $message = $exception->getMessage() . ": " . $query_string . "; " . print_r($arguments, TRUE);
-    $options['dbalExtension']->delegateQueryExceptionProcess($query_string, $arguments, $options, $message, $exception);
+    $this->connection->getDbalExtension()->delegateQueryExceptionProcess($query_string, $arguments, $options, $message, $exception);
   }
 
 }

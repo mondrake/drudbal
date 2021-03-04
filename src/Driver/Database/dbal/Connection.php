@@ -264,9 +264,15 @@ class Connection extends DatabaseConnection {
       }
     }
     catch (\Exception $e) {
-      $options += ['dbalExtension' => $this->dbalExtension];
       return $this->exceptionHandler()->handleExecutionException($e, $stmt, $args, $options);
     }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function exceptionHandler() {
+    return new ExceptionHandler($this);
   }
 
   /**

@@ -27,11 +27,11 @@ class Delete extends QueryDelete {
   public function execute() {
     $stmt = $this->connection->prepareStatement((string) $this, $this->queryOptions);
     try {
-      return $stmt->execute($this->dbalQuery->getParameters(), $this->queryOptions);
+      $stmt->execute($this->dbalQuery->getParameters(), $this->queryOptions);
+      return $stmt->rowCount();
     }
     catch (\Exception $e) {
-      $options = $this->queryOptions + ['dbalExtension' => $this->connection->getDbalExtension()];
-      $this->connection->exceptionHandler()->handleExecutionException($e, $stmt, $this->dbalQuery->getParameters(), $options);
+      $this->connection->exceptionHandler()->handleExecutionException($e, $stmt, $this->dbalQuery->getParameters(), $this->queryOptions);
     }
   }
 
