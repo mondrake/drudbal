@@ -274,7 +274,7 @@ class Connection extends DatabaseConnection {
     }
     catch (\Exception $e) {
       $options += ['dbalExtension' => $this->dbalExtension];
-      $this->exceptionHandler()->handleExecutionException($e, $stmt, $args, $options);
+      return $this->exceptionHandler()->handleExecutionException($e, $stmt, $args, $options);
     }
   }
 

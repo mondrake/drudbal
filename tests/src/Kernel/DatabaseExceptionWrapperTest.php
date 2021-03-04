@@ -42,4 +42,11 @@ class DatabaseExceptionWrapperTest extends DatabaseExceptionWrapperTestBase {
     $stmt->execute();
   }
 
+  /**
+   * Tests deprecation of Connection::handleQueryException.
+   */
+  public function testHandleQueryExceptionDeprecation() {
+    $this->markTestSkipped('It\'s deprecated, Jim.');
+  }
+
 }
