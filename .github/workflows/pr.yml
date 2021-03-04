@@ -22,31 +22,22 @@ jobs:
 
 #################################
 
-  oracle-oci8:
-    name: "Oracle on Oci8"
+  sqlite-pdo:
+    name: "SQLite with PDO"
     runs-on: ubuntu-20.04
     env:
-        DRUDBAL_ENV: "dbal/oci8"
-        DBAL_URL: "oci8://DRUDBAL:ORACLE@0.0.0.0:1521/XE"
-        SIMPLETEST_DB: "dbal://DRUDBAL:ORACLE@0.0.0.0:1521/XE?module=drudbal&dbal_driver=oci8#dru"
-
-    services:
-      oracle:
-        image: "wnameless/oracle-xe-11g-r2"
-        ports:
-          - "1521:1521"
+        DRUDBAL_ENV: "dbal/sqlite/file"
+        DBAL_URL: "sqlite://localhost/sites/drudbal.sqlite"
+        SIMPLETEST_DB: "dbal://localhost/sites/drudbal.sqlite?module=drudbal&dbal_driver=pdo_sqlite"
 
     strategy:
       fail-fast: false
       matrix:
         php-version:
-          - "7.4"
+#          - "7.4"
+          - "8.0"
         test-args:
           - "--group Database"
-#          - "--group Entity"
-#          - "--group Cache,Config"
-#          - "--group field,Field"
-#          - "--group file"
 
     steps:
     - name: Install PHP
@@ -54,7 +45,7 @@ jobs:
       with:
         php-version: "${{ matrix.php-version }}"
         coverage: "none"
-        extensions: "oci8"
+        extensions: "pdo_mysql"
         ini-values: "zend.assertions=1"
 
     - name: Checkout Drupal
@@ -68,9 +59,6 @@ jobs:
     - name: Patch Drupal
       run: ./drudbal_staging/tests/github/drupal_patch.sh
 
-#    - name: Test Drupal patch
-#      run: git apply -v drudbal_staging/test.patch
-
     - name: Install Composer dependencies
       run: |
         composer install --no-progress --ansi
@@ -83,50 +71,20 @@ jobs:
         composer config repositories.test-run '{"type": "path", "url": "drudbal_staging", "options": {"symlink": false}}'
         composer require "mondrake/drudbal:dev-test-run-branch" --no-progress --ansi
 
-    - name: Patch doctrine/dbal
-      run: |
-        patch -d vendor/doctrine/dbal -p1 < modules/contrib/drudbal/tests/github/dbal/oci8/dbal.patch
-
-    - name: Create Oracle schema
+    - name: Install Drupal
       run: |
         cp modules/contrib/drudbal/tests/github/install_* .
-        php install_oracle.php
+        # Use the custom installer.
+        php install_cli.php
+        vendor/bin/drush runserver localhost:8080 &
+        sleep 1s
 
-#    - name: Install Drupal
-#      run: |
-#        # Use the custom installer.
-#        php install_cli.php
-#        vendor/bin/drush runserver localhost:8080 &
-#        sleep 5s
+    - name: Report installation
+      run: |
+        php install_report.php
+        vendor/bin/drush core:status
+        vendor/bin/drush core:requirements
+        vendor/bin/drush pml --type=module --no-core
 
-#    - name: Report installation
-#      continue-on-error: true
-#      run: |
-#        php install_report.php
-#        vendor/bin/drush pml --type=module --no-core
-#        vendor/bin/drush core:status
-#        vendor/bin/drush core:requirements
-
-#    - name: Run test ${{ matrix.test-args }}
-#      continue-on-error: true
-#      run: vendor/bin/phpunit -c core --color=always ${{ matrix.test-args }}
-
-    - name: Run test a
-      continue-on-error: true
-      run: vendor/bin/phpunit -c core --color=always modules/contrib/drudbal/tests/src/Kernel/SchemaTest.php
-
-#    - name: Run test b
-#      continue-on-error: true
-#      run: vendor/bin/phpunit -c core --color=always core/tests/Drupal/KernelTests/Core/Database/InsertTest.php
-
-#    - name: Run test c
-#      continue-on-error: true
-#      run: vendor/bin/phpunit -c core --color=always core/tests/Drupal/KernelTests/Core/Entity/EntityDefinitionUpdateTest.php
-
-#    - name: Run test d
-#      continue-on-error: true
-#      run: vendor/bin/phpunit -c core --color=always core/tests/Drupal/KernelTests/Core/Entity/EntityCrudHookTest.php
-
-#    - name: Run test e
-#      continue-on-error: true
-#      run: vendor/bin/phpunit -c core --color=always core/tests/Drupal/KernelTests/Core/Entity/EntityQueryAggregateTest.php
+    - name: Run test ${{ matrix.test-args }}
+      run: vendor/bin/phpunit -c core --color=always ${{ matrix.test-args }}
