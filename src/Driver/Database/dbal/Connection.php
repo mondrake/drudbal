@@ -215,32 +215,23 @@ class Connection extends DatabaseConnection {
     // Use default values if not already set.
     $options += $this->defaultOptions();
 
+    // We allow either a pre-bound statement object (deprecated) or a literal
+    // string. In either case, we want to end up with an executed statement
+    // object, which we pass to StatementInterface::execute.
+    if ($query instanceof StatementInterface) {
+      @trigger_error('Passing a StatementInterface object as a $query argument to Drupal\Core\Database\Connection::query is deprecated in drupal:9.2.0 and is removed in drupal:10.0.0. Call the execute method from the StatementInterface object directly instead. See https://www.drupal.org/node/3154439', E_USER_DEPRECATED);
+      $stmt = $query;
+    }
+    else {
+      $this->expandArguments($query, $args);
+      $stmt = $this->prepareStatement($query, $options);
+    }
+
     try {
-      // We allow either a pre-bound statement object or a literal string.
-      // In either case, we want to end up with an executed statement object,
-      // which we pass to Statement::execute.
       if ($query instanceof StatementInterface) {
-        @trigger_error('Passing a StatementInterface object as a $query argument to Drupal\Core\Database\Connection::query is deprecated in drupal:9.2.0 and is removed in drupal:10.0.0. Call the execute method from the StatementInterface object directly instead. See https://www.drupal.org/node/3154439', E_USER_DEPRECATED);
-        $stmt = $query;
         $stmt->execute(NULL, $options);
       }
       else {
-        $this->expandArguments($query, $args);
-        // To protect against SQL injection, Drupal only supports executing one
-        // statement at a time.  Thus, the presence of a SQL delimiter (the
-        // semicolon) is not allowed unless the option is set.  Allowing
-        // semicolons should only be needed for special cases like defining a
-        // function or stored procedure in SQL. Trim any trailing delimiter to
-        // minimize false positives unless delimiter is allowed.
-        $trim_chars = " \xA0\t\n\r\0\x0B";
-        if (empty($options['allow_delimiter_in_query'])) {
-          $trim_chars .= ';';
-        }
-        $query = rtrim($query, $trim_chars);
-        if (strpos($query, ';') !== FALSE && empty($options['allow_delimiter_in_query'])) {
-          throw new \InvalidArgumentException('; is not supported in SQL strings. Use only one statement at a time.');
-        }
-        $stmt = $this->prepareStatement($query, $options);
         $stmt->execute($args, $options);
       }
 
@@ -457,6 +448,21 @@ class Connection extends DatabaseConnection {
       $query = $this->prefixTables($query);
       if (!($options['allow_square_brackets'] ?? FALSE)) {
         $query = $this->quoteIdentifiers($query);
+      }
+
+      // To protect against SQL injection, Drupal only supports executing one
+      // statement at a time.  Thus, the presence of a SQL delimiter (the
+      // semicolon) is not allowed unless the option is set.  Allowing
+      // semicolons should only be needed for special cases like defining a
+      // function or stored procedure in SQL. Trim any trailing delimiter to
+      // minimize false positives unless delimiter is allowed.
+      $trim_chars = " \xA0\t\n\r\0\x0B";
+      if (empty($options['allow_delimiter_in_query'])) {
+        $trim_chars .= ';';
+      }
+      $query = rtrim($query, $trim_chars);
+      if (strpos($query, ';') !== FALSE && empty($options['allow_delimiter_in_query'])) {
+        throw new \InvalidArgumentException('; is not supported in SQL strings. Use only one statement at a time.');
       }
 
       $statement = new $this->statementClass($this, $query, $options['pdo'] ?? []);
