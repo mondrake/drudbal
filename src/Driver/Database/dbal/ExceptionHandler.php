@@ -2,7 +2,9 @@
 
 namespace Drupal\drudbal\Driver\Database\dbal;
 
+use Drupal\Core\Database\DatabaseExceptionWrapper;
 use Drupal\Core\Database\ExceptionHandler as DatabaseExceptionHandler;
+use Drupal\Core\Database\StatementInterface;
 
 /**
  * DruDbal implementation of \Drupal\Core\Database\ExceptionHandler.
