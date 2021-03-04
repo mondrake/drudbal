@@ -35,7 +35,6 @@ class ExceptionHandler extends DatabaseExceptionHandler {
    * {@inheritdoc}
    */
   public function handleExecutionException(\Exception $exception, StatementInterface $statement, array $arguments = [], array $options = []): void {
-dump($options);
     $query_string = $statement->getQueryString();
     $message = $exception->getMessage() . ": " . $query_string . "; " . print_r($arguments, TRUE);
     $options['dbalExtension']->delegateQueryExceptionProcess($query_string, $arguments, $options, $message, $exception);
