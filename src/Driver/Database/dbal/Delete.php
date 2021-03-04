@@ -30,7 +30,8 @@ class Delete extends QueryDelete {
       return $stmt->execute($this->dbalQuery->getParameters(), $this->queryOptions);
     }
     catch (\Exception $e) {
-      $this->connection->exceptionHandler()->handleExecutionException($e, $stmt, $this->dbalQuery->getParameters(), $this->queryOptions);
+      $options = $this->queryOptions + ['dbalExtension' => $this->connection->getDbalExtension()];
+      $this->connection->exceptionHandler()->handleExecutionException($e, $stmt, $this->dbalQuery->getParameters(), $options);
     }
   }
 
