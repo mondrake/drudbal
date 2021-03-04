@@ -215,32 +215,23 @@ class Connection extends DatabaseConnection {
     // Use default values if not already set.
     $options += $this->defaultOptions();
 
+    // We allow either a pre-bound statement object (deprecated) or a literal
+    // string. In either case, we want to end up with an executed statement
+    // object, which we pass to StatementInterface::execute.
+    if ($query instanceof StatementInterface) {
+      @trigger_error('Passing a StatementInterface object as a $query argument to Drupal\Core\Database\Connection::query is deprecated in drupal:9.2.0 and is removed in drupal:10.0.0. Call the execute method from the StatementInterface object directly instead. See https://www.drupal.org/node/3154439', E_USER_DEPRECATED);
+      $stmt = $query;
+    }
+    else {
+      $this->expandArguments($query, $args);
+      $stmt = $this->prepareStatement($query, $options);
+    }
+
     try {
-      // We allow either a pre-bound statement object or a literal string.
-      // In either case, we want to end up with an executed statement object,
-      // which we pass to Statement::execute.
       if ($query instanceof StatementInterface) {
-        @trigger_error('Passing a StatementInterface object as a $query argument to Drupal\Core\Database\Connection::query is deprecated in drupal:9.2.0 and is removed in drupal:10.0.0. Call the execute method from the StatementInterface object directly instead. See https://www.drupal.org/node/3154439', E_USER_DEPRECATED);
-        $stmt = $query;
         $stmt->execute(NULL, $options);
       }
       else {
-        $this->expandArguments($query, $args);
-        // To protect against SQL injection, Drupal only supports executing one
-        // statement at a time.  Thus, the presence of a SQL delimiter (the
-        // semicolon) is not allowed unless the option is set.  Allowing
-        // semicolons should only be needed for special cases like defining a
-        // function or stored procedure in SQL. Trim any trailing delimiter to
-        // minimize false positives unless delimiter is allowed.
-        $trim_chars = " \xA0\t\n\r\0\x0B";
-        if (empty($options['allow_delimiter_in_query'])) {
-          $trim_chars .= ';';
-        }
-        $query = rtrim($query, $trim_chars);
-        if (strpos($query, ';') !== FALSE && empty($options['allow_delimiter_in_query'])) {
-          throw new \InvalidArgumentException('; is not supported in SQL strings. Use only one statement at a time.');
-        }
-        $stmt = $this->prepareStatement($query, $options);
         $stmt->execute($args, $options);
       }
 
@@ -272,50 +263,16 @@ class Connection extends DatabaseConnection {
 
       }
     }
-    catch (\InvalidArgumentException $e) {
-      throw $e;
-    }
     catch (\Exception $e) {
-      return $this->handleDbalQueryException($e, $query, $args, $options);
+      return $this->exceptionHandler()->handleExecutionException($e, $stmt, $args, $options);
     }
   }
 
   /**
-   * Wraps and re-throws any DbalException thrown by ::query().
-   *
-   * @param \Exception $e
-   *   The exception thrown by query().
-   * @param string $query
-   *   The query executed by query().
-   * @param array $args
-   *   An array of arguments for the prepared statement.
-   * @param array $options
-   *   An associative array of options to control how the query is run.
-   *
-   * @return mixed
-   *   NULL when the option to re-throw is FALSE, the result of
-   *   DbalExtensionInterface::delegateQueryExceptionProcess() otherwise.
-   *
-   * @throws \Drupal\Core\Database\DatabaseExceptionWrapper
+   * {@inheritdoc}
    */
-  protected function handleDbalQueryException(\Exception $e, $query, array $args = [], array $options = []) {
-    if ($options['throw_exception']) {
-      // Wrap the exception in another exception, because PHP does not allow
-      // overriding Exception::getMessage(). Its message is the extra database
-      // debug information.
-      if ($query instanceof StatementInterface) {
-        $query_string = $query->getQueryString();
-      }
-      elseif (is_string($query)) {
-        $query_string = $query;
-      }
-      else {
-        $query_string = NULL;
-      }
-      $message = $e->getMessage() . ": " . $query_string . "; " . print_r($args, TRUE);
-      return $this->dbalExtension->delegateQueryExceptionProcess($query, $args, $options, $message, $e);
-    }
-    return NULL;
+  public function exceptionHandler() {
+    return new ExceptionHandler($this);
   }
 
   /**
@@ -493,11 +450,33 @@ class Connection extends DatabaseConnection {
    * {@inheritdoc}
    */
   public function prepareStatement(string $query, array $options): StatementInterface {
-    $query = $this->prefixTables($query);
-    if (!($options['allow_square_brackets'] ?? FALSE)) {
-      $query = $this->quoteIdentifiers($query);
+    try {
+      $query = $this->prefixTables($query);
+      if (!($options['allow_square_brackets'] ?? FALSE)) {
+        $query = $this->quoteIdentifiers($query);
+      }
+
+      // To protect against SQL injection, Drupal only supports executing one
+      // statement at a time.  Thus, the presence of a SQL delimiter (the
+      // semicolon) is not allowed unless the option is set.  Allowing
+      // semicolons should only be needed for special cases like defining a
+      // function or stored procedure in SQL. Trim any trailing delimiter to
+      // minimize false positives unless delimiter is allowed.
+      $trim_chars = " \xA0\t\n\r\0\x0B";
+      if (empty($options['allow_delimiter_in_query'])) {
+        $trim_chars .= ';';
+      }
+      $query = rtrim($query, $trim_chars);
+      if (strpos($query, ';') !== FALSE && empty($options['allow_delimiter_in_query'])) {
+        throw new \InvalidArgumentException('; is not supported in SQL strings. Use only one statement at a time.');
+      }
+
+      $statement = new $this->statementClass($this, $query, $options['pdo'] ?? []);
     }
-    return new $this->statementClass($this, $query, $options['pdo'] ?? []);
+    catch (\Exception $e) {
+      $this->exceptionHandler()->handleStatementException($e, $query, $options);
+    }
+    return $statement;
   }
 
   /**

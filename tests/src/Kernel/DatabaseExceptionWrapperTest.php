@@ -29,9 +29,9 @@ class DatabaseExceptionWrapperTest extends DatabaseExceptionWrapperTestBase {
   }
 
   /**
-   * Tests Connection::prepareStatement exceptions.
+   * Tests Connection::prepareStatement exceptions on execution.
    */
-  public function testPrepareStatement() {
+  public function testPrepareStatementFailOnExecution() {
     if (in_array(Database::getConnection()->driver(), ['mysql', 'sqlite'])) {
       $this->expectException(\PDOException::class);
     }
@@ -40,6 +40,13 @@ class DatabaseExceptionWrapperTest extends DatabaseExceptionWrapperTestBase {
     }
     $stmt = Database::getConnection()->prepareStatement('bananas', []);
     $stmt->execute();
+  }
+
+  /**
+   * Tests deprecation of Connection::handleQueryException.
+   */
+  public function testHandleQueryExceptionDeprecation(): void {
+    $this->markTestSkipped('It\'s deprecated, Jim.');
   }
 
 }
