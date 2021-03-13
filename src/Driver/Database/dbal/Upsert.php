@@ -31,7 +31,7 @@ class Upsert extends QueryUpsert {
 
     // Delegate to DBAL extension.
     $result = NULL;
-    if ($this->dbalExtension->delegateUpsert($this, $result)) {
+    if ($this->connection->getDbalExtension()->delegateUpsert($this, $result)) {
       return $result;
     }
 
