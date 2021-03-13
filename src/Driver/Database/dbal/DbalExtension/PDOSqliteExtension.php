@@ -600,6 +600,45 @@ class PDOSqliteExtension extends AbstractExtension {
   }
 
   /**
+   * Upsert delegated methods.
+   */
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateUpsert($upsert_query, $result) {
+    // Create a sanitized comment string to prepend to the query.
+    $comments = $this->connection->makeComment($upsert_query->comments);
+
+    // Default fields are always placed first for consistency.
+    $insert_fields = array_merge($upsert_query->defaultFields, $upsert_query->insertFields);
+    $insert_fields = array_map(function ($field) {
+      return $this->connection->escapeField($field);
+    }, $insert_fields);
+
+    $query = $comments . 'INSERT INTO {' . $upsert_query->table . '} (' . implode(', ', $insert_fields) . ') VALUES ';
+
+    $values = $upsert_query->getInsertPlaceholderFragment($upsert_query->insertValues, $upsert_query->defaultFields);
+    $query .= implode(', ', $values);
+
+    // Updating the unique / primary key is not necessary.
+    unset($insert_fields[$upsert_query->key]);
+
+    $update = [];
+    foreach ($insert_fields as $field) {
+      // The "excluded." prefix causes the field to refer to the value for field
+      // that would have been inserted had there been no conflict.
+      $update[] = "$field = EXCLUDED.$field";
+    }
+
+    $query .= ' ON CONFLICT (' . $this->connection->escapeField($upsert_query->key) . ') DO UPDATE SET ' . implode(', ', $update);
+
+    return $query;
+
+    return TRUE;
+  }
+
+  /**
    * Install\Tasks delegated methods.
    */
 
