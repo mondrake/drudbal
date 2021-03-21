@@ -88,8 +88,6 @@ class Upsert extends QueryUpsert {
     if ($dbal_extension->hasNativeUpsert()) {
       $insert_fields = array_merge($this->defaultFields, $this->insertFields);
       $insert_values = $this->getInsertPlaceholderFragment($this->insertValues, $this->defaultFields);
-dump($insert_fields, $insert_values);
-return 0;
       return $dbal_extension->delegateUpsertSql($this, $this->table, $this->key, $insert_fields, $insert_values, $comments);
     }
 
