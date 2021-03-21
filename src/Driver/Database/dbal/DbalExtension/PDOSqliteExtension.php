@@ -614,15 +614,10 @@ class PDOSqliteExtension extends AbstractExtension {
    * {@inheritdoc}
    */
   public function delegateUpsertSql(string $drupal_table_name, string $key, array $insert_fields, array $insert_values, string $comments = ''): string {
-// dump(['start', $drupal_table_name, $key, $insert_fields, $insert_values, $comments]);
 
-    $insert_fields = array_map(function ($field) {
-      return $this->connection->escapeField($field);
-    }, $insert_fields);
-// dump(['mid-1', $insert_fields]);
-
-    $query = $comments . 'INSERT INTO {' . $drupal_table_name . '} (' . implode(', ', $insert_fields) . ') VALUES ';
-    $query .= implode(', ', $insert_values);
+    $query = $comments . 'INSERT INTO {' . $drupal_table_name . '} ';
+    $query .= '([' . implode('], [', $insert_fields) . ']) ';
+    $query .= 'VALUES ' . implode(', ', $insert_values);
 
     // Updating the unique / primary key is not necessary.
     unset($insert_fields[$key]);
@@ -636,7 +631,6 @@ class PDOSqliteExtension extends AbstractExtension {
 
     $query .= ' ON CONFLICT (' . $this->connection->escapeField($key) . ') DO UPDATE SET ' . implode(', ', $update);
 
-// dump(['end', $query]);
     return $query;
   }
 

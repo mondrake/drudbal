@@ -44,11 +44,13 @@ class Upsert extends QueryUpsert {
           $values[':db_insert_placeholder_' . $max_placeholder++] = $value;
         }
         try {
+dump(['pre-query', $sql, $values, $this->queryOptions]);
           $last_insert_id = $this->connection->query($sql, $values, $this->queryOptions);
         }
         catch (IntegrityConstraintViolationException $e) {
           // Update the record at key in case of integrity constraint
           // violation.
+dump(['++++ fail', $insert_values]);
           if (!$this->connection->getDbalExtension()->hasNativeUpsert()) {
             $this->fallbackUpdate($insert_values);
           }
@@ -59,6 +61,7 @@ class Upsert extends QueryUpsert {
       // If there are no values, then this is a default-only query. We still
       // need to handle that.
       try {
+dump(['pre-query-defaults', $sql, [], $this->queryOptions]);
         $last_insert_id = $this->connection->query($sql, [], $this->queryOptions);
       }
       catch (IntegrityConstraintViolationException $e) {
