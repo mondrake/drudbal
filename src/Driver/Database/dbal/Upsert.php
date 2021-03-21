@@ -29,12 +29,6 @@ class Upsert extends QueryUpsert {
       return NULL;
     }
 
-    // Delegate to DBAL extension.
-    $result = NULL;
-    if ($this->connection->getDbalExtension()->delegateUpsert($this, $result)) {
-      return $result;
-    }
-
     $sql = (string) $this;
 
     // @codingStandardsIgnoreLine
@@ -55,7 +49,9 @@ class Upsert extends QueryUpsert {
         catch (IntegrityConstraintViolationException $e) {
           // Update the record at key in case of integrity constraint
           // violation.
-          $this->fallbackUpdate($insert_values);
+          if (!$this->connection->getDbalExtension()->hasNativeUpsert()) {
+            $this->fallbackUpdate($insert_values);
+          }
         }
       }
     }
@@ -68,7 +64,9 @@ class Upsert extends QueryUpsert {
       catch (IntegrityConstraintViolationException $e) {
         // Update the record at key in case of integrity constraint
         // violation.
-        $this->fallbackUpdate([]);
+        if (!$this->connection->getDbalExtension()->hasNativeUpsert()) {
+          $this->fallbackUpdate([]);
+        }
       }
     }
 
@@ -85,6 +83,12 @@ class Upsert extends QueryUpsert {
     $dbal_extension = $this->connection->getDbalExtension();
 
     $comments = $this->connection->makeComment($this->comments);
+
+    // Delegate to DBAL extension.
+    if ($dbal_extension->hasNativeUpsert()) {
+      return $dbal_extension->delegateUpsertSql($this, $comments);
+    }
+
     $dbal_connection = $this->connection->getDbalConnection();
 
     // Use DBAL query builder to prepare an INSERT query. Need to pass the

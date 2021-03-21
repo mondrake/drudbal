@@ -606,9 +606,14 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateUpsert($upsert_query, $result) {
-    // Create a sanitized comment string to prepend to the query.
-    $comments = $this->connection->makeComment($upsert_query->comments);
+  public function hasNativeUpsert(): bool {
+    return TRUE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateUpsertSql($upsert_query, string $comments): string {
 
     // Default fields are always placed first for consistency.
     $insert_fields = array_merge($upsert_query->defaultFields, $upsert_query->insertFields);
