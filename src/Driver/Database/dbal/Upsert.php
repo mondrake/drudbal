@@ -30,7 +30,7 @@ class Upsert extends QueryUpsert {
     }
 
     $sql = (string) $this;
-dump($sql);
+
     // Loop through the values to be UPSERTed.
     $last_insert_id = NULL;
     if ($this->insertValues) {
@@ -160,7 +160,7 @@ dump($sql);
     // Execute the DBAL query directly. Needs loop to wait and retry in case
     // of deadlock.
     // @todo note this drops support for comments.
-    for ($i = 0; $i < 100; $i++) {
+/*    for ($i = 0; $i < 100; $i++) {
       try {
         return $dbal_query->execute();
       }
@@ -170,7 +170,7 @@ dump($sql);
         }
         usleep(5000);
       }
-    }
+    }*/
   }
 
 }
