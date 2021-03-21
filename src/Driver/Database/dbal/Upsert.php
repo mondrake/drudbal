@@ -30,7 +30,7 @@ class Upsert extends QueryUpsert {
     }
 
     $sql = (string) $this;
-
+dump($sql);
     // @codingStandardsIgnoreLine
     $trn = $this->connection->startTransaction();
 
