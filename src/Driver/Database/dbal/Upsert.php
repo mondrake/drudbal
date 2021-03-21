@@ -156,21 +156,6 @@ class Upsert extends QueryUpsert {
           ->setParameter('db_condition_placeholder_0', $insert_values[$i]);
       }
     }
-
-    // Execute the DBAL query directly. Needs loop to wait and retry in case
-    // of deadlock.
-    // @todo note this drops support for comments.
-/*    for ($i = 0; $i < 100; $i++) {
-      try {
-        return $dbal_query->execute();
-      }
-      catch (DBALDeadlockException $e) {
-        if ($i === 99) {
-          throw $e;
-        }
-        usleep(5000);
-      }
-    }*/
   }
 
 }

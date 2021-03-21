@@ -424,6 +424,24 @@ class AbstractExtension implements DbalExtensionInterface {
   }
 
   /**
+   * Upsert delegated methods.
+   */
+
+  /**
+   * {@inheritdoc}
+   */
+  public function hasNativeUpsert(): bool {
+    return FALSE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateUpsertSql(string $drupal_table_name, string $key, array $insert_fields, array $insert_values, string $comments = ''): string {
+    throw new \LogicException("Method " . __METHOD__ . " not implemented.");
+  }
+
+  /**
    * Truncate delegated methods.
    */
 
