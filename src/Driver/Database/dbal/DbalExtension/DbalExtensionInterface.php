@@ -24,6 +24,14 @@ interface DbalExtensionInterface {
   public function getDbalConnection();
 
   /**
+   * Gets the Statement class to use for this connection.
+   *
+   * @return string
+   *   The FQCN of the Statement class.
+   */
+  public function getStatementClass(): string;
+
+  /**
    * Gets the database server platform.
    *
    * @return string

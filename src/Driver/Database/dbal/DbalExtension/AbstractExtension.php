@@ -11,6 +11,7 @@ use Doctrine\DBAL\Schema\Table as DbalTable;
 use Doctrine\DBAL\Statement as DbalStatement;
 use Drupal\Component\Uuid\Php as Uuid;
 use Drupal\drudbal\Driver\Database\dbal\Connection as DruDbalConnection;
+use Drupal\drudbal\Driver\Database\dbal\Statement as DruDbalStatement;
 
 /**
  * Abstract DBAL Extension.
@@ -36,7 +37,7 @@ class AbstractExtension implements DbalExtensionInterface {
    *
    * @var \Drupal\Core\Database\StatementInterface
    */
-  protected $statementClass;
+  protected $statementClass = DruDbalStatement::class;
 
   /**
    * Enables debugging.
@@ -46,29 +47,16 @@ class AbstractExtension implements DbalExtensionInterface {
   protected static $isDebugging = FALSE;
 
   /**
-   * Instance debug ID.
-   *
-   * @var int
-   */
-  public $debugId;
-
-  /**
    * Constructs a DBAL extension object.
    *
    * @param \Drupal\drudbal\Driver\Database\dbal\Connection $drudbal_connection
    *   The Drupal database connection object for this extension.
    * @param \Doctrine\DBAL\Connection $dbal_connection
    *   The DBAL connection.
-   * @param string $statement_class
-   *   The StatementInterface class to be used.
    */
-  public function __construct(DruDbalConnection $drudbal_connection, DbalConnection $dbal_connection, $statement_class) {
+  public function __construct(DruDbalConnection $drudbal_connection, DbalConnection $dbal_connection) {
     $this->connection = $drudbal_connection;
     $this->dbalConnection = $dbal_connection;
-    $this->statementClass = $statement_class;
-
-    static $debugIdCnt = 0;
-    $this->debugId = $debugIdCnt++;
   }
 
   /**
@@ -119,6 +107,13 @@ class AbstractExtension implements DbalExtensionInterface {
    */
   public function getDbalConnection() {
     return $this->dbalConnection;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getStatementClass(): string {
+    return $this->$statementClass;
   }
 
   /**
