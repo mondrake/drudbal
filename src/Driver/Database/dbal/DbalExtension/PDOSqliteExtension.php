@@ -613,7 +613,7 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateUpsertSql($upsert_query, array $default_fields, array $insert_fields, string $comments): string {
+  public function delegateUpsertSql($upsert_query, string $drupal_table_name, $key, array $default_fields, array $insert_fields, string $comments): string {
 
     // Default fields are always placed first for consistency.
     $insert_fields_x = array_merge($default_fields, $insert_fields);
@@ -621,13 +621,13 @@ class PDOSqliteExtension extends AbstractExtension {
       return $this->connection->escapeField($field);
     }, $insert_fields_x);
 
-    $query = $comments . 'INSERT INTO {' . $upsert_query->table . '} (' . implode(', ', $insert_fields_x) . ') VALUES ';
+    $query = $comments . 'INSERT INTO {' . $drupal_table_name . '} (' . implode(', ', $insert_fields_x) . ') VALUES ';
 
     $values = $upsert_query->getInsertPlaceholderFragment($insert_fields, $default_fields);
     $query .= implode(', ', $values);
 
     // Updating the unique / primary key is not necessary.
-    unset($insert_fields_x[$upsert_query->key]);
+    unset($insert_fields_x[$key]);
 
     $update = [];
     foreach ($insert_fields_x as $field) {
@@ -636,7 +636,7 @@ class PDOSqliteExtension extends AbstractExtension {
       $update[] = "$field = EXCLUDED.$field";
     }
 
-    $query .= ' ON CONFLICT (' . $this->connection->escapeField($upsert_query->key) . ') DO UPDATE SET ' . implode(', ', $update);
+    $query .= ' ON CONFLICT (' . $this->connection->escapeField($key) . ') DO UPDATE SET ' . implode(', ', $update);
 
     return $query;
   }

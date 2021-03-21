@@ -86,7 +86,7 @@ class Upsert extends QueryUpsert {
 
     // Delegate to DBAL extension.
     if ($dbal_extension->hasNativeUpsert()) {
-      return $dbal_extension->delegateUpsertSql($this, $comments);
+      return $dbal_extension->delegateUpsertSql($this, $this->table, $this->key, $this->defaultFields, $this->insertFields, $comments);
     }
 
     $dbal_connection = $this->connection->getDbalConnection();
