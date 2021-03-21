@@ -22,22 +22,35 @@ jobs:
 
 #################################
 
-  sqlite-pdo:
-    name: "SQLite with PDO"
-    runs-on: ubuntu-20.04
+  mysql-pdo:
+    name: "MySql with PDO"
+    runs-on: ubuntu-latest
     env:
-        DRUDBAL_ENV: "dbal/sqlite/file"
-        DBAL_URL: "sqlite://localhost/sites/drudbal.sqlite"
-        SIMPLETEST_DB: "dbal://localhost/sites/drudbal.sqlite?module=drudbal&dbal_driver=pdo_sqlite"
+        DRUDBAL_ENV: "dbal/mysql"
+        DBAL_URL: "mysql://root:@0.0.0.0:3306/drudbal"
+        SIMPLETEST_DB: "dbal://root:@0.0.0.0:3306/drudbal?module=drudbal&dbal_driver=pdo_mysql"
 
     strategy:
       fail-fast: false
       matrix:
         php-version:
           - "7.4"
-#          - "8.0"
         test-args:
           - "--group Database"
+#          - "--group Entity"
+#          - "--group Cache,Config"
+#          - "--group field,Field"
+#          - "--group file"
+#          - "--group views"
+
+    services:
+      mysql:
+        image: "mysql:5.7"
+        options: >-
+          -e MYSQL_ALLOW_EMPTY_PASSWORD=yes
+          -e MYSQL_DATABASE=drudbal
+        ports:
+          - "3306:3306"
 
     steps:
     - name: Install PHP
@@ -87,4 +100,5 @@ jobs:
         vendor/bin/drush pml --type=module --no-core
 
     - name: Run test ${{ matrix.test-args }}
-      run: vendor/bin/phpunit -c core --color=always ${{ matrix.test-args }}
+      run: vendor/bin/phpunit -c core --color=always core/tests/Drupal/KernelTests/Core/Database/UpsertTest.php
+#      run: vendor/bin/phpunit -c core --color=always ${{ matrix.test-args }}
