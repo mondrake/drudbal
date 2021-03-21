@@ -613,24 +613,24 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateUpsertSql($upsert_query, string $comments): string {
+  public function delegateUpsertSql($upsert_query, array $default_fields, array $insert_fields, string $comments): string {
 
     // Default fields are always placed first for consistency.
-    $insert_fields = array_merge($upsert_query->defaultFields, $upsert_query->insertFields);
-    $insert_fields = array_map(function ($field) {
+    $insert_fields_x = array_merge($default_fields, $insert_fields);
+    $insert_fields_x = array_map(function ($field) {
       return $this->connection->escapeField($field);
-    }, $insert_fields);
+    }, $insert_fields_x);
 
-    $query = $comments . 'INSERT INTO {' . $upsert_query->table . '} (' . implode(', ', $insert_fields) . ') VALUES ';
+    $query = $comments . 'INSERT INTO {' . $upsert_query->table . '} (' . implode(', ', $insert_fields_x) . ') VALUES ';
 
-    $values = $upsert_query->getInsertPlaceholderFragment($upsert_query->insertValues, $upsert_query->defaultFields);
+    $values = $upsert_query->getInsertPlaceholderFragment($insert_fields, $default_fields);
     $query .= implode(', ', $values);
 
     // Updating the unique / primary key is not necessary.
-    unset($insert_fields[$upsert_query->key]);
+    unset($insert_fields_x[$upsert_query->key]);
 
     $update = [];
-    foreach ($insert_fields as $field) {
+    foreach ($insert_fields_x as $field) {
       // The "excluded." prefix causes the field to refer to the value for field
       // that would have been inserted had there been no conflict.
       $update[] = "$field = EXCLUDED.$field";
@@ -639,8 +639,6 @@ class PDOSqliteExtension extends AbstractExtension {
     $query .= ' ON CONFLICT (' . $this->connection->escapeField($upsert_query->key) . ') DO UPDATE SET ' . implode(', ', $update);
 
     return $query;
-
-    return TRUE;
   }
 
   /**
