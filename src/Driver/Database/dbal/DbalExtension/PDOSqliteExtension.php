@@ -613,7 +613,7 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateUpsertSql($upsert_query, string $drupal_table_name, $key, array $default_fields, array $insert_fields, string $comments): string {
+  public function delegateUpsertSql($upsert_query, string $drupal_table_name, $key, array $default_fields, array $insert_fields, string $comments, array $values): string {
 
     // Default fields are always placed first for consistency.
     $insert_fields_x = array_merge($default_fields, $insert_fields);
@@ -622,8 +622,6 @@ class PDOSqliteExtension extends AbstractExtension {
     }, $insert_fields_x);
 
     $query = $comments . 'INSERT INTO {' . $drupal_table_name . '} (' . implode(', ', $insert_fields_x) . ') VALUES ';
-
-    $values = $upsert_query->getInsertPlaceholderFragment($insert_fields, $default_fields);
     $query .= implode(', ', $values);
 
     // Updating the unique / primary key is not necessary.
