@@ -613,22 +613,20 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateUpsertSql($upsert_query, string $drupal_table_name, $key, array $default_fields, array $insert_fields, string $comments, array $values): string {
+  public function delegateUpsertSql(string $drupal_table_name, string $key, array $insert_fields, array $insert_values, string $comments = ''): string {
 
-    // Default fields are always placed first for consistency.
-    $insert_fields_x = array_merge($default_fields, $insert_fields);
-    $insert_fields_x = array_map(function ($field) {
+    $insert_fields = array_map(function ($field) {
       return $this->connection->escapeField($field);
-    }, $insert_fields_x);
+    }, $insert_fields);
 
-    $query = $comments . 'INSERT INTO {' . $drupal_table_name . '} (' . implode(', ', $insert_fields_x) . ') VALUES ';
-    $query .= implode(', ', $values);
+    $query = $comments . 'INSERT INTO {' . $drupal_table_name . '} (' . implode(', ', $insert_fields) . ') VALUES ';
+    $query .= implode(', ', $insert_values);
 
     // Updating the unique / primary key is not necessary.
-    unset($insert_fields_x[$key]);
+    unset($insert_fields[$key]);
 
     $update = [];
-    foreach ($insert_fields_x as $field) {
+    foreach ($insert_fields as $field) {
       // The "excluded." prefix causes the field to refer to the value for field
       // that would have been inserted had there been no conflict.
       $update[] = "$field = EXCLUDED.$field";
