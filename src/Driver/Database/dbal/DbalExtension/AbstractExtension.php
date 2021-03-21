@@ -113,7 +113,7 @@ class AbstractExtension implements DbalExtensionInterface {
    * {@inheritdoc}
    */
   public function getStatementClass(): string {
-    return $this->$statementClass;
+    return $this->statementClass;
   }
 
   /**
