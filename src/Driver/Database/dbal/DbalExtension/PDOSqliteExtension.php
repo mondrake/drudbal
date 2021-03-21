@@ -9,6 +9,7 @@ use Drupal\Core\Database\DatabaseNotFoundException;
 use Drupal\Core\Database\IntegrityConstraintViolationException;
 use Drupal\Core\Database\Driver\sqlite\Connection as SqliteConnectionBase;
 use Drupal\drudbal\Driver\Database\dbal\Connection as DruDbalConnection;
+use Drupal\drudbal\Driver\Database\dbal\Statement\PrefetchingStatementWrapper;
 
 use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\Exception as DbalException;
@@ -38,6 +39,11 @@ class PDOSqliteExtension extends AbstractExtension {
    * single quotes inside.
    */
   const SINGLE_QUOTE_IDENTIFIER_REPLACEMENT = ']]]]SINGLEQUOTEIDENTIFIERDRUDBAL[[[[';
+
+  /**
+   * {@inheritdoc}
+   */
+  protected $statementClass = PrefetchingStatementWrapper::class;
 
   /**
    * A map of condition operators to SQLite operators.
