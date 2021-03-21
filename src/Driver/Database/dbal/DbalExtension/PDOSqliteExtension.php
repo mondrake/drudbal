@@ -615,7 +615,6 @@ class PDOSqliteExtension extends AbstractExtension {
    */
   public function delegateUpsertSql(string $drupal_table_name, string $key, array $insert_fields, array $insert_values, string $comments = ''): string {
 dump(['start', $drupal_table_name, $key, $insert_fields, $insert_values, $comments]);
-return 'xxx';
 
     $insert_fields = array_map(function ($field) {
       return $this->connection->escapeField($field);
