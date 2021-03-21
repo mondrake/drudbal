@@ -3,7 +3,6 @@
 namespace Drupal\drudbal\Driver\Database\dbal\DbalExtension;
 
 use Doctrine\DBAL\Connection as DbalConnection;
-use Doctrine\DBAL\Statement as DbalStatement;
 
 /**
  * Driver specific methods for pdo_mysql.

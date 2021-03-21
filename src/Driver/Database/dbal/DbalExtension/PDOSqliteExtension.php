@@ -14,7 +14,6 @@ use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\Exception as DbalException;
 use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
 use Doctrine\DBAL\Schema\Schema as DbalSchema;
-use Doctrine\DBAL\Statement as DbalStatement;
 
 /**
  * Driver specific methods for pdo_sqlite.
@@ -75,8 +74,8 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function __construct(DruDbalConnection $drudbal_connection, DbalConnection $dbal_connection, $statement_class) {
-    parent::__construct($drudbal_connection, $dbal_connection, $statement_class);
+  public function __construct(DruDbalConnection $drudbal_connection, DbalConnection $dbal_connection) {
+    parent::__construct($drudbal_connection, $dbal_connection);
 
     // If a memory database, then do not try to attach databases per prefix.
     if ($drudbal_connection->getConnectionOptions()['database'] === ':memory:') {

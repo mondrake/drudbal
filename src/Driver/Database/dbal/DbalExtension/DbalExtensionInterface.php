@@ -8,7 +8,6 @@ use Doctrine\DBAL\Result as DbalResult;
 use Doctrine\DBAL\Schema\Column as DbalColumn;
 use Doctrine\DBAL\Schema\Schema as DbalSchema;
 use Doctrine\DBAL\Schema\Table as DbalTable;
-use Doctrine\DBAL\Statement as DbalStatement;
 
 /**
  * Provides an interface for Dbal extensions.

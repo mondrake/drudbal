@@ -11,7 +11,7 @@ use Doctrine\DBAL\Schema\Table as DbalTable;
 use Doctrine\DBAL\Statement as DbalStatement;
 use Drupal\Component\Uuid\Php as Uuid;
 use Drupal\drudbal\Driver\Database\dbal\Connection as DruDbalConnection;
-use Drupal\drudbal\Driver\Database\dbal\Statement as DruDbalStatement;
+use Drupal\drudbal\Driver\Database\dbal\Statement\StatementWrapper;
 
 /**
  * Abstract DBAL Extension.
@@ -37,7 +37,7 @@ class AbstractExtension implements DbalExtensionInterface {
    *
    * @var \Drupal\Core\Database\StatementInterface
    */
-  protected $statementClass = DruDbalStatement::class;
+  protected $statementClass = StatementWrapper::class;
 
   /**
    * Enables debugging.
