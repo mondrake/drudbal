@@ -34,9 +34,9 @@ class Upsert extends QueryUpsert {
     // Loop through the values to be UPSERTed.
     $last_insert_id = NULL;
     if ($this->insertValues) {
-      $max_placeholder = 0;
       if ($this->connection->getDbalExtension()->hasNativeUpsert()) {
         // Use native UPSERT.
+        $max_placeholder = 0;
         $values = [];
         foreach ($this->insertValues as $insert_values) {
           foreach ($insert_values as $value) {
@@ -51,6 +51,7 @@ class Upsert extends QueryUpsert {
         $trn = $this->connection->startTransaction();
 
         foreach ($this->insertValues as $insert_values) {
+          $max_placeholder = 0;
           $values = [];
           foreach ($insert_values as $value) {
             $values[':db_insert_placeholder_' . $max_placeholder++] = $value;
