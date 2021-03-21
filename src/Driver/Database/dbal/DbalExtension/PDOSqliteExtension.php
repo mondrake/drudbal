@@ -626,7 +626,7 @@ class PDOSqliteExtension extends AbstractExtension {
     foreach ($insert_fields as $field) {
       // The "excluded." prefix causes the field to refer to the value for field
       // that would have been inserted had there been no conflict.
-      $update[] = "$field = EXCLUDED.$field";
+      $update[] = "[$field] = EXCLUDED.[$field]";
     }
 
     $query .= ' ON CONFLICT (' . $this->connection->escapeField($key) . ') DO UPDATE SET ' . implode(', ', $update);

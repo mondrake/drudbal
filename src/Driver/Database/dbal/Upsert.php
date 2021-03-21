@@ -30,28 +30,37 @@ class Upsert extends QueryUpsert {
     }
 
     $sql = (string) $this;
-
-    // @codingStandardsIgnoreLine
-    $trn = $this->connection->startTransaction();
-
+dump($sql);
     // Loop through the values to be UPSERTed.
     $last_insert_id = NULL;
     if ($this->insertValues) {
-      foreach ($this->insertValues as $insert_values) {
-        $max_placeholder = 0;
+      $max_placeholder = 0;
+      if ($this->connection->getDbalExtension()->hasNativeUpsert()) {
+        // Use native UPSERT.
         $values = [];
-        foreach ($insert_values as $value) {
-          $values[':db_insert_placeholder_' . $max_placeholder++] = $value;
+        foreach ($this->insertValues as $insert_values) {
+          foreach ($insert_values as $value) {
+            $values[':db_insert_placeholder_' . $max_placeholder++] = $value;
+          }
         }
-        try {
-dump(['pre-query', $sql, $values, $this->queryOptions]);
-          $last_insert_id = $this->connection->query($sql, $values, $this->queryOptions);
-        }
-        catch (IntegrityConstraintViolationException $e) {
-          // Update the record at key in case of integrity constraint
-          // violation.
-dump(['++++ fail', $insert_values]);
-          if (!$this->connection->getDbalExtension()->hasNativeUpsert()) {
+        $last_insert_id = $this->connection->query($sql, $values, $this->queryOptions);
+      }
+      else {
+        // Emulated UPSERT.
+        // @codingStandardsIgnoreLine
+        $trn = $this->connection->startTransaction();
+
+        foreach ($this->insertValues as $insert_values) {
+          $values = [];
+          foreach ($insert_values as $value) {
+            $values[':db_insert_placeholder_' . $max_placeholder++] = $value;
+          }
+          try {
+            $last_insert_id = $this->connection->query($sql, $values, $this->queryOptions);
+          }
+          catch (IntegrityConstraintViolationException $e) {
+            // Update the record at key in case of integrity constraint
+            // violation.
             $this->fallbackUpdate($insert_values);
           }
         }
@@ -61,7 +70,6 @@ dump(['++++ fail', $insert_values]);
       // If there are no values, then this is a default-only query. We still
       // need to handle that.
       try {
-dump(['pre-query-defaults', $sql, [], $this->queryOptions]);
         $last_insert_id = $this->connection->query($sql, [], $this->queryOptions);
       }
       catch (IntegrityConstraintViolationException $e) {
