@@ -60,6 +60,7 @@ class Upsert extends QueryUpsert {
             $last_insert_id = $this->connection->query($sql, $values, $this->queryOptions);
           }
           catch (IntegrityConstraintViolationException $e) {
+dump(['+++ fail', $insert_values]);
             // Update the record at key in case of integrity constraint
             // violation.
             $this->fallbackUpdate($insert_values);
