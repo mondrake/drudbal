@@ -129,7 +129,7 @@ class Upsert extends QueryUpsert {
    * @return int
    *   The number of records updated (should be 1).
    */
-  protected function fallbackUpdate(array $insert_values) {
+  protected function fallbackUpdate(array $insert_values): int {
     $dbal_connection = $this->connection->getDbalConnection();
     $dbal_extension = $this->connection->getDbalExtension();
 
@@ -157,6 +157,8 @@ class Upsert extends QueryUpsert {
           ->setParameter('db_condition_placeholder_0', $insert_values[$i]);
       }
     }
+
+    return $dbal_query->execute();
   }
 
 }
