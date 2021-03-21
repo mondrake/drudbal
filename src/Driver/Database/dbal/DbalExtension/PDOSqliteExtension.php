@@ -619,7 +619,7 @@ dump(['start', $drupal_table_name, $key, $insert_fields, $insert_values, $commen
     $insert_fields = array_map(function ($field) {
       return $this->connection->escapeField($field);
     }, $insert_fields);
-dump(['mid-1', $insert_fields, $query]);
+dump(['mid-1', $insert_fields]);
 
     $query = $comments . 'INSERT INTO {' . $drupal_table_name . '} (' . implode(', ', $insert_fields) . ') VALUES ';
     $query .= implode(', ', $insert_values);
