@@ -621,6 +621,8 @@ dump(['start', $drupal_table_name, $key, $insert_fields, $insert_values, $commen
     }, $insert_fields);
 
     $query = $comments . 'INSERT INTO {' . $drupal_table_name . '} (' . implode(', ', $insert_fields) . ') VALUES ';
+dump(['mid-1', $insert_fields, $query]);
+return 'xxx';
     $query .= implode(', ', $insert_values);
 
     // Updating the unique / primary key is not necessary.
