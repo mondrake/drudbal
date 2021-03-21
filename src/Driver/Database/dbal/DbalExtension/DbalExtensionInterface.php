@@ -507,6 +507,39 @@ interface DbalExtensionInterface {
   public function delegateDefaultsOnlyInsertSql(&$sql, $drupal_table_name);
 
   /**
+   * Upsert delegated methods.
+   */
+
+   /**
+    * Determines if the extension support native UPSERT constructs.
+    *
+    * @return bool
+    *   TRUE if the database platform allows native UPSERTs.
+    */
+  public function hasNativeUpsert(): bool;
+
+  /**
+   * Returns a native SQL UPSERT string statement.
+   *
+   * @param string $drupal_table_name
+   *   A string with the Drupal name of the table.
+   * @param string $key
+   *   The name of the primary key column.
+   * @param array $insert_fields
+   *   The columns to be upserted.
+   * @param array $insert_values
+   *   The values to be upserted. It is an array of strings, each representing
+   *   a list of VALUES for the SQL statement.
+   * @param string $comments
+   *   (Optional) The comments to be prepended to the SQL query. Defaults to an
+   *   empty string.
+   *
+   * @return string
+   *   A SQL string with the native UPSERT command.
+   */
+  public function delegateUpsertSql(string $drupal_table_name, string $key, array $insert_fields, array $insert_values, string $comments = ''): string;
+
+  /**
    * Truncate delegated methods.
    */
 

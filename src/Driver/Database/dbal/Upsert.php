@@ -31,25 +31,38 @@ class Upsert extends QueryUpsert {
 
     $sql = (string) $this;
 
-    // @codingStandardsIgnoreLine
-    $trn = $this->connection->startTransaction();
-
     // Loop through the values to be UPSERTed.
     $last_insert_id = NULL;
     if ($this->insertValues) {
-      foreach ($this->insertValues as $insert_values) {
-        $max_placeholder = 0;
+      $max_placeholder = 0;
+      if ($this->connection->getDbalExtension()->hasNativeUpsert()) {
+        // Use native UPSERT.
         $values = [];
-        foreach ($insert_values as $value) {
-          $values[':db_insert_placeholder_' . $max_placeholder++] = $value;
+        foreach ($this->insertValues as $insert_values) {
+          foreach ($insert_values as $value) {
+            $values[':db_insert_placeholder_' . $max_placeholder++] = $value;
+          }
         }
-        try {
-          $last_insert_id = $this->connection->query($sql, $values, $this->queryOptions);
-        }
-        catch (IntegrityConstraintViolationException $e) {
-          // Update the record at key in case of integrity constraint
-          // violation.
-          $this->fallbackUpdate($insert_values);
+        $last_insert_id = $this->connection->query($sql, $values, $this->queryOptions);
+      }
+      else {
+        // Emulated UPSERT.
+        // @codingStandardsIgnoreLine
+        $trn = $this->connection->startTransaction();
+
+        foreach ($this->insertValues as $insert_values) {
+          $values = [];
+          foreach ($insert_values as $value) {
+            $values[':db_insert_placeholder_' . $max_placeholder++] = $value;
+          }
+          try {
+            $last_insert_id = $this->connection->query($sql, $values, $this->queryOptions);
+          }
+          catch (IntegrityConstraintViolationException $e) {
+            // Update the record at key in case of integrity constraint
+            // violation.
+            $this->fallbackUpdate($insert_values);
+          }
         }
       }
     }
@@ -62,7 +75,9 @@ class Upsert extends QueryUpsert {
       catch (IntegrityConstraintViolationException $e) {
         // Update the record at key in case of integrity constraint
         // violation.
-        $this->fallbackUpdate([]);
+        if (!$this->connection->getDbalExtension()->hasNativeUpsert()) {
+          $this->fallbackUpdate([]);
+        }
       }
     }
 
@@ -79,6 +94,14 @@ class Upsert extends QueryUpsert {
     $dbal_extension = $this->connection->getDbalExtension();
 
     $comments = $this->connection->makeComment($this->comments);
+
+    // Delegate to DBAL extension.
+    if ($dbal_extension->hasNativeUpsert()) {
+      $insert_fields = array_merge($this->defaultFields, $this->insertFields);
+      $insert_values = $this->getInsertPlaceholderFragment($this->insertValues, $this->defaultFields);
+      return $dbal_extension->delegateUpsertSql($this->table, $this->key, $insert_fields, $insert_values, $comments);
+    }
+
     $dbal_connection = $this->connection->getDbalConnection();
 
     // Use DBAL query builder to prepare an INSERT query. Need to pass the
@@ -131,21 +154,6 @@ class Upsert extends QueryUpsert {
         $dbal_query
           ->where($dbal_query->expr()->eq($dbal_extension->getDbFieldName($this->insertFields[$i], TRUE), ':db_condition_placeholder_0'))
           ->setParameter('db_condition_placeholder_0', $insert_values[$i]);
-      }
-    }
-
-    // Execute the DBAL query directly. Needs loop to wait and retry in case
-    // of deadlock.
-    // @todo note this drops support for comments.
-    for ($i = 0; $i < 100; $i++) {
-      try {
-        return $dbal_query->execute();
-      }
-      catch (DBALDeadlockException $e) {
-        if ($i === 99) {
-          throw $e;
-        }
-        usleep(5000);
       }
     }
   }

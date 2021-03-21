@@ -600,6 +600,41 @@ class PDOSqliteExtension extends AbstractExtension {
   }
 
   /**
+   * Upsert delegated methods.
+   */
+
+  /**
+   * {@inheritdoc}
+   */
+  public function hasNativeUpsert(): bool {
+    return TRUE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateUpsertSql(string $drupal_table_name, string $key, array $insert_fields, array $insert_values, string $comments = ''): string {
+
+    $query = $comments . 'INSERT INTO {' . $drupal_table_name . '} ';
+    $query .= '([' . implode('], [', $insert_fields) . ']) ';
+    $query .= 'VALUES ' . implode(', ', $insert_values);
+
+    // Updating the unique / primary key is not necessary.
+    unset($insert_fields[$key]);
+
+    $update = [];
+    foreach ($insert_fields as $field) {
+      // The "excluded." prefix causes the field to refer to the value for field
+      // that would have been inserted had there been no conflict.
+      $update[] = "[$field] = EXCLUDED.[$field]";
+    }
+
+    $query .= ' ON CONFLICT (' . $this->connection->escapeField($key) . ') DO UPDATE SET ' . implode(', ', $update);
+
+    return $query;
+  }
+
+  /**
    * Install\Tasks delegated methods.
    */
 
