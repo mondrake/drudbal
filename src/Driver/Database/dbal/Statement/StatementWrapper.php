@@ -8,7 +8,7 @@ use Doctrine\DBAL\Result;
 use Drupal\Core\Database\Database;
 use Drupal\Core\Database\DatabaseExceptionWrapper;
 use Drupal\Core\Database\RowCountException;
-use Drupal\Core\Database\StatementInterface;
+use Drupal\Core\Database\StatementWrapper as BaseStatementWrapper;
 use Drupal\drudbal\Driver\Database\dbal\Connection as DruDbalConnection;
 
 /**
@@ -19,30 +19,7 @@ use Drupal\drudbal\Driver\Database\dbal\Connection as DruDbalConnection;
  * code in Drupal\drudbal\Driver\Database\dbal\DbalExtension\[dbal_driver_name]
  * classes and execution handed over to there.
  */
-class StatementWrapper implements \IteratorAggregate, StatementInterface {
-
-  /**
-   * Reference to the database connection object for this statement.
-   *
-   * The name $dbh is inherited from \PDOStatement.
-   *
-   * @var \Drupal\drudbal\Driver\Database\dbal\Connection
-   */
-  public $dbh;
-
-  /**
-   * Is rowCount() execution allowed.
-   *
-   * @var bool
-   */
-  public $allowRowCount = FALSE;
-
-  /**
-   * The DBAL statement.
-   *
-   * @var \Doctrine\DBAL\Statement
-   */
-  protected $dbalStatement = NULL;
+class StatementWrapper extends BaseStatementWrapper {
 
   /**
    * The DBAL executed statement result.
@@ -121,7 +98,7 @@ class StatementWrapper implements \IteratorAggregate, StatementInterface {
     $args = $args ?? [];
 
     // Prepare the lower-level statement if it's not been prepared already.
-    if (!$this->dbalStatement) {
+    if (!$this->clientStatement) {
       // Replace named placeholders with positional ones if needed.
       if (!$this->dbh->getDbalExtension()->delegateNamedPlaceholdersSupport()) {
         $this->paramsPositions = array_flip(array_keys($args));
@@ -131,7 +108,8 @@ class StatementWrapper implements \IteratorAggregate, StatementInterface {
 
       try {
         $this->dbh->getDbalExtension()->alterStatement($this->queryString, $args);
-        $this->dbalStatement = $this->dbh->getDbalConnection()->prepare($this->queryString);
+        /** @var \Doctrine\DBAL\Statement */
+        $this->clientStatement = $this->dbh->getDbalConnection()->prepare($this->queryString);
       }
       catch (DbalException $e) {
         throw new DatabaseExceptionWrapper($e->getMessage(), $e->getCode(), $e);
@@ -161,7 +139,7 @@ class StatementWrapper implements \IteratorAggregate, StatementInterface {
     }
 
     try {
-      $this->dbalResult = $this->dbalStatement->execute($args);
+      $this->dbalResult = $this->clientStatement->execute($args);
     }
     catch (DbalException $e) {
       throw new DatabaseExceptionWrapper($e->getMessage(), $e->getCode(), $e);
@@ -260,22 +238,8 @@ class StatementWrapper implements \IteratorAggregate, StatementInterface {
   /**
    * {@inheritdoc}
    */
-  public function getIterator() {
-    return new \ArrayIterator($this->fetchAll());
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function getQueryString() {
     return $this->queryString;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function fetchCol($index = 0) {
-    return $this->fetchAll(\PDO::FETCH_COLUMN, $index);
   }
 
   /**
@@ -321,13 +285,6 @@ class StatementWrapper implements \IteratorAggregate, StatementInterface {
       return FALSE;
     }
     return $ret[$index] === NULL ? NULL : (string) $ret[$index];
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function fetchAssoc() {
-    return $this->fetch(\PDO::FETCH_ASSOC);
   }
 
   /**
