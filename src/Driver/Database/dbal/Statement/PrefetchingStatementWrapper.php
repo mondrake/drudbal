@@ -200,7 +200,7 @@ class PrefetchingStatementWrapper implements \IteratorAggregate, StatementInterf
    * @param array $driver_options
    *   (optional) An array of driver options for this query.
    */
-  public function __construct(DruDbalConnection $dbh, string $query, array $driver_options = []) {
+  public function __construct(DruDbalConnection $dbh, DbalConnection $client_connection, string $query, array $driver_options = []) {
     $this->queryString = $query;
     $this->dbh = $dbh;
     $this->dbalConnection = $client_connection;
