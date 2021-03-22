@@ -8,7 +8,6 @@ use Doctrine\DBAL\Result as DbalResult;
 use Doctrine\DBAL\Schema\Column as DbalColumn;
 use Doctrine\DBAL\Schema\Schema as DbalSchema;
 use Doctrine\DBAL\Schema\Table as DbalTable;
-use Doctrine\DBAL\Statement as DbalStatement;
 
 /**
  * Provides an interface for Dbal extensions.
@@ -22,6 +21,14 @@ interface DbalExtensionInterface {
    *   The DBAL connection.
    */
   public function getDbalConnection();
+
+  /**
+   * Gets the Statement class to use for this connection.
+   *
+   * @return string
+   *   The FQCN of the Statement class.
+   */
+  public function getStatementClass(): string;
 
   /**
    * Gets the database server platform.
@@ -389,14 +396,6 @@ interface DbalExtensionInterface {
   /**
    * Statement delegated methods.
    */
-
-  /**
-   * Informs the Statement on whether all data needs to be fetched on SELECT.
-   *
-   * @return bool
-   *   TRUE if data has to be prefetched, FALSE otherwise.
-   */
-  public function onSelectPrefetchAllData();
 
   /**
    * Informs the Statement on whether named placeholders are supported.

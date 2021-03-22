@@ -108,8 +108,8 @@ class Connection extends DatabaseConnection {
     $this->connectionOptions = $connection_options;
     $this->setPrefix(isset($connection_options['prefix']) ? $connection_options['prefix'] : '');
     $dbal_extension_class = static::getDbalExtensionClass($connection_options);
-    $this->statementClass = static::getStatementClass($connection_options);
-    $this->dbalExtension = new $dbal_extension_class($this, $dbal_connection, $this->statementClass);
+    $this->dbalExtension = new $dbal_extension_class($this, $dbal_connection);
+    $this->statementWrapperClass = $this->dbalExtension->getStatementClass();
     $this->transactionalDDLSupport = $this->dbalExtension->delegateTransactionalDdlSupport($connection_options);
 
     // Unset $this->connection so that __get() can return the wrapped
@@ -344,7 +344,6 @@ class Connection extends DatabaseConnection {
       'dbal_driver' => NULL,
       'dbal_options' => NULL,
       'dbal_extension_class' => NULL,
-      'dbal_statement_class' => NULL,
     ]);
     // Map to DBAL connection array the main keys from the Drupal connection.
     if (!empty($connection_options['database'])) {
@@ -471,7 +470,7 @@ class Connection extends DatabaseConnection {
         throw new \InvalidArgumentException('; is not supported in SQL strings. Use only one statement at a time.');
       }
 
-      $statement = new $this->statementClass($this, $query, $options['pdo'] ?? []);
+      $statement = new $this->statementWrapperClass($this, $this->connection, $query, $options['pdo'] ?? []);
     }
     catch (\Exception $e) {
       $this->exceptionHandler()->handleStatementException($e, $query, $options);
@@ -668,22 +667,6 @@ class Connection extends DatabaseConnection {
       $driver_name = static::$driverSchemeAliases[$driver_name];
     }
     return static::$dbalClassMap[$driver_name];
-  }
-
-  /**
-   * Gets the Statement class to use for this connection.
-   *
-   * @param array $connection_options
-   *   An array of options for the connection.
-   *
-   * @return string
-   *   The Statement class.
-   */
-  public static function getStatementClass(array $connection_options) {
-    if (isset($connection_options['dbal_statement_class'])) {
-      return $connection_options['dbal_statement_class'];
-    }
-    return Statement::class;
   }
 
   /**

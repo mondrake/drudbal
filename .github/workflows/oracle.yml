@@ -11,12 +11,13 @@ env:
     DRUDBAL_DRUPAL_PROFILE: "standard"
     SIMPLETEST_BASE_URL: "http://localhost:8080"
     PHPUNIT_SKIP_CLASS: '[
+      "Drupal\\KernelTests\\Core\\Cache\\ApcuBackendTest",
+      "Drupal\\KernelTests\\Core\\Cache\\EndOfTransactionQueriesTest",
       "Drupal\\KernelTests\\Core\\Database\\BasicSyntaxTest",
       "Drupal\\KernelTests\\Core\\Database\\ConnectionUnitTest",
       "Drupal\\KernelTests\\Core\\Database\\DatabaseExceptionWrapperTest",
       "Drupal\\KernelTests\\Core\\Database\\SchemaTest",
-      "Drupal\\KernelTests\\Core\\Cache\\ApcuBackendTest",
-      "Drupal\\KernelTests\\Core\\Cache\\EndOfTransactionQueriesTest"
+      "Drupal\\KernelTests\\Core\\Database\\StatementWrapperLegacyTest"
     ]'
 
 jobs:

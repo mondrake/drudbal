@@ -9,12 +9,12 @@ use Drupal\Core\Database\DatabaseNotFoundException;
 use Drupal\Core\Database\IntegrityConstraintViolationException;
 use Drupal\Core\Database\Driver\sqlite\Connection as SqliteConnectionBase;
 use Drupal\drudbal\Driver\Database\dbal\Connection as DruDbalConnection;
+use Drupal\drudbal\Driver\Database\dbal\Statement\PrefetchingStatementWrapper;
 
 use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\Exception as DbalException;
 use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
 use Doctrine\DBAL\Schema\Schema as DbalSchema;
-use Doctrine\DBAL\Statement as DbalStatement;
 
 /**
  * Driver specific methods for pdo_sqlite.
@@ -39,6 +39,11 @@ class PDOSqliteExtension extends AbstractExtension {
    * single quotes inside.
    */
   const SINGLE_QUOTE_IDENTIFIER_REPLACEMENT = ']]]]SINGLEQUOTEIDENTIFIERDRUDBAL[[[[';
+
+  /**
+   * {@inheritdoc}
+   */
+  protected $statementClass = PrefetchingStatementWrapper::class;
 
   /**
    * A map of condition operators to SQLite operators.
@@ -75,8 +80,8 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function __construct(DruDbalConnection $drudbal_connection, DbalConnection $dbal_connection, $statement_class) {
-    parent::__construct($drudbal_connection, $dbal_connection, $statement_class);
+  public function __construct(DruDbalConnection $drudbal_connection, DbalConnection $dbal_connection) {
+    parent::__construct($drudbal_connection, $dbal_connection);
 
     // If a memory database, then do not try to attach databases per prefix.
     if ($drudbal_connection->getConnectionOptions()['database'] === ':memory:') {
@@ -480,13 +485,6 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * Statement delegated methods.
    */
-
-  /**
-   * {@inheritdoc}
-   */
-  public function onSelectPrefetchAllData() {
-    return TRUE;
-  }
 
   /**
    * {@inheritdoc}

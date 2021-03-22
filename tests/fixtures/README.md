@@ -12,10 +12,9 @@ Insert                        | Implemented with overrides to the ```execute``` 
 Merge                         | Inheriting from ```\Drupal\Core\Database\Query\Merge```. DBAL does not support MERGE constructs, the INSERT with UPDATE fallback implemented by the base class fits the purpose. |
 Schema                        | Implemented. |
 Select                        | Implemented with override to the ```::__toString``` method. Consider integrating at higher level. |
-Statement                     | Implemented as a wrapper around ```DBAL\Statement```. |
+Statement/StatementWrapper    | Implemented as a wrapper around ```DBAL\Statement```. |
 Transaction                   | Inheriting from ```\Drupal\Core\Database\Transaction```. Maybe in the future look into DBAL Transaction Management features. |
 Truncate                      | Implemented with overrides to the ```execute``` and ```::__toString``` methods. |
 Update                        | Implemented. |
 Upsert                        | Implemented with overrides to the ```execute``` and ```::__toString``` methods. DBAL does not support UPSERT, so implementation opens a transaction and proceeds with an INSERT attempt, falling back to UPDATE in case of failure. |
 Install/Tasks	                | Implemented. |
-
