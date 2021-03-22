@@ -105,16 +105,13 @@ class Connection extends DatabaseConnection {
     }
 
     $this->dbalPlatform = $dbal_connection->getDatabasePlatform();
+    $this->connection = $dbal_connection;
     $this->connectionOptions = $connection_options;
     $this->setPrefix(isset($connection_options['prefix']) ? $connection_options['prefix'] : '');
     $dbal_extension_class = static::getDbalExtensionClass($connection_options);
     $this->dbalExtension = new $dbal_extension_class($this, $dbal_connection);
     $this->statementWrapperClass = $this->dbalExtension->getStatementClass();
     $this->transactionalDDLSupport = $this->dbalExtension->delegateTransactionalDdlSupport($connection_options);
-
-    // Unset $this->connection so that __get() can return the wrapped
-    // DbalConnection on the extension instead.
-    unset($this->connection);
 
     $quote_identifier = $this->dbalPlatform->getIdentifierQuoteCharacter();
     $this->identifierQuotes = [$quote_identifier, $quote_identifier];
@@ -125,17 +122,6 @@ class Connection extends DatabaseConnection {
    */
   public function __destruct() {
     $this->schema = NULL;
-  }
-
-  /**
-   * Implements the magic __get() method.
-   */
-  public function __get($name) {
-    // Calls to $this->connection return the wrapped DbalConnection on the
-    // extension instead.
-    if ($name === 'connection') {
-      return $this->getDbalConnection();
-    }
   }
 
   /**
@@ -622,11 +608,11 @@ class Connection extends DatabaseConnection {
   /**
    * Gets the wrapped DBAL connection.
    *
-   * @return string
+   * @return DbalConnection
    *   The DBAL connection wrapped by the extension object.
    */
-  public function getDbalConnection() {
-    return $this->dbalExtension->getDbalConnection();
+  public function getDbalConnection(): DbalConnection {
+    return $this->connection;
   }
 
   /**
