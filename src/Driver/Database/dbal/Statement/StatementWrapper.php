@@ -2,6 +2,7 @@
 
 namespace Drupal\drudbal\Driver\Database\dbal\Statement;
 
+use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\Exception as DbalException;
 use Doctrine\DBAL\FetchMode;
 use Doctrine\DBAL\Result;
@@ -20,6 +21,13 @@ use Drupal\drudbal\Driver\Database\dbal\Connection as DruDbalConnection;
  * classes and execution handed over to there.
  */
 class StatementWrapper extends BaseStatementWrapper {
+
+  /**
+   * The DBAL client connection.
+   *
+   * @var \Doctrine\DBAL\Connection
+   */
+  protected $dbalConnection;
 
   /**
    * The DBAL executed statement result.
@@ -79,14 +87,17 @@ class StatementWrapper extends BaseStatementWrapper {
    *
    * @param \Drupal\drudbal\Driver\Database\dbal\Connection $dbh
    *   The database connection object for this statement.
+   * @param object $client_connection
+   *   Client database connection object, for example \PDO.
    * @param string $query
    *   A string containing an SQL query.
    * @param array $driver_options
    *   (optional) An array of driver options for this query.
    */
-  public function __construct(DruDbalConnection $dbh, string $query, array $driver_options = []) {
+  public function __construct(DruDbalConnection $dbh, DbalConnection $client_connection, string $query, array $driver_options = []) {
     $this->queryString = $query;
     $this->dbh = $dbh;
+    $this->dbalConnection = $client_connection;
     $this->setFetchMode(\PDO::FETCH_OBJ);
     $this->driverOpts = $driver_options;
   }
@@ -109,7 +120,7 @@ class StatementWrapper extends BaseStatementWrapper {
       try {
         $this->dbh->getDbalExtension()->alterStatement($this->queryString, $args);
         /** @var \Doctrine\DBAL\Statement */
-        $this->clientStatement = $this->dbh->getDbalConnection()->prepare($this->queryString);
+        $this->clientStatement = $this->dbalConnection->prepare($this->queryString);
       }
       catch (DbalException $e) {
         throw new DatabaseExceptionWrapper($e->getMessage(), $e->getCode(), $e);

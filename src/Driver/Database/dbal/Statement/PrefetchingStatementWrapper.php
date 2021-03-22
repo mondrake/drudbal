@@ -2,6 +2,7 @@
 
 namespace Drupal\drudbal\Driver\Database\dbal\Statement;
 
+use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\Exception as DbalException;
 use Doctrine\DBAL\FetchMode;
 use Doctrine\DBAL\Result;
@@ -43,6 +44,13 @@ class PrefetchingStatementWrapper implements \IteratorAggregate, StatementInterf
    * @var \Doctrine\DBAL\Statement
    */
   protected $dbalStatement = NULL;
+
+  /**
+   * The DBAL client connection.
+   *
+   * @var \Doctrine\DBAL\Connection
+   */
+  protected $dbalConnection;
 
   /**
    * The DBAL executed statement result.
@@ -185,6 +193,8 @@ class PrefetchingStatementWrapper implements \IteratorAggregate, StatementInterf
    *
    * @param \Drupal\drudbal\Driver\Database\dbal\Connection $dbh
    *   The database connection object for this statement.
+   * @param object $client_connection
+   *   Client database connection object, for example \PDO.
    * @param string $query
    *   A string containing an SQL query.
    * @param array $driver_options
@@ -193,6 +203,7 @@ class PrefetchingStatementWrapper implements \IteratorAggregate, StatementInterf
   public function __construct(DruDbalConnection $dbh, string $query, array $driver_options = []) {
     $this->queryString = $query;
     $this->dbh = $dbh;
+    $this->dbalConnection = $client_connection;
     $this->setFetchMode(\PDO::FETCH_OBJ);
     $this->driverOpts = $driver_options;
   }

@@ -470,7 +470,7 @@ class Connection extends DatabaseConnection {
         throw new \InvalidArgumentException('; is not supported in SQL strings. Use only one statement at a time.');
       }
 
-      $statement = new $this->statementWrapperClass($this, $query, $options['pdo'] ?? []);
+      $statement = new $this->statementWrapperClass($this, $this->connection, $query, $options['pdo'] ?? []);
     }
     catch (\Exception $e) {
       $this->exceptionHandler()->handleStatementException($e, $query, $options);
