@@ -202,7 +202,7 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
    */
   public function postCreateDatabase($database_name) {
     // Set the database as active.
-    $this->dbalConnection->exec("USE $database_name");
+    $this->getDbalConnection()->exec("USE $database_name");
     return $this;
   }
 
@@ -334,7 +334,7 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
       // We also have to explain to PDO that the transaction stack has
       // been cleaned-up.
       try {
-        $this->dbalConnection->commit();
+        $this->getDbalConnection()->commit();
       }
       catch (DbalConnectionException $exc) {
         throw new TransactionCommitFailedException();
@@ -398,7 +398,7 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
    * {@inheritdoc}
    */
   public function delegateSetTimezoneOffset(string $offset) : void {
-    $this->dbalConnection->exec("SET @@session.time_zone = '$offset'");
+    $this->getDbalConnection()->exec("SET @@session.time_zone = '$offset'");
   }
 
   /**
@@ -418,7 +418,7 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
    * {@inheritdoc}
    */
   public function preTruncate($drupal_table_name) {
-    $this->dbalConnection->exec('SET FOREIGN_KEY_CHECKS=0');
+    $this->getDbalConnection()->exec('SET FOREIGN_KEY_CHECKS=0');
     return $this;
   }
 
@@ -426,7 +426,7 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
    * {@inheritdoc}
    */
   public function postTruncate($drupal_table_name) {
-    $this->dbalConnection->exec('SET FOREIGN_KEY_CHECKS=1');
+    $this->getDbalConnection()->exec('SET FOREIGN_KEY_CHECKS=1');
     return $this;
   }
 
@@ -633,7 +633,7 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
    */
   public function delegateGetDbalColumnType(&$dbal_type, array $drupal_field_specs) {
     if (isset($drupal_field_specs['mysql_type'])) {
-      $dbal_type = $this->dbalConnection->getDatabasePlatform()->getDoctrineTypeMapping($drupal_field_specs['mysql_type']);
+      $dbal_type = $this->getDbalConnection()->getDatabasePlatform()->getDoctrineTypeMapping($drupal_field_specs['mysql_type']);
       return TRUE;
     }
     return FALSE;

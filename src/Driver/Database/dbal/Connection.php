@@ -104,12 +104,12 @@ class Connection extends DatabaseConnection {
       unset($connection_options['transactions']);
     }
 
-    $this->dbalPlatform = $dbal_connection->getDatabasePlatform();
     $this->connection = $dbal_connection;
     $this->connectionOptions = $connection_options;
     $this->setPrefix($connection_options['prefix'] ?? '');
+    $this->dbalPlatform = $dbal_connection->getDatabasePlatform();
     $dbal_extension_class = static::getDbalExtensionClass($connection_options);
-    $this->dbalExtension = new $dbal_extension_class($this, $dbal_connection);
+    $this->dbalExtension = new $dbal_extension_class($this);
     $this->statementWrapperClass = $this->dbalExtension->getStatementClass();
     $this->transactionalDDLSupport = $this->dbalExtension->delegateTransactionalDdlSupport($connection_options);
 
@@ -122,6 +122,8 @@ class Connection extends DatabaseConnection {
    */
   public function __destruct() {
     $this->schema = NULL;
+    $this->connection->close();
+    $this->connection = NULL;
   }
 
   /**
