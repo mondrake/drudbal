@@ -28,7 +28,7 @@ jobs:
     runs-on: ubuntu-20.04
     env:
         DRUDBAL_ENV: "dbal/pdo_oci"
-        DBAL_URL: "pdo_oci://DRUDBAL:ORACLE@0.0.0.0:1521/XE"
+        DBAL_URL: "pdo-oci://DRUDBAL:ORACLE@0.0.0.0:1521/XE"
         SIMPLETEST_DB: "dbal://DRUDBAL:ORACLE@0.0.0.0:1521/XE?module=drudbal&dbal_driver=pdo_oci#dru"
 
     services:
@@ -94,28 +94,28 @@ jobs:
         cp modules/contrib/drudbal/tests/github/install_* .
         php install_oracle.php
 
-#    - name: Install Drupal
-#      run: |
-#        # Use the custom installer.
-#        php install_cli.php
-#        vendor/bin/drush runserver localhost:8080 &
-#        sleep 5s
+    - name: Install Drupal
+      run: |
+        # Use the custom installer.
+        php install_cli.php
+        vendor/bin/drush runserver localhost:8080 &
+        sleep 5s
 
-#    - name: Report installation
-#      continue-on-error: true
-#      run: |
-#        php install_report.php
-#        vendor/bin/drush pml --type=module --no-core
-#        vendor/bin/drush core:status
-#        vendor/bin/drush core:requirements
-
-#    - name: Run test ${{ matrix.test-args }}
-#      continue-on-error: true
-#      run: vendor/bin/phpunit -c core --color=always ${{ matrix.test-args }}
-
-    - name: Run test a
+    - name: Report installation
       continue-on-error: true
-      run: vendor/bin/phpunit -c core --color=always modules/contrib/drudbal/tests/src/Kernel/SchemaTest.php
+      run: |
+        php install_report.php
+        vendor/bin/drush pml --type=module --no-core
+        vendor/bin/drush core:status
+        vendor/bin/drush core:requirements
+
+    - name: Run test ${{ matrix.test-args }}
+      continue-on-error: true
+      run: vendor/bin/phpunit -c core --color=always ${{ matrix.test-args }}
+
+#    - name: Run test a
+#      continue-on-error: true
+#      run: vendor/bin/phpunit -c core --color=always modules/contrib/drudbal/tests/src/Kernel/SchemaTest.php
 
 #    - name: Run test b
 #      continue-on-error: true
