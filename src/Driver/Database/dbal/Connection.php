@@ -104,12 +104,12 @@ class Connection extends DatabaseConnection {
       unset($connection_options['transactions']);
     }
 
-    $this->dbalPlatform = $dbal_connection->getDatabasePlatform();
     $this->connection = $dbal_connection;
     $this->connectionOptions = $connection_options;
-    $this->setPrefix(isset($connection_options['prefix']) ? $connection_options['prefix'] : '');
+    $this->setPrefix($connection_options['prefix'] ?? '');
+    $this->dbalPlatform = $dbal_connection->getDatabasePlatform();
     $dbal_extension_class = static::getDbalExtensionClass($connection_options);
-    $this->dbalExtension = new $dbal_extension_class($this, $dbal_connection);
+    $this->dbalExtension = new $dbal_extension_class($this);
     $this->statementWrapperClass = $this->dbalExtension->getStatementClass();
     $this->transactionalDDLSupport = $this->dbalExtension->delegateTransactionalDdlSupport($connection_options);
 
@@ -122,6 +122,8 @@ class Connection extends DatabaseConnection {
    */
   public function __destruct() {
     $this->schema = NULL;
+    $this->connection->close();
+    $this->connection = NULL;
   }
 
   /**
@@ -234,7 +236,7 @@ class Connection extends DatabaseConnection {
 
         case Database::RETURN_INSERT_ID:
           try {
-            $sequence_name = isset($options['sequence_name']) ? $options['sequence_name'] : NULL;
+            $sequence_name = $options['sequence_name'] ?? NULL;
             return (string) $this->getDbalConnection()->lastInsertId($sequence_name);
           }
           catch (\Exception $e) {
@@ -355,7 +357,7 @@ class Connection extends DatabaseConnection {
     }
     // If there is a 'pdo' key in Drupal, that needs to be mapped to the
     // 'driverOptions' key in DBAL.
-    $options['driverOptions'] = isset($connection_options['pdo']) ? $connection_options['pdo'] : [];
+    $options['driverOptions'] = $connection_options['pdo'] ?? [];
     // If there is a 'dbal_options' key in Drupal, merge it with the array
     // built so far. The content of the 'dbal_options' key will override
     // overlapping keys built so far.
@@ -456,7 +458,7 @@ class Connection extends DatabaseConnection {
         throw new \InvalidArgumentException('; is not supported in SQL strings. Use only one statement at a time.');
       }
 
-      $statement = new $this->statementWrapperClass($this, $this->connection, $query, $options['pdo'] ?? []);
+      $statement = new $this->statementWrapperClass($this, $this->getDbalConnection(), $query, $options['pdo'] ?? []);
     }
     catch (\Exception $e) {
       $this->exceptionHandler()->handleStatementException($e, $query, $options);
@@ -522,7 +524,7 @@ class Connection extends DatabaseConnection {
       call_user_func($callback, FALSE);
     }
 
-    $this->connection->rollBack();
+    $this->getDbalConnection()->rollBack();
     if ($rolled_back_other_active_savepoints) {
       throw new TransactionOutOfOrderException();
     }
@@ -541,7 +543,7 @@ class Connection extends DatabaseConnection {
       $this->getDbalConnection()->exec($this->dbalPlatform->createSavePoint($name));
     }
     else {
-      $this->connection->beginTransaction();
+      $this->getDbalConnection()->beginTransaction();
     }
     $this->transactionLayers[$name] = $name;
   }
@@ -608,7 +610,7 @@ class Connection extends DatabaseConnection {
   /**
    * Gets the wrapped DBAL connection.
    *
-   * @return DbalConnection
+   * @return \Doctrine\DBAL\Connection
    *   The DBAL connection wrapped by the extension object.
    */
   public function getDbalConnection(): DbalConnection {
@@ -666,10 +668,10 @@ class Connection extends DatabaseConnection {
 
     // User credentials if existing.
     if (isset($connection_options['username'])) {
-      $uri = $uri->withUserInfo($connection_options['username'], isset($connection_options['password']) ? $connection_options['password'] : NULL);
+      $uri = $uri->withUserInfo($connection_options['username'], $connection_options['password'] ?? NULL);
     }
 
-    $uri = $uri->withHost(isset($connection_options['host']) ? $connection_options['host'] : 'localhost');
+    $uri = $uri->withHost($connection_options['host'] ?? 'localhost');
 
     if (!empty($connection_options['port'])) {
       $uri = $uri->withPort($connection_options['port']);
@@ -726,13 +728,13 @@ class Connection extends DatabaseConnection {
     if (!empty($user_info)) {
       $user_info_elements = explode(':', $user_info, 2);
       $connection_options['username'] = $user_info_elements[0];
-      $connection_options['password'] = isset($user_info_elements[1]) ? $user_info_elements[1] : '';
+      $connection_options['password'] = $user_info_elements[1] ?? '';
     }
 
     // Add the 'dbal_driver' key to the connection options.
     $parts = [];
     parse_str($uri->getQuery(), $parts);
-    $dbal_driver = isset($parts['dbal_driver']) ? $parts['dbal_driver'] : '';
+    $dbal_driver = $parts['dbal_driver'] ?? '';
     $connection_options['dbal_driver'] = $dbal_driver;
 
     return $connection_options;
