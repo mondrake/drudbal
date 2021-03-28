@@ -122,8 +122,6 @@ class Connection extends DatabaseConnection {
    */
   public function __destruct() {
     $this->schema = NULL;
-//    $this->connection->close();
-//    $this->connection = NULL;
   }
 
   /**
