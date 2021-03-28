@@ -47,6 +47,7 @@ class Connection extends DatabaseConnection {
     'mysqli' => MysqliExtension::class,
     'oci8' => Oci8Extension::class,
     'pdo_mysql' => PDOMySqlExtension::class,
+    'pdo_oci' => PDOOciExtension::class,
     'pdo_sqlite' => PDOSqliteExtension::class,
   ];
 
