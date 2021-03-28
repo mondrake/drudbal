@@ -25,6 +25,7 @@ use Drupal\Core\Database\TransactionOutOfOrderException;
 use Drupal\drudbal\Driver\Database\dbal\DbalExtension\MysqliExtension;
 use Drupal\drudbal\Driver\Database\dbal\DbalExtension\Oci8Extension;
 use Drupal\drudbal\Driver\Database\dbal\DbalExtension\PDOMySqlExtension;
+use Drupal\drudbal\Driver\Database\dbal\DbalExtension\PDOOciExtension;
 use Drupal\drudbal\Driver\Database\dbal\DbalExtension\PDOSqliteExtension;
 use GuzzleHttp\Psr7\Uri;
 

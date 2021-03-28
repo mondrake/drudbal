@@ -87,7 +87,7 @@ jobs:
     - name: Patch doctrine/dbal
       run: |
         patch -d vendor/doctrine/dbal -p1 < modules/contrib/drudbal/tests/github/dbal/pdo_oci/dbal.patch
-        curl https://patch-diff.githubusercontent.com/raw/mondrake/dbal/pull/2.patch | patch -d vendor/doctrine/dbal -p1
+#        curl https://patch-diff.githubusercontent.com/raw/mondrake/dbal/pull/2.patch | patch -d vendor/doctrine/dbal -p1
 
     - name: Create Oracle schema
       run: |
