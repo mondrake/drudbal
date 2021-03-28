@@ -94,7 +94,7 @@ class AbstractExtension implements DbalExtensionInterface {
    * {@inheritdoc}
    */
   public function getDbalConnection() {
-    return $this->connection->getDbalConnection;
+    return $this->connection->getDbalConnection();
   }
 
   /**
