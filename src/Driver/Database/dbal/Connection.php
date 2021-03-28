@@ -353,7 +353,7 @@ class Connection extends DatabaseConnection {
       $options['url'] = $connection_options['dbal_url'];
     }
     if (!empty($connection_options['dbal_driver'])) {
-      $options['driver'] = $connection_options['dbal_driver'];
+      $options['driver'] = str_replace('-', '_', $connection_options['dbal_driver']);
     }
     // If there is a 'pdo' key in Drupal, that needs to be mapped to the
     // 'driverOptions' key in DBAL.
