@@ -647,15 +647,13 @@ class Connection extends DatabaseConnection {
    *   The DBAL extension class.
    */
   public static function getDbalExtensionClass(array $connection_options) {
-    dump($connection_options);
     if (isset($connection_options['dbal_extension_class'])) {
       return $connection_options['dbal_extension_class'];
     }
-    $driver_name = $connection_options['dbal_driver'];
+    $driver_name = str_replace('-', '_', $connection_options['dbal_driver']);
     if (isset(static::$driverSchemeAliases[$driver_name])) {
       $driver_name = static::$driverSchemeAliases[$driver_name];
     }
-    //str_replace('-', '_')
     return static::$dbalClassMap[$driver_name];
   }
 
