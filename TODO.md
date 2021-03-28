@@ -1,7 +1,6 @@
 TODO
 
 * new identifier management class
-* driver::getName was removed
 
 SCHEMA
 ------

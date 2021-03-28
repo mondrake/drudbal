@@ -20,7 +20,7 @@ interface DbalExtensionInterface {
    * @return \Doctrine\DBAL\Connection
    *   The DBAL connection.
    */
-  public function getDbalConnection();
+  public function getDbalConnection(): DbalConnection;
 
   /**
    * Gets the Statement class to use for this connection.

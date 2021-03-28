@@ -80,8 +80,8 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function __construct(DruDbalConnection $drudbal_connection, DbalConnection $dbal_connection) {
-    parent::__construct($drudbal_connection, $dbal_connection);
+  public function __construct(DruDbalConnection $drudbal_connection) {
+    parent::__construct($drudbal_connection);
 
     // If a memory database, then do not try to attach databases per prefix.
     if ($drudbal_connection->getConnectionOptions()['database'] === ':memory:') {
@@ -98,7 +98,7 @@ class PDOSqliteExtension extends AbstractExtension {
       // Default prefix means query the main database -- no need to attach anything.
       if ($key !== 'default' && !isset($this->attachedDatabases[$prefix])) {
         $this->attachedDatabases[$prefix] = $connection_options['database'] . '-' . $prefix;
-        $dbal_connection->executeQuery('ATTACH DATABASE ? AS ?', [$connection_options['database'] . '-' . $prefix, $prefix]);
+        $this->getDbalConnection()->executeQuery('ATTACH DATABASE ? AS ?', [$connection_options['database'] . '-' . $prefix, $prefix]);
       }
       $prefixes[$key] = $prefix;
     }
