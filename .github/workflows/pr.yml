@@ -13,6 +13,7 @@ env:
       "Drupal\\KernelTests\\Core\\Database\\ConnectionUnitTest",
       "Drupal\\KernelTests\\Core\\Database\\DatabaseExceptionWrapperTest",
       "Drupal\\KernelTests\\Core\\Database\\SchemaTest",
+      "Drupal\\KernelTests\\Core\\Database\\StatementWrapperLegacyTest",
       "Drupal\\KernelTests\\Core\\Cache\\ApcuBackendTest",
       "Drupal\\KernelTests\\Core\\Cache\\EndOfTransactionQueriesTest"
     ]'
@@ -43,11 +44,11 @@ jobs:
           - "7.4"
         test-args:
 #          - "--group Database"
-#          - "--group Entity"
-          - "--group Cache,Config"
-          - "--group field,Field"
-          - "--group file,File"
-          - "--group views"
+          - "--group Entity"
+#          - "--group Cache,Config"
+#          - "--group field,Field"
+#          - "--group file"
+#          - "--group views"
 
     steps:
     - name: Install PHP
@@ -68,9 +69,6 @@ jobs:
 
     - name: Patch Drupal
       run: ./drudbal_staging/tests/github/drupal_patch.sh
-
-#    - name: Test Drupal patch
-#      run: git apply -v drudbal_staging/test.patch
 
     - name: Install Composer dependencies
       run: |
@@ -104,30 +102,9 @@ jobs:
       continue-on-error: true
       run: |
         php install_report.php
-        vendor/bin/drush pml --type=module --no-core
         vendor/bin/drush core:status
         vendor/bin/drush core:requirements
+        vendor/bin/drush pml --type=module --no-core
 
     - name: Run test ${{ matrix.test-args }}
-      continue-on-error: true
       run: vendor/bin/phpunit -c core --color=always ${{ matrix.test-args }}
-
-#    - name: Run test a
-#      continue-on-error: true
-#      run: vendor/bin/phpunit -c core --color=always modules/contrib/drudbal/tests/src/Kernel/SchemaTest.php
-
-#    - name: Run test b
-#      continue-on-error: true
-#      run: vendor/bin/phpunit -c core --color=always core/tests/Drupal/KernelTests/Core/Database/InsertTest.php
-
-#    - name: Run test c
-#      continue-on-error: true
-#      run: vendor/bin/phpunit -c core --color=always core/tests/Drupal/KernelTests/Core/Entity/EntityDefinitionUpdateTest.php
-
-#    - name: Run test d
-#      continue-on-error: true
-#      run: vendor/bin/phpunit -c core --color=always core/tests/Drupal/KernelTests/Core/Entity/EntityCrudHookTest.php
-
-#    - name: Run test e
-#      continue-on-error: true
-#      run: vendor/bin/phpunit -c core --color=always core/tests/Drupal/KernelTests/Core/Entity/EntityQueryAggregateTest.php

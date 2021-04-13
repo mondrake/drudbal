@@ -104,17 +104,14 @@ class Connection extends DatabaseConnection {
       unset($connection_options['transactions']);
     }
 
-    $this->dbalPlatform = $dbal_connection->getDatabasePlatform();
+    $this->connection = $dbal_connection;
     $this->connectionOptions = $connection_options;
-    $this->setPrefix(isset($connection_options['prefix']) ? $connection_options['prefix'] : '');
+    $this->setPrefix($connection_options['prefix'] ?? '');
+    $this->dbalPlatform = $dbal_connection->getDatabasePlatform();
     $dbal_extension_class = static::getDbalExtensionClass($connection_options);
-    $this->statementClass = static::getStatementClass($connection_options);
-    $this->dbalExtension = new $dbal_extension_class($this, $dbal_connection, $this->statementClass);
+    $this->dbalExtension = new $dbal_extension_class($this);
+    $this->statementWrapperClass = $this->dbalExtension->getStatementClass();
     $this->transactionalDDLSupport = $this->dbalExtension->delegateTransactionalDdlSupport($connection_options);
-
-    // Unset $this->connection so that __get() can return the wrapped
-    // DbalConnection on the extension instead.
-    unset($this->connection);
 
     $quote_identifier = $this->dbalPlatform->getIdentifierQuoteCharacter();
     $this->identifierQuotes = [$quote_identifier, $quote_identifier];
@@ -125,17 +122,6 @@ class Connection extends DatabaseConnection {
    */
   public function __destruct() {
     $this->schema = NULL;
-  }
-
-  /**
-   * Implements the magic __get() method.
-   */
-  public function __get($name) {
-    // Calls to $this->connection return the wrapped DbalConnection on the
-    // extension instead.
-    if ($name === 'connection') {
-      return $this->getDbalConnection();
-    }
   }
 
   /**
@@ -215,32 +201,23 @@ class Connection extends DatabaseConnection {
     // Use default values if not already set.
     $options += $this->defaultOptions();
 
+    // We allow either a pre-bound statement object (deprecated) or a literal
+    // string. In either case, we want to end up with an executed statement
+    // object, which we pass to StatementInterface::execute.
+    if ($query instanceof StatementInterface) {
+      @trigger_error('Passing a StatementInterface object as a $query argument to Drupal\Core\Database\Connection::query is deprecated in drupal:9.2.0 and is removed in drupal:10.0.0. Call the execute method from the StatementInterface object directly instead. See https://www.drupal.org/node/3154439', E_USER_DEPRECATED);
+      $stmt = $query;
+    }
+    else {
+      $this->expandArguments($query, $args);
+      $stmt = $this->prepareStatement($query, $options);
+    }
+
     try {
-      // We allow either a pre-bound statement object or a literal string.
-      // In either case, we want to end up with an executed statement object,
-      // which we pass to Statement::execute.
       if ($query instanceof StatementInterface) {
-        @trigger_error('Passing a StatementInterface object as a $query argument to Drupal\Core\Database\Connection::query is deprecated in drupal:9.2.0 and is removed in drupal:10.0.0. Call the execute method from the StatementInterface object directly instead. See https://www.drupal.org/node/3154439', E_USER_DEPRECATED);
-        $stmt = $query;
         $stmt->execute(NULL, $options);
       }
       else {
-        $this->expandArguments($query, $args);
-        // To protect against SQL injection, Drupal only supports executing one
-        // statement at a time.  Thus, the presence of a SQL delimiter (the
-        // semicolon) is not allowed unless the option is set.  Allowing
-        // semicolons should only be needed for special cases like defining a
-        // function or stored procedure in SQL. Trim any trailing delimiter to
-        // minimize false positives unless delimiter is allowed.
-        $trim_chars = " \xA0\t\n\r\0\x0B";
-        if (empty($options['allow_delimiter_in_query'])) {
-          $trim_chars .= ';';
-        }
-        $query = rtrim($query, $trim_chars);
-        if (strpos($query, ';') !== FALSE && empty($options['allow_delimiter_in_query'])) {
-          throw new \InvalidArgumentException('; is not supported in SQL strings. Use only one statement at a time.');
-        }
-        $stmt = $this->prepareStatement($query, $options);
         $stmt->execute($args, $options);
       }
 
@@ -257,7 +234,7 @@ class Connection extends DatabaseConnection {
 
         case Database::RETURN_INSERT_ID:
           try {
-            $sequence_name = isset($options['sequence_name']) ? $options['sequence_name'] : NULL;
+            $sequence_name = $options['sequence_name'] ?? NULL;
             return (string) $this->getDbalConnection()->lastInsertId($sequence_name);
           }
           catch (\Exception $e) {
@@ -272,50 +249,16 @@ class Connection extends DatabaseConnection {
 
       }
     }
-    catch (\InvalidArgumentException $e) {
-      throw $e;
-    }
     catch (\Exception $e) {
-      return $this->handleDbalQueryException($e, $query, $args, $options);
+      return $this->exceptionHandler()->handleExecutionException($e, $stmt, $args, $options);
     }
   }
 
   /**
-   * Wraps and re-throws any DbalException thrown by ::query().
-   *
-   * @param \Exception $e
-   *   The exception thrown by query().
-   * @param string $query
-   *   The query executed by query().
-   * @param array $args
-   *   An array of arguments for the prepared statement.
-   * @param array $options
-   *   An associative array of options to control how the query is run.
-   *
-   * @return mixed
-   *   NULL when the option to re-throw is FALSE, the result of
-   *   DbalExtensionInterface::delegateQueryExceptionProcess() otherwise.
-   *
-   * @throws \Drupal\Core\Database\DatabaseExceptionWrapper
+   * {@inheritdoc}
    */
-  protected function handleDbalQueryException(\Exception $e, $query, array $args = [], array $options = []) {
-    if ($options['throw_exception']) {
-      // Wrap the exception in another exception, because PHP does not allow
-      // overriding Exception::getMessage(). Its message is the extra database
-      // debug information.
-      if ($query instanceof StatementInterface) {
-        $query_string = $query->getQueryString();
-      }
-      elseif (is_string($query)) {
-        $query_string = $query;
-      }
-      else {
-        $query_string = NULL;
-      }
-      $message = $e->getMessage() . ": " . $query_string . "; " . print_r($args, TRUE);
-      return $this->dbalExtension->delegateQueryExceptionProcess($query, $args, $options, $message, $e);
-    }
-    return NULL;
+  public function exceptionHandler() {
+    return new ExceptionHandler($this);
   }
 
   /**
@@ -387,7 +330,6 @@ class Connection extends DatabaseConnection {
       'dbal_driver' => NULL,
       'dbal_options' => NULL,
       'dbal_extension_class' => NULL,
-      'dbal_statement_class' => NULL,
     ]);
     // Map to DBAL connection array the main keys from the Drupal connection.
     if (!empty($connection_options['database'])) {
@@ -413,7 +355,7 @@ class Connection extends DatabaseConnection {
     }
     // If there is a 'pdo' key in Drupal, that needs to be mapped to the
     // 'driverOptions' key in DBAL.
-    $options['driverOptions'] = isset($connection_options['pdo']) ? $connection_options['pdo'] : [];
+    $options['driverOptions'] = $connection_options['pdo'] ?? [];
     // If there is a 'dbal_options' key in Drupal, merge it with the array
     // built so far. The content of the 'dbal_options' key will override
     // overlapping keys built so far.
@@ -493,11 +435,33 @@ class Connection extends DatabaseConnection {
    * {@inheritdoc}
    */
   public function prepareStatement(string $query, array $options): StatementInterface {
-    $query = $this->prefixTables($query);
-    if (!($options['allow_square_brackets'] ?? FALSE)) {
-      $query = $this->quoteIdentifiers($query);
+    try {
+      $query = $this->prefixTables($query);
+      if (!($options['allow_square_brackets'] ?? FALSE)) {
+        $query = $this->quoteIdentifiers($query);
+      }
+
+      // To protect against SQL injection, Drupal only supports executing one
+      // statement at a time.  Thus, the presence of a SQL delimiter (the
+      // semicolon) is not allowed unless the option is set.  Allowing
+      // semicolons should only be needed for special cases like defining a
+      // function or stored procedure in SQL. Trim any trailing delimiter to
+      // minimize false positives unless delimiter is allowed.
+      $trim_chars = " \xA0\t\n\r\0\x0B";
+      if (empty($options['allow_delimiter_in_query'])) {
+        $trim_chars .= ';';
+      }
+      $query = rtrim($query, $trim_chars);
+      if (strpos($query, ';') !== FALSE && empty($options['allow_delimiter_in_query'])) {
+        throw new \InvalidArgumentException('; is not supported in SQL strings. Use only one statement at a time.');
+      }
+
+      $statement = new $this->statementWrapperClass($this, $this->getDbalConnection(), $query, $options['pdo'] ?? []);
     }
-    return new $this->statementClass($this, $query, $options['pdo'] ?? []);
+    catch (\Exception $e) {
+      $this->exceptionHandler()->handleStatementException($e, $query, $options);
+    }
+    return $statement;
   }
 
   /**
@@ -558,7 +522,7 @@ class Connection extends DatabaseConnection {
       call_user_func($callback, FALSE);
     }
 
-    $this->connection->rollBack();
+    $this->getDbalConnection()->rollBack();
     if ($rolled_back_other_active_savepoints) {
       throw new TransactionOutOfOrderException();
     }
@@ -577,7 +541,7 @@ class Connection extends DatabaseConnection {
       $this->getDbalConnection()->exec($this->dbalPlatform->createSavePoint($name));
     }
     else {
-      $this->connection->beginTransaction();
+      $this->getDbalConnection()->beginTransaction();
     }
     $this->transactionLayers[$name] = $name;
   }
@@ -644,11 +608,11 @@ class Connection extends DatabaseConnection {
   /**
    * Gets the wrapped DBAL connection.
    *
-   * @return string
+   * @return \Doctrine\DBAL\Connection
    *   The DBAL connection wrapped by the extension object.
    */
-  public function getDbalConnection() {
-    return $this->dbalExtension->getDbalConnection();
+  public function getDbalConnection(): DbalConnection {
+    return $this->connection;
   }
 
   /**
@@ -692,22 +656,6 @@ class Connection extends DatabaseConnection {
   }
 
   /**
-   * Gets the Statement class to use for this connection.
-   *
-   * @param array $connection_options
-   *   An array of options for the connection.
-   *
-   * @return string
-   *   The Statement class.
-   */
-  public static function getStatementClass(array $connection_options) {
-    if (isset($connection_options['dbal_statement_class'])) {
-      return $connection_options['dbal_statement_class'];
-    }
-    return Statement::class;
-  }
-
-  /**
    * {@inheritdoc}
    */
   public static function createUrlFromConnectionOptions(array $connection_options) {
@@ -718,10 +666,10 @@ class Connection extends DatabaseConnection {
 
     // User credentials if existing.
     if (isset($connection_options['username'])) {
-      $uri = $uri->withUserInfo($connection_options['username'], isset($connection_options['password']) ? $connection_options['password'] : NULL);
+      $uri = $uri->withUserInfo($connection_options['username'], $connection_options['password'] ?? NULL);
     }
 
-    $uri = $uri->withHost(isset($connection_options['host']) ? $connection_options['host'] : 'localhost');
+    $uri = $uri->withHost($connection_options['host'] ?? 'localhost');
 
     if (!empty($connection_options['port'])) {
       $uri = $uri->withPort($connection_options['port']);
@@ -778,13 +726,13 @@ class Connection extends DatabaseConnection {
     if (!empty($user_info)) {
       $user_info_elements = explode(':', $user_info, 2);
       $connection_options['username'] = $user_info_elements[0];
-      $connection_options['password'] = isset($user_info_elements[1]) ? $user_info_elements[1] : '';
+      $connection_options['password'] = $user_info_elements[1] ?? '';
     }
 
     // Add the 'dbal_driver' key to the connection options.
     $parts = [];
     parse_str($uri->getQuery(), $parts);
-    $dbal_driver = isset($parts['dbal_driver']) ? $parts['dbal_driver'] : '';
+    $dbal_driver = $parts['dbal_driver'] ?? '';
     $connection_options['dbal_driver'] = $dbal_driver;
 
     return $connection_options;

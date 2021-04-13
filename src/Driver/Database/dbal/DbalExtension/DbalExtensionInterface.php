@@ -8,7 +8,6 @@ use Doctrine\DBAL\Result as DbalResult;
 use Doctrine\DBAL\Schema\Column as DbalColumn;
 use Doctrine\DBAL\Schema\Schema as DbalSchema;
 use Doctrine\DBAL\Schema\Table as DbalTable;
-use Doctrine\DBAL\Statement as DbalStatement;
 
 /**
  * Provides an interface for Dbal extensions.
@@ -21,7 +20,15 @@ interface DbalExtensionInterface {
    * @return \Doctrine\DBAL\Connection
    *   The DBAL connection.
    */
-  public function getDbalConnection();
+  public function getDbalConnection(): DbalConnection;
+
+  /**
+   * Gets the Statement class to use for this connection.
+   *
+   * @return string
+   *   The FQCN of the Statement class.
+   */
+  public function getStatementClass(): string;
 
   /**
    * Gets the database server platform.
@@ -391,14 +398,6 @@ interface DbalExtensionInterface {
    */
 
   /**
-   * Informs the Statement on whether all data needs to be fetched on SELECT.
-   *
-   * @return bool
-   *   TRUE if data has to be prefetched, FALSE otherwise.
-   */
-  public function onSelectPrefetchAllData();
-
-  /**
    * Informs the Statement on whether named placeholders are supported.
    *
    * @return bool
@@ -505,6 +504,39 @@ interface DbalExtensionInterface {
    *   has to be handled by DBAL.
    */
   public function delegateDefaultsOnlyInsertSql(&$sql, $drupal_table_name);
+
+  /**
+   * Upsert delegated methods.
+   */
+
+   /**
+    * Determines if the extension support native UPSERT constructs.
+    *
+    * @return bool
+    *   TRUE if the database platform allows native UPSERTs.
+    */
+  public function hasNativeUpsert(): bool;
+
+  /**
+   * Returns a native SQL UPSERT string statement.
+   *
+   * @param string $drupal_table_name
+   *   A string with the Drupal name of the table.
+   * @param string $key
+   *   The name of the primary key column.
+   * @param array $insert_fields
+   *   The columns to be upserted.
+   * @param array $insert_values
+   *   The values to be upserted. It is an array of strings, each representing
+   *   a list of VALUES for the SQL statement.
+   * @param string $comments
+   *   (Optional) The comments to be prepended to the SQL query. Defaults to an
+   *   empty string.
+   *
+   * @return string
+   *   A SQL string with the native UPSERT command.
+   */
+  public function delegateUpsertSql(string $drupal_table_name, string $key, array $insert_fields, array $insert_values, string $comments = ''): string;
 
   /**
    * Truncate delegated methods.

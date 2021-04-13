@@ -14,7 +14,6 @@ use Drupal\drudbal\Driver\Database\dbal\Connection as DruDbalConnection;
 use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
 use Doctrine\DBAL\Schema\Schema as DbalSchema;
-use Doctrine\DBAL\Statement as DbalStatement;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\DBAL\Exception\NotNullConstraintViolationException;
 
@@ -55,8 +54,8 @@ class Oci8Extension extends AbstractExtension {
   public function __destruct() {
     foreach ($this->tempTables as $db_table) {
       try {
-        $this->dbalConnection->exec("TRUNCATE TABLE $db_table");
-        $this->dbalConnection->exec("DROP TABLE $db_table");
+        $this->getDbalConnection()->exec("TRUNCATE TABLE $db_table");
+        $this->getDbalConnection()->exec("DROP TABLE $db_table");
       }
       catch (\Exception $e) {
         throw new \RuntimeException("Missing temp table $db_table", $e->getCode(), $e);
@@ -570,7 +569,7 @@ class Oci8Extension extends AbstractExtension {
 
     // Install a CONCAT_WS function.
     try {
-      $this->dbalConnection->exec(<<<PLSQL
+      $this->getDbalConnection()->exec(<<<PLSQL
 CREATE OR REPLACE FUNCTION CONCAT_WS(p_delim IN VARCHAR2
                                     , p_str1 IN VARCHAR2 DEFAULT NULL
                                     , p_str2 IN VARCHAR2 DEFAULT NULL
@@ -640,7 +639,7 @@ PLSQL
 
     // Install a GREATEST function.
     try {
-      $this->dbalConnection->exec(<<<PLSQL
+      $this->getDbalConnection()->exec(<<<PLSQL
 create or replace function greatest(p1 number, p2 number, p3 number default null)
 return number
 as
@@ -664,7 +663,7 @@ PLSQL
 
     // Install a RAND function.
     try {
-      $this->dbalConnection->exec(<<<PLSQL
+      $this->getDbalConnection()->exec(<<<PLSQL
 create or replace function rand
 return number
 as
@@ -748,7 +747,7 @@ PLSQL
    */
   public function delegateGetDbalColumnType(&$dbal_type, array $drupal_field_specs) {
     if (isset($drupal_field_specs['oracle_type'])) {
-      $dbal_type = $this->dbalConnection->getDatabasePlatform()->getDoctrineTypeMapping($drupal_field_specs['oracle_type']);
+      $dbal_type = $this->getDbalConnection()->getDatabasePlatform()->getDoctrineTypeMapping($drupal_field_specs['oracle_type']);
       return TRUE;
     }
     if (isset($drupal_field_specs['type']) && $drupal_field_specs['type'] === 'blob') {

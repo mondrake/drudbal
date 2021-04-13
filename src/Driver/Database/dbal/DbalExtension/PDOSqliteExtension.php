@@ -9,12 +9,12 @@ use Drupal\Core\Database\DatabaseNotFoundException;
 use Drupal\Core\Database\IntegrityConstraintViolationException;
 use Drupal\Core\Database\Driver\sqlite\Connection as SqliteConnectionBase;
 use Drupal\drudbal\Driver\Database\dbal\Connection as DruDbalConnection;
+use Drupal\drudbal\Driver\Database\dbal\Statement\PrefetchingStatementWrapper;
 
 use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\Exception as DbalException;
 use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
 use Doctrine\DBAL\Schema\Schema as DbalSchema;
-use Doctrine\DBAL\Statement as DbalStatement;
 
 /**
  * Driver specific methods for pdo_sqlite.
@@ -39,6 +39,11 @@ class PDOSqliteExtension extends AbstractExtension {
    * single quotes inside.
    */
   const SINGLE_QUOTE_IDENTIFIER_REPLACEMENT = ']]]]SINGLEQUOTEIDENTIFIERDRUDBAL[[[[';
+
+  /**
+   * {@inheritdoc}
+   */
+  protected $statementClass = PrefetchingStatementWrapper::class;
 
   /**
    * A map of condition operators to SQLite operators.
@@ -75,8 +80,8 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function __construct(DruDbalConnection $drudbal_connection, DbalConnection $dbal_connection, $statement_class) {
-    parent::__construct($drudbal_connection, $dbal_connection, $statement_class);
+  public function __construct(DruDbalConnection $drudbal_connection) {
+    parent::__construct($drudbal_connection);
 
     // If a memory database, then do not try to attach databases per prefix.
     if ($drudbal_connection->getConnectionOptions()['database'] === ':memory:') {
@@ -93,7 +98,7 @@ class PDOSqliteExtension extends AbstractExtension {
       // Default prefix means query the main database -- no need to attach anything.
       if ($key !== 'default' && !isset($this->attachedDatabases[$prefix])) {
         $this->attachedDatabases[$prefix] = $connection_options['database'] . '-' . $prefix;
-        $dbal_connection->executeQuery('ATTACH DATABASE ? AS ?', [$connection_options['database'] . '-' . $prefix, $prefix]);
+        $this->getDbalConnection()->executeQuery('ATTACH DATABASE ? AS ?', [$connection_options['database'] . '-' . $prefix, $prefix]);
       }
       $prefixes[$key] = $prefix;
     }
@@ -484,13 +489,6 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function onSelectPrefetchAllData() {
-    return TRUE;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function alterStatement(&$query, array &$args) {
     // The PDO SQLite layer doesn't replace numeric placeholders in queries
     // correctly, and this makes numeric expressions (such as
@@ -597,6 +595,41 @@ class PDOSqliteExtension extends AbstractExtension {
   public function delegateDefaultsOnlyInsertSql(&$sql, $drupal_table_name) {
     $sql = 'INSERT INTO ' . $this->connection->getPrefixedTableName($drupal_table_name) . ' DEFAULT VALUES';
     return TRUE;
+  }
+
+  /**
+   * Upsert delegated methods.
+   */
+
+  /**
+   * {@inheritdoc}
+   */
+  public function hasNativeUpsert(): bool {
+    return TRUE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateUpsertSql(string $drupal_table_name, string $key, array $insert_fields, array $insert_values, string $comments = ''): string {
+
+    $query = $comments . 'INSERT INTO {' . $drupal_table_name . '} ';
+    $query .= '([' . implode('], [', $insert_fields) . ']) ';
+    $query .= 'VALUES ' . implode(', ', $insert_values);
+
+    // Updating the unique / primary key is not necessary.
+    unset($insert_fields[$key]);
+
+    $update = [];
+    foreach ($insert_fields as $field) {
+      // The "excluded." prefix causes the field to refer to the value for field
+      // that would have been inserted had there been no conflict.
+      $update[] = "[$field] = EXCLUDED.[$field]";
+    }
+
+    $query .= ' ON CONFLICT (' . $this->connection->escapeField($key) . ') DO UPDATE SET ' . implode(', ', $update);
+
+    return $query;
   }
 
   /**
