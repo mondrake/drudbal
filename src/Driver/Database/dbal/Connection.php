@@ -434,39 +434,6 @@ class Connection extends DatabaseConnection {
   /**
    * {@inheritdoc}
    */
-  public function prepareStatement(string $query, array $options): StatementInterface {
-    try {
-      $query = $this->prefixTables($query);
-      if (!($options['allow_square_brackets'] ?? FALSE)) {
-        $query = $this->quoteIdentifiers($query);
-      }
-
-      // To protect against SQL injection, Drupal only supports executing one
-      // statement at a time.  Thus, the presence of a SQL delimiter (the
-      // semicolon) is not allowed unless the option is set.  Allowing
-      // semicolons should only be needed for special cases like defining a
-      // function or stored procedure in SQL. Trim any trailing delimiter to
-      // minimize false positives unless delimiter is allowed.
-      $trim_chars = " \xA0\t\n\r\0\x0B";
-      if (empty($options['allow_delimiter_in_query'])) {
-        $trim_chars .= ';';
-      }
-      $query = rtrim($query, $trim_chars);
-      if (strpos($query, ';') !== FALSE && empty($options['allow_delimiter_in_query'])) {
-        throw new \InvalidArgumentException('; is not supported in SQL strings. Use only one statement at a time.');
-      }
-
-      $statement = new $this->statementWrapperClass($this, $this->getDbalConnection(), $query, $options['pdo'] ?? []);
-    }
-    catch (\Exception $e) {
-      $this->exceptionHandler()->handleStatementException($e, $query, $options);
-    }
-    return $statement;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function escapeField($field) {
     return $this->getDbalExtension()->getDbFieldName($field, TRUE);
   }
