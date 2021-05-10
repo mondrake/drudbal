@@ -305,27 +305,6 @@ interface DbalExtensionInterface {
   public function delegateQueryRange($query, $from, $count, array $args = [], array $options = []);
 
   /**
-   * Runs a SELECT query and stores its results in a temporary table.
-   *
-   * @param string $drupal_table_name
-   *   A string with the Drupal name of the table to be generated.
-   * @param string $query
-   *   A string containing a normal SELECT SQL query.
-   * @param array $args
-   *   (optional) An array of values to substitute into the query at placeholder
-   *   markers.
-   * @param array $options
-   *   (optional) An associative array of options to control how the query is
-   *   run. See the documentation for DatabaseConnection::defaultOptions() for
-   *   details.
-   *
-   * @return \Drupal\Core\Database\StatementInterface
-   *   A database query result resource, or NULL if the query was not executed
-   *   correctly.
-   */
-  public function delegateQueryTemporary(string $query, array $args = [], array $options = []): string;
-
-  /**
    * Handles exceptions thrown by Connection::popCommittableTransactions().
    *
    * @param \Doctrine\DBAL\Exception\DriverException $e

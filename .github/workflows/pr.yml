@@ -15,7 +15,8 @@ env:
       "Drupal\\KernelTests\\Core\\Database\\SchemaTest",
       "Drupal\\KernelTests\\Core\\Database\\StatementWrapperLegacyTest",
       "Drupal\\KernelTests\\Core\\Cache\\ApcuBackendTest",
-      "Drupal\\KernelTests\\Core\\Cache\\EndOfTransactionQueriesTest"
+      "Drupal\\KernelTests\\Core\\Cache\\EndOfTransactionQueriesTest",
+      "Drupal\\Tests\\system\\Functional\\Database\\TemporaryQueryTest"
     ]'
     DRUPAL_TEST_RESULTS_DB: "sites/test_results.sqlite"
 
