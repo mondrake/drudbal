@@ -313,15 +313,6 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateQueryTemporary(string $query, array $args = [], array $options = []): string {
-    $table_name = $this->generateTemporaryTableName();
-    $this->connection->query('CREATE TEMPORARY TABLE {' . $table_name . '} Engine=MEMORY ' . $query, $args, $options);
-    return $table_name;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function delegateReleaseSavepointExceptionProcess(DbalDriverException $e) {
     // In MySQL (InnoDB), savepoints are automatically committed
     // when tables are altered or created (DDL transactions are not

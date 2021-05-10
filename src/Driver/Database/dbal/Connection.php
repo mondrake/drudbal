@@ -376,13 +376,6 @@ class Connection extends DatabaseConnection {
   /**
    * {@inheritdoc}
    */
-  public function queryTemporary($query, array $args = [], array $options = []) {
-    return $this->dbalExtension->delegateQueryTemporary($query, $args, $options);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function driver() {
     return 'dbal';
   }

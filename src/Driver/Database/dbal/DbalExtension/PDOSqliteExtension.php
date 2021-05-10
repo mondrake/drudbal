@@ -375,21 +375,6 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateQueryTemporary(string $query, array $args = [], array $options = []): string {
-    $table_name = $this->generateTemporaryTableName();
-    $this->connection->query('CREATE TEMPORARY TABLE ' . $table_name . ' AS ' . $query, $args, $options);
-
-    // Temp tables should not be prefixed.
-    $prefixes = $this->connection->getPrefixes();
-    $prefixes[$table_name] = '';
-    $this->connection->setPrefixPublic($prefixes);
-
-    return $table_name;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function delegateReleaseSavepointExceptionProcess(DbalDriverException $e) {
     throw $e;
   }

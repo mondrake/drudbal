@@ -36,8 +36,6 @@ class Oci8Extension extends AbstractExtension {
     'NOT LIKE' => ['postfix' => " ESCAPE '\\'"],
   ];
 
-  private $tempTables = [];
-
   /**
    * Map of database identifiers.
    *
@@ -47,22 +45,6 @@ class Oci8Extension extends AbstractExtension {
    * @var string[]
    */
   private $dbIdentifiersMap = [];
-
-  /**
-   * Destructs an Oci8 extension object.
-   */
-  public function __destruct() {
-    foreach ($this->tempTables as $db_table) {
-      try {
-        $this->getDbalConnection()->exec("TRUNCATE TABLE $db_table");
-        $this->getDbalConnection()->exec("DROP TABLE $db_table");
-      }
-      catch (\Exception $e) {
-        throw new \RuntimeException("Missing temp table $db_table", $e->getCode(), $e);
-      }
-    }
-    parent::__destruct();
-  }
 
   /**
    * Database asset name resolution methods.
@@ -253,36 +235,6 @@ class Oci8Extension extends AbstractExtension {
   public function delegateQueryRange($query, $from, $count, array $args = [], array $options = []) {
     $limit_query = $this->getDbalConnection()->getDatabasePlatform()->modifyLimitQuery($query, $count, $from);
     return $this->connection->query($limit_query, $args, $options);
-  }
-
-  /**
-   * Generates a temporary table name.
-   *
-   * @return string
-   *   A table name.
-   */
-  protected function generateTemporaryTableName() {
-    return $this->getLimitedIdentifier(parent::generateTemporaryTableName(), 24);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function delegateQueryTemporary(string $query, array $args = [], array $options = []): string {
-    $table_name = $this->generateTemporaryTableName();
-    $this->connection->query("CREATE GLOBAL TEMPORARY TABLE \"$table_name\" ON COMMIT PRESERVE ROWS AS $query", $args, $options);
-
-    // @todo Oracle 18 allows session scoped temporary tables, but until then
-    //   we need to store away the table being created and drop it during
-    //   destruction.
-    $this->tempTables[$table_name] = '"' . $table_name . '"';
-
-    // Temp tables should not be prefixed.
-    $prefixes = $this->connection->getPrefixes();
-    $prefixes[$table_name] = '';
-    $this->connection->setPrefixPublic($prefixes);
-
-    return $table_name;
   }
 
   /**
