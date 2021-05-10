@@ -16,6 +16,7 @@ env:
       "Drupal\\KernelTests\\Core\\Database\\ConnectionUnitTest",
       "Drupal\\KernelTests\\Core\\Database\\DatabaseExceptionWrapperTest",
       "Drupal\\KernelTests\\Core\\Database\\StatementWrapperLegacyTest",
+      "Drupal\\Tests\\system\\Functional\\Database\\TemporaryQueryTest",
       "Drupal\\Tests\\views\\Kernel\\ViewElementTest"
     ]'
 

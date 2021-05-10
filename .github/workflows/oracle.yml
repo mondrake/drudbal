@@ -17,7 +17,8 @@ env:
       "Drupal\\KernelTests\\Core\\Database\\ConnectionUnitTest",
       "Drupal\\KernelTests\\Core\\Database\\DatabaseExceptionWrapperTest",
       "Drupal\\KernelTests\\Core\\Database\\SchemaTest",
-      "Drupal\\KernelTests\\Core\\Database\\StatementWrapperLegacyTest"
+      "Drupal\\KernelTests\\Core\\Database\\StatementWrapperLegacyTest",
+      "Drupal\\Tests\\system\\Functional\\Database\\TemporaryQueryTest"
     ]'
 
 jobs:
