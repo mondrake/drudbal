@@ -110,6 +110,7 @@ class StatementWrapper extends BaseStatementWrapper {
    * {@inheritdoc}
    */
   public function execute($args = [], $options = []) {
+dump($this);
     $args = $args ?? [];
 
     // Prepare the lower-level statement if it's not been prepared already.
