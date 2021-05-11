@@ -85,7 +85,7 @@ class StatementWrapper extends BaseStatementWrapper {
    * call of the execute method, to allow replacing named parameters with
    * positional ones if needed.
    *
-   * @param \Drupal\drudbal\Driver\Database\dbal\Connection $dbh
+   * @param \Drupal\drudbal\Driver\Database\dbal\Connection $connection
    *   The database connection object for this statement.
    * @param object $client_connection
    *   Client database connection object, for example \PDO.
@@ -93,12 +93,16 @@ class StatementWrapper extends BaseStatementWrapper {
    *   A string containing an SQL query.
    * @param array $driver_options
    *   (optional) An array of driver options for this query.
+   * @param bool $row_count_enabled
+   *   (optional) Enables counting the rows affected. Defaults to FALSE.
    */
-  public function __construct(DruDbalConnection $dbh, DbalConnection $client_connection, string $query, array $driver_options = []) {
-    $this->queryString = $query;
-    $this->dbh = $dbh;
-    $this->dbalConnection = $client_connection;
+  public function __construct(DruDbalConnection $dbh, DbalConnection $client_connection, string $query, array $driver_options = [], bool $row_count_enabled = FALSE) {
+    $this->connection = $connection;
+    $this->rowCountEnabled = $row_count_enabled;
     $this->setFetchMode(\PDO::FETCH_OBJ);
+
+    $this->queryString = $query;
+    $this->dbalConnection = $client_connection;
     $this->driverOpts = $driver_options;
   }
 
