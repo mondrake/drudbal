@@ -32,10 +32,10 @@ class Upsert extends QueryUpsert {
     $sql = (string) $this;
 
     // Loop through the values to be UPSERTed.
-    $last_insert_id = NULL;
+    $affected_rows = NULL;
     if ($this->insertValues) {
       if ($this->connection->getDbalExtension()->hasNativeUpsert()) {
-        // Use native UPSERT.
+        // Native UPSERT.
         $max_placeholder = 0;
         $values = [];
         foreach ($this->insertValues as $insert_values) {
@@ -43,13 +43,14 @@ class Upsert extends QueryUpsert {
             $values[':db_insert_placeholder_' . $max_placeholder++] = $value;
           }
         }
-        $last_insert_id = $this->connection->query($sql, $values, $this->queryOptions);
+        $affected_rows = $this->connection->query($sql, $values, $this->queryOptions);
       }
       else {
         // Emulated UPSERT.
         // @codingStandardsIgnoreLine
         $trn = $this->connection->startTransaction();
 
+        $affected_rows = 0;
         foreach ($this->insertValues as $insert_values) {
           $max_placeholder = 0;
           $values = [];
@@ -57,12 +58,13 @@ class Upsert extends QueryUpsert {
             $values[':db_insert_placeholder_' . $max_placeholder++] = $value;
           }
           try {
-            $last_insert_id = $this->connection->query($sql, $values, $this->queryOptions);
+            $affected_rows += $this->connection->query($sql, $values, $this->queryOptions);
           }
           catch (IntegrityConstraintViolationException $e) {
             // Update the record at key in case of integrity constraint
             // violation.
             $this->fallbackUpdate($insert_values);
+            $affected_rows++;
           }
         }
       }
@@ -71,13 +73,14 @@ class Upsert extends QueryUpsert {
       // If there are no values, then this is a default-only query. We still
       // need to handle that.
       try {
-        $last_insert_id = $this->connection->query($sql, [], $this->queryOptions);
+        $affected_rows = $this->connection->query($sql, [], $this->queryOptions);
       }
       catch (IntegrityConstraintViolationException $e) {
         // Update the record at key in case of integrity constraint
         // violation.
         if (!$this->connection->getDbalExtension()->hasNativeUpsert()) {
           $this->fallbackUpdate([]);
+          $affected_rows = 1;
         }
       }
     }
@@ -85,36 +88,32 @@ class Upsert extends QueryUpsert {
     // Re-initialize the values array so that we can re-use this query.
     $this->insertValues = [];
 
-    return $last_insert_id;
+    return $affected_rows;
   }
 
   /**
    * {@inheritdoc}
    */
   public function __toString() {
-    $dbal_extension = $this->connection->getDbalExtension();
-
     $comments = $this->connection->makeComment($this->comments);
 
     // Delegate to DBAL extension.
-    if ($dbal_extension->hasNativeUpsert()) {
+    if ($this->connection->getDbalExtension()->hasNativeUpsert()) {
       $insert_fields = array_merge($this->defaultFields, $this->insertFields);
       $insert_values = $this->getInsertPlaceholderFragment($this->insertValues, $this->defaultFields);
-      return $dbal_extension->delegateUpsertSql($this->table, $this->key, $insert_fields, $insert_values, $comments);
+      return $this->connection->getDbalExtension()->delegateUpsertSql($this->table, $this->key, $insert_fields, $insert_values, $comments);
     }
-
-    $dbal_connection = $this->connection->getDbalConnection();
 
     // Use DBAL query builder to prepare an INSERT query. Need to pass the
     // quoted table name here.
-    $dbal_query = $dbal_connection->createQueryBuilder()->insert($this->connection->getPrefixedTableName($this->table, TRUE));
+    $dbal_query = $this->connection->getDbalConnection()->createQueryBuilder()->insert($this->connection->getPrefixedTableName($this->table, TRUE));
 
     foreach ($this->defaultFields as $field) {
-      $dbal_query->setValue($dbal_extension->getDbFieldName($field, TRUE), 'DEFAULT');
+      $dbal_query->setValue($this->connection->getDbalExtension()->getDbFieldName($field, TRUE), 'DEFAULT');
     }
     $max_placeholder = 0;
     foreach ($this->insertFields as $field) {
-      $dbal_query->setValue($dbal_extension->getDbFieldName($field, TRUE), ':db_insert_placeholder_' . $max_placeholder++);
+      $dbal_query->setValue($this->connection->getDbalExtension()->getDbFieldName($field, TRUE), ':db_insert_placeholder_' . $max_placeholder++);
     }
     return $comments . $dbal_query->getSQL();
   }
@@ -130,16 +129,13 @@ class Upsert extends QueryUpsert {
    *   The number of records updated (should be 1).
    */
   protected function fallbackUpdate(array $insert_values): int {
-    $dbal_connection = $this->connection->getDbalConnection();
-    $dbal_extension = $this->connection->getDbalExtension();
-
     // Use the DBAL query builder for the UPDATE. Need to pass the quoted table
     // name here.
-    $dbal_query = $dbal_connection->createQueryBuilder()->update($this->connection->getPrefixedTableName($this->table, TRUE));
+    $dbal_query = $this->connection->getDbalConnection()->createQueryBuilder()->update($this->connection->getPrefixedTableName($this->table, TRUE));
 
     // Set default fields first.
     foreach ($this->defaultFields as $field) {
-      $dbal_query->set($dbal_extension->getDbFieldName($field), 'DEFAULT');
+      $dbal_query->set($this->connection->getDbalExtension()->getDbFieldName($field), 'DEFAULT');
     }
 
     // Set values fields.
@@ -147,13 +143,13 @@ class Upsert extends QueryUpsert {
       if ($this->insertFields[$i] != $this->key) {
         // Updating the unique / primary key is not necessary.
         $dbal_query
-          ->set($dbal_extension->getDbFieldName($this->insertFields[$i], TRUE), ':db_update_placeholder_' . $i)
+          ->set($this->connection->getDbalExtension()->getDbFieldName($this->insertFields[$i], TRUE), ':db_update_placeholder_' . $i)
           ->setParameter('db_update_placeholder_' . $i, $insert_values[$i]);
       }
       else {
         // The unique / primary key is the WHERE condition for the UPDATE.
         $dbal_query
-          ->where($dbal_query->expr()->eq($dbal_extension->getDbFieldName($this->insertFields[$i], TRUE), ':db_condition_placeholder_0'))
+          ->where($dbal_query->expr()->eq($this->connection->getDbalExtension()->getDbFieldName($this->insertFields[$i], TRUE), ':db_condition_placeholder_0'))
           ->setParameter('db_condition_placeholder_0', $insert_values[$i]);
       }
     }
