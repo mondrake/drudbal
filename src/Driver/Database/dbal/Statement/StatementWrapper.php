@@ -96,7 +96,7 @@ class StatementWrapper extends BaseStatementWrapper {
    * @param bool $row_count_enabled
    *   (optional) Enables counting the rows affected. Defaults to FALSE.
    */
-  public function __construct(DruDbalConnection $dbh, DbalConnection $client_connection, string $query, array $driver_options = [], bool $row_count_enabled = FALSE) {
+  public function __construct(DruDbalConnection $connection, DbalConnection $client_connection, string $query, array $driver_options = [], bool $row_count_enabled = FALSE) {
     $this->connection = $connection;
     $this->rowCountEnabled = $row_count_enabled;
     $this->setFetchMode(\PDO::FETCH_OBJ);
@@ -110,7 +110,7 @@ class StatementWrapper extends BaseStatementWrapper {
    * {@inheritdoc}
    */
   public function execute($args = [], $options = []) {
-dump($this);
+//dump($this);
     $args = $args ?? [];
 
     // Prepare the lower-level statement if it's not been prepared already.
