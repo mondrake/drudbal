@@ -115,7 +115,7 @@ class StatementWrapper extends BaseStatementWrapper {
     // Prepare the lower-level statement if it's not been prepared already.
     if (!$this->clientStatement) {
       // Replace named placeholders with positional ones if needed.
-      if (!$this->dbh->getDbalExtension()->delegateNamedPlaceholdersSupport()) {
+      if (!$this->connection->getDbalExtension()->delegateNamedPlaceholdersSupport()) {
         $this->paramsPositions = array_flip(array_keys($args));
         list($query, $args) = $this->dbh->expandArrayParameters($this->queryString, $args, []);
         $this->queryString = $query;
