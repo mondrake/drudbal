@@ -110,13 +110,12 @@ class StatementWrapper extends BaseStatementWrapper {
    * {@inheritdoc}
    */
   public function execute($args = [], $options = []) {
-//dump($this);
     $args = $args ?? [];
 
     // Prepare the lower-level statement if it's not been prepared already.
     if (!$this->clientStatement) {
       // Replace named placeholders with positional ones if needed.
-      if (!$this->connection->getDbalExtension()->delegateNamedPlaceholdersSupport()) {
+      if (!$this->dbh->getDbalExtension()->delegateNamedPlaceholdersSupport()) {
         $this->paramsPositions = array_flip(array_keys($args));
         list($query, $args) = $this->dbh->expandArrayParameters($this->queryString, $args, []);
         $this->queryString = $query;
