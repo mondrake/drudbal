@@ -66,8 +66,13 @@ class Upsert extends QueryUpsert {
           }
           try {
             $stmt = $this->connection->prepareStatement($sql, $this->queryOptions, TRUE);
-            $stmt->execute($values, $this->queryOptions);
-            $affected_rows += $stmt->rowCount();
+            try {
+              $stmt->execute($values, $this->queryOptions);
+              $affected_rows += $stmt->rowCount();
+            }
+            catch (\Exception $e) {
+              $this->connection->exceptionHandler()->handleExecutionException($e, $stmt, $values, $this->queryOptions);
+            }
           }
           catch (IntegrityConstraintViolationException $e) {
             // Update the record at key in case of integrity constraint
@@ -83,8 +88,13 @@ class Upsert extends QueryUpsert {
       // need to handle that.
       try {
         $stmt = $this->connection->prepareStatement($sql, $this->queryOptions, TRUE);
-        $stmt->execute([], $this->queryOptions);
-        $affected_rows = $stmt->rowCount();
+        try {
+          $stmt->execute([], $this->queryOptions);
+          $affected_rows = $stmt->rowCount();
+        }
+        catch (\Exception $e) {
+          $this->connection->exceptionHandler()->handleExecutionException($e, $stmt, [], $this->queryOptions);
+        }
       }
       catch (IntegrityConstraintViolationException $e) {
         // Update the record at key in case of integrity constraint
