@@ -14,6 +14,7 @@ env:
       "Drupal\\KernelTests\\Core\\Database\\DatabaseExceptionWrapperTest",
       "Drupal\\KernelTests\\Core\\Database\\SchemaTest",
       "Drupal\\KernelTests\\Core\\Database\\StatementWrapperLegacyTest",
+      "Drupal\\KernelTests\\Core\\Database\\StatementTest",
       "Drupal\\KernelTests\\Core\\Cache\\ApcuBackendTest",
       "Drupal\\KernelTests\\Core\\Cache\\EndOfTransactionQueriesTest",
       "Drupal\\Tests\\system\\Functional\\Database\\TemporaryQueryTest"
@@ -36,8 +37,8 @@ jobs:
       fail-fast: false
       matrix:
         php-version:
-          - "7.4"
-#          - "8.0"
+#          - "7.4"
+          - "8.0"
         test-args:
           - "--group Database"
 

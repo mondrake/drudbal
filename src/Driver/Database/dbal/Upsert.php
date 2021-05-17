@@ -43,7 +43,14 @@ class Upsert extends QueryUpsert {
             $values[':db_insert_placeholder_' . $max_placeholder++] = $value;
           }
         }
-        $affected_rows = $this->connection->query($sql, $values, $this->queryOptions);
+        $stmt = $this->connection->prepareStatement((string) $this, $this->queryOptions, TRUE);
+        try {
+          $stmt->execute($values, $this->queryOptions);
+          $affected_rows = $stmt->rowCount();
+        }
+        catch (\Exception $e) {
+          $this->connection->exceptionHandler()->handleExecutionException($e, $stmt, $values, $this->queryOptions);
+        }
       }
       else {
         // Emulated UPSERT.
@@ -58,7 +65,14 @@ class Upsert extends QueryUpsert {
             $values[':db_insert_placeholder_' . $max_placeholder++] = $value;
           }
           try {
-            $affected_rows += $this->connection->query($sql, $values, $this->queryOptions);
+            $stmt = $this->connection->prepareStatement($sql, $this->queryOptions, TRUE);
+            try {
+              $stmt->execute($values, $this->queryOptions);
+              $affected_rows += $stmt->rowCount();
+            }
+            catch (\Exception $e) {
+              $this->connection->exceptionHandler()->handleExecutionException($e, $stmt, $values, $this->queryOptions);
+            }
           }
           catch (IntegrityConstraintViolationException $e) {
             // Update the record at key in case of integrity constraint
@@ -73,7 +87,14 @@ class Upsert extends QueryUpsert {
       // If there are no values, then this is a default-only query. We still
       // need to handle that.
       try {
-        $affected_rows = $this->connection->query($sql, [], $this->queryOptions);
+        $stmt = $this->connection->prepareStatement($sql, $this->queryOptions, TRUE);
+        try {
+          $stmt->execute([], $this->queryOptions);
+          $affected_rows = $stmt->rowCount();
+        }
+        catch (\Exception $e) {
+          $this->connection->exceptionHandler()->handleExecutionException($e, $stmt, [], $this->queryOptions);
+        }
       }
       catch (IntegrityConstraintViolationException $e) {
         // Update the record at key in case of integrity constraint

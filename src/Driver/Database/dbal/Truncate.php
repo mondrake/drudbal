@@ -18,19 +18,24 @@ class Truncate extends QueryTruncate {
    * {@inheritdoc}
    */
   public function execute() {
-    $dbal_extension = $this->connection->getDbalExtension();
-
     // Allow DBAL extension to process commands before a DDL TRUNCATE.
     if (!$this->connection->inTransaction()) {
-      $dbal_extension->preTruncate($this->table);
+      $this->connection->getDbalExtension()->preTruncate($this->table);
     }
 
     // Process the truncate, either DDL or via DELETE.
-    $result = $this->connection->query((string) $this, [], $this->queryOptions);
+    $stmt = $this->connection->prepareStatement((string) $this, $this->queryOptions, TRUE);
+    try {
+      $stmt->execute([], $this->queryOptions);
+      $result = $stmt->rowCount();
+    }
+    catch (\Exception $e) {
+      $this->connection->exceptionHandler()->handleExecutionException($e, $stmt, [], $this->queryOptions);
+    }
 
     // Allow DBAL extension to process commands after a DDL TRUNCATE.
     if (!$this->connection->inTransaction()) {
-      $dbal_extension->postTruncate($this->table);
+      $this->connection->getDbalExtension()->postTruncate($this->table);
     }
 
     return $result;
@@ -41,18 +46,17 @@ class Truncate extends QueryTruncate {
    */
   public function __toString() {
     $comments = $this->connection->makeComment($this->comments);
-    $dbal_connection = $this->connection->getDbalConnection();
     $prefixed_table = $this->connection->getPrefixedTableName($this->table, TRUE);
 
     // In most cases, TRUNCATE is not a transaction safe statement as it is a
     // DDL statement which results in an implicit COMMIT. When we are in a
     // transaction, fallback to the slower, but transactional, DELETE.
     if ($this->connection->inTransaction()) {
-      $dbal_query = $dbal_connection->createQueryBuilder()->delete($prefixed_table);
+      $dbal_query = $this->connection->getDbalConnection()->createQueryBuilder()->delete($prefixed_table);
       return $comments . $dbal_query->getSQL();
     }
     else {
-      $sql = $dbal_connection->getDatabasePlatform()->getTruncateTableSql($prefixed_table);
+      $sql = $this->connection->getDbalConnection()->getDatabasePlatform()->getTruncateTableSql($prefixed_table);
       return $comments . $sql;
     }
   }

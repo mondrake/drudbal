@@ -216,10 +216,15 @@ class Oci8Extension extends AbstractExtension {
   public function delegateNextId(int $existing_id = 0): int {
     // @codingStandardsIgnoreLine
     $trn = $this->connection->startTransaction();
-    $affected = $this->connection->query('UPDATE {sequences} SET [value] = GREATEST([value], :existing_id) + 1', [
-      ':existing_id' => $existing_id,
-    ], ['return' => Database::RETURN_AFFECTED]);
-    if (!$affected) {
+    $stmt = $this->connection->prepareStatement('UPDATE {sequences} SET [value] = GREATEST([value], :existing_id) + 1', [], TRUE);
+    $args = [':existing_id' => $existing_id];
+    try {
+      $stmt->execute($args);
+    }
+    catch (\Exception $e) {
+      $this->connection->exceptionHandler()->handleExecutionException($e, $stmt, $args, []);
+    }
+    if ($stmt->rowCount() === 0) {
       $this->connection->query('INSERT INTO {sequences} ([value]) VALUES (:new_id)', [
         ':new_id' => $existing_id + 1,
       ]);
