@@ -307,6 +307,7 @@ class StatementWrapper extends BaseStatementWrapper {
    */
   public function fetchObject(string $class_name = NULL, array $constructor_arguments = NULL) {
     if (isset($class_name)) {
+ dump([$class_name, $constructor_arguments]);
       $this->fetchStyle = \PDO::FETCH_CLASS;
       $this->fetchOptions = [
         'class' => $class_name,

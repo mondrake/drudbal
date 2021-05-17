@@ -213,6 +213,13 @@ class PrefetchingStatementWrapper implements \IteratorAggregate, StatementInterf
   /**
    * {@inheritdoc}
    */
+  public function getConnectionTarget(): string {
+    return $this->connection->getTarget();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function execute($args = [], $options = []) {
     $args = $args ?? [];
 

@@ -65,7 +65,9 @@ class Upsert extends QueryUpsert {
             $values[':db_insert_placeholder_' . $max_placeholder++] = $value;
           }
           try {
-            $affected_rows += $this->connection->query($sql, $values, $this->queryOptions);
+            $stmt = $this->connection->prepareStatement($sql, $this->queryOptions, TRUE);
+            $stmt->execute($values, $this->queryOptions);
+            $affected_rows += $stmt->rowCount();
           }
           catch (IntegrityConstraintViolationException $e) {
             // Update the record at key in case of integrity constraint
@@ -80,7 +82,9 @@ class Upsert extends QueryUpsert {
       // If there are no values, then this is a default-only query. We still
       // need to handle that.
       try {
-        $affected_rows = $this->connection->query($sql, [], $this->queryOptions);
+        $stmt = $this->connection->prepareStatement($sql, $this->queryOptions, TRUE);
+        $stmt->execute([], $this->queryOptions);
+        $affected_rows = $stmt->rowCount();
       }
       catch (IntegrityConstraintViolationException $e) {
         // Update the record at key in case of integrity constraint
