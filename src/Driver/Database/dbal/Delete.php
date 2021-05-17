@@ -25,8 +25,7 @@ class Delete extends QueryDelete {
    * {@inheritdoc}
    */
   public function execute() {
-    $stmt = $this->connection->prepareStatement((string) $this, $this->queryOptions);
-    $stmt->allowRowCount = TRUE;
+    $stmt = $this->connection->prepareStatement((string) $this, $this->queryOptions, TRUE);
     try {
       $stmt->execute($this->dbalQuery->getParameters(), $this->queryOptions);
       return $stmt->rowCount();

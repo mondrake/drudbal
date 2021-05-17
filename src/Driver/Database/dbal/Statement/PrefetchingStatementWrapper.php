@@ -23,20 +23,18 @@ use Drupal\drudbal\Driver\Database\dbal\Connection as DruDbalConnection;
 class PrefetchingStatementWrapper implements \IteratorAggregate, StatementInterface {
 
   /**
-   * Reference to the database connection object for this statement.
+   * The Drupal database connection object.
    *
-   * The name $dbh is inherited from \PDOStatement.
-   *
-   * @var \Drupal\drudbal\Driver\Database\dbal\Connection
+   * @var \Drupal\Core\Database\Connection
    */
-  public $dbh;
+  protected $connection;
 
   /**
    * Is rowCount() execution allowed.
    *
    * @var bool
    */
-  public $allowRowCount = FALSE;
+  protected $rowCountEnabled = FALSE;
 
   /**
    * The DBAL statement.
@@ -191,7 +189,7 @@ class PrefetchingStatementWrapper implements \IteratorAggregate, StatementInterf
    * call of the execute method, to allow replacing named parameters with
    * positional ones if needed.
    *
-   * @param \Drupal\drudbal\Driver\Database\dbal\Connection $dbh
+   * @param \Drupal\drudbal\Driver\Database\dbal\Connection $connection
    *   The database connection object for this statement.
    * @param object $client_connection
    *   Client database connection object, for example \PDO.
@@ -199,10 +197,14 @@ class PrefetchingStatementWrapper implements \IteratorAggregate, StatementInterf
    *   A string containing an SQL query.
    * @param array $driver_options
    *   (optional) An array of driver options for this query.
+   * @param bool $row_count_enabled
+   *   (optional) Enables counting the rows affected. Defaults to FALSE.
    */
-  public function __construct(DruDbalConnection $dbh, DbalConnection $client_connection, string $query, array $driver_options = []) {
+  public function __construct(DruDbalConnection $connection, DbalConnection $client_connection, string $query, array $driver_options = [], bool $row_count_enabled = FALSE) {
+    $this->connection = $connection;
+    $this->rowCountEnabled = $row_count_enabled;
+
     $this->queryString = $query;
-    $this->dbh = $dbh;
     $this->dbalConnection = $client_connection;
     $this->setFetchMode(\PDO::FETCH_OBJ);
     $this->driverOpts = $driver_options;
@@ -217,21 +219,21 @@ class PrefetchingStatementWrapper implements \IteratorAggregate, StatementInterf
     // Prepare the lower-level statement if it's not been prepared already.
     if (!$this->dbalStatement) {
       // Replace named placeholders with positional ones if needed.
-      if (!$this->dbh->getDbalExtension()->delegateNamedPlaceholdersSupport()) {
+      if (!$this->connection->getDbalExtension()->delegateNamedPlaceholdersSupport()) {
         $this->paramsPositions = array_flip(array_keys($args));
-        list($query, $args) = $this->dbh->expandArrayParameters($this->queryString, $args, []);
+        list($query, $args) = $this->connection->expandArrayParameters($this->queryString, $args, []);
         $this->queryString = $query;
       }
 
       try {
-        $this->dbh->getDbalExtension()->alterStatement($this->queryString, $args);
-        $this->dbalStatement = $this->dbh->getDbalConnection()->prepare($this->queryString);
+        $this->connection->getDbalExtension()->alterStatement($this->queryString, $args);
+        $this->dbalStatement = $this->connection->getDbalConnection()->prepare($this->queryString);
       }
       catch (DbalException $e) {
         throw new DatabaseExceptionWrapper($e->getMessage(), $e->getCode(), $e);
       }
     }
-    elseif (!$this->dbh->getDbalExtension()->delegateNamedPlaceholdersSupport()) {
+    elseif (!$this->connection->getDbalExtension()->delegateNamedPlaceholdersSupport()) {
       // Transform the $args to positional if needed.
       $tmp = [];
       foreach ($this->paramsPositions as $param => $pos) {
@@ -249,7 +251,7 @@ class PrefetchingStatementWrapper implements \IteratorAggregate, StatementInterf
       }
     }
 
-    $logger = $this->dbh->getLogger();
+    $logger = $this->connection->getLogger();
     if (!empty($logger)) {
       $query_start = microtime(TRUE);
     }
@@ -485,7 +487,7 @@ class PrefetchingStatementWrapper implements \IteratorAggregate, StatementInterf
    */
   public function rowCount() {
     // SELECT query should not use the method.
-    if ($this->allowRowCount) {
+    if ($this->rowCountEnabled) {
       return $this->rowCount;
     }
     else {
