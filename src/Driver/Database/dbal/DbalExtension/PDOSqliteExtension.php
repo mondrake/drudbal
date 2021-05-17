@@ -349,20 +349,21 @@ class PDOSqliteExtension extends AbstractExtension {
     // override nextId. However, this is unlikely as we deal with short strings
     // and integers and no known databases require special handling for those
     // simple cases. If another transaction wants to write the same row, it will
-    // wait until this transaction commits. Also, the return value needs to be
-    // set to RETURN_AFFECTED as if it were a real update() query otherwise it
-    // is not possible to get the row count properly.
-    $affected = $this->connection->query('UPDATE {sequences} SET value = GREATEST(value, :existing_id) + 1', [
-      ':existing_id' => $existing_id,
-    ], ['return' => Database::RETURN_AFFECTED]);
-    if (!$affected) {
-      $this->connection->query('INSERT INTO {sequences} (value) VALUES (:existing_id + 1)', [
-        ':existing_id' => $existing_id,
-      ]);
+    // wait until this transaction commits.
+    $stmt = $this->connection->prepareStatement('UPDATE {sequences} SET [value] = GREATEST([value], :existing_id) + 1', [], TRUE);
+    $args = [':existing_id' => $existing_id];
+    try {
+      $stmt->execute($args);
+    }
+    catch (\Exception $e) {
+      $this->connection->exceptionHandler()->handleExecutionException($e, $stmt, $args, []);
+    }
+    if ($stmt->rowCount() === 0) {
+      $this->connection->query('INSERT INTO {sequences} ([value]) VALUES (:existing_id + 1)', $args);
     }
     // The transaction gets committed when the transaction object gets destroyed
     // because it gets out of scope.
-    return $this->connection->query('SELECT value FROM {sequences}')->fetchField();
+    return $this->connection->query('SELECT [value] FROM {sequences}')->fetchField();
   }
 
   /**

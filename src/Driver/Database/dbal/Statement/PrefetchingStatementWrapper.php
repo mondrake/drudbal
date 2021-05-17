@@ -263,7 +263,7 @@ class PrefetchingStatementWrapper implements \IteratorAggregate, StatementInterf
       throw new DatabaseExceptionWrapper($e->getMessage(), $e->getCode(), $e);
     }
 
-    if ($options['return'] == Database::RETURN_AFFECTED) {
+    if ($this->rowCountEnabled) {
       $this->rowCount = $this->dbalResult->rowCount();
     }
 
