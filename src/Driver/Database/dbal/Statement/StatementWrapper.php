@@ -211,9 +211,7 @@ class StatementWrapper extends BaseStatementWrapper {
       case \PDO::FETCH_CLASS:
         $constructor_arguments = $this->fetchOptions['constructor_args'] ?? [];
         $class_obj = new $this->fetchClass(...$constructor_arguments);
-
- dump([$class_obj, $constructor_arguments,$row]);
-       foreach ($row as $column => $value) {
+        foreach ($row as $column => $value) {
           $class_obj->$column = $value;
         }
         return $class_obj;
