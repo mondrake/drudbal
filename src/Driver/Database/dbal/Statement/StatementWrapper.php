@@ -79,6 +79,16 @@ class StatementWrapper extends BaseStatementWrapper {
   protected $fetchClass;
 
   /**
+   * Holds supplementary fetch options.
+   *
+   * @var array
+   */
+  protected $fetchOptions = [
+    'class' => 'stdClass',
+    'constructor_args' => [],
+  ];
+
+  /**
    * Constructs a Statement object.
    *
    * Preparation of the actual lower-level statement is deferred to the first
