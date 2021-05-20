@@ -552,12 +552,17 @@ class Connection extends DatabaseConnection {
    * @internal
    */
   protected function doCommit() {
-    try {
-      $this->getDbalConnection()->commit();
-      $success = TRUE;
-    }
-    catch (DbalConnectionException $e) {
+    if (!$this->connection->inTransaction()) {
       $success = FALSE;
+    }
+    else {
+      try {
+        $this->getDbalConnection()->commit();
+        $success = TRUE;
+      }
+      catch (DbalConnectionException $e) {
+        $success = FALSE;
+      }
     }
 
     if (!empty($this->rootTransactionEndCallbacks)) {
