@@ -561,7 +561,7 @@ class Connection extends DatabaseConnection {
         $success = TRUE;
       }
       catch (\Exception $e) {
-        $success = FALSE;
+        $success = TRUE;
       }
     }
 
