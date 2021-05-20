@@ -552,7 +552,7 @@ class Connection extends DatabaseConnection {
    * @internal
    */
   protected function doCommit() {
-    if (!$this->connection->inTransactionActive()) {
+    if (!$this->connection->isTransactionActive()) {
       $success = FALSE;
     }
     else {
