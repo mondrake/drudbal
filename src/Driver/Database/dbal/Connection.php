@@ -560,7 +560,7 @@ class Connection extends DatabaseConnection {
         $this->getDbalConnection()->commit();
         $success = TRUE;
       }
-      catch (DbalConnectionException $e) {
+      catch (\Exception $e) {
         $success = FALSE;
       }
     }
