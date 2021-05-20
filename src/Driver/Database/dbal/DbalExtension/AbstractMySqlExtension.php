@@ -324,11 +324,16 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
     if ($e->getCode() == '1305') {
       // We also have to explain to PDO that the transaction stack has
       // been cleaned-up.
-      try {
-        $this->getDbalConnection()->commit();
-      }
-      catch (DbalConnectionException $exc) {
+      if (!$this->getDbalConnection()->isTransactionActive()) {
         throw new TransactionCommitFailedException();
+      }
+      else {
+        try {
+          $this->getDbalConnection()->commit();
+        }
+        catch (\Exception $e) {
+          // Do nothing.
+        }
       }
       // If one SAVEPOINT was released automatically, then all were.
       // Therefore, clean the transaction stack.
