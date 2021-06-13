@@ -268,6 +268,24 @@ class AbstractExtension implements DbalExtensionInterface {
   }
 
   /**
+   * Transaction delegated methods.
+   */
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateRollBack(): void {
+    $this->getDbalConnection()->rollBack();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateCommit(): void {
+    $this->getDbalConnection()->commit();
+  }
+
+  /**
    * {@inheritdoc}
    */
   public function delegateReleaseSavepointExceptionProcess(DbalDriverException $e) {
@@ -336,24 +354,6 @@ class AbstractExtension implements DbalExtensionInterface {
    */
   public function delegateRowCount(DbalResult $dbal_result) {
     return $dbal_result->rowCount();
-  }
-
-  /**
-   * Transaction delegated methods.
-   */
-
-  /**
-   * {@inheritdoc}
-   */
-  public function delegateRollBack(): void {
-    $this->getDbalConnection()->rollBack();
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function delegateCommit(): void {
-    $this->getDbalConnection()->commit();
   }
 
   /**
