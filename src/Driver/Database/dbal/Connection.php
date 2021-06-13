@@ -454,11 +454,13 @@ dump([$savepoint_name, array_keys($this->transactionLayers)]);
     if (!$this->inTransaction()) {
       throw new TransactionNoActiveException();
     }
+dump(['a']);
     // A previous rollback to an earlier savepoint may mean that the savepoint
     // in question has already been accidentally committed.
     if (!isset($this->transactionLayers[$savepoint_name])) {
       throw new TransactionNoActiveException();
     }
+dump(['b']);
 
     // We need to find the point we're rolling back to, all other savepoints
     // before are no longer needed. If we rolled back other active savepoints,
@@ -483,6 +485,7 @@ dump([$savepoint_name, array_keys($this->transactionLayers)]);
         $rolled_back_other_active_savepoints = TRUE;
       }
     }
+dump(['c', $rolled_back_other_active_savepoints]);
 
     // Notify the callbacks about the rollback.
     $callbacks = $this->rootTransactionEndCallbacks;
@@ -490,6 +493,7 @@ dump([$savepoint_name, array_keys($this->transactionLayers)]);
     foreach ($callbacks as $callback) {
       call_user_func($callback, FALSE);
     }
+dump(['d']);
 
     $this->getDbalExtension()->delegateRollBack();
     if ($rolled_back_other_active_savepoints) {
