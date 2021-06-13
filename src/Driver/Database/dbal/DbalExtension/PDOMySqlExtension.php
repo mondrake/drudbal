@@ -60,9 +60,9 @@ class PDOMySqlExtension extends AbstractMySqlExtension {
 
       // If \Drupal\Core\Database\Connection::rollBack() would throw an
       // exception then continue to throw an exception.
-//      if (!$this->inTransaction()) {
-//        throw new TransactionNoActiveException();
-//      }
+      if (!$this->connection->inTransaction()) {
+        throw new TransactionNoActiveException();
+      }
       // A previous rollback to an earlier savepoint may mean that the savepoint
       // in question has already been accidentally committed.
 //      if (!isset($this->transactionLayers[$savepoint_name])) {
