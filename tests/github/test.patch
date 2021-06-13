@@ -1,0 +1,13 @@
+diff --git a/core/tests/Drupal/KernelTests/Core/Database/TransactionTest.php b/core/tests/Drupal/KernelTests/Core/Database/TransactionTest.php
+index d55fe82cbd..78c365063d 100644
+--- a/core/tests/Drupal/KernelTests/Core/Database/TransactionTest.php
++++ b/core/tests/Drupal/KernelTests/Core/Database/TransactionTest.php
+@@ -216,6 +216,8 @@ public function testTransactionWithDdlStatement() {
+
+     // A transaction after a DDL statement should still work the same.
+     $this->cleanUp();
++global $xxx;
++$xxx = TRUE;
+     $transaction = $this->connection->startTransaction();
+     $transaction2 = $this->connection->startTransaction();
+     $this->executeDDLStatement();

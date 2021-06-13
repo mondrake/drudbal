@@ -450,17 +450,18 @@ class Connection extends DatabaseConnection {
    * {@inheritdoc}
    */
   public function rollBack($savepoint_name = 'drupal_transaction') {
-dump([$savepoint_name, array_keys($this->transactionLayers)]);
+global $xxx;
+if ($xxx) dump([$savepoint_name, array_keys($this->transactionLayers)]);
     if (!$this->inTransaction()) {
       throw new TransactionNoActiveException();
     }
-dump(['a']);
+if ($xxx) dump(['a']);
     // A previous rollback to an earlier savepoint may mean that the savepoint
     // in question has already been accidentally committed.
     if (!isset($this->transactionLayers[$savepoint_name])) {
       throw new TransactionNoActiveException();
     }
-dump(['b']);
+if ($xxx) dump(['b']);
 
     // We need to find the point we're rolling back to, all other savepoints
     // before are no longer needed. If we rolled back other active savepoints,
@@ -485,7 +486,7 @@ dump(['b']);
         $rolled_back_other_active_savepoints = TRUE;
       }
     }
-dump(['c', $rolled_back_other_active_savepoints]);
+if ($xxx) dump(['c', $rolled_back_other_active_savepoints]);
 
     // Notify the callbacks about the rollback.
     $callbacks = $this->rootTransactionEndCallbacks;
@@ -493,7 +494,7 @@ dump(['c', $rolled_back_other_active_savepoints]);
     foreach ($callbacks as $callback) {
       call_user_func($callback, FALSE);
     }
-dump(['d']);
+if ($xxx) dump(['d']);
 
     $this->getDbalExtension()->delegateRollBack();
     if ($rolled_back_other_active_savepoints) {
@@ -508,6 +509,8 @@ dump(['d']);
     if (isset($this->transactionLayers[$name])) {
       throw new TransactionNameNonUniqueException($name . " is already in use.");
     }
+global $xxx;
+if ($xxx) dump(['pushTransaction', $name, $this->transactionLayers, $this->inTransaction()]);
     // If we're already in a transaction then we want to create a savepoint
     // rather than try to create another transaction.
     if ($this->inTransaction()) {
