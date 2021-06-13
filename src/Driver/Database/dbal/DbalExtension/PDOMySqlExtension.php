@@ -50,55 +50,18 @@ class PDOMySqlExtension extends AbstractMySqlExtension {
    * {@inheritdoc}
    */
   public function delegateRollBack(): void {
-    // MySQL will automatically commit transactions when tables are altered or
-    // created (DDL transactions are not supported). Prevent triggering an
-    // exception to ensure that the error that has caused the rollback is
-    // properly reported.
-    if (!$this->getDbalConnection()->getWrappedConnection()->getWrappedConnection()->inTransaction()) {
-      // On PHP 7 \PDO::inTransaction() will return TRUE and \PDO::rollback()
-      // does not throw an exception; the following code is unreachable.
-
-      // If \Drupal\Core\Database\Connection::rollBack() would throw an
-      // exception then continue to throw an exception.
-      //      if (!$this->connection->inTransaction()) {
-      //        throw new TransactionNoActiveException();
-      //      }
-      // A previous rollback to an earlier savepoint may mean that the savepoint
-      // in question has already been accidentally committed.
-      //      if (!isset($this->transactionLayers[$savepoint_name])) {
-      //        throw new TransactionNoActiveException();
-      //      }
-
-      // trigger_error('Rollback attempted when there is no active transaction. This can cause data integrity issues.', E_USER_WARNING);
-      return;
+    if ($this->getDbalConnection()->getWrappedConnection()->getWrappedConnection()->inTransaction()) {
+      $this->getDbalConnection()->rollBack();
     }
-    $this->getDbalConnection()->rollBack();
   }
 
   /**
    * {@inheritdoc}
    */
   public function delegateCommit(): void {
-    // MySQL will automatically commit transactions when tables are altered or
-    // created (DDL transactions are not supported). Prevent triggering an
-    // exception in this case as all statements have been committed.
     if ($this->getDbalConnection()->getWrappedConnection()->getWrappedConnection()->inTransaction()) {
-      // On PHP 7 \PDO::inTransaction() will return TRUE and \PDO::commit()
-      // does not throw an exception.
       $this->getDbalConnection()->commit();
     }
-//    else {
-      // Process the post-root (non-nested) transaction commit callbacks. The
-      // following code is copied from
-      // \Drupal\Core\Database\Connection::doCommit()
-//      if (!empty($this->rootTransactionEndCallbacks)) {
-//        $callbacks = $this->rootTransactionEndCallbacks;
-//        $this->rootTransactionEndCallbacks = [];
-//        foreach ($callbacks as $callback) {
-//          call_user_func($callback, $success);
-//        }
-//      }
-//    }
   }
 
 }
