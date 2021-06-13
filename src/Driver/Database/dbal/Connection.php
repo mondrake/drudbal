@@ -450,6 +450,7 @@ class Connection extends DatabaseConnection {
    * {@inheritdoc}
    */
   public function rollBack($savepoint_name = 'drupal_transaction') {
+dump([$savepoint_name]);
     if (!$this->inTransaction()) {
       throw new TransactionNoActiveException();
     }
