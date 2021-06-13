@@ -75,4 +75,30 @@ class PDOMySqlExtension extends AbstractMySqlExtension {
     $this->getDbalConnection()->rollBack();
   }
 
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateCommit(): void {
+    // MySQL will automatically commit transactions when tables are altered or
+    // created (DDL transactions are not supported). Prevent triggering an
+    // exception in this case as all statements have been committed.
+    if ($this->getDbalConnection()->getWrappedConnection()->getWrappedConnection()->inTransaction()) {
+      // On PHP 7 $this->connection->inTransaction() will return TRUE and
+      // $this->connection->commit() does not throw an exception.
+      $this->getDbalConnection()->commit();
+    }
+    else {
+      // Process the post-root (non-nested) transaction commit callbacks. The
+      // following code is copied from
+      // \Drupal\Core\Database\Connection::doCommit()
+//      if (!empty($this->rootTransactionEndCallbacks)) {
+//        $callbacks = $this->rootTransactionEndCallbacks;
+//        $this->rootTransactionEndCallbacks = [];
+//        foreach ($callbacks as $callback) {
+//          call_user_func($callback, $success);
+//        }
+//      }
+    }
+  }
+
 }

@@ -350,6 +350,13 @@ class AbstractExtension implements DbalExtensionInterface {
   }
 
   /**
+   * {@inheritdoc}
+   */
+  public function delegateCommit(): void {
+    $this->getDbalConnection()->commit();
+  }
+
+  /**
    * Select delegated methods.
    */
 
