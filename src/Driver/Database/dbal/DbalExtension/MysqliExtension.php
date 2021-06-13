@@ -31,7 +31,7 @@ class MysqliExtension extends AbstractMySqlExtension {
   /**
    * {@inheritdoc}
    */
-  public function processFetchedRecord(array $record) : array {
+  public function processFetchedRecord(array $record): array {
     // Enforce all values are of type 'string'.
     $result = [];
     foreach ($record as $column => $value) {
