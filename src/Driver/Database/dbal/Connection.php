@@ -490,8 +490,7 @@ class Connection extends DatabaseConnection {
       call_user_func($callback, FALSE);
     }
 
-    $this->getDbalConnection()->rollBack();
-
+    $this->getDbalExtension()->delegateRollBack();
     if ($rolled_back_other_active_savepoints) {
       throw new TransactionOutOfOrderException();
     }

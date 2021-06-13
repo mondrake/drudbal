@@ -41,4 +41,38 @@ class PDOMySqlExtension extends AbstractMySqlExtension {
     return $this->getDbalConnection()->getWrappedConnection()->getServerVersion();
   }
 
+  /**
+   * Transaction delegated methods.
+   */
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateRollBack(): void {
+    // MySQL will automatically commit transactions when tables are altered or
+    // created (DDL transactions are not supported). Prevent triggering an
+    // exception to ensure that the error that has caused the rollback is
+    // properly reported.
+    if (!$this->getDbalConnection()->getWrappedConnection()->inTransaction()) {
+      // On PHP 7 $this->connection->inTransaction() will return TRUE and
+      // $this->connection->rollback() does not throw an exception; the
+      // following code is unreachable.
+
+      // If \Drupal\Core\Database\Connection::rollBack() would throw an
+      // exception then continue to throw an exception.
+//      if (!$this->inTransaction()) {
+//        throw new TransactionNoActiveException();
+//      }
+      // A previous rollback to an earlier savepoint may mean that the savepoint
+      // in question has already been accidentally committed.
+//      if (!isset($this->transactionLayers[$savepoint_name])) {
+//        throw new TransactionNoActiveException();
+//      }
+
+      trigger_error('Rollback attempted when there is no active transaction. This can cause data integrity issues.', E_USER_WARNING);
+      return;
+    }
+    $this->getDbalConnection()->rollBack();
+  }
+
 }

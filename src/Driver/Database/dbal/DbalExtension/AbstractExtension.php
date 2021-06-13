@@ -281,28 +281,28 @@ class AbstractExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function delegateGetDateFieldSql(string $field, bool $string_date) : string {
+  public function delegateGetDateFieldSql(string $field, bool $string_date): string {
     throw new \LogicException("Method " . __METHOD__ . " not implemented.");
   }
 
   /**
    * {@inheritdoc}
    */
-  public function delegateGetDateFormatSql(string $field, string $format) : string {
+  public function delegateGetDateFormatSql(string $field, string $format): string {
     throw new \LogicException("Method " . __METHOD__ . " not implemented.");
   }
 
   /**
    * {@inheritdoc}
    */
-  public function delegateSetTimezoneOffset(string $offset) : void {
+  public function delegateSetTimezoneOffset(string $offset): void {
     throw new \LogicException("Method " . __METHOD__ . " not implemented.");
   }
 
   /**
    * {@inheritdoc}
    */
-  public function delegateSetFieldTimezoneOffsetSql(string &$field, int $offset) : void {
+  public function delegateSetFieldTimezoneOffsetSql(string &$field, int $offset): void {
     throw new \LogicException("Method " . __METHOD__ . " not implemented.");
   }
 
@@ -327,7 +327,7 @@ class AbstractExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function processFetchedRecord(array $record) : array {
+  public function processFetchedRecord(array $record): array {
     return $record;
   }
 
@@ -336,6 +336,17 @@ class AbstractExtension implements DbalExtensionInterface {
    */
   public function delegateRowCount(DbalResult $dbal_result) {
     return $dbal_result->rowCount();
+  }
+
+  /**
+   * Transaction delegated methods.
+   */
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateRollBack(): void {
+    $this->getDbalConnection()->rollBack();
   }
 
   /**
@@ -606,7 +617,7 @@ class AbstractExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function preprocessIndexFields(DbalSchema $dbal_schema, string $table_full_name, string $index_full_name, string $drupal_table_name, string $drupal_index_name, array $drupal_field_specs, array $indexes_spec) : array {
+  public function preprocessIndexFields(DbalSchema $dbal_schema, string $table_full_name, string $index_full_name, string $drupal_table_name, string $drupal_index_name, array $drupal_field_specs, array $indexes_spec): array {
     return $drupal_field_specs;
   }
 
