@@ -347,7 +347,7 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateGetDateFieldSql(string $field, bool $string_date) : string {
+  public function delegateGetDateFieldSql(string $field, bool $string_date): string {
     if ($string_date) {
       return $field;
     }
@@ -360,7 +360,7 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateGetDateFormatSql(string $field, string $format) : string {
+  public function delegateGetDateFormatSql(string $field, string $format): string {
     // An array of PHP-to-MySQL replacement patterns.
     static $replace = [
       'Y' => '%Y',
@@ -388,14 +388,14 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateSetTimezoneOffset(string $offset) : void {
+  public function delegateSetTimezoneOffset(string $offset): void {
     $this->getDbalConnection()->exec("SET @@session.time_zone = '$offset'");
   }
 
   /**
    * {@inheritdoc}
    */
-  public function delegateSetFieldTimezoneOffsetSql(string &$field, int $offset) : void {
+  public function delegateSetFieldTimezoneOffsetSql(string &$field, int $offset): void {
     if (!empty($offset)) {
       $field = "($field + INTERVAL $offset SECOND)";
     }
@@ -706,7 +706,7 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function preprocessIndexFields(DbalSchema $dbal_schema, string $table_full_name, string $index_full_name, string $drupal_table_name, string $drupal_index_name, array $drupal_field_specs, array $indexes_spec) : array {
+  public function preprocessIndexFields(DbalSchema $dbal_schema, string $table_full_name, string $index_full_name, string $drupal_table_name, string $drupal_index_name, array $drupal_field_specs, array $indexes_spec): array {
     // We need to normalize the index columns length in MySql.
     $indexes_spec['indexes'][$drupal_index_name] = $drupal_field_specs;
     return $this->getNormalizedIndexes($indexes_spec)[$drupal_index_name];

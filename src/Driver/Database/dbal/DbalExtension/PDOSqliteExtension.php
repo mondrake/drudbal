@@ -387,7 +387,7 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateGetDateFieldSql(string $field, bool $string_date) : string {
+  public function delegateGetDateFieldSql(string $field, bool $string_date): string {
     if ($string_date) {
       $field = "strftime('%s', $field)";
     }
@@ -397,7 +397,7 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateGetDateFormatSql(string $field, string $format) : string {
+  public function delegateGetDateFormatSql(string $field, string $format): string {
     // An array of PHP-to-SQLite date replacement patterns.
     static $replace = [
       'Y' => '%Y',
@@ -455,14 +455,14 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateSetTimezoneOffset(string $offset) : void {
+  public function delegateSetTimezoneOffset(string $offset): void {
     // Nothing to do here.
   }
 
   /**
    * {@inheritdoc}
    */
-  public function delegateSetFieldTimezoneOffsetSql(string &$field, int $offset) : void {
+  public function delegateSetFieldTimezoneOffsetSql(string &$field, int $offset): void {
     if (!empty($offset)) {
       $field = "($field + $offset)";
     }

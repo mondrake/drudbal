@@ -356,7 +356,7 @@ class Oci8Extension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateGetDateFieldSql(string $field, bool $string_date) : string {
+  public function delegateGetDateFieldSql(string $field, bool $string_date): string {
     if ($string_date) {
       return $field;
     }
@@ -367,7 +367,7 @@ class Oci8Extension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateGetDateFormatSql(string $field, string $format) : string {
+  public function delegateGetDateFormatSql(string $field, string $format): string {
     // An array of PHP-to-Oracle date replacement patterns.
     static $replace = [
       'Y' => 'YYYY',
@@ -398,14 +398,14 @@ class Oci8Extension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateSetTimezoneOffset(string $offset) : void {
+  public function delegateSetTimezoneOffset(string $offset): void {
     // Nothing to do here.
   }
 
   /**
    * {@inheritdoc}
    */
-  public function delegateSetFieldTimezoneOffsetSql(string &$field, int $offset) : void {
+  public function delegateSetFieldTimezoneOffsetSql(string &$field, int $offset): void {
     // Nothing to do here.
   }
 
@@ -459,7 +459,7 @@ class Oci8Extension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function processFetchedRecord(array $record) : array {
+  public function processFetchedRecord(array $record): array {
     // Enforce all values are of type 'string'.
     $result = [];
     foreach ($record as $column => $value) {
