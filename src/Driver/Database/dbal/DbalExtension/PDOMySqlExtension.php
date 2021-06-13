@@ -53,8 +53,8 @@ class PDOMySqlExtension extends AbstractMySqlExtension {
     // created (DDL transactions are not supported). Prevent triggering an
     // exception to ensure that the error that has caused the rollback is
     // properly reported.
-    if (!$this->getDbalConnection()->getWrappedConnection()->inTransaction()) {
-      // On PHP 7 $this->connection->inTransaction() will return TRUE and
+    if (!$this->getDbalConnection()->getWrappedConnection()->getWrappedConnection()->inTransaction()) {
+      // On PHP 7 \PDO::inTransaction() will return TRUE and
       // $this->connection->rollback() does not throw an exception; the
       // following code is unreachable.
 
