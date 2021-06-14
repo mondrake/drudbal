@@ -510,7 +510,7 @@ if ($xxx) dump(['rollBack', 'd']);
       throw new TransactionNameNonUniqueException($name . " is already in use.");
     }
 global $xxx;
-if ($xxx) dump(['pushTransaction-pre', $name, $this->transactionLayers, $this->inTransaction(), $this->getDbalConnection()->getWrappedConnection()->getWrappedConnection()->inTransaction()]);
+if ($xxx) dump(['pushTransaction-pre', 'name' => $name, 'layers' => $this->transactionLayers, 'Drupal_t' => $this->inTransaction(), 'DBAL_t' => $this->getDbalConnection()->isTransactionActive(), 'PDO_t' => $this->getDbalConnection()->getWrappedConnection()->getWrappedConnection()->inTransaction()]);
     // If we're already in a transaction then we want to create a savepoint
     // rather than try to create another transaction.
     if ($this->inTransaction()) {
@@ -520,14 +520,14 @@ if ($xxx) dump(['pushTransaction-pre', $name, $this->transactionLayers, $this->i
       $this->getDbalConnection()->beginTransaction();
     }
     $this->transactionLayers[$name] = $name;
-if ($xxx) dump(['pushTransaction-post', $name, $this->transactionLayers, $this->inTransaction(), $this->getDbalConnection()->getWrappedConnection()->getWrappedConnection()->inTransaction()]);
+if ($xxx) dump(['pushTransaction-post', 'name' => $name, 'layers' => $this->transactionLayers, 'Drupal_t' => $this->inTransaction(), 'DBAL_t' => $this->getDbalConnection()->isTransactionActive(), 'PDO_t' => $this->getDbalConnection()->getWrappedConnection()->getWrappedConnection()->inTransaction()]);
   }
 
   public function popTransaction($name) {
 global $xxx;
-if ($xxx) dump(['popTransaction-pre', $name, $this->transactionLayers, $this->inTransaction(), $this->getDbalConnection()->getWrappedConnection()->getWrappedConnection()->inTransaction()]);
+if ($xxx) dump(['popTransaction-pre', 'name' => $name, 'layers' => $this->transactionLayers, 'Drupal_t' => $this->inTransaction(), 'DBAL_t' => $this->getDbalConnection()->isTransactionActive(), 'PDO_t' => $this->getDbalConnection()->getWrappedConnection()->getWrappedConnection()->inTransaction()]);
     parent::popTransaction($name);
-if ($xxx) dump(['popTransaction-post', $name, $this->transactionLayers, $this->inTransaction(), $this->getDbalConnection()->getWrappedConnection()->getWrappedConnection()->inTransaction()]);
+if ($xxx) dump(['popTransaction-post', 'name' => $name, 'layers' => $this->transactionLayers, 'Drupal_t' => $this->inTransaction(), 'DBAL_t' => $this->getDbalConnection()->isTransactionActive(), 'PDO_t' => $this->getDbalConnection()->getWrappedConnection()->getWrappedConnection()->inTransaction()]);
   }
 
   /**
