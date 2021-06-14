@@ -451,17 +451,17 @@ class Connection extends DatabaseConnection {
    */
   public function rollBack($savepoint_name = 'drupal_transaction') {
 global $xxx;
-if ($xxx) dump([$savepoint_name, array_keys($this->transactionLayers)]);
+if ($xxx) dump(['rollBack', $savepoint_name, array_keys($this->transactionLayers)]);
     if (!$this->inTransaction()) {
       throw new TransactionNoActiveException();
     }
-if ($xxx) dump(['a']);
+if ($xxx) dump(['rollBack', 'a']);
     // A previous rollback to an earlier savepoint may mean that the savepoint
     // in question has already been accidentally committed.
     if (!isset($this->transactionLayers[$savepoint_name])) {
       throw new TransactionNoActiveException();
     }
-if ($xxx) dump(['b']);
+if ($xxx) dump(['rollBack', 'b']);
 
     // We need to find the point we're rolling back to, all other savepoints
     // before are no longer needed. If we rolled back other active savepoints,
@@ -486,7 +486,7 @@ if ($xxx) dump(['b']);
         $rolled_back_other_active_savepoints = TRUE;
       }
     }
-if ($xxx) dump(['c', $rolled_back_other_active_savepoints]);
+if ($xxx) dump(['rollBack', 'c', $rolled_back_other_active_savepoints]);
 
     // Notify the callbacks about the rollback.
     $callbacks = $this->rootTransactionEndCallbacks;
@@ -494,7 +494,7 @@ if ($xxx) dump(['c', $rolled_back_other_active_savepoints]);
     foreach ($callbacks as $callback) {
       call_user_func($callback, FALSE);
     }
-if ($xxx) dump(['d']);
+if ($xxx) dump(['rollBack', 'd']);
 
     $this->getDbalExtension()->delegateRollBack();
     if ($rolled_back_other_active_savepoints) {
@@ -520,6 +520,12 @@ if ($xxx) dump(['pushTransaction', $name, $this->transactionLayers, $this->inTra
       $this->getDbalConnection()->beginTransaction();
     }
     $this->transactionLayers[$name] = $name;
+  }
+
+  public function popTransaction($name) {
+global $xxx;
+if ($xxx) dump(['popTransaction', $name, $this->transactionLayers, $this->inTransaction()]);
+    parent::popTransaction($name);
   }
 
   /**
