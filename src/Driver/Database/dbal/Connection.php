@@ -513,7 +513,7 @@ global $xxx;
 if ($xxx) dump(['pushTransaction-pre', 'name' => $name, 'layers' => $this->transactionLayers, 'Drupal_t' => $this->inTransaction(), 'DBAL_t' => $this->getDbalConnection()->isTransactionActive(), 'PDO_t' => $this->getDbalExtension()->isWrappedTransactionActive()]);
     // If we're already in a transaction then we want to create a savepoint
     // rather than try to create another transaction.
-    if ($this->inTransaction() && $this->getDbalExtension()isWrappedTransactionActive()) {
+    if ($this->inTransaction() && $this->getDbalExtension()->isWrappedTransactionActive()) {
       $this->getDbalConnection()->exec($this->dbalPlatform->createSavePoint($name));
     }
     else {
