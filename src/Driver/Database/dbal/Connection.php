@@ -510,7 +510,7 @@ if ($xxx) dump(['rollBack', 'd']);
       throw new TransactionNameNonUniqueException($name . " is already in use.");
     }
 global $xxx;
-if ($xxx) dump(['pushTransaction-pre', 'name' => $name, 'layers' => $this->transactionLayers, 'Drupal_t' => $this->inTransaction(), 'DBAL_t' => $this->getDbalConnection()->isTransactionActive(), 'PDO_t' => $this->getDbalExtension()isWrappedTransactionActive()]);
+if ($xxx) dump(['pushTransaction-pre', 'name' => $name, 'layers' => $this->transactionLayers, 'Drupal_t' => $this->inTransaction(), 'DBAL_t' => $this->getDbalConnection()->isTransactionActive(), 'PDO_t' => $this->getDbalExtension()->isWrappedTransactionActive()]);
     // If we're already in a transaction then we want to create a savepoint
     // rather than try to create another transaction.
     if ($this->inTransaction() && $this->getDbalExtension()isWrappedTransactionActive()) {
@@ -520,12 +520,12 @@ if ($xxx) dump(['pushTransaction-pre', 'name' => $name, 'layers' => $this->trans
       $this->getDbalConnection()->beginTransaction();
     }
     $this->transactionLayers[$name] = $name;
-if ($xxx) dump(['pushTransaction-post', 'name' => $name, 'layers' => $this->transactionLayers, 'Drupal_t' => $this->inTransaction(), 'DBAL_t' => $this->getDbalConnection()->isTransactionActive(), 'PDO_t' => $this->getDbalExtension()isWrappedTransactionActive()]);
+if ($xxx) dump(['pushTransaction-post', 'name' => $name, 'layers' => $this->transactionLayers, 'Drupal_t' => $this->inTransaction(), 'DBAL_t' => $this->getDbalConnection()->isTransactionActive(), 'PDO_t' => $this->getDbalExtension()->isWrappedTransactionActive()]);
   }
 
   public function popTransaction($name) {
 global $xxx;
-if ($xxx) dump(['popTransaction-pre', 'name' => $name, 'layers' => $this->transactionLayers, 'Drupal_t' => $this->inTransaction(), 'DBAL_t' => $this->getDbalConnection()->isTransactionActive(), 'PDO_t' => $this->getDbalExtension()isWrappedTransactionActive()]);
+if ($xxx) dump(['popTransaction-pre', 'name' => $name, 'layers' => $this->transactionLayers, 'Drupal_t' => $this->inTransaction(), 'DBAL_t' => $this->getDbalConnection()->isTransactionActive(), 'PDO_t' => $this->getDbalExtension()->isWrappedTransactionActive()]);
     // The transaction has already been committed earlier. There is nothing we
     // need to do. If this transaction was part of an earlier out-of-order
     // rollback, an exception would already have been thrown by
@@ -537,7 +537,7 @@ if ($xxx) dump(['popTransaction-pre', 'name' => $name, 'layers' => $this->transa
     // Mark this layer as committable.
     $this->transactionLayers[$name] = FALSE;
     $this->popCommittableTransactions();
-if ($xxx) dump(['popTransaction-post', 'name' => $name, 'layers' => $this->transactionLayers, 'Drupal_t' => $this->inTransaction(), 'DBAL_t' => $this->getDbalConnection()->isTransactionActive(), 'PDO_t' => $this->getDbalExtension()isWrappedTransactionActive()]);
+if ($xxx) dump(['popTransaction-post', 'name' => $name, 'layers' => $this->transactionLayers, 'Drupal_t' => $this->inTransaction(), 'DBAL_t' => $this->getDbalConnection()->isTransactionActive(), 'PDO_t' => $this->getDbalExtension()->isWrappedTransactionActive()]);
   }
 
   /**
@@ -545,7 +545,7 @@ if ($xxx) dump(['popTransaction-post', 'name' => $name, 'layers' => $this->trans
    */
   protected function popCommittableTransactions() {
 global $xxx;
-if ($xxx) dump(['popCommittableTransactions-pre', 'layers' => $this->transactionLayers, 'Drupal_t' => $this->inTransaction(), 'DBAL_t' => $this->getDbalConnection()->isTransactionActive(), 'PDO_t' => $this->getDbalExtension()isWrappedTransactionActive()]);
+if ($xxx) dump(['popCommittableTransactions-pre', 'layers' => $this->transactionLayers, 'Drupal_t' => $this->inTransaction(), 'DBAL_t' => $this->getDbalConnection()->isTransactionActive(), 'PDO_t' => $this->getDbalExtension()->isWrappedTransactionActive()]);
     // Commit all the committable layers.
     foreach (array_reverse($this->transactionLayers) as $name => $active) {
       // Stop once we found an active transaction.
@@ -572,7 +572,7 @@ if ($xxx) dump(['popCommittableTransactions-pre', 'layers' => $this->transaction
         }
       }
     }
-if ($xxx) dump(['popCommittableTransactions-post', 'layers' => $this->transactionLayers, 'Drupal_t' => $this->inTransaction(), 'DBAL_t' => $this->getDbalConnection()->isTransactionActive(), 'PDO_t' => $this->getDbalExtension()isWrappedTransactionActive()]);
+if ($xxx) dump(['popCommittableTransactions-post', 'layers' => $this->transactionLayers, 'Drupal_t' => $this->inTransaction(), 'DBAL_t' => $this->getDbalConnection()->isTransactionActive(), 'PDO_t' => $this->getDbalExtension()->isWrappedTransactionActive()]);
   }
 
   /**
