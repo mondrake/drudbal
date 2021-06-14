@@ -526,7 +526,17 @@ if ($xxx) dump(['pushTransaction-post', 'name' => $name, 'layers' => $this->tran
   public function popTransaction($name) {
 global $xxx;
 if ($xxx) dump(['popTransaction-pre', 'name' => $name, 'layers' => $this->transactionLayers, 'Drupal_t' => $this->inTransaction(), 'DBAL_t' => $this->getDbalConnection()->isTransactionActive(), 'PDO_t' => $this->getDbalConnection()->getWrappedConnection()->getWrappedConnection()->inTransaction()]);
-    parent::popTransaction($name);
+    // The transaction has already been committed earlier. There is nothing we
+    // need to do. If this transaction was part of an earlier out-of-order
+    // rollback, an exception would already have been thrown by
+    // Database::rollBack().
+    if (!isset($this->transactionLayers[$name])) {
+      return;
+    }
+
+    // Mark this layer as committable.
+    $this->transactionLayers[$name] = FALSE;
+    $this->popCommittableTransactions();
 if ($xxx) dump(['popTransaction-post', 'name' => $name, 'layers' => $this->transactionLayers, 'Drupal_t' => $this->inTransaction(), 'DBAL_t' => $this->getDbalConnection()->isTransactionActive(), 'PDO_t' => $this->getDbalConnection()->getWrappedConnection()->getWrappedConnection()->inTransaction()]);
   }
 
@@ -534,6 +544,8 @@ if ($xxx) dump(['popTransaction-post', 'name' => $name, 'layers' => $this->trans
    * {@inheritdoc}
    */
   protected function popCommittableTransactions() {
+global $xxx;
+if ($xxx) dump(['popCommittableTransactions-pre', 'name' => $name, 'layers' => $this->transactionLayers, 'Drupal_t' => $this->inTransaction(), 'DBAL_t' => $this->getDbalConnection()->isTransactionActive(), 'PDO_t' => $this->getDbalConnection()->getWrappedConnection()->getWrappedConnection()->inTransaction()]);
     // Commit all the committable layers.
     foreach (array_reverse($this->transactionLayers) as $name => $active) {
       // Stop once we found an active transaction.
@@ -560,6 +572,7 @@ if ($xxx) dump(['popTransaction-post', 'name' => $name, 'layers' => $this->trans
         }
       }
     }
+if ($xxx) dump(['popCommittableTransactions-post', 'name' => $name, 'layers' => $this->transactionLayers, 'Drupal_t' => $this->inTransaction(), 'DBAL_t' => $this->getDbalConnection()->isTransactionActive(), 'PDO_t' => $this->getDbalConnection()->getWrappedConnection()->getWrappedConnection()->inTransaction()]);
   }
 
   /**
