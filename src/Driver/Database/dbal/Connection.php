@@ -510,7 +510,7 @@ if ($xxx) dump(['rollBack', 'd']);
       throw new TransactionNameNonUniqueException($name . " is already in use.");
     }
 global $xxx;
-if ($xxx) dump(['pushTransaction', $name, $this->transactionLayers, $this->inTransaction()]);
+if ($xxx) dump(['pushTransaction-pre', $name, $this->transactionLayers, $this->inTransaction(), $this->getDbalConnection()->getWrappedConnection()->getWrappedConnection()->inTransaction()]);
     // If we're already in a transaction then we want to create a savepoint
     // rather than try to create another transaction.
     if ($this->inTransaction()) {
@@ -520,12 +520,14 @@ if ($xxx) dump(['pushTransaction', $name, $this->transactionLayers, $this->inTra
       $this->getDbalConnection()->beginTransaction();
     }
     $this->transactionLayers[$name] = $name;
+if ($xxx) dump(['pushTransaction-post', $name, $this->transactionLayers, $this->inTransaction(), $this->getDbalConnection()->getWrappedConnection()->getWrappedConnection()->inTransaction()]);
   }
 
   public function popTransaction($name) {
 global $xxx;
-if ($xxx) dump(['popTransaction', $name, $this->transactionLayers, $this->inTransaction()]);
+if ($xxx) dump(['popTransaction-pre', $name, $this->transactionLayers, $this->inTransaction(), $this->getDbalConnection()->getWrappedConnection()->getWrappedConnection()->inTransaction()]);
     parent::popTransaction($name);
+if ($xxx) dump(['popTransaction-post', $name, $this->transactionLayers, $this->inTransaction(), $this->getDbalConnection()->getWrappedConnection()->getWrappedConnection()->inTransaction()]);
   }
 
   /**
