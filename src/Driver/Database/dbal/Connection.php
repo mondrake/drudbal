@@ -545,7 +545,7 @@ if ($xxx) dump(['popTransaction-post', 'name' => $name, 'layers' => $this->trans
    */
   protected function popCommittableTransactions() {
 global $xxx;
-if ($xxx) dump(['popCommittableTransactions-pre', 'name' => $name, 'layers' => $this->transactionLayers, 'Drupal_t' => $this->inTransaction(), 'DBAL_t' => $this->getDbalConnection()->isTransactionActive(), 'PDO_t' => $this->getDbalConnection()->getWrappedConnection()->getWrappedConnection()->inTransaction()]);
+if ($xxx) dump(['popCommittableTransactions-pre', 'layers' => $this->transactionLayers, 'Drupal_t' => $this->inTransaction(), 'DBAL_t' => $this->getDbalConnection()->isTransactionActive(), 'PDO_t' => $this->getDbalConnection()->getWrappedConnection()->getWrappedConnection()->inTransaction()]);
     // Commit all the committable layers.
     foreach (array_reverse($this->transactionLayers) as $name => $active) {
       // Stop once we found an active transaction.
@@ -572,7 +572,7 @@ if ($xxx) dump(['popCommittableTransactions-pre', 'name' => $name, 'layers' => $
         }
       }
     }
-if ($xxx) dump(['popCommittableTransactions-post', 'name' => $name, 'layers' => $this->transactionLayers, 'Drupal_t' => $this->inTransaction(), 'DBAL_t' => $this->getDbalConnection()->isTransactionActive(), 'PDO_t' => $this->getDbalConnection()->getWrappedConnection()->getWrappedConnection()->inTransaction()]);
+if ($xxx) dump(['popCommittableTransactions-post', 'layers' => $this->transactionLayers, 'Drupal_t' => $this->inTransaction(), 'DBAL_t' => $this->getDbalConnection()->isTransactionActive(), 'PDO_t' => $this->getDbalConnection()->getWrappedConnection()->getWrappedConnection()->inTransaction()]);
   }
 
   /**
