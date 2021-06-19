@@ -517,7 +517,8 @@ if ($xxx) dump(['pushTransaction-pre', 'name' => $name, 'layers' => $this->trans
       $this->getDbalConnection()->exec($this->dbalPlatform->createSavePoint($name));
     }
     else {
-      $this->getDbalConnection()->beginTransaction();
+      //$this->getDbalConnection()->beginTransaction();
+      $this->getDbalConnection()->getWrappedConnection()->getWrappedConnection()->beginTransaction();
     }
     $this->transactionLayers[$name] = $name;
 if ($xxx) dump(['pushTransaction-post', 'name' => $name, 'layers' => $this->transactionLayers, 'Drupal_t' => $this->inTransaction(), 'DBAL_t' => $this->getDbalConnection()->isTransactionActive(), 'PDO_t' => $this->getDbalExtension()->isWrappedTransactionActive()]);
@@ -582,21 +583,9 @@ if ($xxx) dump(['popCommittableTransactions-post', 'layers' => $this->transactio
    */
   protected function doCommit() {
 
-    if (!$this->getDbalExtension()->isWrappedTransactionActive()) {
-global $xxx;
-if ($xxx) dump(['doCommit force']);
-      while ($this->getDbalConnection()->getTransactionNestingLevel() !== 0) {
-        try  {
-          $this->getDbalConnection()->commit();
-        }
-        catch (\PDOException $e) {
-          // Just continue.
-        }
-      }
-    }
-
     try {
-      $this->getDbalExtension()->delegateCommit();
+      $this->getDbalConnection()->getWrappedConnection()->getWrappedConnection()->commit();
+//      $this->getDbalExtension()->delegateCommit();
       $success = TRUE;
     }
     catch (DbalConnectionException $e) {
