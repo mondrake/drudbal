@@ -581,6 +581,15 @@ if ($xxx) dump(['popCommittableTransactions-post', 'layers' => $this->transactio
    * @internal
    */
   protected function doCommit() {
+
+    if (!$this->getDbalExtension()->isWrappedTransactionActive()) {
+global $xxx;
+if ($xxx) dump(['doCommit force']);
+      while ($this->getDbalConnection()->getTransactionNestingLevel() !== 0) {
+        $this->getDbalConnection()->commit();
+      }
+    }
+
     try {
       $this->getDbalExtension()->delegateCommit();
       $success = TRUE;
