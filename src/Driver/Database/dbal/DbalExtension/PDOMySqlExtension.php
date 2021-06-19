@@ -67,6 +67,7 @@ class PDOMySqlExtension extends AbstractMySqlExtension {
     if ($this->delegateInTransaction()) {
       return $this->getDbalConnection()->getWrappedConnection()->getWrappedConnection()->rollBack();
     }
+    return FALSE;
   }
 
   /**
@@ -76,6 +77,7 @@ class PDOMySqlExtension extends AbstractMySqlExtension {
     if ($this->delegateInTransaction()) {
       return $this->getDbalConnection()->getWrappedConnection()->getWrappedConnection()->commit();
     }
+    return FALSE;
   }
 
 }
