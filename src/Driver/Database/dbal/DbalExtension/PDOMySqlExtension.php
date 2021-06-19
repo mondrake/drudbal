@@ -65,7 +65,7 @@ class PDOMySqlExtension extends AbstractMySqlExtension {
    */
   public function delegateRollBack(): bool {
     if ($this->delegateInTransaction()) {
-      $this->getDbalConnection()->getWrappedConnection()->getWrappedConnection()->rollBack();
+      return $this->getDbalConnection()->getWrappedConnection()->getWrappedConnection()->rollBack();
     }
   }
 
@@ -74,7 +74,7 @@ class PDOMySqlExtension extends AbstractMySqlExtension {
    */
   public function delegateCommit(): bool {
     if ($this->delegateInTransaction()) {
-      $this->getDbalConnection()->getWrappedConnection()->getWrappedConnection()->commit();
+      return $this->getDbalConnection()->getWrappedConnection()->getWrappedConnection()->commit();
     }
   }
 

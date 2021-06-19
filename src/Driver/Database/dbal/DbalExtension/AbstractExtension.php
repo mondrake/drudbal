@@ -289,14 +289,14 @@ class AbstractExtension implements DbalExtensionInterface {
    * {@inheritdoc}
    */
   public function delegateRollBack(): bool {
-    $this->getDbalConnection()->rollBack();
+    return $this->getDbalConnection()->rollBack();
   }
 
   /**
    * {@inheritdoc}
    */
   public function delegateCommit(): bool {
-    $this->getDbalConnection()->commit();
+    return $this->getDbalConnection()->commit();
   }
 
   /**
