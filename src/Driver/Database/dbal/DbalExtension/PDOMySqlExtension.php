@@ -49,25 +49,32 @@ class PDOMySqlExtension extends AbstractMySqlExtension {
   /**
    * {@inheritdoc}
    */
-  public function isWrappedTransactionActive(): bool {
+  public function delegateInTransaction(): bool {
     return $this->getDbalConnection()->getWrappedConnection()->getWrappedConnection()->inTransaction();
   }
 
   /**
    * {@inheritdoc}
    */
-  public function delegateRollBack(): void {
-    if ($this->getDbalConnection()->getWrappedConnection()->getWrappedConnection()->inTransaction()) {
-      $this->getDbalConnection()->rollBack();
+  public function delegateBeginTransaction(): bool {
+    return $this->getDbalConnection()->getWrappedConnection()->getWrappedConnection()->beginTransaction();;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateRollBack(): bool {
+    if ($this->delegateInTransaction()) {
+      $this->getDbalConnection()->getWrappedConnection()->getWrappedConnection()->rollBack();
     }
   }
 
   /**
    * {@inheritdoc}
    */
-  public function delegateCommit(): void {
-    if ($this->getDbalConnection()->getWrappedConnection()->getWrappedConnection()->inTransaction()) {
-      $this->getDbalConnection()->commit();
+  public function delegateCommit(): bool {
+    if ($this->delegateInTransaction()) {
+      $this->getDbalConnection()->getWrappedConnection()->getWrappedConnection()->commit();
     }
   }
 

@@ -274,21 +274,28 @@ class AbstractExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function isWrappedTransactionActive(): bool {
+  public function delegateInTransaction(): bool {
     return $this->getDbalConnection()->isTransactionActive();
   }
 
   /**
    * {@inheritdoc}
    */
-  public function delegateRollBack(): void {
+  public function delegateBeginTransaction(): bool {
+    return $this->getDbalConnection()->beginTransaction();;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateRollBack(): bool {
     $this->getDbalConnection()->rollBack();
   }
 
   /**
    * {@inheritdoc}
    */
-  public function delegateCommit(): void {
+  public function delegateCommit(): bool {
     $this->getDbalConnection()->commit();
   }
 

@@ -311,12 +311,12 @@ interface DbalExtensionInterface {
   /**
    * Handles rollback of the current transaction.
    */
-  public function delegateRollBack(): void;
+  public function delegateRollBack(): bool;
 
   /**
    * Handles rollback of the current transaction.
    */
-  public function delegateCommit(): void;
+  public function delegateCommit(): bool;
 
   /**
    * Handles exceptions thrown by Connection::popCommittableTransactions().
