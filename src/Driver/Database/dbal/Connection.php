@@ -586,7 +586,12 @@ if ($xxx) dump(['popCommittableTransactions-post', 'layers' => $this->transactio
 global $xxx;
 if ($xxx) dump(['doCommit force']);
       while ($this->getDbalConnection()->getTransactionNestingLevel() !== 0) {
-        $this->getDbalConnection()->commit();
+        try  {
+          $this->getDbalConnection()->commit();
+        }
+        catch (\PDOException $e) {
+          // Just continue.
+        }
       }
     }
 
