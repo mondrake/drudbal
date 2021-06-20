@@ -449,13 +449,6 @@ class Connection extends DatabaseConnection {
   /**
    * {@inheritdoc}
    */
-/*  public function inTransaction() {
-    return ($this->transactionDepth() > 0 && $this->getDbalExtension()->delegateInTransaction());
-  }*/
-
-  /**
-   * {@inheritdoc}
-   */
   public function rollBack($savepoint_name = 'drupal_transaction') {
 global $xxx;
 if ($xxx) dump(['rollBack', $savepoint_name, array_keys($this->transactionLayers)]);
