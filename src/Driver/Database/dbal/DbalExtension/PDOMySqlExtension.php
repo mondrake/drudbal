@@ -67,6 +67,7 @@ class PDOMySqlExtension extends AbstractMySqlExtension {
     if ($this->delegateInTransaction()) {
       return $this->getDbalConnection()->getWrappedConnection()->getWrappedConnection()->rollBack();
     }
+    trigger_error('Rollback attempted when there is no active transaction. This can cause data integrity issues.', E_USER_WARNING);
     return FALSE;
   }
 

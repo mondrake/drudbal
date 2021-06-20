@@ -449,9 +449,9 @@ class Connection extends DatabaseConnection {
   /**
    * {@inheritdoc}
    */
-  public function inTransaction() {
+/*  public function inTransaction() {
     return ($this->transactionDepth() > 0 && $this->getDbalExtension()->delegateInTransaction());
-  }
+  }*/
 
   /**
    * {@inheritdoc}
