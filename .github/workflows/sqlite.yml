@@ -1,4 +1,4 @@
-name: SQLite Testing
+name: SQLite via PDO test
 
 on:
   push:
