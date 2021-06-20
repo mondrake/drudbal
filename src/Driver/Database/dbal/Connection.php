@@ -490,7 +490,7 @@ class Connection extends DatabaseConnection {
       call_user_func($callback, FALSE);
     }
 
-    $this->getDbalConnection()->rollBack();
+    $this->getDbalExtension()->delegateRollBack();
     if ($rolled_back_other_active_savepoints) {
       throw new TransactionOutOfOrderException();
     }
@@ -509,7 +509,7 @@ class Connection extends DatabaseConnection {
       $this->getDbalConnection()->exec($this->dbalPlatform->createSavePoint($name));
     }
     else {
-      $this->getDbalConnection()->beginTransaction();
+      $this->getDbalExtension()->delegateBeginTransaction();
     }
     $this->transactionLayers[$name] = $name;
   }
@@ -553,7 +553,7 @@ class Connection extends DatabaseConnection {
    */
   protected function doCommit() {
     try {
-      $this->getDbalConnection()->commit();
+      $this->getDbalExtension()->delegateCommit();
       $success = TRUE;
     }
     catch (DbalConnectionException $e) {

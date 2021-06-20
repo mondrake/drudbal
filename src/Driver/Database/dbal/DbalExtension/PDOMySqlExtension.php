@@ -41,4 +41,51 @@ class PDOMySqlExtension extends AbstractMySqlExtension {
     return $this->getDbalConnection()->getWrappedConnection()->getServerVersion();
   }
 
+  /**
+   * Transaction delegated methods.
+   *
+   * PHP8 changed behaviour of transactions when a DDL statement is executed.
+   * A commit is executed automatically in that case (like before), but now the
+   * inTransaction() method returns FALSE, which was not doing before. Trying to
+   * execute a commit/rollback now throws a PDOException. Since DBAL does not
+   * take care of that, its internal transactions stack remains in unsync state
+   * in that case. We therefore bypass DBAL here and go to the wrapped
+   * connection methods directly.
+   */
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateInTransaction(): bool {
+    return $this->getDbalConnection()->getWrappedConnection()->getWrappedConnection()->inTransaction();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateBeginTransaction(): bool {
+    return $this->getDbalConnection()->getWrappedConnection()->getWrappedConnection()->beginTransaction();;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateRollBack(): bool {
+    if ($this->delegateInTransaction()) {
+      return $this->getDbalConnection()->getWrappedConnection()->getWrappedConnection()->rollBack();
+    }
+    trigger_error('Rollback attempted when there is no active transaction. This can cause data integrity issues.', E_USER_WARNING);
+    return FALSE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateCommit(): bool {
+    if ($this->delegateInTransaction()) {
+      return $this->getDbalConnection()->getWrappedConnection()->getWrappedConnection()->commit();
+    }
+    return FALSE;
+  }
+
 }

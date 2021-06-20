@@ -305,6 +305,30 @@ interface DbalExtensionInterface {
   public function delegateQueryRange($query, $from, $count, array $args = [], array $options = []);
 
   /**
+   * Transaction delegated methods.
+   */
+
+  /**
+   * Handles checking if a transaction is currently active.
+   */
+  public function delegateInTransaction(): bool;
+
+  /**
+   * Handles starting a new transaction.
+   */
+  public function delegateBeginTransaction(): bool;
+
+  /**
+   * Handles rollback of the current transaction.
+   */
+  public function delegateRollBack(): bool;
+
+  /**
+   * Handles rollback of the current transaction.
+   */
+  public function delegateCommit(): bool;
+
+  /**
    * Handles exceptions thrown by Connection::popCommittableTransactions().
    *
    * @param \Doctrine\DBAL\Exception\DriverException $e

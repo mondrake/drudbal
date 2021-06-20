@@ -1,0 +1,48 @@
+diff --git a/core/tests/Drupal/KernelTests/Core/Database/TransactionTest.php b/core/tests/Drupal/KernelTests/Core/Database/TransactionTest.php
+index d55fe82cbd..22d57e3889 100644
+--- a/core/tests/Drupal/KernelTests/Core/Database/TransactionTest.php
++++ b/core/tests/Drupal/KernelTests/Core/Database/TransactionTest.php
+@@ -187,7 +187,10 @@ public function testCommittedTransaction() {
+    * Tests the compatibility of transactions with DDL statements.
+    */
+   public function testTransactionWithDdlStatement() {
++global $xxx;
++$xxx = TRUE;
+     // First, test that a commit works normally, even with DDL statements.
++dump('*********** FIRST');
+     $transaction = $this->connection->startTransaction();
+     $this->insertRow('row');
+     $this->executeDDLStatement();
+@@ -196,6 +199,7 @@ public function testTransactionWithDdlStatement() {
+
+     // Even in different order.
+     $this->cleanUp();
++dump('*********** SECOND');
+     $transaction = $this->connection->startTransaction();
+     $this->executeDDLStatement();
+     $this->insertRow('row');
+@@ -204,6 +208,7 @@ public function testTransactionWithDdlStatement() {
+
+     // Even with stacking.
+     $this->cleanUp();
++dump('*********** THIRD');
+     $transaction = $this->connection->startTransaction();
+     $transaction2 = $this->connection->startTransaction();
+     $this->executeDDLStatement();
+@@ -216,6 +221,7 @@ public function testTransactionWithDdlStatement() {
+
+     // A transaction after a DDL statement should still work the same.
+     $this->cleanUp();
++dump('*********** FAILS!!!!!!!!!!');
+     $transaction = $this->connection->startTransaction();
+     $transaction2 = $this->connection->startTransaction();
+     $this->executeDDLStatement();
+@@ -226,6 +232,7 @@ public function testTransactionWithDdlStatement() {
+     unset($transaction3);
+     unset($transaction);
+     $this->assertRowAbsent('row');
++$xxx = FALSE;
+
+     // The behavior of a rollback depends on the type of database server.
+     if ($this->connection->supportsTransactionalDDL()) {
+

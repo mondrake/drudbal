@@ -311,6 +311,10 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
   }
 
   /**
+   * Transaction delegated methods.
+   */
+
+  /**
    * {@inheritdoc}
    */
   public function delegateReleaseSavepointExceptionProcess(DbalDriverException $e) {
@@ -325,7 +329,7 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
       // We also have to explain to PDO that the transaction stack has
       // been cleaned-up.
       try {
-        $this->getDbalConnection()->commit();
+        $this->delegateCommit();
       }
       catch (DbalConnectionException $exc) {
         throw new TransactionCommitFailedException();
