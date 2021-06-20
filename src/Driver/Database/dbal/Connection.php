@@ -450,18 +450,14 @@ class Connection extends DatabaseConnection {
    * {@inheritdoc}
    */
   public function rollBack($savepoint_name = 'drupal_transaction') {
-global $xxx;
-if ($xxx) dump(['rollBack', $savepoint_name, array_keys($this->transactionLayers)]);
     if (!$this->inTransaction()) {
       throw new TransactionNoActiveException();
     }
-if ($xxx) dump(['rollBack', 'a']);
     // A previous rollback to an earlier savepoint may mean that the savepoint
     // in question has already been accidentally committed.
     if (!isset($this->transactionLayers[$savepoint_name])) {
       throw new TransactionNoActiveException();
     }
-if ($xxx) dump(['rollBack', 'b']);
 
     // We need to find the point we're rolling back to, all other savepoints
     // before are no longer needed. If we rolled back other active savepoints,
@@ -486,7 +482,6 @@ if ($xxx) dump(['rollBack', 'b']);
         $rolled_back_other_active_savepoints = TRUE;
       }
     }
-if ($xxx) dump(['rollBack', 'c', $rolled_back_other_active_savepoints]);
 
     // Notify the callbacks about the rollback.
     $callbacks = $this->rootTransactionEndCallbacks;
@@ -494,7 +489,6 @@ if ($xxx) dump(['rollBack', 'c', $rolled_back_other_active_savepoints]);
     foreach ($callbacks as $callback) {
       call_user_func($callback, FALSE);
     }
-if ($xxx) dump(['rollBack', 'd']);
 
     $this->getDbalExtension()->delegateRollBack();
     if ($rolled_back_other_active_savepoints) {
@@ -509,8 +503,6 @@ if ($xxx) dump(['rollBack', 'd']);
     if (isset($this->transactionLayers[$name])) {
       throw new TransactionNameNonUniqueException($name . " is already in use.");
     }
-global $xxx;
-if ($xxx) dump(['pushTransaction-pre', 'name' => $name, 'layers' => $this->transactionLayers, 'Drupal_t' => $this->inTransaction(), 'DBAL_t' => $this->getDbalConnection()->isTransactionActive(), 'PDO_t' => $this->getDbalExtension()->delegateInTransaction()]);
     // If we're already in a transaction then we want to create a savepoint
     // rather than try to create another transaction.
     if ($this->inTransaction()) {
@@ -520,22 +512,12 @@ if ($xxx) dump(['pushTransaction-pre', 'name' => $name, 'layers' => $this->trans
       $this->getDbalExtension()->delegateBeginTransaction();
     }
     $this->transactionLayers[$name] = $name;
-if ($xxx) dump(['pushTransaction-post', 'name' => $name, 'layers' => $this->transactionLayers, 'Drupal_t' => $this->inTransaction(), 'DBAL_t' => $this->getDbalConnection()->isTransactionActive(), 'PDO_t' => $this->getDbalExtension()->delegateInTransaction()]);
-  }
-
-  public function popTransaction($name) {
-global $xxx;
-if ($xxx) dump(['popTransaction-pre', 'name' => $name, 'layers' => $this->transactionLayers, 'Drupal_t' => $this->inTransaction(), 'DBAL_t' => $this->getDbalConnection()->isTransactionActive(), 'PDO_t' => $this->getDbalExtension()->delegateInTransaction()]);
-    parent::popTransaction($name);
-if ($xxx) dump(['popTransaction-post', 'name' => $name, 'layers' => $this->transactionLayers, 'Drupal_t' => $this->inTransaction(), 'DBAL_t' => $this->getDbalConnection()->isTransactionActive(), 'PDO_t' => $this->getDbalExtension()->delegateInTransaction()]);
   }
 
   /**
    * {@inheritdoc}
    */
   protected function popCommittableTransactions() {
-global $xxx;
-if ($xxx) dump(['popCommittableTransactions-pre', 'layers' => $this->transactionLayers, 'Drupal_t' => $this->inTransaction(), 'DBAL_t' => $this->getDbalConnection()->isTransactionActive(), 'PDO_t' => $this->getDbalExtension()->delegateInTransaction()]);
     // Commit all the committable layers.
     foreach (array_reverse($this->transactionLayers) as $name => $active) {
       // Stop once we found an active transaction.
@@ -562,7 +544,6 @@ if ($xxx) dump(['popCommittableTransactions-pre', 'layers' => $this->transaction
         }
       }
     }
-if ($xxx) dump(['popCommittableTransactions-post', 'layers' => $this->transactionLayers, 'Drupal_t' => $this->inTransaction(), 'DBAL_t' => $this->getDbalConnection()->isTransactionActive(), 'PDO_t' => $this->getDbalExtension()->delegateInTransaction()]);
   }
 
   /**
@@ -571,7 +552,6 @@ if ($xxx) dump(['popCommittableTransactions-post', 'layers' => $this->transactio
    * @internal
    */
   protected function doCommit() {
-
     try {
       $this->getDbalExtension()->delegateCommit();
       $success = TRUE;

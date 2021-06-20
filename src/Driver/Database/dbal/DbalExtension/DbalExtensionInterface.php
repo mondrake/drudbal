@@ -309,6 +309,16 @@ interface DbalExtensionInterface {
    */
 
   /**
+   * Handles checking if a transaction is currently active.
+   */
+  public function delegateInTransaction(): bool;
+
+  /**
+   * Handles starting a new transaction.
+   */
+  public function delegateBeginTransaction(): bool;
+
+  /**
    * Handles rollback of the current transaction.
    */
   public function delegateRollBack(): bool;

@@ -3,7 +3,6 @@
 namespace Drupal\drudbal\Driver\Database\dbal\DbalExtension;
 
 use Doctrine\DBAL\Connection as DbalConnection;
-use Drupal\Core\Database\TransactionNoActiveException;
 
 /**
  * Driver specific methods for pdo_mysql.
@@ -44,6 +43,14 @@ class PDOMySqlExtension extends AbstractMySqlExtension {
 
   /**
    * Transaction delegated methods.
+   *
+   * PHP8 changed behaviour of transactions when a DDL statement is executed.
+   * A commit is executed automatically in that case (like before), but now the
+   * inTransaction() method returns FALSE, which was not doing before. Trying to
+   * execute a commit/rollback now throws a PDOException. Since DBAL does not
+   * take care of that, its internal transactions stack remains in unsync state
+   * in that case. We therefore bypass DBAL here and go to the wrapped
+   * connection methods directly.
    */
 
   /**
