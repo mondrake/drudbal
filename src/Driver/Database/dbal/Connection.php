@@ -500,6 +500,8 @@ class Connection extends DatabaseConnection {
    * {@inheritdoc}
    */
   public function pushTransaction($name) {
+global $xxx;
+if ($xxx) dump(['pushTransaction-pre', 'name' => $name, 'layers' => $this->transactionLayers, 'Drupal_t' => $this->inTransaction(), 'DBAL_t' => $this->getDbalConnection()->isTransactionActive(), 'PDO_t' => $this->getDbalExtension()->delegateInTransaction()]);
     if (isset($this->transactionLayers[$name])) {
       throw new TransactionNameNonUniqueException($name . " is already in use.");
     }
@@ -512,6 +514,14 @@ class Connection extends DatabaseConnection {
       $this->getDbalExtension()->delegateBeginTransaction();
     }
     $this->transactionLayers[$name] = $name;
+if ($xxx) dump(['pushTransaction-post', 'name' => $name, 'layers' => $this->transactionLayers, 'Drupal_t' => $this->inTransaction(), 'DBAL_t' => $this->getDbalConnection()->isTransactionActive(), 'PDO_t' => $this->getDbalExtension()->delegateInTransaction()]);
+  }
+
+  public function popTransaction($name) {
+global $xxx;
+if ($xxx) dump(['popTransaction-pre', 'name' => $name, 'layers' => $this->transactionLayers, 'Drupal_t' => $this->inTransaction(), 'DBAL_t' => $this->getDbalConnection()->isTransactionActive(), 'PDO_t' => $this->getDbalExtension()->delegateInTransaction()]);
+    parent::popTransaction($name);
+if ($xxx) dump(['popTransaction-post', 'name' => $name, 'layers' => $this->transactionLayers, 'Drupal_t' => $this->inTransaction(), 'DBAL_t' => $this->getDbalConnection()->isTransactionActive(), 'PDO_t' => $this->getDbalExtension()->delegateInTransaction()]);
   }
 
   /**

@@ -25,27 +25,23 @@ jobs:
 
 #################################
 
-  mysql-pdo:
-    name: "MySql with PDO"
+  mysql-mysqli:
+    name: "MySql with mysqli"
     runs-on: ubuntu-latest
     env:
-        DRUDBAL_ENV: "dbal/mysql"
-        DBAL_URL: "mysql://root:@0.0.0.0:3306/drudbal"
-        SIMPLETEST_DB: "dbal://root:@0.0.0.0:3306/drudbal?module=drudbal&dbal_driver=pdo_mysql"
+        DRUDBAL_ENV: "dbal/mysqli"
+        DBAL_URL: "mysqli://root:@0.0.0.0:3306/drudbal"
+        SIMPLETEST_DB: "dbal://root:@0.0.0.0:3306/drudbal?module=drudbal&dbal_driver=mysqli"
 
     strategy:
       fail-fast: false
       matrix:
         php-version:
-          - "7.4"
+#          - "7.4"
           - "8.0"
         test-args:
           - "--group Database"
 #          - "--group Entity"
-#          - "--group Cache,Config"
-#          - "--group field,Field"
-#          - "--group file"
-#          - "--group views"
 
     services:
       mysql:
@@ -62,7 +58,7 @@ jobs:
       with:
         php-version: "${{ matrix.php-version }}"
         coverage: "none"
-        extensions: "pdo_mysql"
+        extensions: "mysqli"
         ini-values: "zend.assertions=1"
 
     - name: Checkout Drupal
@@ -88,42 +84,53 @@ jobs:
         composer config repositories.test-run '{"type": "path", "url": "drudbal_staging", "options": {"symlink": false}}'
         composer require "mondrake/drudbal:dev-test-run-branch" --no-progress --ansi
 
-    - name: Install Drupal
-      run: |
-        cp modules/contrib/drudbal/tests/github/install_* .
-        # Use the custom installer.
-        php install_cli.php
-        vendor/bin/drush runserver localhost:8080 &
-        sleep 1s
+#    - name: Install Drupal
+#      run: |
+#        cp modules/contrib/drudbal/tests/github/install_* .
+#        # Use the custom installer.
+#        php install_cli.php
+#        vendor/bin/drush runserver localhost:8080 &
+#        sleep 1s
 
-    - name: Report installation
-      run: |
-        php install_report.php
-        vendor/bin/drush core:status
-        vendor/bin/drush core:requirements
-        vendor/bin/drush pml --type=module --no-core
+#    - name: Report installation
+#      run: |
+#        php install_report.php
+#        vendor/bin/drush core:status
+#        vendor/bin/drush core:requirements
+#        vendor/bin/drush pml --type=module --no-core
 
     - name: Run test ${{ matrix.test-args }}
-      run: vendor/bin/phpunit -c core --color=always ${{ matrix.test-args }}
+      run: vendor/bin/phpunit -c core --color=always core/tests/Drupal/KernelTests/Core/Database/TransactionTest.php
 
 #################################
 
-  sqlite-pdo:
-    name: "SQLite with PDO"
+  oracle-oci8:
+    name: "Oracle on Oci8"
     runs-on: ubuntu-20.04
     env:
-        DRUDBAL_ENV: "dbal/sqlite/file"
-        DBAL_URL: "sqlite://localhost/sites/drudbal.sqlite"
-        SIMPLETEST_DB: "dbal://localhost/sites/drudbal.sqlite?module=drudbal&dbal_driver=pdo_sqlite"
+        DRUDBAL_ENV: "dbal/oci8"
+        DBAL_URL: "oci8://DRUDBAL:ORACLE@0.0.0.0:1521/XE"
+        SIMPLETEST_DB: "dbal://DRUDBAL:ORACLE@0.0.0.0:1521/XE?module=drudbal&dbal_driver=oci8#dru"
+
+    services:
+      oracle:
+        image: "wnameless/oracle-xe-11g-r2"
+        ports:
+          - "1521:1521"
 
     strategy:
       fail-fast: false
       matrix:
         php-version:
-          - "7.4"
+#          - "7.4"
           - "8.0"
         test-args:
           - "--group Database"
+#          - "--group Entity"
+#          - "--group Cache,Config"
+#          - "--group field,Field"
+#          - "--group file"
+#          - "--group views"
 
     steps:
     - name: Install PHP
@@ -131,7 +138,7 @@ jobs:
       with:
         php-version: "${{ matrix.php-version }}"
         coverage: "none"
-        extensions: "pdo_mysql"
+        extensions: "oci8"
         ini-values: "zend.assertions=1"
 
     - name: Checkout Drupal
@@ -157,20 +164,29 @@ jobs:
         composer config repositories.test-run '{"type": "path", "url": "drudbal_staging", "options": {"symlink": false}}'
         composer require "mondrake/drudbal:dev-test-run-branch" --no-progress --ansi
 
-    - name: Install Drupal
+    - name: Patch doctrine/dbal
+      run: |
+        patch -d vendor/doctrine/dbal -p1 < modules/contrib/drudbal/tests/github/dbal/oci8/dbal.patch
+
+    - name: Create Oracle schema
       run: |
         cp modules/contrib/drudbal/tests/github/install_* .
-        # Use the custom installer.
-        php install_cli.php
-        vendor/bin/drush runserver localhost:8080 &
-        sleep 1s
+        php install_oracle.php
 
-    - name: Report installation
-      run: |
-        php install_report.php
-        vendor/bin/drush core:status
-        vendor/bin/drush core:requirements
-        vendor/bin/drush pml --type=module --no-core
+#    - name: Install Drupal
+#      run: |
+##        # Use the custom installer.
+#        php install_cli.php
+#        vendor/bin/drush runserver localhost:8080 &
+#        sleep 5s
+
+#    - name: Report installation
+#      continue-on-error: true
+#      run: |
+#        php install_report.php
+#        vendor/bin/drush core:status
+#        vendor/bin/drush core:requirements
+#        vendor/bin/drush pml --type=module --no-core
 
     - name: Run test ${{ matrix.test-args }}
-      run: vendor/bin/phpunit -c core --color=always ${{ matrix.test-args }}
+      run: vendor/bin/phpunit -c core --color=always core/tests/Drupal/KernelTests/Core/Database/TransactionTest.php
