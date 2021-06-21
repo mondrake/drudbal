@@ -3,6 +3,7 @@
 namespace Drupal\Tests\drudbal\Kernel;
 
 use Drupal\KernelTests\Core\Database\TransactionTest as TransactionTestBase;
+use PHPUnit\Framework\Error\Warning;
 
 /**
  * Tests the transaction abstraction system.
