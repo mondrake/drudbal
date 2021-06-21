@@ -3,6 +3,7 @@
 namespace Drupal\Tests\drudbal\Kernel;
 
 use Drupal\KernelTests\Core\Database\TransactionTest as TransactionTestBase;
+use PHPUnit\Framework\Error\Warning;
 
 /**
  * Tests the transaction abstraction system.
@@ -98,8 +99,7 @@ class TransactionTest extends TransactionTestBase {
           $this->fail('Rolling back a transaction containing DDL should produce a warning.');
         }
       }
-      catch (\Throwable $warning) {
-dump($warning);
+      catch (Warning $warning) {
         $this->assertSame('Rollback attempted when there is no active transaction. This can cause data integrity issues.', $warning->getMessage());
       }
       unset($transaction);

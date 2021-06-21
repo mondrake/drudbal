@@ -1,8 +1,8 @@
 # DruDbal
-[![MySql via PDO test](https://github.com/mondrake/drudbal/actions/workflows/mysql.yml/badge.svg)](https://github.com/mondrake/drudbal/actions/workflows/mysql.yml)
-[![MySql via mysqli test](https://github.com/mondrake/drudbal/actions/workflows/mysqli.yml/badge.svg)](https://github.com/mondrake/drudbal/actions/workflows/mysqli.yml)
-[![SQLite via PDO test](https://github.com/mondrake/drudbal/actions/workflows/sqlite.yml/badge.svg)](https://github.com/mondrake/drudbal/actions/workflows/sqlite.yml)
-[![Oracle via oci8 test](https://github.com/mondrake/drudbal/actions/workflows/oracle.yml/badge.svg)](https://github.com/mondrake/drudbal/actions/workflows/oracle.yml)
+[![MySql via PDO](https://github.com/mondrake/drudbal/actions/workflows/mysql.yml/badge.svg)](https://github.com/mondrake/drudbal/actions/workflows/mysql.yml)
+[![MySql via mysqli](https://github.com/mondrake/drudbal/actions/workflows/mysqli.yml/badge.svg)](https://github.com/mondrake/drudbal/actions/workflows/mysqli.yml)
+[![SQLite via PDO](https://github.com/mondrake/drudbal/actions/workflows/sqlite.yml/badge.svg)](https://github.com/mondrake/drudbal/actions/workflows/sqlite.yml)
+[![Oracle via oci8](https://github.com/mondrake/drudbal/actions/workflows/oracle.yml/badge.svg)](https://github.com/mondrake/drudbal/actions/workflows/oracle.yml)
 [![License](https://img.shields.io/github/license/mondrake/drudbal.svg)](https://packagist.org/packages/mondrake/drudbal)
 
 (This README updated March 30, 2020)
