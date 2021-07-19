@@ -8,12 +8,13 @@ index f46fd41e66..507b6dfb04 100644
    public function testUpsertWithKeywords() {
 +dump($this->connection->query('SELECT * FROM {select}')->fetchAllAssoc());
      $num_records_before = $this->connection->query('SELECT COUNT(*) FROM {select}')->fetchField();
-
+ 
      $upsert = $this->connection->upsert('select')
 @@ -87,6 +88,7 @@ public function testUpsertWithKeywords() {
      // https://dev.mysql.com/doc/c-api/8.0/en/mysql-affected-rows.html.
      $this->assertGreaterThanOrEqual(2, $result, 'The result of the upsert operation should report that at least two rows were affected.');
-
+ 
 +dump($this->connection->query('SELECT * FROM {select}')->fetchAllAssoc());
      $num_records_after = $this->connection->query('SELECT COUNT(*) FROM {select}')->fetchField();
      $this->assertEquals($num_records_before + 1, $num_records_after, 'Rows were inserted and updated properly.');
+ 
