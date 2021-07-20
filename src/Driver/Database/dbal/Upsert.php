@@ -66,7 +66,7 @@ dump(['exec', $sql]);
           }
           try {
             $stmt = $this->connection->prepareStatement($sql, $this->queryOptions, TRUE);
-dump(['emu', $stmt, $values, $this->queryOptions]);
+dump(['emu', $sql, $stmt->getQueryString(), $values, $this->queryOptions]);
             try {
               $stmt->execute($values, $this->queryOptions);
               $affected_rows += $stmt->rowCount();
