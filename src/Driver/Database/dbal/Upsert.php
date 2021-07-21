@@ -30,7 +30,7 @@ class Upsert extends QueryUpsert {
     }
 
     $sql = (string) $this;
-dump(['exec', $sql]);
+
     // Loop through the values to be UPSERTed.
     $affected_rows = NULL;
     if ($this->insertValues) {
@@ -66,7 +66,6 @@ dump(['exec', $sql]);
           }
           try {
             $stmt = $this->connection->prepareStatement($sql, $this->queryOptions, TRUE);
-dump(['emu', $sql, $stmt->getQueryString(), $values, $this->queryOptions]);
             try {
               $stmt->execute($values, $this->queryOptions);
               $affected_rows += $stmt->rowCount();
