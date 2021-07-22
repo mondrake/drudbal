@@ -26,12 +26,14 @@ class PDOMySqlExtension extends AbstractMySqlExtension {
       // Because MySQL's prepared statements skip the query cache, because it's
       // dumb.
       \PDO::ATTR_EMULATE_PREPARES => TRUE,
+      // Limit SQL to a single statement like mysqli.
+      \PDO::MYSQL_ATTR_MULTI_STATEMENTS => FALSE,
+      // Convert numeric values to strings when fetching. In PHP 8.1,
+      // \PDO::ATTR_EMULATE_PREPARES now behaves the same way as non emulated
+      // prepares and returns integers. See https://externals.io/message/113294
+      // for further discussion.
+      \PDO::ATTR_STRINGIFY_FETCHES => TRUE,
     ];
-    if (defined('\PDO::MYSQL_ATTR_MULTI_STATEMENTS')) {
-      // An added connection option in PHP 5.5.21 to optionally limit SQL to a
-      // single statement like mysqli.
-      $dbal_connection_options['driverOptions'] += [\PDO::MYSQL_ATTR_MULTI_STATEMENTS => FALSE];
-    }
   }
 
   /**
@@ -39,6 +41,53 @@ class PDOMySqlExtension extends AbstractMySqlExtension {
    */
   public function delegateClientVersion() {
     return $this->getDbalConnection()->getWrappedConnection()->getServerVersion();
+  }
+
+  /**
+   * Transaction delegated methods.
+   *
+   * PHP8 changed behaviour of transactions when a DDL statement is executed.
+   * A commit is executed automatically in that case (like before), but now the
+   * inTransaction() method returns FALSE, which was not doing before. Trying to
+   * execute a commit/rollback now throws a PDOException. Since DBAL does not
+   * take care of that, its internal transactions stack remains in unsync state
+   * in that case. We therefore bypass DBAL here and go to the wrapped
+   * connection methods directly.
+   */
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateInTransaction(): bool {
+    return $this->getDbalConnection()->getWrappedConnection()->getWrappedConnection()->inTransaction();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateBeginTransaction(): bool {
+    return $this->getDbalConnection()->getWrappedConnection()->getWrappedConnection()->beginTransaction();;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateRollBack(): bool {
+    if ($this->delegateInTransaction()) {
+      return $this->getDbalConnection()->getWrappedConnection()->getWrappedConnection()->rollBack();
+    }
+    trigger_error('Rollback attempted when there is no active transaction. This can cause data integrity issues.', E_USER_WARNING);
+    return FALSE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateCommit(): bool {
+    if ($this->delegateInTransaction()) {
+      return $this->getDbalConnection()->getWrappedConnection()->getWrappedConnection()->commit();
+    }
+    return FALSE;
   }
 
 }

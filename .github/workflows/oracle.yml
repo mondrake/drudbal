@@ -1,4 +1,4 @@
-name: Oracle Testing
+name: Oracle via oci8 test
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
     - cron: "0 6 * * 2"
 
 env:
-    DRUDBAL_DRUPAL_VERSION: "9.2.x"
+    DRUDBAL_DRUPAL_VERSION: "9.3.x"
     DRUDBAL_DRUPAL_PROFILE: "standard"
     SIMPLETEST_BASE_URL: "http://localhost:8080"
     PHPUNIT_SKIP_CLASS: '[
@@ -17,7 +17,10 @@ env:
       "Drupal\\KernelTests\\Core\\Database\\ConnectionUnitTest",
       "Drupal\\KernelTests\\Core\\Database\\DatabaseExceptionWrapperTest",
       "Drupal\\KernelTests\\Core\\Database\\SchemaTest",
-      "Drupal\\KernelTests\\Core\\Database\\StatementWrapperLegacyTest"
+      "Drupal\\KernelTests\\Core\\Database\\StatementWrapperLegacyTest",
+      "Drupal\\KernelTests\\Core\\Database\\StatementTest",
+      "Drupal\\KernelTests\\Core\\Database\\TransactionTest",
+      "Drupal\\Tests\\system\\Functional\\Database\\TemporaryQueryTest"
     ]'
 
 jobs:
@@ -42,7 +45,8 @@ jobs:
       fail-fast: false
       matrix:
         php-version:
-          - "7.4"
+#          - "7.4"
+          - "8.0"
         test-args:
           - "--group Database"
 #          - "--group Entity"
@@ -85,7 +89,7 @@ jobs:
 
     - name: Patch doctrine/dbal
       run: |
-        patch -d vendor/doctrine/dbal -p1 < modules/contrib/drudbal/tests/github/dbal/oci8/dbal.patch
+        curl https://patch-diff.githubusercontent.com/raw/mondrake/dbal/pull/1.diff | patch -d vendor/doctrine/dbal -p1
 
     - name: Create Oracle schema
       run: |

@@ -9,7 +9,6 @@ use Doctrine\DBAL\Schema\Column as DbalColumn;
 use Doctrine\DBAL\Schema\Schema as DbalSchema;
 use Doctrine\DBAL\Schema\Table as DbalTable;
 use Doctrine\DBAL\Statement as DbalStatement;
-use Drupal\Component\Uuid\Php as Uuid;
 use Drupal\drudbal\Driver\Database\dbal\Connection as DruDbalConnection;
 use Drupal\drudbal\Driver\Database\dbal\Statement\StatementWrapper;
 
@@ -269,20 +268,35 @@ class AbstractExtension implements DbalExtensionInterface {
   }
 
   /**
-   * Generates a temporary table name.
-   *
-   * @return string
-   *   A table name.
+   * Transaction delegated methods.
    */
-  protected function generateTemporaryTableName() {
-    return "tmp_tab_" . str_replace('-', '_', (new Uuid())->generate());
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateInTransaction(): bool {
+    return $this->getDbalConnection()->isTransactionActive();
   }
 
   /**
    * {@inheritdoc}
    */
-  public function delegateQueryTemporary(string $query, array $args = [], array $options = []): string {
-    throw new \LogicException("Method " . __METHOD__ . " not implemented.");
+  public function delegateBeginTransaction(): bool {
+    return $this->getDbalConnection()->beginTransaction();;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateRollBack(): bool {
+    return $this->getDbalConnection()->rollBack();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateCommit(): bool {
+    return $this->getDbalConnection()->commit();
   }
 
   /**
@@ -299,28 +313,28 @@ class AbstractExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function delegateGetDateFieldSql(string $field, bool $string_date) : string {
+  public function delegateGetDateFieldSql(string $field, bool $string_date): string {
     throw new \LogicException("Method " . __METHOD__ . " not implemented.");
   }
 
   /**
    * {@inheritdoc}
    */
-  public function delegateGetDateFormatSql(string $field, string $format) : string {
+  public function delegateGetDateFormatSql(string $field, string $format): string {
     throw new \LogicException("Method " . __METHOD__ . " not implemented.");
   }
 
   /**
    * {@inheritdoc}
    */
-  public function delegateSetTimezoneOffset(string $offset) : void {
+  public function delegateSetTimezoneOffset(string $offset): void {
     throw new \LogicException("Method " . __METHOD__ . " not implemented.");
   }
 
   /**
    * {@inheritdoc}
    */
-  public function delegateSetFieldTimezoneOffsetSql(string &$field, int $offset) : void {
+  public function delegateSetFieldTimezoneOffsetSql(string &$field, int $offset): void {
     throw new \LogicException("Method " . __METHOD__ . " not implemented.");
   }
 
@@ -345,7 +359,7 @@ class AbstractExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function processFetchedRecord(array $record) : array {
+  public function processFetchedRecord(array $record): array {
     return $record;
   }
 
@@ -624,7 +638,7 @@ class AbstractExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function preprocessIndexFields(DbalSchema $dbal_schema, string $table_full_name, string $index_full_name, string $drupal_table_name, string $drupal_index_name, array $drupal_field_specs, array $indexes_spec) : array {
+  public function preprocessIndexFields(DbalSchema $dbal_schema, string $table_full_name, string $index_full_name, string $drupal_table_name, string $drupal_index_name, array $drupal_field_specs, array $indexes_spec): array {
     return $drupal_field_specs;
   }
 

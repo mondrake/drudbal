@@ -79,13 +79,23 @@ class StatementWrapper extends BaseStatementWrapper {
   protected $fetchClass;
 
   /**
+   * Holds supplementary fetch options.
+   *
+   * @var array
+   */
+  protected $fetchOptions = [
+    'class' => 'stdClass',
+    'constructor_args' => [],
+  ];
+
+  /**
    * Constructs a Statement object.
    *
    * Preparation of the actual lower-level statement is deferred to the first
    * call of the execute method, to allow replacing named parameters with
    * positional ones if needed.
    *
-   * @param \Drupal\drudbal\Driver\Database\dbal\Connection $dbh
+   * @param \Drupal\drudbal\Driver\Database\dbal\Connection $connection
    *   The database connection object for this statement.
    * @param object $client_connection
    *   Client database connection object, for example \PDO.
@@ -93,10 +103,14 @@ class StatementWrapper extends BaseStatementWrapper {
    *   A string containing an SQL query.
    * @param array $driver_options
    *   (optional) An array of driver options for this query.
+   * @param bool $row_count_enabled
+   *   (optional) Enables counting the rows affected. Defaults to FALSE.
    */
-  public function __construct(DruDbalConnection $dbh, DbalConnection $client_connection, string $query, array $driver_options = []) {
+  public function __construct(DruDbalConnection $connection, DbalConnection $client_connection, string $query, array $driver_options = [], bool $row_count_enabled = FALSE) {
+    $this->connection = $connection;
+    $this->rowCountEnabled = $row_count_enabled;
+
     $this->queryString = $query;
-    $this->dbh = $dbh;
     $this->dbalConnection = $client_connection;
     $this->setFetchMode(\PDO::FETCH_OBJ);
     $this->driverOpts = $driver_options;
@@ -111,14 +125,14 @@ class StatementWrapper extends BaseStatementWrapper {
     // Prepare the lower-level statement if it's not been prepared already.
     if (!$this->clientStatement) {
       // Replace named placeholders with positional ones if needed.
-      if (!$this->dbh->getDbalExtension()->delegateNamedPlaceholdersSupport()) {
+      if (!$this->connection->getDbalExtension()->delegateNamedPlaceholdersSupport()) {
         $this->paramsPositions = array_flip(array_keys($args));
-        list($query, $args) = $this->dbh->expandArrayParameters($this->queryString, $args, []);
+        list($query, $args) = $this->connection->expandArrayParameters($this->queryString, $args, []);
         $this->queryString = $query;
       }
 
       try {
-        $this->dbh->getDbalExtension()->alterStatement($this->queryString, $args);
+        $this->connection->getDbalExtension()->alterStatement($this->queryString, $args);
         /** @var \Doctrine\DBAL\Statement */
         $this->clientStatement = $this->dbalConnection->prepare($this->queryString);
       }
@@ -126,7 +140,7 @@ class StatementWrapper extends BaseStatementWrapper {
         throw new DatabaseExceptionWrapper($e->getMessage(), $e->getCode(), $e);
       }
     }
-    elseif (!$this->dbh->getDbalExtension()->delegateNamedPlaceholdersSupport()) {
+    elseif (!$this->connection->getDbalExtension()->delegateNamedPlaceholdersSupport()) {
       // Transform the $args to positional if needed.
       $tmp = [];
       foreach ($this->paramsPositions as $param => $pos) {
@@ -144,7 +158,7 @@ class StatementWrapper extends BaseStatementWrapper {
       }
     }
 
-    $logger = $this->dbh->getLogger();
+    $logger = $this->connection->getLogger();
     if (!empty($logger)) {
       $query_start = microtime(TRUE);
     }
@@ -180,7 +194,7 @@ class StatementWrapper extends BaseStatementWrapper {
     if (!$dbal_row) {
       return FALSE;
     }
-    $row = $this->dbh->getDbalExtension()->processFetchedRecord($dbal_row);
+    $row = $this->connection->getDbalExtension()->processFetchedRecord($dbal_row);
     switch ($mode) {
       case \PDO::FETCH_ASSOC:
         return $row;
@@ -317,8 +331,8 @@ class StatementWrapper extends BaseStatementWrapper {
    */
   public function rowCount() {
     // SELECT query should not use the method.
-    if ($this->allowRowCount) {
-      return $this->dbh->getDbalExtension()->delegateRowCount($this->dbalResult);
+    if ($this->rowCountEnabled) {
+      return $this->connection->getDbalExtension()->delegateRowCount($this->dbalResult);
     }
     else {
       throw new RowCountException();

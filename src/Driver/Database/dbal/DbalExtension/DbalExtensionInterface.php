@@ -305,25 +305,28 @@ interface DbalExtensionInterface {
   public function delegateQueryRange($query, $from, $count, array $args = [], array $options = []);
 
   /**
-   * Runs a SELECT query and stores its results in a temporary table.
-   *
-   * @param string $drupal_table_name
-   *   A string with the Drupal name of the table to be generated.
-   * @param string $query
-   *   A string containing a normal SELECT SQL query.
-   * @param array $args
-   *   (optional) An array of values to substitute into the query at placeholder
-   *   markers.
-   * @param array $options
-   *   (optional) An associative array of options to control how the query is
-   *   run. See the documentation for DatabaseConnection::defaultOptions() for
-   *   details.
-   *
-   * @return \Drupal\Core\Database\StatementInterface
-   *   A database query result resource, or NULL if the query was not executed
-   *   correctly.
+   * Transaction delegated methods.
    */
-  public function delegateQueryTemporary(string $query, array $args = [], array $options = []): string;
+
+  /**
+   * Handles checking if a transaction is currently active.
+   */
+  public function delegateInTransaction(): bool;
+
+  /**
+   * Handles starting a new transaction.
+   */
+  public function delegateBeginTransaction(): bool;
+
+  /**
+   * Handles rollback of the current transaction.
+   */
+  public function delegateRollBack(): bool;
+
+  /**
+   * Handles rollback of the current transaction.
+   */
+  public function delegateCommit(): bool;
 
   /**
    * Handles exceptions thrown by Connection::popCommittableTransactions().
@@ -359,7 +362,7 @@ interface DbalExtensionInterface {
    * @return string
    *   An expression representing a date field with timezone.
    */
-  public function delegateGetDateFieldSql(string $field, bool $string_date) : string;
+  public function delegateGetDateFieldSql(string $field, bool $string_date): string;
 
   /**
    * Creates a native database date formatting.
@@ -373,7 +376,7 @@ interface DbalExtensionInterface {
    *   A string representing the field formatted as a date as specified by
    *   $format.
    */
-  public function delegateGetDateFormatSql(string $field, string $format) : string;
+  public function delegateGetDateFormatSql(string $field, string $format): string;
 
   /**
    * Set the database to the given timezone.
@@ -381,7 +384,7 @@ interface DbalExtensionInterface {
    * @param string $offset
    *   The timezone.
    */
-  public function delegateSetTimezoneOffset(string $offset) : void;
+  public function delegateSetTimezoneOffset(string $offset): void;
 
   /**
    * Applies the given offset to the given field.
@@ -391,7 +394,7 @@ interface DbalExtensionInterface {
    * @param int $offset
    *   The timezone offset in seconds.
    */
-  public function delegateSetFieldTimezoneOffsetSql(string &$field, int $offset) : void;
+  public function delegateSetFieldTimezoneOffsetSql(string &$field, int $offset): void;
 
   /**
    * Statement delegated methods.
@@ -427,7 +430,7 @@ interface DbalExtensionInterface {
    * @return array
    *   The processed record.
    */
-  public function processFetchedRecord(array $record) : array;
+  public function processFetchedRecord(array $record): array;
 
   /**
    * Returns the number of rows affected by the last SQL statement.
@@ -976,7 +979,7 @@ interface DbalExtensionInterface {
    * @return array
    *   An array of normalized fields.
    */
-  public function preprocessIndexFields(DbalSchema $dbal_schema, string $table_full_name, string $index_full_name, string $drupal_table_name, string $drupal_index_name, array $drupal_field_specs, array $indexes_spec) : array;
+  public function preprocessIndexFields(DbalSchema $dbal_schema, string $table_full_name, string $index_full_name, string $drupal_table_name, string $drupal_index_name, array $drupal_field_specs, array $indexes_spec): array;
 
   /**
    * Drops the primary key.

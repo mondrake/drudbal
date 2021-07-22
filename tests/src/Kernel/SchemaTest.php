@@ -106,7 +106,7 @@ class SchemaTest extends SchemaTestBase {
 
     // We should have successfully inserted exactly two rows.
     $count = $this->connection->query('SELECT COUNT(*) FROM {test_table2}')->fetchField();
-    $this->assertEqual(2, $count, 'Two fields were successfully inserted.');
+    $this->assertEquals(2, $count, 'Two fields were successfully inserted.');
 
     // Try to drop the table.
     $this->schema->dropTable('test_table2');
@@ -132,7 +132,7 @@ class SchemaTest extends SchemaTestBase {
     $this->assertTrue($max2 > $max1, 'The serial is monotone.');
 
     $count = $this->connection->query('SELECT COUNT(*) FROM {test_table}')->fetchField();
-    $this->assertEqual(2, $count, 'There were two rows.');
+    $this->assertEquals(2, $count, 'There were two rows.');
 
     // Test adding a serial field to an existing table.
     $this->schema->dropTable('test_table');
@@ -152,7 +152,7 @@ class SchemaTest extends SchemaTestBase {
     $this->assertTrue($max2 > $max1, 'The serial is monotone.');
 
     $count = $this->connection->query('SELECT COUNT(*) FROM {test_table}')->fetchField();
-    $this->assertEqual(2, $count, 'There were two rows.');
+    $this->assertEquals(2, $count, 'There were two rows.');
 
     // Test adding a new column and form a composite primary key with it.
     $this->schema->addField('test_table', 'test_composite_primary_key', ['type' => 'int', 'not null' => TRUE, 'default' => 0], ['primary key' => ['test_serial', 'test_composite_primary_key']]);

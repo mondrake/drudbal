@@ -349,20 +349,21 @@ class PDOSqliteExtension extends AbstractExtension {
     // override nextId. However, this is unlikely as we deal with short strings
     // and integers and no known databases require special handling for those
     // simple cases. If another transaction wants to write the same row, it will
-    // wait until this transaction commits. Also, the return value needs to be
-    // set to RETURN_AFFECTED as if it were a real update() query otherwise it
-    // is not possible to get the row count properly.
-    $affected = $this->connection->query('UPDATE {sequences} SET value = GREATEST(value, :existing_id) + 1', [
-      ':existing_id' => $existing_id,
-    ], ['return' => Database::RETURN_AFFECTED]);
-    if (!$affected) {
-      $this->connection->query('INSERT INTO {sequences} (value) VALUES (:existing_id + 1)', [
-        ':existing_id' => $existing_id,
-      ]);
+    // wait until this transaction commits.
+    $stmt = $this->connection->prepareStatement('UPDATE {sequences} SET [value] = GREATEST([value], :existing_id) + 1', [], TRUE);
+    $args = [':existing_id' => $existing_id];
+    try {
+      $stmt->execute($args);
+    }
+    catch (\Exception $e) {
+      $this->connection->exceptionHandler()->handleExecutionException($e, $stmt, $args, []);
+    }
+    if ($stmt->rowCount() === 0) {
+      $this->connection->query('INSERT INTO {sequences} ([value]) VALUES (:existing_id + 1)', $args);
     }
     // The transaction gets committed when the transaction object gets destroyed
     // because it gets out of scope.
-    return $this->connection->query('SELECT value FROM {sequences}')->fetchField();
+    return $this->connection->query('SELECT [value] FROM {sequences}')->fetchField();
   }
 
   /**
@@ -370,21 +371,6 @@ class PDOSqliteExtension extends AbstractExtension {
    */
   public function delegateQueryRange($query, $from, $count, array $args = [], array $options = []) {
     return $this->connection->query($query . ' LIMIT ' . (int) $from . ', ' . (int) $count, $args, $options);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function delegateQueryTemporary(string $query, array $args = [], array $options = []): string {
-    $table_name = $this->generateTemporaryTableName();
-    $this->connection->query('CREATE TEMPORARY TABLE ' . $table_name . ' AS ' . $query, $args, $options);
-
-    // Temp tables should not be prefixed.
-    $prefixes = $this->connection->getPrefixes();
-    $prefixes[$table_name] = '';
-    $this->connection->setPrefixPublic($prefixes);
-
-    return $table_name;
   }
 
   /**
@@ -401,7 +387,7 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateGetDateFieldSql(string $field, bool $string_date) : string {
+  public function delegateGetDateFieldSql(string $field, bool $string_date): string {
     if ($string_date) {
       $field = "strftime('%s', $field)";
     }
@@ -411,7 +397,7 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateGetDateFormatSql(string $field, string $format) : string {
+  public function delegateGetDateFormatSql(string $field, string $format): string {
     // An array of PHP-to-SQLite date replacement patterns.
     static $replace = [
       'Y' => '%Y',
@@ -469,14 +455,14 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateSetTimezoneOffset(string $offset) : void {
+  public function delegateSetTimezoneOffset(string $offset): void {
     // Nothing to do here.
   }
 
   /**
    * {@inheritdoc}
    */
-  public function delegateSetFieldTimezoneOffsetSql(string &$field, int $offset) : void {
+  public function delegateSetFieldTimezoneOffsetSql(string &$field, int $offset): void {
     if (!empty($offset)) {
       $field = "($field + $offset)";
     }
