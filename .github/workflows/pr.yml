@@ -25,13 +25,13 @@ jobs:
 
 #################################
 
-  oracle-oci8:
-    name: "Oracle on Oci8"
+  oracle-pdo:
+    name: "Oracle with PDO"
     runs-on: ubuntu-20.04
     env:
-        DRUDBAL_ENV: "dbal/oci8"
-        DBAL_URL: "oci8://DRUDBAL:ORACLE@0.0.0.0:1521/XE"
-        SIMPLETEST_DB: "dbal://DRUDBAL:ORACLE@0.0.0.0:1521/XE?module=drudbal&dbal_driver=oci8#dru"
+        DRUDBAL_ENV: "dbal/pdo_oci"
+        DBAL_URL: "pdo-oci://DRUDBAL:ORACLE@0.0.0.0:1521/XE"
+        SIMPLETEST_DB: "dbal://DRUDBAL:ORACLE@0.0.0.0:1521/XE?module=drudbal&dbal_driver=pdo_oci#dru"
 
     services:
       oracle:
@@ -59,7 +59,7 @@ jobs:
       with:
         php-version: "${{ matrix.php-version }}"
         coverage: "none"
-        extensions: "oci8"
+        extensions: "pdo_oci"
         ini-values: "zend.assertions=1"
 
     - name: Checkout Drupal
@@ -72,6 +72,9 @@ jobs:
 
     - name: Patch Drupal
       run: ./drudbal_staging/tests/github/drupal_patch.sh
+
+#    - name: Test Drupal patch
+#      run: git apply -v drudbal_staging/test.patch
 
     - name: Install Composer dependencies
       run: |
@@ -94,6 +97,41 @@ jobs:
         cp modules/contrib/drudbal/tests/github/install_* .
         php install_oracle.php
 
+#    - name: Install Drupal
+#      run: |
+#        # Use the custom installer.
+#        php install_cli.php
+#        vendor/bin/drush runserver localhost:8080 &
+#        sleep 5s
+
+#    - name: Report installation
+#      continue-on-error: true
+#      run: |
+#        php install_report.php
+#        vendor/bin/drush pml --type=module --no-core
+#        vendor/bin/drush core:status
+#        vendor/bin/drush core:requirements
+
     - name: Run test ${{ matrix.test-args }}
-      run: vendor/bin/phpunit -c core --color=always core/tests/Drupal/KernelTests/Core/Database/UpsertTest.php
-#      run: vendor/bin/phpunit -c core --color=always ${{ matrix.test-args }}
+      continue-on-error: true
+      run: vendor/bin/phpunit -c core --color=always ${{ matrix.test-args }}
+
+#    - name: Run test a
+#      continue-on-error: true
+#      run: vendor/bin/phpunit -c core --color=always modules/contrib/drudbal/tests/src/Kernel/SchemaTest.php
+
+#    - name: Run test b
+#      continue-on-error: true
+#      run: vendor/bin/phpunit -c core --color=always core/tests/Drupal/KernelTests/Core/Database/InsertTest.php
+
+#    - name: Run test c
+#      continue-on-error: true
+#      run: vendor/bin/phpunit -c core --color=always core/tests/Drupal/KernelTests/Core/Entity/EntityDefinitionUpdateTest.php
+
+#    - name: Run test d
+#      continue-on-error: true
+#      run: vendor/bin/phpunit -c core --color=always core/tests/Drupal/KernelTests/Core/Entity/EntityCrudHookTest.php
+
+#    - name: Run test e
+#      continue-on-error: true
+#      run: vendor/bin/phpunit -c core --color=always core/tests/Drupal/KernelTests/Core/Entity/EntityQueryAggregateTest.php
