@@ -46,9 +46,9 @@ jobs:
 #          - "7.4"
           - "8.0"
         test-args:
-          - "--group Database"
-#          - "--group Entity"
-#          - "--group Cache,Config"
+#          - "--group Database"
+          - "--group Entity"
+          - "--group Cache,Config"
 #          - "--group field,Field"
 #          - "--group file"
 #          - "--group views"
@@ -94,6 +94,20 @@ jobs:
         cp modules/contrib/drudbal/tests/github/install_* .
         php install_oracle.php
 
+    - name: Install Drupal
+      run: |
+        # Use the custom installer.
+        php install_cli.php
+        vendor/bin/drush runserver localhost:8080 &
+        sleep 5s
+
+    - name: Report installation
+      continue-on-error: true
+      run: |
+        php install_report.php
+        vendor/bin/drush core:status
+        vendor/bin/drush core:requirements
+        vendor/bin/drush pml --type=module --no-core
+
     - name: Run test ${{ matrix.test-args }}
-      run: vendor/bin/phpunit -c core --color=always core/tests/Drupal/KernelTests/Core/Database/UpsertTest.php
-#      run: vendor/bin/phpunit -c core --color=always ${{ matrix.test-args }}
+      run: vendor/bin/phpunit -c core --color=always ${{ matrix.test-args }}
