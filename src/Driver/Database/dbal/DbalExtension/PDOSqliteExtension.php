@@ -184,8 +184,8 @@ dump(['A', $prefixes, $this->attachedDatabases]);
    * {@inheritdoc}
    */
   public function getDbTableName(string $drupal_prefix, string $drupal_table_name): string {
-    // In SQLite, the prefix is the database.
-    return $drupal_table_name;
+    $prefix = $this->connection->getPrefixes()['default'];
+    return ($prefix === '' ? 'main.' : $prefix . '.') . $drupal_table_name;
   }
 
   /**
@@ -200,9 +200,8 @@ dump(['A', $prefixes, $this->attachedDatabases]);
    * {@inheritdoc}
    */
   public function getDbFullQualifiedTableName($drupal_table_name) {
-    // In SQLite, the schema is always 'main'. The file name bears the 'prefix'
-    // and the tables in the file are not prefixed.
-    return 'main.' . $drupal_table_name;
+    $prefix = $this->connection->getPrefixes()['default'];
+    return ($prefix === '' ? 'main.' : $prefix . '.') . $drupal_table_name;
   }
 
   /**
