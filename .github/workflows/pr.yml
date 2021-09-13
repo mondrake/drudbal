@@ -38,8 +38,8 @@ jobs:
         php-version:
           - "8.0"
         test-args:
-          - "--group Database"
-          - "--group Entity"
+#          - "--group Database"
+#          - "--group Entity"
 #          - "--group Cache,Config"
 #          - "--group field,Field"
           - "--group file"
