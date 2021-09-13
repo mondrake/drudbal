@@ -91,12 +91,10 @@ class PDOSqliteExtension extends AbstractExtension {
     // Attach additional databases per prefix.
     $connection_options = $drudbal_connection->getConnectionOptions();
     $prefixes = [];
-    foreach ($connection_options['prefix'] as $key => $prefix) {
-      if ($key === 'default') {
-        $this->attachedDatabases['main'] = $connection_options['database'] . (empty($prefix) ? '' : ('-' . $prefix));
-      }
-      // Default prefix means query the main database -- no need to attach anything.
-      if ($key !== 'default' && !isset($this->attachedDatabases[$prefix])) {
+    $this->attachedDatabases['main'] = $connection_options['database'] . (empty($connection_options['prefix']) ? '' : ('-' . $connection_options['prefix']));
+    $prefixes['default'] = $connection_options['prefix'];
+    foreach ($connection_options['extra_prefix'] as $key => $prefix) {
+      if (!isset($this->attachedDatabases[$prefix])) {
         $this->attachedDatabases[$prefix] = $connection_options['database'] . '-' . $prefix;
         $this->getDbalConnection()->executeQuery('ATTACH DATABASE ? AS ?', [$connection_options['database'] . '-' . $prefix, $prefix]);
       }
