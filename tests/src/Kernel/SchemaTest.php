@@ -323,8 +323,8 @@ class SchemaTest extends SchemaTestBase {
     // Add per-table prefix to the second table.
     $new_connection_info = $connection_info['default'];
     $new_connection_info['prefix'] = [
-      'default' => $new_connection_info['default']['prefix'],
-      'test2' => $new_connection_info['default']['prefix'] . 's_',
+      'default' => $connection_info['default']['prefix'],
+      'test2' => $connection_info['default']['prefix'] . 's_',
     ];
     Database::addConnectionInfo('test', 'default', $new_connection_info);
     Database::setActiveConnection('test');
