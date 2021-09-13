@@ -108,7 +108,7 @@ class PDOSqliteExtension extends AbstractExtension {
       }
       $prefixes[$key] = $prefix;
     }
-
+dump(['A', $prefixes, $this->attachedDatabases]);
     $this->connection->setPrefixPublic($prefixes);
   }
 
