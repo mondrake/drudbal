@@ -193,10 +193,11 @@ dump(['__construct B', $prefixes, $this->attachedDatabases]);
    * {@inheritdoc}
    */
   public function getDbFullQualifiedTableName($drupal_table_name) {
-dump(['A', $drupal_table_name]);
-    $prefix = $this->connection->tablePrefix($drupal_table_name);
-dump(['B', $prefix]);
-    return empty($prefix) ? 'main.' . $drupal_table_name : $prefix . '.' . $drupal_table_name;
+//dump(['A', $drupal_table_name]);
+//    $prefix = $this->connection->tablePrefix($drupal_table_name);
+//dump(['B', $prefix]);
+//    return empty($prefix) ? 'main.' . $drupal_table_name : $prefix . '.' . $drupal_table_name;
+    return 'main.' . $drupal_table_name;
   }
 
   /**
