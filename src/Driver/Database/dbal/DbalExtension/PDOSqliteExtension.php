@@ -90,6 +90,7 @@ class PDOSqliteExtension extends AbstractExtension {
 
     // Attach additional databases per prefix.
     $connection_options = $drudbal_connection->getConnectionOptions();
+dump(['__construct A', $connection_options]);
     $prefixes = [];
     $this->attachedDatabases['main'] = $connection_options['database'] . (empty($connection_options['prefix']) ? '' : ('-' . $connection_options['prefix']));
     $prefixes['default'] = $connection_options['prefix'];
@@ -100,6 +101,7 @@ class PDOSqliteExtension extends AbstractExtension {
       }
       $prefixes[$key] = $prefix;
     }
+dump(['__construct B', $prefixes, $this->attachedDatabases]);
     $this->connection->setPrefixPublic($prefixes);
   }
 
