@@ -93,7 +93,7 @@ class PDOSqliteExtension extends AbstractExtension {
     $prefixes = [];
     $this->attachedDatabases['main'] = $connection_options['database'] . (empty($connection_options['prefix']) ? '' : ('-' . $connection_options['prefix']));
     $prefixes['default'] = $connection_options['prefix'];
-    foreach ($connection_options['extra_prefix'] as $key => $prefix) {
+    foreach ($connection_options['extra_prefix'] ?? [] as $key => $prefix) {
       if (!isset($this->attachedDatabases[$prefix])) {
         $this->attachedDatabases[$prefix] = $connection_options['database'] . '-' . $prefix;
         $this->getDbalConnection()->executeQuery('ATTACH DATABASE ? AS ?', [$connection_options['database'] . '-' . $prefix, $prefix]);
