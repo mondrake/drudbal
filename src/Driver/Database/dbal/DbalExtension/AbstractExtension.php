@@ -36,7 +36,7 @@ class AbstractExtension implements DbalExtensionInterface {
    *
    * @var bool
    */
-  protected static $isDebugging = FALSE;
+  protected static $isDebugging = true;
 
   /**
    * Constructs a DBAL extension object.
