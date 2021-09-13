@@ -39,10 +39,10 @@ jobs:
           - "8.0"
         test-args:
           - "--group Database"
-#          - "--group Entity"
+          - "--group Entity"
 #          - "--group Cache,Config"
 #          - "--group field,Field"
-#          - "--group file"
+          - "--group file"
 #          - "--group views"
 
     steps:
