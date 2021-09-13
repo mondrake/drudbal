@@ -90,7 +90,6 @@ class PDOSqliteExtension extends AbstractExtension {
 
     // Attach additional databases per prefix.
     $connection_options = $drudbal_connection->getConnectionOptions();
-dump(['__construct A', $connection_options]);
     $prefixes = [];
     $this->attachedDatabases['main'] = $connection_options['database'] . (empty($connection_options['prefix']) ? '' : ('-' . $connection_options['prefix']));
     $prefixes['default'] = $connection_options['prefix'];
@@ -101,7 +100,6 @@ dump(['__construct A', $connection_options]);
       }
       $prefixes[$key] = $prefix;
     }
-dump(['__construct B', $prefixes, $this->attachedDatabases]);
     $this->connection->setPrefixPublic($prefixes);
   }
 
@@ -193,10 +191,8 @@ dump(['__construct B', $prefixes, $this->attachedDatabases]);
    * {@inheritdoc}
    */
   public function getDbFullQualifiedTableName($drupal_table_name) {
-//dump(['A', $drupal_table_name]);
-//    $prefix = $this->connection->tablePrefix($drupal_table_name);
-//dump(['B', $prefix]);
-//    return empty($prefix) ? 'main.' . $drupal_table_name : $prefix . '.' . $drupal_table_name;
+    // In SQLite, the schema is always 'main'. The file name bears the 'prefix'
+    // and the tables in the file are not prefixed.
     return 'main.' . $drupal_table_name;
   }
 
