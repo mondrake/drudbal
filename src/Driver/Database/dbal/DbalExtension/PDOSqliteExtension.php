@@ -90,7 +90,6 @@ class PDOSqliteExtension extends AbstractExtension {
 
     // Attach additional databases per prefix.
     $connection_options = $drudbal_connection->getConnectionOptions();
-dump(['A', $connection_options]);
     $prefixes = [];
     $this->attachedDatabases['main'] = $connection_options['database'] . (empty($connection_options['prefix']) ? '' : ('-' . $connection_options['prefix']));
     $prefixes['default'] = $connection_options['prefix'];
@@ -102,7 +101,6 @@ dump(['A', $connection_options]);
       $prefixes[$key] = $prefix;
     }
     $this->connection->setPrefixPublic($prefixes);
-dump(['B', $prefixes]);
   }
 
   /**
@@ -193,7 +191,9 @@ dump(['B', $prefixes]);
    * {@inheritdoc}
    */
   public function getDbFullQualifiedTableName($drupal_table_name) {
+dump(['A', $drupal_table_name]);
     $prefix = $this->connection->tablePrefix($drupal_table_name);
+dump(['B', $prefix]);
     return empty($prefix) ? 'main.' . $drupal_table_name : $prefix . '.' . $drupal_table_name;
   }
 
