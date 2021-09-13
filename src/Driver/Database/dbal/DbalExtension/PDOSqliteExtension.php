@@ -695,7 +695,9 @@ class PDOSqliteExtension extends AbstractExtension {
    * {@inheritdoc}
    */
   public function delegateTableExists(&$result, $drupal_table_name) {
+dump(['A', $result, $drupal_table_name]);
     try {
+dump(['B', $this->connection->getPrefixedTableName($drupal_table_name), $this->getDbalConnection()->getSchemaManager()->tablesExist([$this->connection->getPrefixedTableName($drupal_table_name)])]);
       $result = $this->getDbalConnection()->getSchemaManager()->tablesExist([$this->connection->getPrefixedTableName($drupal_table_name)]);
     }
     catch (DbalDriverException $e) {

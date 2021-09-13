@@ -51,7 +51,7 @@ Very rough instructions to install Drupal from scratch with this db driver
 under the hood:
 
 1. Requirements:
-    * PHP 7.3+
+    * PHP 8.0+
     * latest Drupal development branch code, 9.3.x
     * codebase built via Composer
 
