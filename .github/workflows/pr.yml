@@ -97,4 +97,4 @@ jobs:
 #      run: vendor/bin/phpunit -c core --color=always ${{ matrix.test-args }}
 
     - name: List files
-      run: ls -al core/sites
+      run: ls -al sites
