@@ -199,7 +199,8 @@ dump(['getDrupalTableName', $drupal_default_prefix, $db_table_name]);
    * {@inheritdoc}
    */
   public function getDbFullQualifiedTableName($drupal_table_name) {
-dump(['getDbFullQualifiedTableName', $drupal_table_name]);
+    $prefix = $this->connection->tablePrefix($drupal_table_name);
+dump(['getDbFullQualifiedTableName', $drupal_table_name, $prefix]);
     return 'main.' . $drupal_table_name;
   }
 
