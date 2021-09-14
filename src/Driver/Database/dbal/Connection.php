@@ -654,7 +654,7 @@ class Connection extends DatabaseConnection {
     }
 
     // Table prefix as the URI fragment.
-    if (!empty($connection_options['prefix'])) {
+    if ($connection_options['prefix'] !== '') {
       $uri = $uri->withFragment($connection_options['prefix']);
     }
 

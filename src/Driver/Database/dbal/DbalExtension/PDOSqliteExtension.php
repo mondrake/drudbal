@@ -94,9 +94,6 @@ class PDOSqliteExtension extends AbstractExtension {
 
     // Main prefix.
     $prefix = $connection_options['prefix'];
-    if ($prefix !== '' && !isset($this->attachedDatabases[$prefix])) {
-      $this->getDbalConnection()->executeQuery('ATTACH DATABASE ? AS ?', ["{$connection_options['database']}-{$prefix}", $prefix]);
-    }
     $this->attachedDatabases['main'] = $connection_options['database'] . (empty($prefix) ? '' : ('-' . $prefix));
     $prefixes['default'] = $prefix;
 
@@ -184,8 +181,8 @@ dump(['A', $prefixes, $this->attachedDatabases]);
    * {@inheritdoc}
    */
   public function getDbTableName(string $drupal_prefix, string $drupal_table_name): string {
-    $prefix = $this->connection->getPrefixes()['default'];
-    return ($prefix === '' ? 'main.' : $prefix . '.') . $drupal_table_name;
+    // In SQLite, the prefix is the database.
+    return $drupal_table_name;
   }
 
   /**
@@ -200,8 +197,7 @@ dump(['A', $prefixes, $this->attachedDatabases]);
    * {@inheritdoc}
    */
   public function getDbFullQualifiedTableName($drupal_table_name) {
-    $prefix = $this->connection->getPrefixes()['default'];
-    return ($prefix === '' ? 'main.' : $prefix . '.') . $drupal_table_name;
+    return 'main.' . $drupal_table_name;
   }
 
   /**
@@ -257,10 +253,10 @@ dump(['A', $prefixes, $this->attachedDatabases]);
     }
     else {
       $dbal_connection_options['path'] = $connection_options['database'];
-      if (isset($connection_options['prefix']['default']) && $connection_options['prefix']['default'] !== '') {
-        $dbal_connection_options['path'] .= '-' . $connection_options['prefix']['default'];
+      if ($connection_options['prefix'] !== '') {
+        $dbal_connection_options['path'] .= '-' . $connection_options['prefix'];
         if (isset($dbal_connection_options['url'])) {
-          $dbal_connection_options['url'] .= '-' . $connection_options['prefix']['default'];
+          $dbal_connection_options['url'] .= '-' . $connection_options['prefix'];
         }
       }
     }
@@ -565,7 +561,7 @@ dump(['A', $prefixes, $this->attachedDatabases]);
 
     list($schema, $table_name) = explode('.', $full_db_table_name);
     $connection_options = $this->connection->getConnectionOptions();
-    if (isset($connection_options['prefix']['default']) && $schema === $connection_options['prefix']['default']) {
+    if ($connection_options['prefix'] === '' || $schema === $connection_options['prefix']) {
       return 'main.' . $table_name;
     }
     return $full_db_table_name;
