@@ -105,6 +105,7 @@ class PDOSqliteExtension extends AbstractExtension {
       }
       $prefixes[$key] = $prefix;
     }
+dump(['__construct', $prefixes, $this->attachedDatabases]);
     $this->connection->setPrefixPublic($prefixes);
   }
 
@@ -116,10 +117,12 @@ class PDOSqliteExtension extends AbstractExtension {
    * creates and destroy databases several times in a row.
    */
   public function __destruct() {
+dump(['__destruct', $this->tableDropped, $this->attachedDatabases]);
     if ($this->tableDropped && !empty($this->attachedDatabases)) {
       foreach ($this->attachedDatabases as $prefix => $db_file) {
         // Check if the database is now empty, ignore the internal SQLite tables.
         try {
+dump(["__destruct $prefix $db_file", $this->connection->query('SELECT * FROM ' . $prefix . '.sqlite_master WHERE type = :type AND name NOT LIKE :pattern', [':type' => 'table', ':pattern' => 'sqlite_%'])->fetchField()]);
           $count = $this->connection->query('SELECT COUNT(*) FROM ' . $prefix . '.sqlite_master WHERE type = :type AND name NOT LIKE :pattern', [':type' => 'table', ':pattern' => 'sqlite_%'])->fetchField();
 
           // We can prune the database file if it doesn't have any tables.
