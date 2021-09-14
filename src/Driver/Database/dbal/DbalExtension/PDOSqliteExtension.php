@@ -105,7 +105,6 @@ class PDOSqliteExtension extends AbstractExtension {
       }
       $prefixes[$key] = $prefix;
     }
-dump(['A', $prefixes, $this->attachedDatabases]);
     $this->connection->setPrefixPublic($prefixes);
   }
 
@@ -699,9 +698,7 @@ dump(['A', $prefixes, $this->attachedDatabases]);
    * {@inheritdoc}
    */
   public function delegateTableExists(&$result, $drupal_table_name) {
-//dump(['A', $result, $drupal_table_name]);
     try {
-//dump(['B', $this->connection->getPrefixedTableName($drupal_table_name), $this->getDbalConnection()->getSchemaManager()->tablesExist([$this->connection->getPrefixedTableName($drupal_table_name)])]);
       $result = $this->getDbalConnection()->getSchemaManager()->tablesExist([$this->connection->getPrefixedTableName($drupal_table_name)]);
     }
     catch (DbalDriverException $e) {
