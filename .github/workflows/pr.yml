@@ -39,11 +39,11 @@ jobs:
           - "8.0"
         test-args:
           - "--group Database"
-#          - "--group Entity"
-#          - "--group Cache,Config"
-#          - "--group field,Field"
+          - "--group Entity"
+          - "--group Cache,Config"
+          - "--group field,Field"
           - "--group file"
-#          - "--group views"
+          - "--group views"
 
     steps:
     - name: Install PHP
