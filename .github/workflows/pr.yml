@@ -36,12 +36,12 @@ jobs:
       fail-fast: false
       matrix:
         php-version:
-          - "8.0"
+          - "8.1"
         test-args:
-#          - "--group Database"
+          - "--group Database"
 #          - "--group Entity"
 #          - "--group Cache,Config"
-          - "--group field,Field"
+#          - "--group field,Field"
 #          - "--group file"
 #          - "--group views"
 
@@ -93,12 +93,12 @@ jobs:
 
     - name: Run test A
       continue-on-error: true
-      run: vendor/bin/phpunit -v -c core --color=always core/modules/field/tests/src/Kernel/Migrate/d7/MigrateFieldInstanceTest.php
-#      run: vendor/bin/phpunit -c core --color=always ${{ matrix.test-args }}
+#      run: vendor/bin/phpunit -v -c core --color=always core/modules/field/tests/src/Kernel/Migrate/d7/MigrateFieldInstanceTest.php
+      run: vendor/bin/phpunit -c core --color=always ${{ matrix.test-args }}
 
-    - name: Run test B
-      continue-on-error: true
-      run: vendor/bin/phpunit -v -c core --color=always core/tests/Drupal/KernelTests/Core/Database/SelectTest.php
+#    - name: Run test B
+#      continue-on-error: true
+#      run: vendor/bin/phpunit -v -c core --color=always core/tests/Drupal/KernelTests/Core/Database/SelectTest.php
 
     - name: List files
       run: ls -al sites
