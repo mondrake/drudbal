@@ -87,7 +87,7 @@ class PDOSqliteExtension extends AbstractExtension {
     if ($drudbal_connection->getConnectionOptions()['database'] === ':memory:') {
       return;
     }
-dump(['A', $drudbal_connection]);
+dump(['A', $drudbal_connection->getConnectionOptions()]);
     // Attach databases per prefix.
     $prefixes = [];
     $connection_options = $drudbal_connection->getConnectionOptions();
@@ -105,6 +105,7 @@ dump(['A', $drudbal_connection]);
       }
       $prefixes[$key] = $prefix;
     }
+dump(['A', $prefixes, $this->attachedDatabases]);
     $this->connection->setPrefixPublic($prefixes);
   }
 
