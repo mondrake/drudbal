@@ -182,6 +182,7 @@ dump(['A', $prefixes, $this->attachedDatabases]);
    */
   public function getDbTableName(string $drupal_prefix, string $drupal_table_name): string {
     // In SQLite, the prefix is the database.
+dump(['getDbTableName', $drupal_prefix, $drupal_table_name]);
     return $drupal_table_name;
   }
 
@@ -190,6 +191,7 @@ dump(['A', $prefixes, $this->attachedDatabases]);
    */
   public function getDrupalTableName(string $drupal_default_prefix, string $db_table_name): string {
     // In SQLite, the prefix is the database.
+dump(['getDrupalTableName', $drupal_default_prefix, $db_table_name]);
     return $db_table_name;
   }
 
@@ -197,6 +199,7 @@ dump(['A', $prefixes, $this->attachedDatabases]);
    * {@inheritdoc}
    */
   public function getDbFullQualifiedTableName($drupal_table_name) {
+dump(['getDbFullQualifiedTableName', $drupal_table_name]);
     return 'main.' . $drupal_table_name;
   }
 
