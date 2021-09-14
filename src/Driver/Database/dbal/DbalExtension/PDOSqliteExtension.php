@@ -117,9 +117,9 @@ dump(['__construct', $prefixes, $this->attachedDatabases]);
    * creates and destroy databases several times in a row.
    */
   public function __destruct() {
-//throw new \Exception("WHY DON'T YOU TRIGGER? {$this->tableDropped}");
 //dump(['__destruct', $this->tableDropped, $this->attachedDatabases]);
     if ($this->tableDropped && !empty($this->attachedDatabases)) {
+throw new \Exception("WHY DON'T YOU TRIGGER? {$this->tableDropped} " . var_export($this->attachedDatabases, TRUE));
       foreach ($this->attachedDatabases as $prefix => $db_file) {
         // Check if the database is now empty, ignore the internal SQLite tables.
         try {
