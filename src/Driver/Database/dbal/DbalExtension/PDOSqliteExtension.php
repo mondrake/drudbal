@@ -87,7 +87,7 @@ class PDOSqliteExtension extends AbstractExtension {
     if ($drudbal_connection->getConnectionOptions()['database'] === ':memory:') {
       return;
     }
-dump(['A', $drudbal_connection->getConnectionOptions()]);
+
     // Attach databases per prefix.
     $prefixes = [];
     $connection_options = $drudbal_connection->getConnectionOptions();
@@ -105,7 +105,6 @@ dump(['A', $drudbal_connection->getConnectionOptions()]);
       }
       $prefixes[$key] = $prefix;
     }
-dump(['A', $prefixes, $this->attachedDatabases]);
     $this->connection->setPrefixPublic($prefixes);
   }
 
@@ -182,7 +181,6 @@ dump(['A', $prefixes, $this->attachedDatabases]);
    */
   public function getDbTableName(string $drupal_prefix, string $drupal_table_name): string {
     // In SQLite, the prefix is the database.
-//dump(['getDbTableName', $drupal_prefix, $drupal_table_name]);
     return $drupal_table_name;
   }
 
@@ -191,7 +189,6 @@ dump(['A', $prefixes, $this->attachedDatabases]);
    */
   public function getDrupalTableName(string $drupal_default_prefix, string $db_table_name): string {
     // In SQLite, the prefix is the database.
-//dump(['getDrupalTableName', $drupal_default_prefix, $db_table_name]);
     return $db_table_name;
   }
 
@@ -201,8 +198,6 @@ dump(['A', $prefixes, $this->attachedDatabases]);
   public function getDbFullQualifiedTableName($drupal_table_name) {
     $prefix = $this->connection->tablePrefix($drupal_table_name);
     return empty($prefix) ? 'main.' . $drupal_table_name : $prefix . '.' . $drupal_table_name;
-//dump(['getDbFullQualifiedTableName', $drupal_table_name, $prefix]);
-//    return 'main.' . $drupal_table_name;
   }
 
   /**

@@ -254,11 +254,6 @@ class Connection extends DatabaseConnection {
     }
   }
 
-//  public function prepareStatement(string $query, array $options, bool $allow_row_count = FALSE): StatementInterface {
-//    dump($query);
-//    return parent::prepareStatement($query, $options, $allow_row_count);
-//  }
-
   /**
    * {@inheritdoc}
    */
