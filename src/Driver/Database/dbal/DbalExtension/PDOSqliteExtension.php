@@ -117,12 +117,8 @@ dump(['__construct', $prefixes, $this->attachedDatabases]);
    * creates and destroy databases several times in a row.
    */
   public function __destruct() {
-//dump(['__destruct', $this->tableDropped, $this->attachedDatabases]);
     if ($this->tableDropped && !empty($this->attachedDatabases)) {
-//throw new \Exception("WHY DON'T YOU TRIGGER? {$this->tableDropped} " . var_export($this->attachedDatabases, TRUE));
       foreach ($this->attachedDatabases as $prefix => $db_file) {
-//          $xx = $this->connection->query('SELECT * FROM ' . $prefix . '.sqlite_master WHERE type = :type AND name NOT LIKE :pattern', [':type' => 'table', ':pattern' => 'sqlite_%'])->fetchAll();
-//throw new \Exception("$prefix $db_file --> " . var_export($xx, TRUE));
         // Check if the database is now empty, ignore the internal SQLite tables.
 //        try {
 //          $xx = $this->connection->query('SELECT * FROM ' . $prefix . '.sqlite_master WHERE type = :type AND name NOT LIKE :pattern', [':type' => 'table', ':pattern' => 'sqlite_%'])->fetchAll();
@@ -132,7 +128,9 @@ dump(['__construct', $prefixes, $this->attachedDatabases]);
           // We can prune the database file if it doesn't have any tables.
           if ($count == 0) {
             // Detach the database.
-            $this->connection->query('DETACH DATABASE :schema', [':schema' => $prefix]);
+            if ($prefix !== 'main') {
+              $this->connection->query('DETACH DATABASE :schema', [':schema' => $prefix]);
+            }
             // Destroy the database file.
             unlink($db_file);
           }
