@@ -120,8 +120,6 @@ class PDOSqliteExtension extends AbstractExtension {
       foreach ($this->attachedDatabases as $prefix => $db_file) {
         // Check if the database is now empty, ignore the internal SQLite tables.
         try {
-//          $xx = $this->connection->query('SELECT * FROM ' . $prefix . '.sqlite_master WHERE type = :type AND name NOT LIKE :pattern', [':type' => 'table', ':pattern' => 'sqlite_%'])->fetchAll();
-//throw new \Exception("__destruct $prefix $db_file --> " . var_export($xx, TRUE));
           $count = $this->connection->query('SELECT COUNT(*) FROM ' . $prefix . '.sqlite_master WHERE type = :type AND name NOT LIKE :pattern', [':type' => 'table', ':pattern' => 'sqlite_%'])->fetchField();
 
           // We can prune the database file if it doesn't have any tables.
@@ -134,6 +132,8 @@ class PDOSqliteExtension extends AbstractExtension {
             unlink($db_file);
             @unlink($db_file . '-wal');
             @unlink($db_file . '-shm');
+            // @todo The '0' suffix file is due to migrate tests. To be removed. 
+            @unlink($db_file . '0');
           }
         }
         catch (\Exception $e) {
