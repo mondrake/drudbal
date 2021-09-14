@@ -789,6 +789,7 @@ dump(["__destruct $prefix $db_file", $this->connection->query('SELECT * FROM ' .
   public function postDropTable(DbalSchema $dbal_schema, string $drupal_table_name): void  {
     // Signal that at least a table has been deleted so that housekeeping
     // can happen when destructing the extension.
+dump("DROPPED $drupal_table_name");
     $this->tableDropped = TRUE;
   }
 
