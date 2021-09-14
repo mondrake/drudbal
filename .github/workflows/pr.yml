@@ -38,12 +38,12 @@ jobs:
         php-version:
           - "8.0"
         test-args:
-          - "--group Database"
-          - "--group Entity"
-          - "--group Cache,Config"
+#          - "--group Database"
+#          - "--group Entity"
+#          - "--group Cache,Config"
           - "--group field,Field"
-          - "--group file"
-          - "--group views"
+#          - "--group file"
+ #         - "--group views"
 
     steps:
     - name: Install PHP
@@ -93,8 +93,8 @@ jobs:
 
     - name: Run test ${{ matrix.test-args }}
       continue-on-error: true
-#      run: vendor/bin/phpunit -c core --color=always core/modules/options/tests/src/Kernel/Views/FileViewsDataTest.php
-      run: vendor/bin/phpunit -c core --color=always ${{ matrix.test-args }}
+      run: vendor/bin/phpunit -c core --color=always core/modules/field/tests/src/Kernel/Migrate/d7/MigrateFieldInstanceTest.php
+#      run: vendor/bin/phpunit -c core --color=always ${{ matrix.test-args }}
 
     - name: List files
       run: ls -al sites
