@@ -681,7 +681,7 @@ class Connection extends DatabaseConnection {
       // Note that additional leading slashes have meaning for some database
       // drivers.
       'database' => substr($uri->getPath(), 1),
-      'prefix' => $uri->getFragment() ?: NULL,
+      'prefix' => $uri->getFragment() ?: '',
       'namespace' => $reflector->getNamespaceName(),
     ];
 

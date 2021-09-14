@@ -196,7 +196,8 @@ class PDOSqliteExtension extends AbstractExtension {
    * {@inheritdoc}
    */
   public function getDbFullQualifiedTableName($drupal_table_name) {
-    return 'main.' . $drupal_table_name;
+    $prefix = $this->connection->tablePrefix($drupal_table_name);
+    return empty($prefix) ? 'main.' . $drupal_table_name : $prefix . '.' . $drupal_table_name;
   }
 
   /**
