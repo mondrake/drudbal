@@ -117,6 +117,7 @@ dump(['__construct', $prefixes, $this->attachedDatabases]);
    * creates and destroy databases several times in a row.
    */
   public function __destruct() {
+throw new \Exception("WHY DON'T YOU TRIGGER? {$this->tableDropped}");
 dump(['__destruct', $this->tableDropped, $this->attachedDatabases]);
     if ($this->tableDropped && !empty($this->attachedDatabases)) {
       foreach ($this->attachedDatabases as $prefix => $db_file) {
