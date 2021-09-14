@@ -105,7 +105,6 @@ class PDOSqliteExtension extends AbstractExtension {
       }
       $prefixes[$key] = $prefix;
     }
-dump(['__construct', $prefixes, $this->attachedDatabases]);
     $this->connection->setPrefixPublic($prefixes);
   }
 
@@ -120,7 +119,7 @@ dump(['__construct', $prefixes, $this->attachedDatabases]);
     if ($this->tableDropped && !empty($this->attachedDatabases)) {
       foreach ($this->attachedDatabases as $prefix => $db_file) {
         // Check if the database is now empty, ignore the internal SQLite tables.
-//        try {
+        try {
 //          $xx = $this->connection->query('SELECT * FROM ' . $prefix . '.sqlite_master WHERE type = :type AND name NOT LIKE :pattern', [':type' => 'table', ':pattern' => 'sqlite_%'])->fetchAll();
 //throw new \Exception("__destruct $prefix $db_file --> " . var_export($xx, TRUE));
           $count = $this->connection->query('SELECT COUNT(*) FROM ' . $prefix . '.sqlite_master WHERE type = :type AND name NOT LIKE :pattern', [':type' => 'table', ':pattern' => 'sqlite_%'])->fetchField();
@@ -131,14 +130,16 @@ dump(['__construct', $prefixes, $this->attachedDatabases]);
             if ($prefix !== 'main') {
               $this->connection->query('DETACH DATABASE :schema', [':schema' => $prefix]);
             }
-            // Destroy the database file.
+            // Destroy the database files.
             unlink($db_file);
+            @unlink($db_file . '-wal');
+            @unlink($db_file . '-shm');
           }
-       // }
-       // catch (\Exception $e) {
+        }
+        catch (\Exception $e) {
           // Ignore the exception and continue. There is nothing we can do here
           // to report the error or fail safe.
-      //  }
+        }
       }
     }
     parent::__destruct();
@@ -791,7 +792,6 @@ dump(['__construct', $prefixes, $this->attachedDatabases]);
   public function postDropTable(DbalSchema $dbal_schema, string $drupal_table_name): void  {
     // Signal that at least a table has been deleted so that housekeeping
     // can happen when destructing the extension.
-dump("DROPPED $drupal_table_name");
     $this->tableDropped = TRUE;
   }
 
