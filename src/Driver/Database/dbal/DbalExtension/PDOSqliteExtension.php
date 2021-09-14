@@ -121,12 +121,12 @@ dump(['__construct', $prefixes, $this->attachedDatabases]);
     if ($this->tableDropped && !empty($this->attachedDatabases)) {
 //throw new \Exception("WHY DON'T YOU TRIGGER? {$this->tableDropped} " . var_export($this->attachedDatabases, TRUE));
       foreach ($this->attachedDatabases as $prefix => $db_file) {
-          $xx = $this->connection->query('SELECT * FROM ' . $prefix . '.sqlite_master WHERE type = :type AND name NOT LIKE :pattern', [':type' => 'table', ':pattern' => 'sqlite_%'])->fetchAll();
-throw new \Exception("$prefix $db_file --> " . var_export($xx, TRUE));
+//          $xx = $this->connection->query('SELECT * FROM ' . $prefix . '.sqlite_master WHERE type = :type AND name NOT LIKE :pattern', [':type' => 'table', ':pattern' => 'sqlite_%'])->fetchAll();
+//throw new \Exception("$prefix $db_file --> " . var_export($xx, TRUE));
         // Check if the database is now empty, ignore the internal SQLite tables.
-        try {
-          $xx = $this->connection->query('SELECT * FROM ' . $prefix . '.sqlite_master WHERE type = :type AND name NOT LIKE :pattern', [':type' => 'table', ':pattern' => 'sqlite_%'])->fetchAll();
-throw new \Exception("__destruct $prefix $db_file --> " . var_export($xx, TRUE));
+//        try {
+//          $xx = $this->connection->query('SELECT * FROM ' . $prefix . '.sqlite_master WHERE type = :type AND name NOT LIKE :pattern', [':type' => 'table', ':pattern' => 'sqlite_%'])->fetchAll();
+//throw new \Exception("__destruct $prefix $db_file --> " . var_export($xx, TRUE));
           $count = $this->connection->query('SELECT COUNT(*) FROM ' . $prefix . '.sqlite_master WHERE type = :type AND name NOT LIKE :pattern', [':type' => 'table', ':pattern' => 'sqlite_%'])->fetchField();
 
           // We can prune the database file if it doesn't have any tables.
@@ -136,11 +136,11 @@ throw new \Exception("__destruct $prefix $db_file --> " . var_export($xx, TRUE))
             // Destroy the database file.
             unlink($db_file);
           }
-        }
-        catch (\Exception $e) {
+       // }
+       // catch (\Exception $e) {
           // Ignore the exception and continue. There is nothing we can do here
           // to report the error or fail safe.
-        }
+      //  }
       }
     }
     parent::__destruct();
