@@ -182,7 +182,7 @@ dump(['A', $prefixes, $this->attachedDatabases]);
    */
   public function getDbTableName(string $drupal_prefix, string $drupal_table_name): string {
     // In SQLite, the prefix is the database.
-dump(['getDbTableName', $drupal_prefix, $drupal_table_name]);
+//dump(['getDbTableName', $drupal_prefix, $drupal_table_name]);
     return $drupal_table_name;
   }
 
@@ -191,7 +191,7 @@ dump(['getDbTableName', $drupal_prefix, $drupal_table_name]);
    */
   public function getDrupalTableName(string $drupal_default_prefix, string $db_table_name): string {
     // In SQLite, the prefix is the database.
-dump(['getDrupalTableName', $drupal_default_prefix, $db_table_name]);
+//dump(['getDrupalTableName', $drupal_default_prefix, $db_table_name]);
     return $db_table_name;
   }
 
@@ -200,8 +200,9 @@ dump(['getDrupalTableName', $drupal_default_prefix, $db_table_name]);
    */
   public function getDbFullQualifiedTableName($drupal_table_name) {
     $prefix = $this->connection->tablePrefix($drupal_table_name);
-dump(['getDbFullQualifiedTableName', $drupal_table_name, $prefix]);
-    return 'main.' . $drupal_table_name;
+    return empty($prefix) ? 'main.' . $drupal_table_name : $prefix . '.' . $drupal_table_name;
+//dump(['getDbFullQualifiedTableName', $drupal_table_name, $prefix]);
+//    return 'main.' . $drupal_table_name;
   }
 
   /**
