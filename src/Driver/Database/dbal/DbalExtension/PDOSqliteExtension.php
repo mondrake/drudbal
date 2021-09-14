@@ -88,15 +88,20 @@ class PDOSqliteExtension extends AbstractExtension {
       return;
     }
 
-    // Attach additional databases per prefix.
-    $connection_options = $drudbal_connection->getConnectionOptions();
+    // Attach databases per prefix.
     $prefixes = [];
-    $this->attachedDatabases['main'] = $connection_options['database'] . (empty($connection_options['prefix']) ? '' : ('-' . $connection_options['prefix']));
-    $prefixes['default'] = $connection_options['prefix'];
+    $connection_options = $drudbal_connection->getConnectionOptions();
+
+    // Main prefix.
+    $prefix = $connection_options['prefix'];
+    $this->attachedDatabases['main'] = $connection_options['database'] . (empty($prefix) ? '' : ('-' . $prefix));
+    $prefixes['default'] = $prefix;
+
+    // Extra prefixes.
     foreach ($connection_options['extra_prefix'] ?? [] as $key => $prefix) {
       if (!isset($this->attachedDatabases[$prefix])) {
-        $this->attachedDatabases[$prefix] = $connection_options['database'] . '-' . $prefix;
-        $this->getDbalConnection()->executeQuery('ATTACH DATABASE ? AS ?', [$connection_options['database'] . '-' . $prefix, $prefix]);
+        $this->getDbalConnection()->executeQuery('ATTACH DATABASE ? AS ?', ["{$connection_options['database']}-{$prefix}", $prefix]);
+        $this->attachedDatabases[$prefix] = "{$connection_options['database']}-{$prefix}";
       }
       $prefixes[$key] = $prefix;
     }
@@ -191,8 +196,7 @@ class PDOSqliteExtension extends AbstractExtension {
    * {@inheritdoc}
    */
   public function getDbFullQualifiedTableName($drupal_table_name) {
-    $prefix = $this->connection->tablePrefix($drupal_table_name);
-    return empty($prefix) ? 'main.' . $drupal_table_name : $prefix . '.' . $drupal_table_name;
+    return 'main.' . $drupal_table_name;
   }
 
   /**
@@ -248,10 +252,10 @@ class PDOSqliteExtension extends AbstractExtension {
     }
     else {
       $dbal_connection_options['path'] = $connection_options['database'];
-      if (isset($connection_options['prefix']['default']) && $connection_options['prefix']['default'] !== '') {
-        $dbal_connection_options['path'] .= '-' . $connection_options['prefix']['default'];
+      if ($connection_options['prefix'] !== '') {
+        $dbal_connection_options['path'] .= '-' . $connection_options['prefix'];
         if (isset($dbal_connection_options['url'])) {
-          $dbal_connection_options['url'] .= '-' . $connection_options['prefix']['default'];
+          $dbal_connection_options['url'] .= '-' . $connection_options['prefix'];
         }
       }
     }
@@ -556,7 +560,7 @@ class PDOSqliteExtension extends AbstractExtension {
 
     list($schema, $table_name) = explode('.', $full_db_table_name);
     $connection_options = $this->connection->getConnectionOptions();
-    if (isset($connection_options['prefix']['default']) && $schema === $connection_options['prefix']['default']) {
+    if ($connection_options['prefix'] === '' || $schema === $connection_options['prefix']) {
       return 'main.' . $table_name;
     }
     return $full_db_table_name;

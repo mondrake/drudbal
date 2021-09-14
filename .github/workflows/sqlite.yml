@@ -52,7 +52,6 @@ jobs:
       with:
         php-version: "${{ matrix.php-version }}"
         coverage: "none"
-        extensions: "pdo_mysql"
         ini-values: "zend.assertions=1"
 
     - name: Checkout Drupal
