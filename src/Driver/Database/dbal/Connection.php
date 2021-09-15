@@ -455,6 +455,7 @@ class Connection extends DatabaseConnection {
    * {@inheritdoc}
    */
   public function rollBack($savepoint_name = 'drupal_transaction') {
+    dump(['rollBack', $savepoint_name]);
     if (!$this->inTransaction()) {
       throw new TransactionNoActiveException();
     }
@@ -517,12 +518,14 @@ class Connection extends DatabaseConnection {
       $this->getDbalExtension()->delegateBeginTransaction();
     }
     $this->transactionLayers[$name] = $name;
+    dump(['pushTransaction', $name, $this->transactionLayers]);
   }
 
   /**
    * {@inheritdoc}
    */
   protected function popCommittableTransactions() {
+    dump(['popCommittableTransactions', $name]);
     // Commit all the committable layers.
     foreach (array_reverse($this->transactionLayers) as $name => $active) {
       // Stop once we found an active transaction.
