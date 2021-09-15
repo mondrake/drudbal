@@ -452,6 +452,30 @@ class Connection extends DatabaseConnection {
   }
 
   /**
+   * Determines if there is an active transaction open.
+   *
+   * @return bool
+   *   TRUE if we're currently in a transaction, FALSE otherwise.
+   */
+  public function inTransaction() {
+    sleep(1);
+    dump(['inTransaction', $this->transactionLayers]);
+    return ($this->transactionDepth() > 0);
+  }
+
+  /**
+   * Determines the current transaction depth.
+   *
+   * @return int
+   *   The current transaction depth.
+   */
+  public function transactionDepth() {
+    sleep(1);
+    dump(['transactionDepth', $this->transactionLayers]);
+    return count($this->transactionLayers);
+  }
+
+  /**
    * {@inheritdoc}
    */
   public function rollBack($savepoint_name = 'drupal_transaction') {
