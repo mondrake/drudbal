@@ -450,14 +450,14 @@ class Connection extends DatabaseConnection {
    * {@inheritdoc}
    */
   public function rollBack($savepoint_name = 'drupal_transaction') {
-//    if (!$this->inTransaction()) {
-//      throw new TransactionNoActiveException();
-//    }
+    if (!$this->inTransaction()) {
+      throw new TransactionNoActiveException();
+    }
     // A previous rollback to an earlier savepoint may mean that the savepoint
     // in question has already been accidentally committed.
-//    if (!isset($this->transactionLayers[$savepoint_name])) {
-//      throw new TransactionNoActiveException();
-//    }
+    if (!isset($this->transactionLayers[$savepoint_name])) {
+      throw new TransactionNoActiveException();
+    }
 
     // We need to find the point we're rolling back to, all other savepoints
     // before are no longer needed. If we rolled back other active savepoints,
