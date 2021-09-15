@@ -194,6 +194,11 @@ class Connection extends DatabaseConnection {
     return $quoted ? $prefixed_table_name : str_replace($this->identifierQuotes, ['', ''], $prefixed_table_name);
   }
 
+  public function prepareStatement(string $query, array $options, bool $allow_row_count = FALSE): StatementInterface {
+    dump($query);
+    return parent::prepareStatement($query, $options, $allow_row_count);
+  }
+
   /**
    * {@inheritdoc}
    */
