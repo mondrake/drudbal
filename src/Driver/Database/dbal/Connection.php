@@ -457,7 +457,7 @@ class Connection extends DatabaseConnection {
    * @return bool
    *   TRUE if we're currently in a transaction, FALSE otherwise.
    */
-  public function inTransaction() {
+/*  public function inTransaction() {
     sleep(1);
     dump(['inTransaction', $this->transactionLayers]);
     return ($this->transactionDepth() > 0);
@@ -469,7 +469,7 @@ class Connection extends DatabaseConnection {
    * @return int
    *   The current transaction depth.
    */
-  public function transactionDepth() {
+/*  public function transactionDepth() {
     sleep(1);
     dump(['transactionDepth', $this->transactionLayers]);
     return count($this->transactionLayers);
@@ -479,8 +479,8 @@ class Connection extends DatabaseConnection {
    * {@inheritdoc}
    */
   public function rollBack($savepoint_name = 'drupal_transaction') {
-    sleep(1);
-    dump(['rollBack', $savepoint_name, $this->transactionLayers]);
+    sleep(2);
+    dump(['rollBack', $savepoint_name, $this->transactionLayers, $this->getDbalExtension()->formatBacktrace(debug_backtrace())]);
     if (!$this->inTransaction()) {
       throw new TransactionNoActiveException();
     }
