@@ -46,17 +46,17 @@ class Insert extends QueryInsert {
           foreach ($insert_values as $value) {
             $values[':db_insert_placeholder_' . $max_placeholder++] = $value;
           }
-          try {
+  //        try {
             $last_insert_id = $this->connection->query($sql, $values, $this->queryOptions);
-          }
-          catch (IntegrityConstraintViolationException $e) {
+    //      }
+/*          catch (IntegrityConstraintViolationException $e) {
             // Abort the entire insert in case of integrity constraint violation
             // and a transaction is open.
             if ($this->connection->inTransaction()) {
               $this->connection->rollBack();
             }
             throw $e;
-          }
+          }*/
         }
       }
       else {
