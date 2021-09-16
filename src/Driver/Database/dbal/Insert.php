@@ -47,13 +47,13 @@ class Insert extends QueryInsert {
             $values[':db_insert_placeholder_' . $max_placeholder++] = $value;
           }
           try {
-//            if ($this->table === 'user') {
-              dump([$this->table, $sql, $values, $this->queryOptions]);
-//            }
+            if ($this->table === 'users') {
+              dump([$this->table, $sql, $values]);
+            }
             $last_insert_id = $this->connection->query($sql, $values, $this->queryOptions);
-//            if ($this->table === 'user') {
-//              dump($this->connection->query("SELECT * FROM [user]", [], [])->fetchAll());
-//            }
+            if ($this->table === 'users') {
+              dump($this->connection->query("SELECT * FROM [user]", [], [])->fetchAll());
+            }
           }
           catch (IntegrityConstraintViolationException $e) {
             // Abort the entire insert in case of integrity constraint violation
