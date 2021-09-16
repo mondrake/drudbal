@@ -48,13 +48,13 @@ class Insert extends QueryInsert {
           }
           try {
 //            if ($this->table === 'user') {
-              dump([$sql, $values, $this->queryOptions]);
+              dump([$this->table, $sql, $values, $this->queryOptions]);
 //            }
             $last_insert_id = $this->connection->query($sql, $values, $this->queryOptions);
 //            if ($this->table === 'user') {
-              dump($this->connection->query("SELECT * FROM [user]", [], [])->fetchAll());
-            }
-//          }
+//              dump($this->connection->query("SELECT * FROM [user]", [], [])->fetchAll());
+//            }
+          }
           catch (IntegrityConstraintViolationException $e) {
             // Abort the entire insert in case of integrity constraint violation
             // and a transaction is open.
