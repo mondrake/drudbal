@@ -52,7 +52,7 @@ class Insert extends QueryInsert {
             }
             $last_insert_id = $this->connection->query($sql, $values, $this->queryOptions);
             if ($this->table === 'users') {
-              dump($this->connection->query("SELECT * FROM [users]", [], [])->fetchAll());
+              dump($this->connection->query('SELECT * FROM "druusers"', [], [])->fetchAll());
             }
           }
           catch (IntegrityConstraintViolationException $e) {
