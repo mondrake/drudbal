@@ -194,11 +194,6 @@ class Connection extends DatabaseConnection {
     return $quoted ? $prefixed_table_name : str_replace($this->identifierQuotes, ['', ''], $prefixed_table_name);
   }
 
-  public function prepareStatement(string $query, array $options, bool $allow_row_count = FALSE): StatementInterface {
-    //dump($query);
-    return parent::prepareStatement($query, $options, $allow_row_count);
-  }
-
   /**
    * {@inheritdoc}
    */
@@ -452,35 +447,9 @@ class Connection extends DatabaseConnection {
   }
 
   /**
-   * Determines if there is an active transaction open.
-   *
-   * @return bool
-   *   TRUE if we're currently in a transaction, FALSE otherwise.
-   */
-/*  public function inTransaction() {
-    sleep(1);
-    dump(['inTransaction', $this->transactionLayers]);
-    return ($this->transactionDepth() > 0);
-  }
-
-  /**
-   * Determines the current transaction depth.
-   *
-   * @return int
-   *   The current transaction depth.
-   */
-/*  public function transactionDepth() {
-    sleep(1);
-    dump(['transactionDepth', $this->transactionLayers]);
-    return count($this->transactionLayers);
-  }
-
-  /**
    * {@inheritdoc}
    */
   public function rollBack($savepoint_name = 'drupal_transaction') {
-    sleep(2);
-    dump(['rollBack', $savepoint_name, $this->transactionLayers, $this->getDbalExtension()->formatBacktrace(debug_backtrace())]);
     if (!$this->inTransaction()) {
       throw new TransactionNoActiveException();
     }
@@ -543,14 +512,12 @@ class Connection extends DatabaseConnection {
       $this->getDbalExtension()->delegateBeginTransaction();
     }
     $this->transactionLayers[$name] = $name;
-    dump(['pushTransaction', $name, $this->transactionLayers]);
   }
 
   /**
    * {@inheritdoc}
    */
   protected function popCommittableTransactions() {
-    dump(['popCommittableTransactions', $name]);
     // Commit all the committable layers.
     foreach (array_reverse($this->transactionLayers) as $name => $active) {
       // Stop once we found an active transaction.
