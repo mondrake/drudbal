@@ -18,7 +18,6 @@ env:
       "Drupal\\Tests\\system\\Functional\\Database\\TemporaryQueryTest",
       "Drupal\\Tests\\views\\Functional\\Update\\ViewsSortIdentifiersUpdateTest"
     ]'
-    DRUPAL_TEST_RESULTS_DB: "sites/test_results.sqlite"
 
 jobs:
 
@@ -36,6 +35,7 @@ jobs:
       fail-fast: false
       matrix:
         php-version:
+#          - "8.0"
           - "8.1"
         test-args:
           - "--group Database"
@@ -76,29 +76,20 @@ jobs:
         composer config repositories.test-run '{"type": "path", "url": "drudbal_staging", "options": {"symlink": false}}'
         composer require "mondrake/drudbal:dev-test-run-branch" --no-progress --ansi
 
-#    - name: Install Drupal
-#      run: |
-#        cp modules/contrib/drudbal/tests/github/install_* .
-#        # Use the custom installer.
-#        php install_cli.php
-#        vendor/bin/drush runserver localhost:8080 &
-#        sleep 1s
+    - name: Install Drupal
+      run: |
+        cp modules/contrib/drudbal/tests/github/install_* .
+        # Use the custom installer.
+        php install_cli.php
+        vendor/bin/drush runserver localhost:8080 &
+        sleep 1s
 
-#    - name: Report installation
-#      run: |
-#        php install_report.php
-#        vendor/bin/drush core:status
- #       vendor/bin/drush core:requirements
- #       vendor/bin/drush pml --type=module --no-core
+    - name: Report installation
+      run: |
+        php install_report.php
+        vendor/bin/drush core:status
+        vendor/bin/drush core:requirements
+        vendor/bin/drush pml --type=module --no-core
 
-    - name: Run test A
-      continue-on-error: true
-#      run: vendor/bin/phpunit -v -c core --color=always core/modules/field/tests/src/Kernel/Migrate/d7/MigrateFieldInstanceTest.php
+    - name: Run test ${{ matrix.test-args }}
       run: vendor/bin/phpunit -c core --color=always ${{ matrix.test-args }}
-
-#    - name: Run test B
-#      continue-on-error: true
-#      run: vendor/bin/phpunit -v -c core --color=always core/tests/Drupal/KernelTests/Core/Database/SelectTest.php
-
-    - name: List files
-      run: ls -al sites
