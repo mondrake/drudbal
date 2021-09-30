@@ -1047,7 +1047,8 @@ class PDOSqliteExtension extends AbstractExtension {
         $schema['fields'][$column->getName()]['default'] = NULL;
       }
       else {
-        $schema['fields'][$column->getName()]['default'] = $column->getDefault();
+        $default = $column->getDefault() === NULL ? NULL : str_replace("''", "'", $column->getDefault());
+        $schema['fields'][$column->getName()]['default'] = $default;
       }
       if ($column->getAutoincrement() === TRUE && in_array($dbal_type, [
         'smallint', 'integer', 'bigint',
