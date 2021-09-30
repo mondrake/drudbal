@@ -1049,7 +1049,7 @@ dump(['b', $drupal_field_specs, $old_schema]);
         $schema['fields'][$column->getName()]['default'] = NULL;
       }
       else {
-        $schema['fields'][$column->getName()]['default'] = $column->getDefault();
+        $schema['fields'][$column->getName()]['default'] = str_replace("''", "'", $column->getDefault());
       }
       if ($column->getAutoincrement() === TRUE && in_array($dbal_type, [
         'smallint', 'integer', 'bigint',
