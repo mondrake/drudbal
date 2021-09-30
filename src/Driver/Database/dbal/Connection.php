@@ -409,7 +409,7 @@ class Connection extends DatabaseConnection {
   public function createDatabase($database) {
     try {
       $this->dbalExtension->preCreateDatabase($database);
-      $this->getDbalConnection()->getSchemaManager()->createDatabase($database);
+      $this->getDbalConnection()->createSchemaManager()->createDatabase($database);
       $this->dbalExtension->postCreateDatabase($database);
     }
     catch (DbalException $e) {
@@ -471,7 +471,7 @@ class Connection extends DatabaseConnection {
         if (empty($this->transactionLayers)) {
           break;
         }
-        $this->getDbalConnection()->exec($this->dbalPlatform->rollbackSavePoint($savepoint));
+        $this->getDbalConnection()->executeStatement($this->dbalPlatform->rollbackSavePoint($savepoint));
         $this->popCommittableTransactions();
         if ($rolled_back_other_active_savepoints) {
           throw new TransactionOutOfOrderException();
@@ -506,7 +506,7 @@ class Connection extends DatabaseConnection {
     // If we're already in a transaction then we want to create a savepoint
     // rather than try to create another transaction.
     if ($this->inTransaction()) {
-      $this->getDbalConnection()->exec($this->dbalPlatform->createSavePoint($name));
+      $this->getDbalConnection()->executeStatement($this->dbalPlatform->createSavePoint($name));
     }
     else {
       $this->getDbalExtension()->delegateBeginTransaction();
@@ -533,7 +533,7 @@ class Connection extends DatabaseConnection {
       else {
         // Attempt to release this savepoint in the standard way.
         try {
-          $this->getDbalConnection()->exec($this->dbalPlatform->releaseSavePoint($name));
+          $this->getDbalConnection()->executeStatement($this->dbalPlatform->releaseSavePoint($name));
         }
         catch (DbalDriverException $e) {
           // If all SAVEPOINTs were released automatically, clean the
