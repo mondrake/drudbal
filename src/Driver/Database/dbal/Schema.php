@@ -504,7 +504,9 @@ class Schema extends DatabaseSchema {
     $current_schema = $this->dbalSchema();
     $to_schema = clone $current_schema;
     $to_schema->getTable($table_full_name)->setPrimaryKey($this->dbalGetFieldList($fields));
+$this->dbalExtension->setDebugging(TRUE);
     $this->dbalExecuteSchemaChange($to_schema);
+$this->dbalExtension->setDebugging(FALSE);
   }
 
   /**
