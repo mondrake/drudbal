@@ -91,4 +91,4 @@ jobs:
         vendor/bin/drush pml --type=module --no-core
 
     - name: Run test ${{ matrix.test-args }}
-      run: vendor/bin/phpunit -c core --color=always core/tests/Drupal/Core/KernelTests/Database/SchemaTest.php
+      run: vendor/bin/phpunit -c core --color=always core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php
