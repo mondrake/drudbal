@@ -806,7 +806,6 @@ class PDOSqliteExtension extends AbstractExtension {
       // When we don't have to create new keys and we are not creating a
       // NOT NULL column without a default value, we can use the quicker
       // version.
-//dump(['a', $drupal_field_specs]);
       $dbal_type = $this->connection->schema()->getDbalColumnType($drupal_field_specs);
       $dbal_column_options = $this->connection->schema()->getDbalColumnOptions('addField', $field_name, $dbal_type, $drupal_field_specs);
       $query = 'ALTER TABLE {' . $drupal_table_name . '} ADD ' . $field_name . ' ' . $dbal_column_options['columnDefinition'];
@@ -816,7 +815,6 @@ class PDOSqliteExtension extends AbstractExtension {
       // We cannot add the field directly. Use the slower table alteration
       // method, starting from the old schema.
       $old_schema = $this->buildTableSpecFromDbalSchema($dbal_schema, $drupal_table_name);
-//dump(['b', $drupal_field_specs, $old_schema]);
       $new_schema = $old_schema;
 
       // Add the new field.
@@ -1049,7 +1047,6 @@ class PDOSqliteExtension extends AbstractExtension {
         $schema['fields'][$column->getName()]['default'] = NULL;
       }
       else {
-dump(['c', $column->getName(), $column->getDefault()]);
         $default = $column->getDefault() === NULL ? NULL : str_replace("''", "'", $column->getDefault());
         $schema['fields'][$column->getName()]['default'] = $default;
       }
