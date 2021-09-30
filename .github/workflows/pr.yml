@@ -39,11 +39,11 @@ jobs:
           - "8.1"
         test-args:
           - "--group Database"
-#          - "--group Entity"
-#          - "--group Cache,Config"
-#          - "--group field,Field"
-#          - "--group file"
-#          - "--group views"
+          - "--group Entity"
+          - "--group Cache,Config"
+          - "--group field,Field"
+          - "--group file"
+          - "--group views"
 
     steps:
     - name: Install PHP
@@ -93,3 +93,4 @@ jobs:
 
     - name: Run test ${{ matrix.test-args }}
       run: vendor/bin/phpunit -c core --color=always ${{ matrix.test-args }}
+#      run: vendor/bin/phpunit -c core --color=always core/tests/Drupal/KernelTests/Core/Database/SchemaTest.php
