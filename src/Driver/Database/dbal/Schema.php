@@ -59,7 +59,7 @@ class Schema extends DatabaseSchema {
   public function __construct(Connection $connection) {
     parent::__construct($connection);
     $this->dbalExtension = $this->connection->getDbalExtension();
-    $this->dbalSchemaManager = $this->connection->getDbalConnection()->getSchemaManager();
+    $this->dbalSchemaManager = $this->connection->getDbalConnection()->createSchemaManager();
     $this->dbalPlatform = $this->connection->getDbalConnection()->getDatabasePlatform();
     $this->dbalExtension->alterDefaultSchema($this->defaultSchema);
   }
@@ -871,7 +871,7 @@ class Schema extends DatabaseSchema {
       if ($this->dbalExtension->getDebugging()) {
         dump($sql);
       }
-      $this->connection->getDbalConnection()->exec($sql);
+      $this->connection->getDbalConnection()->executeStatement($sql);
     }
     $this->dbalSetCurrentSchema($to_schema);
     return TRUE;

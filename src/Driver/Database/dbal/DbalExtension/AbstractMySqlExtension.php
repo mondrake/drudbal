@@ -167,7 +167,7 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
     if (!empty($connection_options['collation'])) {
       $sql .= ' COLLATE ' . $connection_options['collation'];
     }
-    $dbal_connection->exec($sql);
+    $dbal_connection->executeStatement($sql);
 
     // Set MySQL init_commands if not already defined.  Default Drupal's MySQL
     // behavior to conform more closely to SQL standards.  This allows Drupal
@@ -185,7 +185,7 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
     ];
     // Execute initial commands.
     foreach ($connection_options['init_commands'] as $sql) {
-      $dbal_connection->exec($sql);
+      $dbal_connection->executeStatement($sql);
     }
   }
 
@@ -202,7 +202,7 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
    */
   public function postCreateDatabase($database_name) {
     // Set the database as active.
-    $this->getDbalConnection()->exec("USE $database_name");
+    $this->getDbalConnection()->executeStatement("USE $database_name");
     return $this;
   }
 
@@ -393,7 +393,7 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
    * {@inheritdoc}
    */
   public function delegateSetTimezoneOffset(string $offset): void {
-    $this->getDbalConnection()->exec("SET @@session.time_zone = '$offset'");
+    $this->getDbalConnection()->executeStatement("SET @@session.time_zone = '$offset'");
   }
 
   /**
@@ -413,7 +413,7 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
    * {@inheritdoc}
    */
   public function preTruncate($drupal_table_name) {
-    $this->getDbalConnection()->exec('SET FOREIGN_KEY_CHECKS=0');
+    $this->getDbalConnection()->executeStatement('SET FOREIGN_KEY_CHECKS=0');
     return $this;
   }
 
@@ -421,7 +421,7 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
    * {@inheritdoc}
    */
   public function postTruncate($drupal_table_name) {
-    $this->getDbalConnection()->exec('SET FOREIGN_KEY_CHECKS=1');
+    $this->getDbalConnection()->executeStatement('SET FOREIGN_KEY_CHECKS=1');
     return $this;
   }
 

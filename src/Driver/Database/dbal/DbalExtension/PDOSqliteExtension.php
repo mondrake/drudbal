@@ -316,7 +316,7 @@ class PDOSqliteExtension extends AbstractExtension {
 
     // Execute sqlite init_commands.
     if (isset($connection_options['init_commands'])) {
-      $dbal_connection->exec(implode('; ', $connection_options['init_commands']));
+      $dbal_connection->executeStatement(implode('; ', $connection_options['init_commands']));
     }
   }
 
@@ -689,11 +689,11 @@ class PDOSqliteExtension extends AbstractExtension {
    */
   public function delegateListTableNames() {
     try {
-      return $this->getDbalConnection()->getSchemaManager()->listTableNames();
+      return $this->getDbalConnection()->createSchemaManager()->listTableNames();
     }
     catch (DbalDriverException $e) {
       if ($e->getCode() === 17) {
-        return $this->getDbalConnection()->getSchemaManager()->listTableNames();
+        return $this->getDbalConnection()->createSchemaManager()->listTableNames();
       }
       else {
         throw $e;
@@ -706,11 +706,11 @@ class PDOSqliteExtension extends AbstractExtension {
    */
   public function delegateTableExists(&$result, $drupal_table_name) {
     try {
-      $result = $this->getDbalConnection()->getSchemaManager()->tablesExist([$this->connection->getPrefixedTableName($drupal_table_name)]);
+      $result = $this->getDbalConnection()->createSchemaManager()->tablesExist([$this->connection->getPrefixedTableName($drupal_table_name)]);
     }
     catch (DbalDriverException $e) {
       if ($e->getCodeCode() === 17) {
-        $result = $this->getDbalConnection()->getSchemaManager()->tablesExist([$this->connection->getPrefixedTableName($drupal_table_name)]);
+        $result = $this->getDbalConnection()->createSchemaManager()->tablesExist([$this->connection->getPrefixedTableName($drupal_table_name)]);
       }
       else {
         throw $e;
