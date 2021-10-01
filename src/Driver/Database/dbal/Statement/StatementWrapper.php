@@ -164,7 +164,7 @@ class StatementWrapper extends BaseStatementWrapper {
     }
 
     try {
-      $this->dbalResult = $this->clientStatement->execute($args);
+      $this->dbalResult = $this->clientStatement->executeQuery($args);
     }
     catch (DbalException $e) {
       throw new DatabaseExceptionWrapper($e->getMessage(), $e->getCode(), $e);
