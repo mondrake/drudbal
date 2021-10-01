@@ -574,7 +574,7 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
     // Instead, we try to select from the table in question.  If it fails,
     // the most likely reason is that it does not exist.
     try {
-      $this->getDbalConnection()->executeStatement("SELECT 1 FROM " . $this->connection->getPrefixedTableName($drupal_table_name) . " LIMIT 1 OFFSET 0");
+      $this->getDbalConnection()->executeQuery("SELECT 1 FROM " . $this->connection->getPrefixedTableName($drupal_table_name) . " LIMIT 1 OFFSET 0");
       $result = TRUE;
     }
     catch (\Exception $e) {
@@ -591,7 +591,7 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
     // Instead, we try to select from the table and field in question. If it
     // fails, the most likely reason is that it does not exist.
     try {
-      $this->getDbalConnection()->executeStatement("SELECT $field_name FROM " . $this->connection->getPrefixedTableName($drupal_table_name) . " LIMIT 1 OFFSET 0");
+      $this->getDbalConnection()->executeQuery("SELECT $field_name FROM " . $this->connection->getPrefixedTableName($drupal_table_name) . " LIMIT 1 OFFSET 0");
       $result = TRUE;
     }
     catch (\Exception $e) {
