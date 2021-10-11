@@ -10,7 +10,7 @@ curl https://git.drupalcode.org/project/drupal/-/merge_requests/291.diff | git a
 curl https://git.drupalcode.org/project/drupal/-/merge_requests/785.diff | git apply -v
 
 #3220021 [meta] Ensure compatibility of Drupal 9 with PHP 8.1 (as it evolves)
-curl https://git.drupalcode.org/project/drupal/-/merge_requests/937.diff | git apply -v
+#curl https://git.drupalcode.org/project/drupal/-/merge_requests/937.diff | git apply -v
 
 #ls -al drudbal_staging/tests/github/drupal_patch.sh
 #git apply -v drudbal_staging/tests/github/test.patch
