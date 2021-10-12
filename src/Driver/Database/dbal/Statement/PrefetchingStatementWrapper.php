@@ -358,7 +358,7 @@ class PrefetchingStatementWrapper implements \IteratorAggregate, StatementInterf
   /**
    * {@inheritdoc}
    */
-  public function getIterator() {
+  public function getIterator(): \ArrayIterator {
     return new \ArrayIterator($this->fetchAll());
   }
 
