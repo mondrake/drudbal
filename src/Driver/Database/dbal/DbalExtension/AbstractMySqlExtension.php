@@ -261,7 +261,10 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
     if ($e instanceof DatabaseExceptionWrapper) {
       $e = $e->getPrevious();
     }
-dump($e);
+//dump($e);
+if (method_exists($e, 'getSqlState')) {
+dump([$e->getSqlState(), substr($e->getSqlState(), -6, -3)]);
+}
     // Match all SQLSTATE 23xxx errors.
     if (method_exists($e, 'getSqlState') && substr($e->getSqlState(), -6, -3) == '23') {
       throw new IntegrityConstraintViolationException($message, $e->getCode(), $e);
