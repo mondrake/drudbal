@@ -264,7 +264,7 @@ class PrefetchingStatementWrapper implements \IteratorAggregate, StatementInterf
     }
 
     try {
-      $this->dbalResult = $this->dbalStatement->execute($args);
+      $this->dbalResult = $this->dbalStatement->executeQuery($args);
     }
     catch (DbalException $e) {
       throw new DatabaseExceptionWrapper($e->getMessage(), $e->getCode(), $e);

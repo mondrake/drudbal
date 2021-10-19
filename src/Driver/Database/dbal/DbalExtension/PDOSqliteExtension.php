@@ -84,13 +84,13 @@ class PDOSqliteExtension extends AbstractExtension {
     parent::__construct($drudbal_connection);
 
     // If a memory database, then do not try to attach databases per prefix.
-    if ($drudbal_connection->getConnectionOptions()['database'] === ':memory:') {
+    if ($this->connection->getConnectionOptions()['database'] === ':memory:') {
       return;
     }
 
     // Attach databases per prefix.
     $prefixes = [];
-    $connection_options = $drudbal_connection->getConnectionOptions();
+    $connection_options = $this->connection->getConnectionOptions();
 
     // Main prefix.
     $prefix = $connection_options['prefix'];
@@ -148,8 +148,8 @@ class PDOSqliteExtension extends AbstractExtension {
   public function delegateAttachDatabase(string $database): void {
     // Only attach the database once.
     if (!isset($this->attachedDatabases[$database])) {
-      $this->getDbalConnection()->executeQuery('ATTACH DATABASE ? AS ?', ["{$connection_options['database']}-{$database}", $database]);
-      $this->attachedDatabases[$database] = "{$connection_options['database']}-{$database}";
+      $this->getDbalConnection()->executeQuery('ATTACH DATABASE ? AS ?', ["{$this->connection->getConnectionOptions()['database']}-{$database}", $database]);
+      $this->attachedDatabases[$database] = "{$this->connection->getConnectionOptions()['database']}-{$database}";
     }
   }
 
