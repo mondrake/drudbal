@@ -135,6 +135,13 @@ class Connection extends DatabaseConnection {
   /**
    * {@inheritdoc}
    */
+  public function attachDatabase(string $database): void {
+    $this->dbalExtension->delegateAttachDatabase($database);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function clientVersion() {
     return $this->dbalExtension->delegateClientVersion();
   }

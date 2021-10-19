@@ -99,10 +99,7 @@ class PDOSqliteExtension extends AbstractExtension {
 
     // Extra prefixes.
     foreach ($connection_options['extra_prefix'] ?? [] as $key => $prefix) {
-      if (!isset($this->attachedDatabases[$prefix])) {
-        $this->getDbalConnection()->executeQuery('ATTACH DATABASE ? AS ?', ["{$connection_options['database']}-{$prefix}", $prefix]);
-        $this->attachedDatabases[$prefix] = "{$connection_options['database']}-{$prefix}";
-      }
+      $this->delegateAttachDatabase($prefix);
       $prefixes[$key] = $prefix;
     }
     $this->connection->setPrefixPublic($prefixes);
@@ -132,7 +129,7 @@ class PDOSqliteExtension extends AbstractExtension {
             unlink($db_file);
             @unlink($db_file . '-wal');
             @unlink($db_file . '-shm');
-            // @todo The '0' suffix file is due to migrate tests. To be removed. 
+            // @todo The '0' suffix file is due to migrate tests. To be removed.
             @unlink($db_file . '0');
           }
         }
@@ -143,6 +140,17 @@ class PDOSqliteExtension extends AbstractExtension {
       }
     }
     parent::__destruct();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateAttachDatabase(string $database): void {
+    // Only attach the database once.
+    if (!isset($this->attachedDatabases[$database])) {
+      $this->getDbalConnection()->executeQuery('ATTACH DATABASE ? AS ?', ["{$connection_options['database']}-{$database}", $database]);
+      $this->attachedDatabases[$database] = "{$connection_options['database']}-{$database}";
+    }
   }
 
   /**
