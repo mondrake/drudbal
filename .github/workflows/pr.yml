@@ -46,8 +46,8 @@ jobs:
 #          [ 1521 ]
         env:
           ORACLE_PASSWORD: oracle
-          APP_USER: drudbal
-          APP_USER_PASSWORD: drudbal
+          APP_USER: drudt
+          APP_USER_PASSWORD: drudt
         options: >-
           --health-cmd healthcheck.sh
           --health-interval 20s
