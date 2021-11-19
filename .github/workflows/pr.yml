@@ -40,7 +40,7 @@ jobs:
           - "1521:1521"
         env:
           ORACLE_PASSWORD: oracle
-          APP_USER: drudbal
+          APP_USER: drudt
           APP_USER_PASSWORD: oracle
         options: >-
           --health-cmd healthcheck.sh
@@ -100,7 +100,7 @@ jobs:
     - name: Create Oracle schema
       run: |
         cp modules/contrib/drudbal/tests/github/install_* .
-#        php install_oracle.php
+        php install_oracle.php
 
     - name: Install Drupal
       run: |
