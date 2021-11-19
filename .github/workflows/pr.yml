@@ -40,8 +40,8 @@ jobs:
           - "1521:1521"
         env:
           ORACLE_PASSWORD: oracle
-          APP_USER: drudt
-          APP_USER_PASSWORD: oracle
+      #    APP_USER: drudt
+       #   APP_USER_PASSWORD: oracle
         options: >-
           --health-cmd healthcheck.sh
           --health-interval 20s
@@ -56,7 +56,7 @@ jobs:
         test-args:
           - "--group Database"
 #          - "--group Entity"
-#          - "--group Cache,Config"
+          - "--group Cache,Config"
 #          - "--group field,Field"
 #          - "--group file"
 #          - "--group views"
