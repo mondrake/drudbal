@@ -40,12 +40,14 @@ jobs:
   #        - "1521:1521"
     services:
       oracle:
-        image: gvenzl/oracle-xe:21
-        ports: [ 1521 ]
+        image: gvenzl/oracle-xe:18-slim
+        ports:
+          - "1521:1521"
+#          [ 1521 ]
         env:
           ORACLE_PASSWORD: oracle
-          APP_USER: sqitchtest
-          APP_USER_PASSWORD: sqitchtest
+          APP_USER: drudbal
+          APP_USER_PASSWORD: drudbal
         options: >-
           --health-cmd healthcheck.sh
           --health-interval 20s
