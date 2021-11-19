@@ -33,11 +33,25 @@ jobs:
         DBAL_URL: "oci8://DRUDBAL:ORACLE@0.0.0.0:1521/XE"
         SIMPLETEST_DB: "dbal://DRUDBAL:ORACLE@0.0.0.0:1521/XE?module=drudbal&dbal_driver=oci8#dru"
 
+  #  services:
+  #    oracle:
+  #      image: "wnameless/oracle-xe-11g-r2"
+  #      ports:
+  #        - "1521:1521"
     services:
       oracle:
-        image: "wnameless/oracle-xe-11g-r2"
+        image: gvenzl/oracle-xe:18
+        env:
+          ORACLE_RANDOM_PASSWORD: true
+          APP_USER: my_user
+          APP_USER_PASSWORD: my_password_which_I_really_should_change
         ports:
-          - "1521:1521"
+          - 1521:1521
+        options: >-
+          --health-cmd healthcheck.sh
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
 
     strategy:
       fail-fast: false
