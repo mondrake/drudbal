@@ -40,19 +40,18 @@ jobs:
   #        - "1521:1521"
     services:
       oracle:
-        image: gvenzl/oracle-xe:latest
+        image: gvenzl/oracle-xe:21
+        ports: [ 1521 ]
         env:
-          ORACLE_RANDOM_PASSWORD: true
-          APP_USER: my_user
-          APP_USER_PASSWORD: my_password_which_I_really_should_change
-        ports:
-          - 1521:1521
+          ORACLE_PASSWORD: oracle
+          APP_USER: sqitchtest
+          APP_USER_PASSWORD: sqitchtest
         options: >-
           --health-cmd healthcheck.sh
-          --health-interval 10s
-          --health-timeout 5s
+          --health-interval 20s
+          --health-timeout 10s
           --health-retries 10
-
+          
     strategy:
       fail-fast: false
       matrix:
