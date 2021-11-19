@@ -40,7 +40,7 @@ jobs:
   #        - "1521:1521"
     services:
       oracle:
-        image: gvenzl/oracle-xe:18
+        image: gvenzl/oracle-xe:latest
         env:
           ORACLE_RANDOM_PASSWORD: true
           APP_USER: my_user
