@@ -33,21 +33,15 @@ jobs:
         DBAL_URL: "oci8://DRUDBAL:ORACLE@0.0.0.0:1521/XE"
         SIMPLETEST_DB: "dbal://DRUDBAL:ORACLE@0.0.0.0:1521/XE?module=drudbal&dbal_driver=oci8#dru"
 
-  #  services:
-  #    oracle:
-  #      image: "wnameless/oracle-xe-11g-r2"
-  #      ports:
-  #        - "1521:1521"
     services:
       oracle:
-        image: gvenzl/oracle-xe:18-slim
+        image: gvenzl/oracle-xe:18
         ports:
           - "1521:1521"
-#          [ 1521 ]
         env:
           ORACLE_PASSWORD: oracle
-          APP_USER: drudt
-          APP_USER_PASSWORD: drudt
+          APP_USER: drudbal
+          APP_USER_PASSWORD: oracle
         options: >-
           --health-cmd healthcheck.sh
           --health-interval 20s
@@ -106,7 +100,7 @@ jobs:
     - name: Create Oracle schema
       run: |
         cp modules/contrib/drudbal/tests/github/install_* .
-        php install_oracle.php
+#        php install_oracle.php
 
     - name: Install Drupal
       run: |
