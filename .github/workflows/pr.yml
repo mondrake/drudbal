@@ -35,7 +35,7 @@ jobs:
 
     services:
       oracle:
-        image: gvenzl/oracle-xe:18
+        image: gvenzl/oracle-xe:21
         ports:
           - "1521:1521"
         env:
