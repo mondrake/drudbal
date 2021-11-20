@@ -39,7 +39,6 @@ jobs:
         image: gvenzl/oracle-xe:21
         ports:
           - "1521:1521"
-        env:
         options: >-
           --health-cmd healthcheck.sh
           --health-interval 20s
