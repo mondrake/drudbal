@@ -67,9 +67,9 @@ class Oci8Extension extends AbstractExtension {
     $prefixed_table_name = $drupal_prefix . $drupal_table_name;
     // Max length for Oracle is 30 chars, but should be even lower to allow
     // DBAL creating triggers/sequences with table name + suffix.
-/*    if (strlen($prefixed_table_name) > 122) {
+/*    if (strlen($prefixed_table_name) > 24) {
       $identifier_crc = hash('crc32b', $prefixed_table_name);
-      $prefixed_table_name = substr($prefixed_table_name, 0, 114) . $identifier_crc;
+      $prefixed_table_name = substr($prefixed_table_name, 0, 16) . $identifier_crc;
     }
     return $prefixed_table_name;*/
     return $this->getLimitedIdentifier($prefixed_table_name, 30);
