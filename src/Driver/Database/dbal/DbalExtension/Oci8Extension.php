@@ -72,7 +72,7 @@ class Oci8Extension extends AbstractExtension {
       $prefixed_table_name = substr($prefixed_table_name, 0, 16) . $identifier_crc;
     }
     return $prefixed_table_name;*/
-    return $this->getLimitedIdentifier($prefixed_table_name, 30);
+    return $this->getLimitedIdentifier($prefixed_table_name, 24);
   }
 
   /**
