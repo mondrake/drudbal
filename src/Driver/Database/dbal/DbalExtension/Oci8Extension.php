@@ -27,6 +27,13 @@ class Oci8Extension extends AbstractExtension {
   const ORACLE_EMPTY_STRING_REPLACEMENT = "\010"; // it's the Backspace, dec=8, hex=8, oct=10.
 
   /**
+   * Oracle 12+ allows 128 chars long identifiers.
+   *
+   * Oracle 11 only 30 chars.
+   */
+  const ORACLE_MAX_IDENTIFIER_LENGHT = 128;
+
+  /**
    * A map of condition operators to SQLite operators.
    *
    * @var array
@@ -50,7 +57,7 @@ class Oci8Extension extends AbstractExtension {
    * Database asset name resolution methods.
    */
 
-  private function getLimitedIdentifier(string $identifier, int $max_length = 128): string {
+  private function getLimitedIdentifier(string $identifier, int $max_length = self::ORACLE_MAX_IDENTIFIER_LENGHT): string {
     if (strlen($identifier) > $max_length) {
       $identifier_crc = hash('crc32b', $identifier);
       $limited_identifier = substr($identifier, 0, $max_length - 8) . $identifier_crc;
@@ -64,15 +71,9 @@ class Oci8Extension extends AbstractExtension {
    * {@inheritdoc}
    */
   public function getDbTableName(string $drupal_prefix, string $drupal_table_name): string {
-    $prefixed_table_name = $drupal_prefix . $drupal_table_name;
-    // Max length for Oracle is 30 chars, but should be even lower to allow
-    // DBAL creating triggers/sequences with table name + suffix.
-/*    if (strlen($prefixed_table_name) > 24) {
-      $identifier_crc = hash('crc32b', $prefixed_table_name);
-      $prefixed_table_name = substr($prefixed_table_name, 0, 16) . $identifier_crc;
-    }
-    return $prefixed_table_name;*/
-    return $this->getLimitedIdentifier($prefixed_table_name, 24);
+    // @todo DBAL currently limits table identifiers lenght to 30. We limit
+    // Drupal's table name to 24 to allow including '_AI_PK' suffix.
+    return $this->getLimitedIdentifier($drupal_prefix . $drupal_table_name, 24);
   }
 
   /**
@@ -468,9 +469,12 @@ class Oci8Extension extends AbstractExtension {
       if ($column === 'doctrine_rownum') {
         continue;
       }
-      /*if (isset($this->dbIdentifiersMap[$column])) {
-        $column = $this->dbIdentifiersMap[$column];
-      }*/
+      // @todo with Oracle 21, there's very low chance of limited column names.
+      // We skip checking the map for performance opportunities. Leaving code
+      // commented in case this needs reconsideration.
+      // if (isset($this->dbIdentifiersMap[$column])) {
+      //  $column = $this->dbIdentifiersMap[$column];
+      // }
       switch ($value) {
         case self::ORACLE_EMPTY_STRING_REPLACEMENT:
           $result[$column] = '';
