@@ -27,6 +27,13 @@ class Oci8Extension extends AbstractExtension {
   const ORACLE_EMPTY_STRING_REPLACEMENT = "\010"; // it's the Backspace, dec=8, hex=8, oct=10.
 
   /**
+   * Oracle 12+ allows 128 chars long identifiers.
+   *
+   * Oracle 11 only 30 chars.
+   */
+  const ORACLE_MAX_IDENTIFIER_LENGHT = 128;
+
+  /**
    * A map of condition operators to SQLite operators.
    *
    * @var array
@@ -50,7 +57,7 @@ class Oci8Extension extends AbstractExtension {
    * Database asset name resolution methods.
    */
 
-  private function getLimitedIdentifier(string $identifier, int $max_length = 30): string {
+  private function getLimitedIdentifier(string $identifier, int $max_length = self::ORACLE_MAX_IDENTIFIER_LENGHT): string {
     if (strlen($identifier) > $max_length) {
       $identifier_crc = hash('crc32b', $identifier);
       $limited_identifier = substr($identifier, 0, $max_length - 8) . $identifier_crc;
@@ -64,14 +71,9 @@ class Oci8Extension extends AbstractExtension {
    * {@inheritdoc}
    */
   public function getDbTableName(string $drupal_prefix, string $drupal_table_name): string {
-    $prefixed_table_name = $drupal_prefix . $drupal_table_name;
-    // Max length for Oracle is 30 chars, but should be even lower to allow
-    // DBAL creating triggers/sequences with table name + suffix.
-    if (strlen($prefixed_table_name) > 24) {
-      $identifier_crc = hash('crc32b', $prefixed_table_name);
-      $prefixed_table_name = substr($prefixed_table_name, 0, 16) . $identifier_crc;
-    }
-    return $prefixed_table_name;
+    // @todo DBAL currently limits table identifiers lenght to 30. We limit
+    // Drupal's table name to 24 to allow including '_AI_PK' suffix.
+    return $this->getLimitedIdentifier($drupal_prefix . $drupal_table_name, 24);
   }
 
   /**
@@ -192,7 +194,7 @@ class Oci8Extension extends AbstractExtension {
    * {@inheritdoc}
    */
   public static function postConnectionOpen(DbalConnection $dbal_connection, array &$connection_options, array &$dbal_connection_options) {
-    $dbal_connection->exec('ALTER SESSION SET NLS_LENGTH_SEMANTICS=CHAR');
+    $dbal_connection->executeStatement('ALTER SESSION SET NLS_LENGTH_SEMANTICS=CHAR');
   }
 
   /**
@@ -417,7 +419,7 @@ class Oci8Extension extends AbstractExtension {
    * {@inheritdoc}
    */
   public function alterStatement(&$query, array &$args) {
-//    if ($this->getDebugging()) dump(['pre-alter', $query, $args]);
+    if ($this->getDebugging()) dump(['pre-alter', $query, $args]);
 
     // Reprocess args.
     $new_args = [];
@@ -467,9 +469,12 @@ class Oci8Extension extends AbstractExtension {
       if ($column === 'doctrine_rownum') {
         continue;
       }
-      if (isset($this->dbIdentifiersMap[$column])) {
-        $column = $this->dbIdentifiersMap[$column];
-      }
+      // @todo with Oracle 21, there's very low chance of limited column names.
+      // We skip checking the map for performance opportunities. Leaving code
+      // commented in case this needs reconsideration.
+      // if (isset($this->dbIdentifiersMap[$column])) {
+      //  $column = $this->dbIdentifiersMap[$column];
+      // }
       switch ($value) {
         case self::ORACLE_EMPTY_STRING_REPLACEMENT:
           $result[$column] = '';
@@ -526,7 +531,7 @@ class Oci8Extension extends AbstractExtension {
 
     // Install a CONCAT_WS function.
     try {
-      $this->getDbalConnection()->exec(<<<PLSQL
+      $this->getDbalConnection()->executeStatement(<<<PLSQL
 CREATE OR REPLACE FUNCTION CONCAT_WS(p_delim IN VARCHAR2
                                     , p_str1 IN VARCHAR2 DEFAULT NULL
                                     , p_str2 IN VARCHAR2 DEFAULT NULL
@@ -596,7 +601,7 @@ PLSQL
 
     // Install a GREATEST function.
     try {
-      $this->getDbalConnection()->exec(<<<PLSQL
+      $this->getDbalConnection()->executeStatement(<<<PLSQL
 create or replace function greatest(p1 number, p2 number, p3 number default null)
 return number
 as
@@ -620,7 +625,7 @@ PLSQL
 
     // Install a RAND function.
     try {
-      $this->getDbalConnection()->exec(<<<PLSQL
+      $this->getDbalConnection()->executeStatement(<<<PLSQL
 create or replace function rand
 return number
 as
@@ -649,7 +654,7 @@ PLSQL
     // Instead, we try to select from the table in question.  If it fails,
     // the most likely reason is that it does not exist.
     try {
-      $this->getDbalConnection()->query("SELECT 1 FROM " . $this->connection->getPrefixedTableName($drupal_table_name, TRUE) . " WHERE ROWNUM <= 1");
+      $this->getDbalConnection()->executeQuery("SELECT 1 FROM " . $this->connection->getPrefixedTableName($drupal_table_name, TRUE) . " WHERE ROWNUM <= 1");
       $result = TRUE;
     }
     catch (\Exception $e) {
@@ -667,7 +672,7 @@ PLSQL
     // fails, the most likely reason is that it does not exist.
     $db_field = $this->getDbFieldName($field_name, TRUE);
     try {
-      $this->getDbalConnection()->query("SELECT $db_field FROM " . $this->connection->getPrefixedTableName($drupal_table_name, TRUE) . " WHERE ROWNUM <= 1");
+      $this->getDbalConnection()->executeQuery("SELECT $db_field FROM " . $this->connection->getPrefixedTableName($drupal_table_name, TRUE) . " WHERE ROWNUM <= 1");
       $result = TRUE;
     }
     catch (\Exception $e) {
@@ -680,7 +685,7 @@ PLSQL
    * {@inheritdoc}
    */
   public function delegateListTableNames() {
-    $db_table_names = $this->getDbalConnection()->getSchemaManager()->listTableNames();
+    $db_table_names = $this->getDbalConnection()->createSchemaManager()->listTableNames();
     $table_names = [];
     foreach ($db_table_names as $db_table_name) {
       $table_names[] = rtrim(ltrim($db_table_name, '"'), '"');
@@ -810,10 +815,7 @@ PLSQL
     }
 
     foreach ($sql as $exec) {
-      if ($this->getDebugging()) {
-        dump($exec);
-      }
-      $this->getDbalConnection()->exec($exec);
+      $this->getDbalConnection()->executeStatement($exec);
     }
 
     return TRUE;
@@ -919,10 +921,7 @@ PLSQL
     }
 
     foreach ($sql as $exec) {
-      if ($this->getDebugging()) {
-        dump($exec);
-      }
-      $this->getDbalConnection()->exec($exec);
+      $this->getDbalConnection()->executeStatement($exec);
     }
 
     return TRUE;
@@ -933,7 +932,7 @@ PLSQL
    */
   public function delegateIndexExists(&$result, DbalSchema $dbal_schema, $table_full_name, $drupal_table_name, $drupal_index_name) {
     $index_full_name = $this->getDbIndexName('indexExists', $dbal_schema, $drupal_table_name, $drupal_index_name);
-    $result = in_array($index_full_name, array_keys($this->getDbalConnection()->getSchemaManager()->listTableIndexes("\"$table_full_name\"")));
+    $result = in_array($index_full_name, array_keys($this->getDbalConnection()->createSchemaManager()->listTableIndexes("\"$table_full_name\"")));
     return TRUE;
   }
 
@@ -953,10 +952,7 @@ SQL
     )->fetch();
     $primary_key_asset_name = $db_constraint->name;
     $exec = "ALTER TABLE $db_table DROP CONSTRAINT \"$primary_key_asset_name\"";
-    if ($this->getDebugging()) {
-      dump($exec);
-    }
-    $this->getDbalConnection()->exec($exec);
+    $this->getDbalConnection()->executeStatement($exec);
     $primary_key_dropped_by_extension = TRUE;
     return TRUE;
   }

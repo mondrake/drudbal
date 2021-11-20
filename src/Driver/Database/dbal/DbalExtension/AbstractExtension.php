@@ -228,6 +228,12 @@ class AbstractExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
+  public function delegateAttachDatabase(string $database): void {
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function delegateTransactionalDdlSupport(array &$connection_options = []): bool {
     throw new \LogicException("Method " . __METHOD__ . " not implemented.");
   }
@@ -489,7 +495,7 @@ class AbstractExtension implements DbalExtensionInterface {
    * {@inheritdoc}
    */
   public function delegateListTableNames() {
-    return $this->getDbalConnection()->getSchemaManager()->listTableNames();
+    return $this->getDbalConnection()->createSchemaManager()->listTableNames();
   }
 
   /**

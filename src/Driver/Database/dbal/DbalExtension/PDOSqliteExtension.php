@@ -84,22 +84,22 @@ class PDOSqliteExtension extends AbstractExtension {
     parent::__construct($drudbal_connection);
 
     // If a memory database, then do not try to attach databases per prefix.
-    if ($drudbal_connection->getConnectionOptions()['database'] === ':memory:') {
+    if ($this->connection->getConnectionOptions()['database'] === ':memory:') {
       return;
     }
 
-    // Attach additional databases per prefix.
-    $connection_options = $drudbal_connection->getConnectionOptions();
+    // Attach databases per prefix.
     $prefixes = [];
-    foreach ($connection_options['prefix'] as $key => $prefix) {
-      if ($key === 'default') {
-        $this->attachedDatabases['main'] = $connection_options['database'] . (empty($prefix) ? '' : ('-' . $prefix));
-      }
-      // Default prefix means query the main database -- no need to attach anything.
-      if ($key !== 'default' && !isset($this->attachedDatabases[$prefix])) {
-        $this->attachedDatabases[$prefix] = $connection_options['database'] . '-' . $prefix;
-        $this->getDbalConnection()->executeQuery('ATTACH DATABASE ? AS ?', [$connection_options['database'] . '-' . $prefix, $prefix]);
-      }
+    $connection_options = $this->connection->getConnectionOptions();
+
+    // Main prefix.
+    $prefix = $connection_options['prefix'];
+    $this->attachedDatabases['main'] = $connection_options['database'] . (empty($prefix) ? '' : ('-' . $prefix));
+    $prefixes['default'] = $prefix;
+
+    // Extra prefixes.
+    foreach ($connection_options['extra_prefix'] ?? [] as $key => $prefix) {
+      $this->delegateAttachDatabase($prefix);
       $prefixes[$key] = $prefix;
     }
     $this->connection->setPrefixPublic($prefixes);
@@ -122,9 +122,15 @@ class PDOSqliteExtension extends AbstractExtension {
           // We can prune the database file if it doesn't have any tables.
           if ($count == 0) {
             // Detach the database.
-            $this->connection->query('DETACH DATABASE :schema', [':schema' => $prefix]);
-            // Destroy the database file.
+            if ($prefix !== 'main') {
+              $this->connection->query('DETACH DATABASE :schema', [':schema' => $prefix]);
+            }
+            // Destroy the database files.
             unlink($db_file);
+            @unlink($db_file . '-wal');
+            @unlink($db_file . '-shm');
+            // @todo The '0' suffix file is due to migrate tests. To be removed.
+            @unlink($db_file . '0');
           }
         }
         catch (\Exception $e) {
@@ -134,6 +140,17 @@ class PDOSqliteExtension extends AbstractExtension {
       }
     }
     parent::__destruct();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateAttachDatabase(string $database): void {
+    // Only attach the database once.
+    if (!isset($this->attachedDatabases[$database])) {
+      $this->getDbalConnection()->executeQuery('ATTACH DATABASE ? AS ?', ["{$this->connection->getConnectionOptions()['database']}-{$database}", $database]);
+      $this->attachedDatabases[$database] = "{$this->connection->getConnectionOptions()['database']}-{$database}";
+    }
   }
 
   /**
@@ -250,10 +267,10 @@ class PDOSqliteExtension extends AbstractExtension {
     }
     else {
       $dbal_connection_options['path'] = $connection_options['database'];
-      if (isset($connection_options['prefix']['default']) && $connection_options['prefix']['default'] !== '') {
-        $dbal_connection_options['path'] .= '-' . $connection_options['prefix']['default'];
+      if ($connection_options['prefix'] !== '') {
+        $dbal_connection_options['path'] .= '-' . $connection_options['prefix'];
         if (isset($dbal_connection_options['url'])) {
-          $dbal_connection_options['url'] .= '-' . $connection_options['prefix']['default'];
+          $dbal_connection_options['url'] .= '-' . $connection_options['prefix'];
         }
       }
     }
@@ -307,7 +324,7 @@ class PDOSqliteExtension extends AbstractExtension {
 
     // Execute sqlite init_commands.
     if (isset($connection_options['init_commands'])) {
-      $dbal_connection->exec(implode('; ', $connection_options['init_commands']));
+      $dbal_connection->executeStatement(implode('; ', $connection_options['init_commands']));
     }
   }
 
@@ -558,7 +575,7 @@ class PDOSqliteExtension extends AbstractExtension {
 
     list($schema, $table_name) = explode('.', $full_db_table_name);
     $connection_options = $this->connection->getConnectionOptions();
-    if (isset($connection_options['prefix']['default']) && $schema === $connection_options['prefix']['default']) {
+    if ($connection_options['prefix'] === '' || $schema === $connection_options['prefix']) {
       return 'main.' . $table_name;
     }
     return $full_db_table_name;
@@ -680,11 +697,11 @@ class PDOSqliteExtension extends AbstractExtension {
    */
   public function delegateListTableNames() {
     try {
-      return $this->getDbalConnection()->getSchemaManager()->listTableNames();
+      return $this->getDbalConnection()->createSchemaManager()->listTableNames();
     }
     catch (DbalDriverException $e) {
       if ($e->getCode() === 17) {
-        return $this->getDbalConnection()->getSchemaManager()->listTableNames();
+        return $this->getDbalConnection()->createSchemaManager()->listTableNames();
       }
       else {
         throw $e;
@@ -697,11 +714,11 @@ class PDOSqliteExtension extends AbstractExtension {
    */
   public function delegateTableExists(&$result, $drupal_table_name) {
     try {
-      $result = $this->getDbalConnection()->getSchemaManager()->tablesExist([$this->connection->getPrefixedTableName($drupal_table_name)]);
+      $result = $this->getDbalConnection()->createSchemaManager()->tablesExist([$this->connection->getPrefixedTableName($drupal_table_name)]);
     }
     catch (DbalDriverException $e) {
       if ($e->getCodeCode() === 17) {
-        $result = $this->getDbalConnection()->getSchemaManager()->tablesExist([$this->connection->getPrefixedTableName($drupal_table_name)]);
+        $result = $this->getDbalConnection()->createSchemaManager()->tablesExist([$this->connection->getPrefixedTableName($drupal_table_name)]);
       }
       else {
         throw $e;
@@ -1038,7 +1055,8 @@ class PDOSqliteExtension extends AbstractExtension {
         $schema['fields'][$column->getName()]['default'] = NULL;
       }
       else {
-        $schema['fields'][$column->getName()]['default'] = $column->getDefault();
+        $default = $column->getDefault() === NULL ? NULL : str_replace("''", "'", $column->getDefault());
+        $schema['fields'][$column->getName()]['default'] = $default;
       }
       if ($column->getAutoincrement() === TRUE && in_array($dbal_type, [
         'smallint', 'integer', 'bigint',

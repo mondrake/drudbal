@@ -25,8 +25,8 @@ $dbal_connection = DBALDriverManager::getConnection($connectionParams);
 echo($dbal_connection->getWrappedConnection()->getServerVersion() . "\n");
 
 // Drop all tables.
-$tables = $dbal_connection->getSchemaManager()->listTableNames();
+$tables = $dbal_connection->createSchemaManager()->listTableNames();
 foreach ($tables as $table) {
-  $dbal_connection->getSchemaManager()->dropTable($table);
+  $dbal_connection->createSchemaManager()->dropTable($table);
   echo('Dropped ' . $table . "\n");
 }

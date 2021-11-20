@@ -120,7 +120,7 @@ class Insert extends QueryInsert {
     // target column names from the table to be INSERTed to, since DBAL does
     // not support 'INSERT INTO ... SELECT * FROM' constructs.
     if (!empty($this->fromQuery) && empty($this->fromQuery->getFields())) {
-      $insert_fields = array_keys($dbal_connection->getSchemaManager()->listTableColumns($this->connection->getPrefixedTableName($this->table)));
+      $insert_fields = array_keys($dbal_connection->createSchemaManager()->listTableColumns($this->connection->getPrefixedTableName($this->table)));
     }
     else {
       if ($this->connection->getDbalExtension()->getAddDefaultsExplicitlyOnInsert()) {
