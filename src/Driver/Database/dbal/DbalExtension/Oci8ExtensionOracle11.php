@@ -50,7 +50,7 @@ class Oci8Extension extends AbstractExtension {
    * Database asset name resolution methods.
    */
 
-  private function getLimitedIdentifier(string $identifier, int $max_length = 128): string {
+  private function getLimitedIdentifier(string $identifier, int $max_length = 30): string {
     if (strlen($identifier) > $max_length) {
       $identifier_crc = hash('crc32b', $identifier);
       $limited_identifier = substr($identifier, 0, $max_length - 8) . $identifier_crc;
@@ -67,9 +67,9 @@ class Oci8Extension extends AbstractExtension {
     $prefixed_table_name = $drupal_prefix . $drupal_table_name;
     // Max length for Oracle is 30 chars, but should be even lower to allow
     // DBAL creating triggers/sequences with table name + suffix.
-    if (strlen($prefixed_table_name) > 122) {
+    if (strlen($prefixed_table_name) > 24) {
       $identifier_crc = hash('crc32b', $prefixed_table_name);
-      $prefixed_table_name = substr($prefixed_table_name, 0, 114) . $identifier_crc;
+      $prefixed_table_name = substr($prefixed_table_name, 0, 16) . $identifier_crc;
     }
     return $prefixed_table_name;
   }
@@ -417,7 +417,7 @@ class Oci8Extension extends AbstractExtension {
    * {@inheritdoc}
    */
   public function alterStatement(&$query, array &$args) {
-    if ($this->getDebugging()) dump(['pre-alter', $query, $args]);
+//    if ($this->getDebugging()) dump(['pre-alter', $query, $args]);
 
     // Reprocess args.
     $new_args = [];
@@ -467,9 +467,9 @@ class Oci8Extension extends AbstractExtension {
       if ($column === 'doctrine_rownum') {
         continue;
       }
-      /*if (isset($this->dbIdentifiersMap[$column])) {
+      if (isset($this->dbIdentifiersMap[$column])) {
         $column = $this->dbIdentifiersMap[$column];
-      }*/
+      }
       switch ($value) {
         case self::ORACLE_EMPTY_STRING_REPLACEMENT:
           $result[$column] = '';
