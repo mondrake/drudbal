@@ -34,11 +34,12 @@ jobs:
         DRUDBAL_ENV: "dbal/oci8"
         DBAL_URL: "oci8://DRUDBAL:ORACLE@0.0.0.0:1521/XE"
         SIMPLETEST_DB: "dbal://DRUDBAL:ORACLE@0.0.0.0:1521/XE?module=drudbal&dbal_driver=oci8#dru"
-        ORACLE_PASSWORD: oracle
 
     services:
       oracle:
         image: gvenzl/oracle-xe:21
+        env:
+          ORACLE_PASSWORD: oracle
         ports:
           - "1521:1521"
         options: >-
