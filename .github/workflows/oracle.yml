@@ -34,12 +34,19 @@ jobs:
         DRUDBAL_ENV: "dbal/oci8"
         DBAL_URL: "oci8://DRUDBAL:ORACLE@0.0.0.0:1521/XE"
         SIMPLETEST_DB: "dbal://DRUDBAL:ORACLE@0.0.0.0:1521/XE?module=drudbal&dbal_driver=oci8#dru"
+        ORACLE_PASSWORD: oracle
 
     services:
       oracle:
-        image: "wnameless/oracle-xe-11g-r2"
+        image: gvenzl/oracle-xe:21
         ports:
           - "1521:1521"
+        env:
+        options: >-
+          --health-cmd healthcheck.sh
+          --health-interval 20s
+          --health-timeout 10s
+          --health-retries 10
 
     strategy:
       fail-fast: false
