@@ -14,7 +14,7 @@ class MysqliExtension extends AbstractMySqlExtension {
    * {@inheritdoc}
    */
   public function delegateClientVersion() {
-    return $this->getDbalConnection()->getWrappedConnection()->getWrappedResourceHandle()->get_client_info();
+    return mysqli_get_client_info();
   }
 
   /**

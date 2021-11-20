@@ -297,13 +297,13 @@ class SchemaTest extends SchemaTestBase {
     if ($this->connection->databaseType() === 'oracle') {
       foreach ($table_specification['unique keys'] as $original_index_name => $columns) {
         unset($table_specification['unique keys'][$original_index_name]);
-        $new_index_name = $this->connection->getDbalExtension()->getDbIndexName('indexExists', $this->connection->getDbalConnection()->getSchemaManager()->createSchema(), $table_name, $original_index_name);
+        $new_index_name = $this->connection->getDbalExtension()->getDbIndexName('indexExists', $this->connection->getDbalConnection()->createSchemaManager()->createSchema(), $table_name, $original_index_name);
         $table_specification['unique keys'][$new_index_name] = $columns;
       }
 
       foreach ($table_specification['indexes'] as $original_index_name => $columns) {
         unset($table_specification['indexes'][$original_index_name]);
-        $new_index_name = $this->connection->getDbalExtension()->getDbIndexName('indexExists', $this->connection->getDbalConnection()->getSchemaManager()->createSchema(), $table_name, $original_index_name);
+        $new_index_name = $this->connection->getDbalExtension()->getDbIndexName('indexExists', $this->connection->getDbalConnection()->createSchemaManager()->createSchema(), $table_name, $original_index_name);
         $table_specification['indexes'][$new_index_name] = $columns;
       }
     }
@@ -322,7 +322,10 @@ class SchemaTest extends SchemaTestBase {
 
     // Add per-table prefix to the second table.
     $new_connection_info = $connection_info['default'];
-    $new_connection_info['prefix']['test2'] = $new_connection_info['prefix']['default'] . 's_';
+    $new_connection_info['prefix'] = [
+      'default' => $connection_info['default']['prefix'],
+      'test2' => $connection_info['default']['prefix'] . 's_',
+    ];
     Database::addConnectionInfo('test', 'default', $new_connection_info);
     Database::setActiveConnection('test');
     $test_schema = Database::getConnection()->schema();

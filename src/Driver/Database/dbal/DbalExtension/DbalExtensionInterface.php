@@ -192,6 +192,16 @@ interface DbalExtensionInterface {
   public static function postConnectionOpen(DbalConnection $dbal_connection, array &$connection_options, array &$dbal_connection_options);
 
   /**
+   * Allows the connection to access additional databases.
+   *
+   * @param string $database
+   *   The database to be attached to the connection.
+   *
+   * @internal
+   */
+  public function delegateAttachDatabase(string $database): void;
+
+  /**
    * Returns the version of the database client.
    *
    * This is the low-level database client version, like mysqlind in MySQL

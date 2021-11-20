@@ -37,16 +37,22 @@ jobs:
 
     services:
       oracle:
-        image: "wnameless/oracle-xe-11g-r2"
+        image: gvenzl/oracle-xe:21
+        env:
+          ORACLE_PASSWORD: oracle
         ports:
           - "1521:1521"
+        options: >-
+          --health-cmd healthcheck.sh
+          --health-interval 20s
+          --health-timeout 10s
+          --health-retries 10
 
     strategy:
       fail-fast: false
       matrix:
         php-version:
-#          - "7.4"
-          - "8.0"
+          - "8.1"
         test-args:
           - "--group Database"
 #          - "--group Entity"
@@ -89,7 +95,7 @@ jobs:
 
     - name: Patch doctrine/dbal
       run: |
-        curl https://patch-diff.githubusercontent.com/raw/mondrake/dbal/pull/1.diff | patch -d vendor/doctrine/dbal -p1
+        curl https://patch-diff.githubusercontent.com/raw/mondrake/dbal/pull/6.diff | patch -d vendor/doctrine/dbal -p1
 
     - name: Create Oracle schema
       run: |

@@ -38,6 +38,7 @@ jobs:
       matrix:
         php-version:
           - "8.0"
+          - "8.1"
         test-args:
           - "--group Database"
           - "--group Entity"
@@ -52,7 +53,6 @@ jobs:
       with:
         php-version: "${{ matrix.php-version }}"
         coverage: "none"
-        extensions: "pdo_mysql"
         ini-values: "zend.assertions=1"
 
     - name: Checkout Drupal
