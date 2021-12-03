@@ -1,13 +1,24 @@
 diff --git a/core/lib/Drupal/Component/Utility/Html.php b/core/lib/Drupal/Component/Utility/Html.php
-index f9bb8e6a23..8bcd194faf 100644
+index f9bb8e6a23..b12685e79a 100644
 --- a/core/lib/Drupal/Component/Utility/Html.php
 +++ b/core/lib/Drupal/Component/Utility/Html.php
-@@ -452,6 +452,8 @@ public static function escape($text) {
+@@ -452,6 +452,7 @@ public static function escape($text) {
     *   The updated (X)HTML snippet.
     */
    public static function transformRootRelativeUrlsToAbsolute($html, $scheme_and_host) {
-+dump([$html, $scheme_and_host]);
 +$scheme_and_host = "http://localhost:8080";
      assert(empty(array_diff(array_keys(parse_url($scheme_and_host)), ["scheme", "host", "port"])), '$scheme_and_host contains scheme, host and port at most.');
      assert(isset(parse_url($scheme_and_host)["scheme"]), '$scheme_and_host is absolute and hence has a scheme.');
      assert(isset(parse_url($scheme_and_host)["host"]), '$base_url is absolute and hence has a host.');
+diff --git a/core/lib/Drupal/Core/Mail/MailManager.php b/core/lib/Drupal/Core/Mail/MailManager.php
+index 05c0c8adfa..517f809703 100644
+--- a/core/lib/Drupal/Core/Mail/MailManager.php
++++ b/core/lib/Drupal/Core/Mail/MailManager.php
+@@ -285,6 +285,7 @@ public function doMail($module, $key, $to, $langcode, $params = [], $reply = NUL
+     // Attempt to convert relative URLs to absolute.
+     foreach ($message['body'] as &$body_part) {
+       if ($body_part instanceof MarkupInterface) {
++dump([$body_part, \Drupal::request(), \Drupal::request()->getSchemeAndHttpHost()]);
+         $body_part = Markup::create(Html::transformRootRelativeUrlsToAbsolute((string) $body_part, \Drupal::request()->getSchemeAndHttpHost()));
+       }
+     }
