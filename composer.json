@@ -4,9 +4,9 @@
     "description": "Drupal driver for Doctrine DBAL.",
     "license": "LGPL-3.0-or-later",
     "require": {
-        "php": ">=7.3",
+        "php": ">=8.0",
         "drupal/core": "^9.3 | ^10",
-        "doctrine/dbal": "^3",
+        "doctrine/dbal": "^3.2",
         "composer-runtime-api": "^2.0.0"
     },
     "minimum-stability": "dev"

@@ -1,20 +1,12 @@
-diff --git a/core/tests/Drupal/KernelTests/Core/Database/UpsertTest.php b/core/tests/Drupal/KernelTests/Core/Database/UpsertTest.php
-index f46fd41e66..2dc8242d84 100644
---- a/core/tests/Drupal/KernelTests/Core/Database/UpsertTest.php
-+++ b/core/tests/Drupal/KernelTests/Core/Database/UpsertTest.php
-@@ -60,6 +60,7 @@ public function testUpsert() {
-    * Confirms that we can upsert records with keywords successfully.
+diff --git a/core/lib/Drupal/Component/Utility/Html.php b/core/lib/Drupal/Component/Utility/Html.php
+index f9bb8e6a23..f4b10d6ee1 100644
+--- a/core/lib/Drupal/Component/Utility/Html.php
++++ b/core/lib/Drupal/Component/Utility/Html.php
+@@ -452,6 +452,7 @@ public static function escape($text) {
+    *   The updated (X)HTML snippet.
     */
-   public function testUpsertWithKeywords() {
-+dump($this->connection->query('SELECT * FROM {select}')->fetchAll());
-     $num_records_before = $this->connection->query('SELECT COUNT(*) FROM {select}')->fetchField();
- 
-     $upsert = $this->connection->upsert('select')
-@@ -87,6 +88,7 @@ public function testUpsertWithKeywords() {
-     // https://dev.mysql.com/doc/c-api/8.0/en/mysql-affected-rows.html.
-     $this->assertGreaterThanOrEqual(2, $result, 'The result of the upsert operation should report that at least two rows were affected.');
- 
-+dump($this->connection->query('SELECT * FROM {select}')->fetchAll());
-     $num_records_after = $this->connection->query('SELECT COUNT(*) FROM {select}')->fetchField();
-     $this->assertEquals($num_records_before + 1, $num_records_after, 'Rows were inserted and updated properly.');
- 
+   public static function transformRootRelativeUrlsToAbsolute($html, $scheme_and_host) {
++dump([$html, $scheme_and_host]);
+     assert(empty(array_diff(array_keys(parse_url($scheme_and_host)), ["scheme", "host", "port"])), '$scheme_and_host contains scheme, host and port at most.');
+     assert(isset(parse_url($scheme_and_host)["scheme"]), '$scheme_and_host is absolute and hence has a scheme.');
+     assert(isset(parse_url($scheme_and_host)["host"]), '$base_url is absolute and hence has a host.');
