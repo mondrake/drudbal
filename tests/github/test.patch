@@ -22,3 +22,34 @@ index 05c0c8adfa..c76bad110c 100644
          $body_part = Markup::create(Html::transformRootRelativeUrlsToAbsolute((string) $body_part, \Drupal::request()->getSchemeAndHttpHost()));
        }
      }
+diff --git a/core/modules/update/update.fetch.inc b/core/modules/update/update.fetch.inc
+index b418d9c3ec..e9d0e12919 100644
+--- a/core/modules/update/update.fetch.inc
++++ b/core/modules/update/update.fetch.inc
+@@ -31,6 +31,7 @@ function _update_cron_notify() {
+   }
+   if (!empty($params)) {
+     $notify_list = $update_config->get('notification.emails');
++dump($notify_list);
+     if (!empty($notify_list)) {
+       $default_langcode = \Drupal::languageManager()->getDefaultLanguage()->getId();
+       foreach ($notify_list as $target) {
+@@ -40,11 +41,13 @@ function _update_cron_notify() {
+         else {
+           $target_langcode = $default_langcode;
+         }
+-        $message = \Drupal::service('plugin.manager.mail')->mail('update', 'status_notify', $target, $target_langcode, $params);
+-        // Track when the last mail was successfully sent to avoid sending
+-        // too many emails.
+-        if ($message['result']) {
+-          \Drupal::state()->set('update.last_email_notification', REQUEST_TIME);
++        if (PHP_SAPI !== 'cli') {
++          $message = \Drupal::service('plugin.manager.mail')->mail('update', 'status_notify', $target, $target_langcode, $params);
++          // Track when the last mail was successfully sent to avoid sending
++          // too many emails.
++          if ($message['result']) {
++            \Drupal::state()->set('update.last_email_notification', REQUEST_TIME);
++          }
+         }
+       }
+     }
