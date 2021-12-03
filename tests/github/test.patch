@@ -1,3 +1,15 @@
+diff --git a/core/includes/install.core.inc b/core/includes/install.core.inc
+index 5a5f92339b..7d6e357f96 100644
+--- a/core/includes/install.core.inc
++++ b/core/includes/install.core.inc
+@@ -297,6 +297,7 @@ function install_state_defaults() {
+  */
+ function install_begin_request($class_loader, &$install_state) {
+   $request = Request::createFromGlobals();
++dump(['install_begin_request', $request->getHost(), $request->getHttpHost()]);
+ 
+   // Add any installation parameters passed in via the URL.
+   if ($install_state['interactive']) {
 diff --git a/core/lib/Drupal/Component/Utility/Html.php b/core/lib/Drupal/Component/Utility/Html.php
 index f9bb8e6a23..b12685e79a 100644
 --- a/core/lib/Drupal/Component/Utility/Html.php
