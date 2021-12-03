@@ -1,29 +1,3 @@
-diff --git a/core/includes/install.core.inc b/core/includes/install.core.inc
-index 5a5f92339b..452d91dd49 100644
---- a/core/includes/install.core.inc
-+++ b/core/includes/install.core.inc
-@@ -296,7 +296,9 @@ function install_state_defaults() {
-  * @see install_drupal()
-  */
- function install_begin_request($class_loader, &$install_state) {
-+dump($_SERVER);
-   $request = Request::createFromGlobals();
-+dump(['install_begin_request', $request->getHost(), $request->getHttpHost()]);
- 
-   // Add any installation parameters passed in via the URL.
-   if ($install_state['interactive']) {
-diff --git a/core/lib/Drupal/Component/Utility/Html.php b/core/lib/Drupal/Component/Utility/Html.php
-index f9bb8e6a23..b12685e79a 100644
---- a/core/lib/Drupal/Component/Utility/Html.php
-+++ b/core/lib/Drupal/Component/Utility/Html.php
-@@ -452,6 +452,7 @@ public static function escape($text) {
-    *   The updated (X)HTML snippet.
-    */
-   public static function transformRootRelativeUrlsToAbsolute($html, $scheme_and_host) {
-+$scheme_and_host = "http://localhost:8080";
-     assert(empty(array_diff(array_keys(parse_url($scheme_and_host)), ["scheme", "host", "port"])), '$scheme_and_host contains scheme, host and port at most.');
-     assert(isset(parse_url($scheme_and_host)["scheme"]), '$scheme_and_host is absolute and hence has a scheme.');
-     assert(isset(parse_url($scheme_and_host)["host"]), '$base_url is absolute and hence has a host.');
 diff --git a/core/lib/Drupal/Core/Mail/MailManager.php b/core/lib/Drupal/Core/Mail/MailManager.php
 index 05c0c8adfa..c76bad110c 100644
 --- a/core/lib/Drupal/Core/Mail/MailManager.php
@@ -34,36 +8,5 @@ index 05c0c8adfa..c76bad110c 100644
        if ($body_part instanceof MarkupInterface) {
 +dump([$body_part, \Drupal::request()->getSchemeAndHttpHost()]);
          $body_part = Markup::create(Html::transformRootRelativeUrlsToAbsolute((string) $body_part, \Drupal::request()->getSchemeAndHttpHost()));
-       }
-     }
-diff --git a/core/modules/update/update.fetch.inc b/core/modules/update/update.fetch.inc
-index b418d9c3ec..e9d0e12919 100644
---- a/core/modules/update/update.fetch.inc
-+++ b/core/modules/update/update.fetch.inc
-@@ -31,6 +31,7 @@ function _update_cron_notify() {
-   }
-   if (!empty($params)) {
-     $notify_list = $update_config->get('notification.emails');
-+dump($notify_list);
-     if (!empty($notify_list)) {
-       $default_langcode = \Drupal::languageManager()->getDefaultLanguage()->getId();
-       foreach ($notify_list as $target) {
-@@ -40,11 +41,13 @@ function _update_cron_notify() {
-         else {
-           $target_langcode = $default_langcode;
-         }
--        $message = \Drupal::service('plugin.manager.mail')->mail('update', 'status_notify', $target, $target_langcode, $params);
--        // Track when the last mail was successfully sent to avoid sending
--        // too many emails.
--        if ($message['result']) {
--          \Drupal::state()->set('update.last_email_notification', REQUEST_TIME);
-+        if (PHP_SAPI !== 'cli') {
-+          $message = \Drupal::service('plugin.manager.mail')->mail('update', 'status_notify', $target, $target_langcode, $params);
-+          // Track when the last mail was successfully sent to avoid sending
-+          // too many emails.
-+          if ($message['result']) {
-+            \Drupal::state()->set('update.last_email_notification', REQUEST_TIME);
-+          }
-         }
        }
      }
