@@ -1,20 +1,12 @@
-diff --git a/core/tests/Drupal/KernelTests/Core/Database/UpsertTest.php b/core/tests/Drupal/KernelTests/Core/Database/UpsertTest.php
-index f46fd41e66..2dc8242d84 100644
---- a/core/tests/Drupal/KernelTests/Core/Database/UpsertTest.php
-+++ b/core/tests/Drupal/KernelTests/Core/Database/UpsertTest.php
-@@ -60,6 +60,7 @@ public function testUpsert() {
-    * Confirms that we can upsert records with keywords successfully.
-    */
-   public function testUpsertWithKeywords() {
-+dump($this->connection->query('SELECT * FROM {select}')->fetchAll());
-     $num_records_before = $this->connection->query('SELECT COUNT(*) FROM {select}')->fetchField();
- 
-     $upsert = $this->connection->upsert('select')
-@@ -87,6 +88,7 @@ public function testUpsertWithKeywords() {
-     // https://dev.mysql.com/doc/c-api/8.0/en/mysql-affected-rows.html.
-     $this->assertGreaterThanOrEqual(2, $result, 'The result of the upsert operation should report that at least two rows were affected.');
- 
-+dump($this->connection->query('SELECT * FROM {select}')->fetchAll());
-     $num_records_after = $this->connection->query('SELECT COUNT(*) FROM {select}')->fetchField();
-     $this->assertEquals($num_records_before + 1, $num_records_after, 'Rows were inserted and updated properly.');
- 
+diff --git a/core/lib/Drupal/Core/Mail/MailManager.php b/core/lib/Drupal/Core/Mail/MailManager.php
+index 05c0c8adfa..c76bad110c 100644
+--- a/core/lib/Drupal/Core/Mail/MailManager.php
++++ b/core/lib/Drupal/Core/Mail/MailManager.php
+@@ -285,6 +285,7 @@ public function doMail($module, $key, $to, $langcode, $params = [], $reply = NUL
+     // Attempt to convert relative URLs to absolute.
+     foreach ($message['body'] as &$body_part) {
+       if ($body_part instanceof MarkupInterface) {
++dump([$body_part, \Drupal::request()->getSchemeAndHttpHost()]);
+         $body_part = Markup::create(Html::transformRootRelativeUrlsToAbsolute((string) $body_part, \Drupal::request()->getSchemeAndHttpHost()));
+       }
+     }
