@@ -1,12 +1,12 @@
-diff --git a/core/lib/Drupal/Core/Mail/MailManager.php b/core/lib/Drupal/Core/Mail/MailManager.php
-index 05c0c8adfa..c76bad110c 100644
---- a/core/lib/Drupal/Core/Mail/MailManager.php
-+++ b/core/lib/Drupal/Core/Mail/MailManager.php
-@@ -285,6 +285,7 @@ public function doMail($module, $key, $to, $langcode, $params = [], $reply = NUL
-     // Attempt to convert relative URLs to absolute.
-     foreach ($message['body'] as &$body_part) {
-       if ($body_part instanceof MarkupInterface) {
-+dump([$body_part, \Drupal::request()->getSchemeAndHttpHost()]);
-         $body_part = Markup::create(Html::transformRootRelativeUrlsToAbsolute((string) $body_part, \Drupal::request()->getSchemeAndHttpHost()));
-       }
+diff --git a/core/includes/install.core.inc b/core/includes/install.core.inc
+index 5a5f92339b..1dc31b4e14 100644
+--- a/core/includes/install.core.inc
++++ b/core/includes/install.core.inc
+@@ -961,6 +961,7 @@ function install_get_form($form_id, array &$install_state) {
+     // values taken from the installation state.
+     $install_form_id = $form_builder->getFormId($form_id, $form_state);
+     if (!empty($install_state['forms'][$install_form_id])) {
++dump([$install_form_id, $install_state['forms'][$install_form_id]);
+       $form_state->setValues($install_state['forms'][$install_form_id]);
      }
+     $form_builder->submitForm($form_id, $form_state);

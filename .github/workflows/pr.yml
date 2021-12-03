@@ -75,7 +75,6 @@ jobs:
         cp modules/contrib/drudbal/tests/github/install_* .
         # Use the custom installer.
         vendor/bin/drush site-install standard --db-url=$SIMPLETEST_DB -y
-        # php install_cli.php
         vendor/bin/drush runserver localhost:8080 &
         sleep 1s
 
