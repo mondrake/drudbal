@@ -1,10 +1,12 @@
 diff --git a/core/includes/install.core.inc b/core/includes/install.core.inc
-index 5a5f92339b..7d6e357f96 100644
+index 5a5f92339b..452d91dd49 100644
 --- a/core/includes/install.core.inc
 +++ b/core/includes/install.core.inc
-@@ -297,6 +297,7 @@ function install_state_defaults() {
+@@ -296,7 +296,9 @@ function install_state_defaults() {
+  * @see install_drupal()
   */
  function install_begin_request($class_loader, &$install_state) {
++dump($_SERVER);
    $request = Request::createFromGlobals();
 +dump(['install_begin_request', $request->getHost(), $request->getHttpHost()]);
  
