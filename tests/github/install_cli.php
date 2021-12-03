@@ -41,8 +41,8 @@ $settings = [
         ],
       ],
       'update_status_module' => [
-        1 => FALSE,
-        2 => FALSE,
+        1 => TRUE,
+        2 => TRUE,
       ],
     ],
   ],
