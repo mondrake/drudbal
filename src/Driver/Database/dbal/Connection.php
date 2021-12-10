@@ -399,7 +399,7 @@ class Connection extends DatabaseConnection {
    * {@inheritdoc}
    */
   public function databaseType() {
-    return $this->getDbalConnection()->getDriver()->getDatabasePlatform()->getName();
+    return $this->dbalExtension->getDbServerPlatform();
   }
 
   /**

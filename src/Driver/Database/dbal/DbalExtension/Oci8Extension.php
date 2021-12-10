@@ -290,6 +290,13 @@ class Oci8Extension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
+  public function getDbServerPlatform(): string {
+    return "oracle";
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function handleDropTableException(\Exception $e, string $drupal_table_name, string $db_table_name): void {
     // ORA-14452: attempt to create, alter or drop an index on temporary table
     // already in use.
