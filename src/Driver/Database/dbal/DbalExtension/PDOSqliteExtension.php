@@ -187,6 +187,13 @@ class PDOSqliteExtension extends AbstractExtension {
   }
 
   /**
+   * {@inheritdoc}
+   */
+  public function getDbServerPlatform(): string {
+    return "sqlite";
+  }
+
+  /**
    * Database asset name resolution methods.
    */
 

@@ -290,7 +290,6 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
     $regex = '/^(?:5\.5\.5-)?(\d+\.\d+\.\d+.*-mariadb.*)/i';
     preg_match($regex, $dbal_server_version, $matches);
     return (empty($matches[1])) ? 'mysql' : 'mariadb';
-
   }
 
   /**
