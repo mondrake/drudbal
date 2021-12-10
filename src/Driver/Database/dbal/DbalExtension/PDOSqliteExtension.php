@@ -189,7 +189,7 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function getDbServerPlatform(): string {
+  public function getDbServerPlatform(bool $strict = FALSE): string {
     return "sqlite";
   }
 

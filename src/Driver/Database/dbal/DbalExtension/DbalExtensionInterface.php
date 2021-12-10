@@ -33,10 +33,14 @@ interface DbalExtensionInterface {
   /**
    * Gets the database server platform.
    *
+   * @param bool $strict
+   *   (Optional) If TRUE, returns a subfamily platform (e.g. mariadb), else the
+   *   platform family (e.g. mysql). Defaults to FALSE.
+   *
    * @return string
    *   The database server platform.
    */
-  public function getDbServerPlatform(): string;
+  public function getDbServerPlatform(bool $strict = FALSE): string;
 
   /**
    * Gets the database server version.

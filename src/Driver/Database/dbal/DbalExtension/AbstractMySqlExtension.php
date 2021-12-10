@@ -285,7 +285,10 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function getDbServerPlatform(): string {
+  public function getDbServerPlatform(bool $strict = FALSE): string {
+    if ($strict) {
+      return 'mysql';
+    }
     $dbal_server_version = $this->getDbalConnection()->getWrappedConnection()->getServerVersion();
     $regex = '/^(?:5\.5\.5-)?(\d+\.\d+\.\d+.*-mariadb.*)/i';
     preg_match($regex, $dbal_server_version, $matches);
@@ -518,7 +521,7 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
     ];
 
     // Ensure that the database server has the right minimum version.
-    $db_server_platform = $this->getDbServerPlatform();
+    $db_server_platform = $this->getDbServerPlatform(TRUE);
     $db_server_version = $this->getDbServerVersion();
     $db_server_min_version = $db_server_platform === 'mysql' ? self::MYSQL_MINIMUM_VERSION : self::MARIADB_MINIMUM_VERSION;
     if (version_compare($db_server_version, $db_server_min_version, '<')) {

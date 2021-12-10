@@ -52,7 +52,7 @@ class Tasks extends InstallTasks {
       }
       $connection = Database::getConnection();
       return t('Doctrine DBAL on @database_type/@database_server_version via @dbal_driver', [
-        '@database_type' => $connection->getDbalExtension()->getDbServerPlatform(),
+        '@database_type' => $connection->getDbalExtension()->getDbServerPlatform(TRUE),
         '@database_server_version' => $connection->getDbalExtension()->getDbServerVersion(),
         '@dbal_driver' => $connection->getConnectionOptions()['dbal_driver'],
       ]);

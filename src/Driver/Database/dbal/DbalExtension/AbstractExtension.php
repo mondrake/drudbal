@@ -106,7 +106,7 @@ class AbstractExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function getDbServerPlatform(): string {
+  public function getDbServerPlatform(bool $strict = FALSE): string {
     throw new \LogicException("Method " . __METHOD__ . " not implemented.");
   }
 
