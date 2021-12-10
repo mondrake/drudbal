@@ -286,7 +286,7 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
    * {@inheritdoc}
    */
   public function getDbServerPlatform(bool $strict = FALSE): string {
-    if ($strict) {
+    if (!$strict) {
       return 'mysql';
     }
     $dbal_server_version = $this->getDbalConnection()->getWrappedConnection()->getServerVersion();
