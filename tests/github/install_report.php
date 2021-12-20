@@ -23,6 +23,7 @@ $kernel->boot();
 
 require_once $root_path . '/core/includes/install.inc';
 
+dump(Database::getAllConnectionInfo());
 $connection = Database::getConnection();
 $connection_info = Database::getConnectionInfo();
 $installer = db_installer_object($connection->driver(), $connection_info['default']['namespace']);
