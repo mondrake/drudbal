@@ -12840,7 +12840,7 @@ index 2237a755cf..b36b039bf9 100644
   * PostgreSQL implementation of \Drupal\Core\Database\Query\Upsert.
 diff --git a/core/modules/system/tests/src/Functional/Update/UpdateEnableProviderDatabaseDriverTest.php b/core/modules/system/tests/src/Functional/Update/UpdateEnableProviderDatabaseDriverTest.php
 new file mode 100644
-index 0000000000..08bc6faf9f
+index 0000000000..918b0da96f
 --- /dev/null
 +++ b/core/modules/system/tests/src/Functional/Update/UpdateEnableProviderDatabaseDriverTest.php
 @@ -0,0 +1,54 @@
@@ -12882,7 +12882,7 @@ index 0000000000..08bc6faf9f
 +  '********** PRE',
 +  'provider' => $provider,
 +  'allConnectionsInfo' => Database::getAllConnectionInfo(),
-+  'modules' => \Drupal::moduleHandler()->getModuleList(),
++  'installed_modules' => implode(', ' array_keys(\Drupal::moduleHandler()->getModuleList())),
 +]);
 +    $this->assertFalse(\Drupal::moduleHandler()->moduleExists($provider));
 +
@@ -12893,7 +12893,7 @@ index 0000000000..08bc6faf9f
 +    $this->assertTrue(\Drupal::moduleHandler()->moduleExists($provider));
 +dump([
 +  '********** POST',
-+  'modules' => \Drupal::moduleHandler()->getModuleList(),
++  'installed_modules' => implode(', ' array_keys(\Drupal::moduleHandler()->getModuleList())),
 +]);
 +  }
 +
