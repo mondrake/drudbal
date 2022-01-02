@@ -18,6 +18,16 @@ class Insert extends QueryInsert {
   /**
    * {@inheritdoc}
    */
+  public function __construct(Connection $connection, string $table, array $options = []) {
+    // @todo Remove the __construct in Drupal 11.
+    // @see https://www.drupal.org/project/drupal/issues/3256524
+    parent::__construct($connection, $table, $options);
+    unset($this->queryOptions['return']);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function execute() {
     if (!$this->preExecute()) {
       return NULL;
@@ -47,7 +57,9 @@ class Insert extends QueryInsert {
             $values[':db_insert_placeholder_' . $max_placeholder++] = $value;
           }
           try {
-            $last_insert_id = $this->connection->query($sql, $values, $this->queryOptions);
+            $stmt = $this->connection->prepareStatement($sql, $this->queryOptions);
+            $stmt->execute($values, $this->queryOptions);
+            $last_insert_id = $this->connection->lastInsertId();
           }
           catch (IntegrityConstraintViolationException $e) {
             // Abort the entire insert in case of integrity constraint violation
@@ -62,7 +74,9 @@ class Insert extends QueryInsert {
       else {
         // If there are no values, then this is a default-only query. We still
         // need to handle that.
-        $last_insert_id = $this->connection->query($sql, [], $this->queryOptions);
+        $stmt = $this->connection->prepareStatement($sql, $this->queryOptions);
+        $stmt->execute([], $this->queryOptions);
+        $last_insert_id = $this->connection->lastInsertId();
       }
     }
     else {
@@ -77,7 +91,9 @@ class Insert extends QueryInsert {
           $values[':db_insert_placeholder_' . $max_placeholder++] = $value;
         }
         try {
-          $last_insert_id = $this->connection->query($sql, $values, $this->queryOptions);
+          $stmt = $this->connection->prepareStatement($sql, $this->queryOptions);
+          $stmt->execute($values, $this->queryOptions);
+          $last_insert_id = $this->connection->lastInsertId();
         }
         catch (IntegrityConstraintViolationException $e) {
           // Abort the entire insert in case of integrity constraint violation
