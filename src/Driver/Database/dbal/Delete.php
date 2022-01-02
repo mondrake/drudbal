@@ -15,6 +15,13 @@ use Drupal\Core\Database\Query\Delete as QueryDelete;
 class Delete extends QueryDelete {
 
   /**
+   * A DBAL query builder object.
+   *
+   * @var \Doctrine\DBAL\Query\QueryBuilder
+   */
+  protected $dbalQuery;
+
+  /**
    * {@inheritdoc}
    */
   public function __construct(Connection $connection, string $table, array $options = []) {
@@ -23,13 +30,6 @@ class Delete extends QueryDelete {
     parent::__construct($connection, $table, $options);
     unset($this->queryOptions['return']);
   }
-
-  /**
-   * A DBAL query builder object.
-   *
-   * @var \Doctrine\DBAL\Query\QueryBuilder
-   */
-  protected $dbalQuery;
 
   /**
    * {@inheritdoc}

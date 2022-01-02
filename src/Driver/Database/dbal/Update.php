@@ -16,6 +16,13 @@ use Drupal\Core\Database\Query\Update as QueryUpdate;
 class Update extends QueryUpdate {
 
   /**
+   * A DBAL query builder object.
+   *
+   * @var \Doctrine\DBAL\Query\QueryBuilder
+   */
+  protected $dbalQuery;
+
+  /**
    * {@inheritdoc}
    */
   public function __construct(Connection $connection, string $table, array $options = []) {
@@ -24,13 +31,6 @@ class Update extends QueryUpdate {
     parent::__construct($connection, $table, $options);
     unset($this->queryOptions['return']);
   }
-
-  /**
-   * A DBAL query builder object.
-   *
-   * @var \Doctrine\DBAL\Query\QueryBuilder
-   */
-  protected $dbalQuery;
 
   /**
    * {@inheritdoc}
