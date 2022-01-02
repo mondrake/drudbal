@@ -294,6 +294,8 @@ class PDOSqliteExtension extends AbstractExtension {
   public static function postConnectionOpen(DbalConnection $dbal_connection, array &$connection_options, array &$dbal_connection_options) {
     $pdo = $dbal_connection->getWrappedConnection()->getWrappedConnection();
 
+    include_once dirname(__DIR__, 9) . 'core/modules/sqlite/src/Driver/Database/sqlite/Connection.php';
+
     // Create functions needed by SQLite.
     $pdo->sqliteCreateFunction('if', [SqliteConnectionBase::class, 'sqlFunctionIf']);
     $pdo->sqliteCreateFunction('greatest', [SqliteConnectionBase::class, 'sqlFunctionGreatest']);
