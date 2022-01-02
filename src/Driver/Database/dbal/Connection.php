@@ -204,6 +204,15 @@ class Connection extends DatabaseConnection {
   /**
    * {@inheritdoc}
    */
+  public function prepareStatement(string $query, array $options, bool $allow_row_count = FALSE): StatementInterface {
+    // @todo remove for Drupal 11.
+    unset($options['return']);
+    return parent::prepareStatement($query, $options, $allow_row_count);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function query($query, array $args = [], $options = []) {
     // Use default values if not already set.
     $options += $this->defaultOptions();
@@ -231,7 +240,7 @@ class Connection extends DatabaseConnection {
       // Depending on the type of query we may need to return a different value.
       // See DatabaseConnection::defaultOptions() for a description of each
       // value.
-      switch ($options['return']) {
+      switch ($options['return'] ?? Database::RETURN_STATEMENT) {
         case Database::RETURN_STATEMENT:
           return $stmt;
 
@@ -259,6 +268,13 @@ class Connection extends DatabaseConnection {
     catch (\Exception $e) {
       return $this->exceptionHandler()->handleExecutionException($e, $stmt, $args, $options);
     }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function lastInsertId(?string $name = NULL): string {
+    return (string) $this->getDbalConnection()->lastInsertId($name);
   }
 
   /**

@@ -9,5 +9,8 @@
         "doctrine/dbal": "^3.2",
         "composer-runtime-api": "^2.0.0"
     },
-    "minimum-stability": "dev"
+    "minimum-stability": "dev",
+    "allow-plugins": {
+        "composer/package-versions-deprecated": true
+    }
 }
