@@ -13,43 +13,37 @@ env:
       "Drupal\\KernelTests\\Core\\Cache\\EndOfTransactionQueriesTest",
       "Drupal\\KernelTests\\Core\\Database\\ConnectionUnitTest",
       "Drupal\\KernelTests\\Core\\Database\\DatabaseExceptionWrapperTest",
-      "Drupal\\KernelTests\\Core\\Database\\SqlModeTest",
-      "Drupal\\KernelTests\\Core\\Database\\StatementWrapperLegacyTest",
       "Drupal\\KernelTests\\Core\\Database\\StatementTest",
+      "Drupal\\Tests\\file\\Functional\\DownloadTest",
       "Drupal\\Tests\\system\\Functional\\Database\\TemporaryQueryTest",
-      "Drupal\\Tests\\views\\Functional\\Update\\ViewsSortIdentifiersUpdateTest",
-      "Drupal\\Tests\\views\\Kernel\\ViewElementTest"
+      "Drupal\\Tests\\views\\Functional\\Update\\ViewsSortIdentifiersUpdateTest"
     ]'
 
 jobs:
 
 #################################
 
-  mariadb-pdo:
-    name: "MariaDb"
-    runs-on: ubuntu-latest
+  sqlite-pdo:
+    name: "SQLite with PDO"
+    runs-on: ubuntu-20.04
     env:
-        DRUDBAL_ENV: "dbal/mariadb"
-        DBAL_URL: "mysql://root:@0.0.0.0:3306/drudbal"
-        SIMPLETEST_DB: "dbal://root:@0.0.0.0:3306/drudbal?module=drudbal&dbal_driver=pdo_mysql"
+        DRUDBAL_ENV: "dbal/sqlite/file"
+        DBAL_URL: "sqlite://localhost/sites/drudbal.sqlite"
+        SIMPLETEST_DB: "dbal://localhost/sites/drudbal.sqlite?module=drudbal&dbal_driver=pdo_sqlite"
 
     strategy:
       fail-fast: false
       matrix:
         php-version:
-#          - "8.0"
+          #- "8.0"
           - "8.1"
         test-args:
           - "--group Database"
-
-    services:
-      mariadb:
-        image: "mariadb:10.5"
-        env:
-          MYSQL_ALLOW_EMPTY_PASSWORD: yes
-          MYSQL_DATABASE: "drudbal"
-        ports:
-          - "3306:3306"
+          #- "--group Entity"
+          #- "--group Cache,Config"
+          #- "--group field,Field"
+          #- "--group file"
+          #- "--group views"
 
     steps:
     - name: Install PHP
@@ -57,7 +51,6 @@ jobs:
       with:
         php-version: "${{ matrix.php-version }}"
         coverage: "none"
-        extensions: "pdo_mysql"
         ini-values: "zend.assertions=1"
 
     - name: Checkout Drupal
@@ -83,20 +76,20 @@ jobs:
         composer config repositories.test-run '{"type": "path", "url": "drudbal_staging", "options": {"symlink": false}}'
         composer require "mondrake/drudbal:dev-test-run-branch" --no-progress --ansi
 
-#    - name: Install Drupal
-#      run: |
-#        cp modules/contrib/drudbal/tests/github/install_* .
-#        # Use the custom installer.
-#        php install_cli.php
-#        vendor/bin/drush runserver localhost:8080 &
-#        sleep 1s
+    - name: Install Drupal
+      run: |
+        cp modules/contrib/drudbal/tests/github/install_* .
+        # Use the custom installer.
+        php install_cli.php
+        vendor/bin/drush runserver localhost:8080 &
+        sleep 1s
 
-#    - name: Report installation
-#      run: |
-#        php install_report.php
-#        vendor/bin/drush core:status
-#        vendor/bin/drush core:requirements
-#        vendor/bin/drush pml --type=module --no-core
+    - name: Report installation
+      run: |
+        php install_report.php
+        vendor/bin/drush core:status
+        vendor/bin/drush core:requirements
+        vendor/bin/drush pml --type=module --no-core
 
     - name: Run test ${{ matrix.test-args }}
       run: vendor/bin/phpunit -c core --color=always ${{ matrix.test-args }}
