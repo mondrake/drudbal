@@ -19,6 +19,10 @@ class Insert extends QueryInsert {
    * {@inheritdoc}
    */
   public function execute() {
+    // @todo Remove the unset in Drupal 11.
+    // @see https://www.drupal.org/project/drupal/issues/3256524
+    unset($this->queryOptions['return']);
+
     if (!$this->preExecute()) {
       return NULL;
     }
