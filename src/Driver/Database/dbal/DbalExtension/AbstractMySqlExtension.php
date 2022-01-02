@@ -210,7 +210,8 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
    * {@inheritdoc}
    */
   public function delegateNextId(int $existing_id = 0): int {
-    $new_id = $this->connection->query('INSERT INTO {sequences} () VALUES ()', [], ['return' => Database::RETURN_INSERT_ID]);
+    $this->query('INSERT INTO {sequences} () VALUES ()');
+    $new_id = $this->connection->lastInsertId();
     // This should only happen after an import or similar event.
     if ($existing_id >= $new_id) {
       // If we INSERT a value manually into the sequences table, on the next
@@ -221,7 +222,8 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
       // UPDATE in such a way that the UPDATE does not do anything. This way,
       // duplicate keys do not generate errors but everything else does.
       $this->connection->query('INSERT INTO {sequences} (value) VALUES (:value) ON DUPLICATE KEY UPDATE value = value', [':value' => $existing_id]);
-      $new_id = $this->connection->query('INSERT INTO {sequences} () VALUES ()', [], ['return' => Database::RETURN_INSERT_ID]);
+      $this->query('INSERT INTO {sequences} () VALUES ()');
+      $new_id = $this->connection->lastInsertId();
     }
     $this->needsCleanup = TRUE;
     return $new_id;
