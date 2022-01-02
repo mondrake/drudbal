@@ -2,19 +2,18 @@
 
 namespace Drupal\drudbal\Driver\Database\dbal\DbalExtension;
 
+use Doctrine\DBAL\Connection as DbalConnection;
+use Doctrine\DBAL\Exception as DbalException;
+use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
+use Doctrine\DBAL\Schema\Schema as DbalSchema;
 use Drupal\Component\Uuid\Php as Uuid;
 use Drupal\Core\Database\Database;
 use Drupal\Core\Database\DatabaseExceptionWrapper;
 use Drupal\Core\Database\DatabaseNotFoundException;
 use Drupal\Core\Database\IntegrityConstraintViolationException;
-use Drupal\Core\Database\Driver\sqlite\Connection as SqliteConnectionBase;
 use Drupal\drudbal\Driver\Database\dbal\Connection as DruDbalConnection;
 use Drupal\drudbal\Driver\Database\dbal\Statement\PrefetchingStatementWrapper;
-
-use Doctrine\DBAL\Connection as DbalConnection;
-use Doctrine\DBAL\Exception as DbalException;
-use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
-use Doctrine\DBAL\Schema\Schema as DbalSchema;
+use Drupal\sqlite\Driver\Database\sqlite\Connection as SqliteConnectionBase;
 
 /**
  * Driver specific methods for pdo_sqlite.
