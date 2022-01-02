@@ -208,6 +208,10 @@ class Connection extends DatabaseConnection {
     // Use default values if not already set.
     $options += $this->defaultOptions();
 
+    if (isset($options['return'])) {
+      @trigger_error('Passing "return" option to Drupal\Core\Database\Connection::query() is deprecated in drupal:9.4.0 and is removed in drupal:11.0.0. For data manipulation operations, use dynamic queries instead. See https://www.drupal.org/node/3185520', E_USER_DEPRECATED);
+    }
+
     // We allow either a pre-bound statement object (deprecated) or a literal
     // string. In either case, we want to end up with an executed statement
     // object, which we pass to StatementInterface::execute.
