@@ -3,5 +3,5 @@ core_version_requirement: ^9.3 | ^10
 name: DruDbal
 description: 'Drupal driver for Doctrine DBAL.'
 lifecycle: experimental
-dependecies:
+dependencies:
   - drupal:sqlite
