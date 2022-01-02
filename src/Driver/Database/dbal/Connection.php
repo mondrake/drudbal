@@ -204,6 +204,15 @@ class Connection extends DatabaseConnection {
   /**
    * {@inheritdoc}
    */
+  public function prepareStatement(string $query, array $options, bool $allow_row_count = FALSE): StatementInterface {
+    // @todo remove for Drupal 11.
+    unset($options['return']);
+    return parent::prepareStatement($query, $options, $allow_row_count);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function query($query, array $args = [], $options = []) {
     // Use default values if not already set.
     $options += $this->defaultOptions();
