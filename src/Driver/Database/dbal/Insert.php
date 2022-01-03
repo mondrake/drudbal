@@ -2,6 +2,7 @@
 
 namespace Drupal\drudbal\Driver\Database\dbal;
 
+use Doctrine\DBAL\Exception\DatabaseObjectNotFoundException;
 use Drupal\Core\Database\IntegrityConstraintViolationException;
 use Drupal\Core\Database\Query\Insert as QueryInsert;
 
@@ -44,7 +45,7 @@ class Insert extends QueryInsert {
 
     // Get from extension if a sequence name should be attached to the insert
     // query.
-    $this->queryOptions['sequence_name'] = $this->connection->getDbalExtension()->getSequenceNameForInsert($this->table);
+    $sequence_name = $this->connection->getDbalExtension()->getSequenceNameForInsert($this->table);
 
     $last_insert_id = NULL;
     if (empty($this->fromQuery)) {
@@ -60,7 +61,12 @@ class Insert extends QueryInsert {
             try {
               $stmt = $this->connection->prepareStatement($sql, $this->queryOptions);
               $stmt->execute($values, $this->queryOptions);
-              $last_insert_id = $this->connection->lastInsertId();
+              try {
+                $last_insert_id = $this->connection->lastInsertId($sequence_name);
+              }
+              catch (DatabaseObjectNotFoundException $e) {
+                $last_insert_id = 0;
+              }
             }
             catch (\Exception $e) {
               $this->connection->exceptionHandler()->handleExecutionException($e, $stmt, $values, $this->queryOptions);
@@ -82,7 +88,12 @@ class Insert extends QueryInsert {
         try {
           $stmt = $this->connection->prepareStatement($sql, $this->queryOptions);
           $stmt->execute([], $this->queryOptions);
-          $last_insert_id = $this->connection->lastInsertId();
+          try {
+            $last_insert_id = $this->connection->lastInsertId($sequence_name);
+          }
+          catch (DatabaseObjectNotFoundException $e) {
+            $last_insert_id = 0;
+          }
         }
         catch (\Exception $e) {
           $this->connection->exceptionHandler()->handleExecutionException($e, $stmt, [], $this->queryOptions);
@@ -104,7 +115,12 @@ class Insert extends QueryInsert {
           try {
             $stmt = $this->connection->prepareStatement($sql, $this->queryOptions);
             $stmt->execute($values, $this->queryOptions);
-            $last_insert_id = $this->connection->lastInsertId();
+            try {
+              $last_insert_id = $this->connection->lastInsertId($sequence_name);
+            }
+            catch (DatabaseObjectNotFoundException $e) {
+              $last_insert_id = 0;
+            }
           }
           catch (\Exception $e) {
             $this->connection->exceptionHandler()->handleExecutionException($e, $stmt, $values, $this->queryOptions);
