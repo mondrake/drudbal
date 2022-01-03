@@ -57,9 +57,14 @@ class Insert extends QueryInsert {
             $values[':db_insert_placeholder_' . $max_placeholder++] = $value;
           }
           try {
-            $stmt = $this->connection->prepareStatement($sql, $this->queryOptions);
-            $stmt->execute($values, $this->queryOptions);
-            $last_insert_id = $this->connection->lastInsertId();
+            try {
+              $stmt = $this->connection->prepareStatement($sql, $this->queryOptions);
+              $stmt->execute($values, $this->queryOptions);
+              $last_insert_id = $this->connection->lastInsertId();
+            }
+            catch (\Exception $e) {
+              $this->connection->exceptionHandler()->handleExecutionException($e, $stmt, $this->dbalQuery->getParameters(), $this->queryOptions);
+            }
           }
           catch (IntegrityConstraintViolationException $e) {
             // Abort the entire insert in case of integrity constraint violation
@@ -74,9 +79,14 @@ class Insert extends QueryInsert {
       else {
         // If there are no values, then this is a default-only query. We still
         // need to handle that.
-        $stmt = $this->connection->prepareStatement($sql, $this->queryOptions);
-        $stmt->execute([], $this->queryOptions);
-        $last_insert_id = $this->connection->lastInsertId();
+        try {
+          $stmt = $this->connection->prepareStatement($sql, $this->queryOptions);
+          $stmt->execute([], $this->queryOptions);
+          $last_insert_id = $this->connection->lastInsertId();
+        }
+        catch (\Exception $e) {
+          $this->connection->exceptionHandler()->handleExecutionException($e, $stmt, $this->dbalQuery->getParameters(), $this->queryOptions);
+        }
       }
     }
     else {
@@ -91,9 +101,14 @@ class Insert extends QueryInsert {
           $values[':db_insert_placeholder_' . $max_placeholder++] = $value;
         }
         try {
-          $stmt = $this->connection->prepareStatement($sql, $this->queryOptions);
-          $stmt->execute($values, $this->queryOptions);
-          $last_insert_id = $this->connection->lastInsertId();
+          try {
+            $stmt = $this->connection->prepareStatement($sql, $this->queryOptions);
+            $stmt->execute($values, $this->queryOptions);
+            $last_insert_id = $this->connection->lastInsertId();
+          }
+          catch (\Exception $e) {
+            $this->connection->exceptionHandler()->handleExecutionException($e, $stmt, $this->dbalQuery->getParameters(), $this->queryOptions);
+          }
         }
         catch (IntegrityConstraintViolationException $e) {
           // Abort the entire insert in case of integrity constraint violation
