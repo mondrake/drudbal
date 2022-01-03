@@ -63,7 +63,7 @@ class Insert extends QueryInsert {
               $last_insert_id = $this->connection->lastInsertId();
             }
             catch (\Exception $e) {
-              $this->connection->exceptionHandler()->handleExecutionException($e, $stmt, $this->dbalQuery->getParameters(), $this->queryOptions);
+              $this->connection->exceptionHandler()->handleExecutionException($e, $stmt, $values, $this->queryOptions);
             }
           }
           catch (IntegrityConstraintViolationException $e) {
@@ -85,7 +85,7 @@ class Insert extends QueryInsert {
           $last_insert_id = $this->connection->lastInsertId();
         }
         catch (\Exception $e) {
-          $this->connection->exceptionHandler()->handleExecutionException($e, $stmt, $this->dbalQuery->getParameters(), $this->queryOptions);
+          $this->connection->exceptionHandler()->handleExecutionException($e, $stmt, [], $this->queryOptions);
         }
       }
     }
@@ -107,7 +107,7 @@ class Insert extends QueryInsert {
             $last_insert_id = $this->connection->lastInsertId();
           }
           catch (\Exception $e) {
-            $this->connection->exceptionHandler()->handleExecutionException($e, $stmt, $this->dbalQuery->getParameters(), $this->queryOptions);
+            $this->connection->exceptionHandler()->handleExecutionException($e, $stmt, $values, $this->queryOptions);
           }
         }
         catch (IntegrityConstraintViolationException $e) {
