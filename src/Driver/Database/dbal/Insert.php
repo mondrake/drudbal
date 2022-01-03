@@ -123,7 +123,7 @@ class Insert extends QueryInsert {
 
     // Re-initialize the values array so that we can re-use this query.
     $this->insertValues = [];
-
+dump([$sql, $values, $this->queryOptions, $last_insert_id]);
     return $last_insert_id;
   }
 
