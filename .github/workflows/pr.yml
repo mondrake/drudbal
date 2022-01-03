@@ -118,4 +118,4 @@ jobs:
 
     - name: Run test ${{ matrix.test-args }}
 #      run: vendor/bin/phpunit -c core --color=always ${{ matrix.test-args }}
-      run: vendor/bin/phpunit -c core --color=always core/tests/Drupal/Core/KernelTests/Core/Database/InsertTest.php
+      run: vendor/bin/phpunit -c core --color=always core/tests/Drupal/KernelTests/Core/Database/InsertTest.php
