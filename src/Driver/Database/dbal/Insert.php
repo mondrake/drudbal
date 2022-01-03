@@ -62,6 +62,7 @@ class Insert extends QueryInsert {
               $stmt->execute($values, $this->queryOptions);
               try {
                 $last_insert_id = $this->connection->lastInsertId($this->queryOptions['sequence_name']);
+              }
               catch (\Exception $e) {
 dump($e);
                 $last_insert_id = 0;
@@ -89,6 +90,7 @@ dump($e);
           $stmt->execute([], $this->queryOptions);
           try {
             $last_insert_id = $this->connection->lastInsertId($this->queryOptions['sequence_name']);
+          }
           catch (\Exception $e) {
 dump($e);
             $last_insert_id = 0;
@@ -116,6 +118,7 @@ dump($e);
             $stmt->execute($values, $this->queryOptions);
             try {
               $last_insert_id = $this->connection->lastInsertId($this->queryOptions['sequence_name']);
+            }
             catch (\Exception $e) {
 dump($e);
               $last_insert_id = 0;
