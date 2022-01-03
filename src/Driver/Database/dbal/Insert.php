@@ -124,7 +124,7 @@ class Insert extends QueryInsert {
     // Re-initialize the values array so that we can re-use this query.
     $this->insertValues = [];
 //dump([$sql, $values, $this->queryOptions, $last_insert_id]);
-dump([$this->connection->query('SELECT * FROM sys.all_sequences WHERE sequence_owner = "DRUDBAL" ')->fetchAll(), $this->queryOptions]);
+dump([$this->connection->query("SELECT * FROM sys.all_sequences WHERE sequence_owner = 'DRUDBAL'")->fetchAll(), $this->queryOptions]);
     return $last_insert_id;
   }
 
