@@ -60,7 +60,12 @@ class Insert extends QueryInsert {
             try {
               $stmt = $this->connection->prepareStatement($sql, $this->queryOptions);
               $stmt->execute($values, $this->queryOptions);
-              $last_insert_id = $this->connection->lastInsertId();
+              try {
+                $last_insert_id = $this->connection->lastInsertId($this->queryOptions['sequence_name']);
+              catch (\Exception $e) {
+dump($e);
+                $last_insert_id = 0;
+              }
             }
             catch (\Exception $e) {
               $this->connection->exceptionHandler()->handleExecutionException($e, $stmt, $values, $this->queryOptions);
@@ -82,7 +87,12 @@ class Insert extends QueryInsert {
         try {
           $stmt = $this->connection->prepareStatement($sql, $this->queryOptions);
           $stmt->execute([], $this->queryOptions);
-          $last_insert_id = $this->connection->lastInsertId();
+          try {
+            $last_insert_id = $this->connection->lastInsertId($this->queryOptions['sequence_name']);
+          catch (\Exception $e) {
+dump($e);
+            $last_insert_id = 0;
+          }
         }
         catch (\Exception $e) {
           $this->connection->exceptionHandler()->handleExecutionException($e, $stmt, [], $this->queryOptions);
@@ -104,7 +114,12 @@ class Insert extends QueryInsert {
           try {
             $stmt = $this->connection->prepareStatement($sql, $this->queryOptions);
             $stmt->execute($values, $this->queryOptions);
-            $last_insert_id = $this->connection->lastInsertId();
+            try {
+              $last_insert_id = $this->connection->lastInsertId($this->queryOptions['sequence_name']);
+            catch (\Exception $e) {
+dump($e);
+              $last_insert_id = 0;
+            }
           }
           catch (\Exception $e) {
             $this->connection->exceptionHandler()->handleExecutionException($e, $stmt, $values, $this->queryOptions);
@@ -124,9 +139,9 @@ class Insert extends QueryInsert {
     // Re-initialize the values array so that we can re-use this query.
     $this->insertValues = [];
 //dump([$sql, $values, $this->queryOptions, $last_insert_id]);
-dump($this->connection->query("SELECT sequence_name FROM sys.all_sequences WHERE sequence_owner = 'DRUDBAL'")->fetchAll());
-dump($this->queryOptions['sequence_name']);
-dump($this->connection->query("SELECT DRUDBAL.{$this->queryOptions['sequence_name']}.CURRVAL FROM DUAL")->fetchAll());
+//dump($this->connection->query("SELECT sequence_name FROM sys.all_sequences WHERE sequence_owner = 'DRUDBAL'")->fetchAll());
+//dump($this->queryOptions['sequence_name']);
+//dump($this->connection->query("SELECT DRUDBAL.{$this->queryOptions['sequence_name']}.CURRVAL FROM DUAL")->fetchAll());
     return $last_insert_id;
   }
 
