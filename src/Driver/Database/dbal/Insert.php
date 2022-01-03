@@ -44,7 +44,7 @@ class Insert extends QueryInsert {
 
     // Get from extension if a sequence name should be probed for the last
     // insert id.
-    $this->queryOptions['sequence_name'] = $this->connection->getDbalExtension()->getSequenceNameForInsert($this->table);
+    $sequence_name = $this->connection->getDbalExtension()->getSequenceNameForInsert($this->table);
 
     $last_insert_id = NULL;
     if (empty($this->fromQuery)) {
@@ -60,7 +60,7 @@ class Insert extends QueryInsert {
             try {
               $stmt = $this->connection->prepareStatement($sql, $this->queryOptions);
               $stmt->execute($values, $this->queryOptions);
-              $last_insert_id = $this->connection->lastInsertId($this->queryOptions['sequence_name']);
+              $last_insert_id = $this->connection->lastInsertId($sequence_name);
             }
             catch (\Exception $e) {
               $this->connection->exceptionHandler()->handleExecutionException($e, $stmt, $values, $this->queryOptions);
@@ -82,7 +82,7 @@ class Insert extends QueryInsert {
         try {
           $stmt = $this->connection->prepareStatement($sql, $this->queryOptions);
           $stmt->execute([], $this->queryOptions);
-          $last_insert_id = $this->connection->lastInsertId($this->queryOptions['sequence_name']);
+          $last_insert_id = $this->connection->lastInsertId($sequence_name);
         }
         catch (\Exception $e) {
           $this->connection->exceptionHandler()->handleExecutionException($e, $stmt, [], $this->queryOptions);
@@ -104,7 +104,7 @@ class Insert extends QueryInsert {
           try {
             $stmt = $this->connection->prepareStatement($sql, $this->queryOptions);
             $stmt->execute($values, $this->queryOptions);
-            $last_insert_id = $this->connection->lastInsertId($this->queryOptions['sequence_name']);
+            $last_insert_id = $this->connection->lastInsertId($sequence_name);
           }
           catch (\Exception $e) {
             $this->connection->exceptionHandler()->handleExecutionException($e, $stmt, $values, $this->queryOptions);
