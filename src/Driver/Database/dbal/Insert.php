@@ -125,7 +125,7 @@ class Insert extends QueryInsert {
     $this->insertValues = [];
 //dump([$sql, $values, $this->queryOptions, $last_insert_id]);
 //dump([$this->connection->query("SELECT * FROM sys.all_sequences WHERE sequence_owner = 'DRUDBAL'")->fetchAll(), $this->queryOptions]);
-dump([$this->connection->query("SELECT \"{$this->queryOptions['sequence_name']}\".CURRVAL FROM DUAL")->fetchAll(), $this->queryOptions]);
+dump([$this->connection->query("SELECT {$this->queryOptions['sequence_name']}.CURRVAL FROM DUAL")->fetchAll(), $this->queryOptions]);
     return $last_insert_id;
   }
 
