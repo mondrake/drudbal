@@ -2,6 +2,7 @@
 
 namespace Drupal\drudbal\Driver\Database\dbal;
 
+use Doctrine\DBAL\Exception\DatabaseObjectNotFoundException;
 use Drupal\Core\Database\IntegrityConstraintViolationException;
 use Drupal\Core\Database\Query\Insert as QueryInsert;
 
@@ -44,7 +45,7 @@ class Insert extends QueryInsert {
 
     // Get from extension if a sequence name should be attached to the insert
     // query.
-    $this->queryOptions['sequence_name'] = $this->connection->getDbalExtension()->getSequenceNameForInsert($this->table);
+    $sequence_name = $this->connection->getDbalExtension()->getSequenceNameForInsert($this->table);
 
     $last_insert_id = NULL;
     if (empty($this->fromQuery)) {
@@ -61,10 +62,9 @@ class Insert extends QueryInsert {
               $stmt = $this->connection->prepareStatement($sql, $this->queryOptions);
               $stmt->execute($values, $this->queryOptions);
               try {
-                $last_insert_id = $this->connection->lastInsertId($this->queryOptions['sequence_name']);
+                $last_insert_id = $this->connection->lastInsertId($sequence_name);
               }
-              catch (\Exception $e) {
-dump($e);
+              catch (DatabaseObjectNotFoundException $e) {
                 $last_insert_id = 0;
               }
             }
@@ -89,10 +89,9 @@ dump($e);
           $stmt = $this->connection->prepareStatement($sql, $this->queryOptions);
           $stmt->execute([], $this->queryOptions);
           try {
-            $last_insert_id = $this->connection->lastInsertId($this->queryOptions['sequence_name']);
+            $last_insert_id = $this->connection->lastInsertId($sequence_name);
           }
-          catch (\Exception $e) {
-dump($e);
+          catch (DatabaseObjectNotFoundException $e) {
             $last_insert_id = 0;
           }
         }
@@ -117,10 +116,9 @@ dump($e);
             $stmt = $this->connection->prepareStatement($sql, $this->queryOptions);
             $stmt->execute($values, $this->queryOptions);
             try {
-              $last_insert_id = $this->connection->lastInsertId($this->queryOptions['sequence_name']);
+              $last_insert_id = $this->connection->lastInsertId($sequence_name);
             }
-            catch (\Exception $e) {
-dump($e);
+            catch (DatabaseObjectNotFoundException $e) {
               $last_insert_id = 0;
             }
           }
@@ -141,10 +139,7 @@ dump($e);
 
     // Re-initialize the values array so that we can re-use this query.
     $this->insertValues = [];
-//dump([$sql, $values, $this->queryOptions, $last_insert_id]);
-//dump($this->connection->query("SELECT sequence_name FROM sys.all_sequences WHERE sequence_owner = 'DRUDBAL'")->fetchAll());
-//dump($this->queryOptions['sequence_name']);
-//dump($this->connection->query("SELECT DRUDBAL.{$this->queryOptions['sequence_name']}.CURRVAL FROM DUAL")->fetchAll());
+
     return $last_insert_id;
   }
 
