@@ -107,7 +107,7 @@ jobs:
       run: |
         # Use the custom installer.
         php install_cli.php
-        vendor/bin/drush runserver localhost:8080 &
+        vendor/bin/drush runserver localhost:8080 --default-server=localhost:8080 &
         sleep 5s
 
     - name: Report installation

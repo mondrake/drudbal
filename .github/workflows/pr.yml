@@ -78,7 +78,7 @@ jobs:
         cp modules/contrib/drudbal/tests/github/install_* .
         # Use the custom installer.
         php install_cli.php
-        vendor/bin/drush runserver localhost:8080 &
+        vendor/bin/drush runserver localhost:8080 --default-server=localhost:8080 &
         sleep 1s
     
     - name: Report installation
