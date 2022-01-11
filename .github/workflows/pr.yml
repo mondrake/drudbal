@@ -9,7 +9,10 @@ env:
     DRUDBAL_DRUPAL_PROFILE: "standard"
     SIMPLETEST_BASE_URL: "http://localhost:8080"
     PHPUNIT_SKIP_CLASS: '[
-      "Drupal\\KernelTests\\Core\\Cache\\ApcuBackendTest"
+      "Drupal\\KernelTests\\Core\\Cache\\ApcuBackendTest",
+      "Drupal\\KernelTests\\Core\\Cache\\EndOfTransactionQueriesTest",
+      "Drupal\\KernelTests\\Core\\Database\\DatabaseExceptionWrapperTest",
+      "Drupal\\Tests\\file\\Functional\\DownloadTest"
     ]'
 
 jobs:
@@ -62,7 +65,7 @@ jobs:
         composer install --no-progress --ansi
         composer run-script drupal-phpunit-upgrade
         composer config --no-plugins allow-plugins.composer/package-versions-deprecated true
-        composer require drush/drush --no-progress --ansi
+        composer require drush/drush:11.x-dev --no-progress --ansi
  
     - name: Composer require DruDbal from local staging
       run: |
