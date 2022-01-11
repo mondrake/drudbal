@@ -86,7 +86,7 @@ jobs:
         composer install --no-progress --ansi
         composer run-script drupal-phpunit-upgrade
         composer config --no-plugins allow-plugins.composer/package-versions-deprecated true
-        composer require drush/drush --no-progress --ansi
+        composer require drush/drush:11.x-dev --no-progress --ansi
 
     - name: Composer require DruDbal from local staging
       run: |
@@ -107,14 +107,14 @@ jobs:
       run: |
         # Use the custom installer.
         php install_cli.php
-        vendor/bin/drush runserver localhost:8080 &
+        vendor/bin/drush runserver localhost:8080 --default-server=localhost:8080 &
         sleep 5s
 
     - name: Report installation
       continue-on-error: true
       run: |
         php install_report.php
-        vendor/bin/drush core:status
+        # vendor/bin/drush core:status
         vendor/bin/drush core:requirements
         vendor/bin/drush pml --type=module --no-core
 
