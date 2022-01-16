@@ -98,12 +98,6 @@ class Connection extends DatabaseConnection {
    * Constructs a Connection object.
    */
   public function __construct(DbalConnection $dbal_connection, array $connection_options = []) {
-    // The 'transactions' option is deprecated.
-    if (isset($connection_options['transactions'])) {
-      @trigger_error('Passing a \'transactions\' connection option to Drupal\\Core\\Database\\Connection::__construct is deprecated in drupal:9.1.0 and is removed in drupal:10.0.0. All database drivers must support transactions. See https://www.drupal.org/node/2278745', E_USER_DEPRECATED);
-      unset($connection_options['transactions']);
-    }
-
     $this->connection = $dbal_connection;
     $this->connectionOptions = $connection_options;
     $this->setPrefix($connection_options['prefix'] ?? '');
@@ -122,14 +116,6 @@ class Connection extends DatabaseConnection {
    */
   public function __destruct() {
     $this->schema = NULL;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function destroy() {
-    @trigger_error(__METHOD__ . '() is deprecated in drupal:9.1.0 and is removed from drupal:10.0.0. Move custom database destruction logic to __destruct(). See https://www.drupal.org/node/3142866', E_USER_DEPRECATED);
-    return;
   }
 
   /**
@@ -325,14 +311,6 @@ class Connection extends DatabaseConnection {
    */
   public function queryRange($query, $from, $count, array $args = [], array $options = []) {
     return $this->dbalExtension->delegateQueryRange($query, $from, $count, $args, $options);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function queryTemporary($query, array $args = [], array $options = []) {
-    @trigger_error('Connection::queryTemporary() is deprecated in drupal:9.3.0 and is removed from drupal:10.0.0. There is no replacement. See https://www.drupal.org/node/3211781', E_USER_DEPRECATED);
-    return '';
   }
 
   /**
