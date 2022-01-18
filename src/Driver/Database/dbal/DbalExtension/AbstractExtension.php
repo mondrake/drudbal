@@ -278,7 +278,7 @@ class AbstractExtension implements DbalExtensionInterface {
    */
   public function delegateHasJson(): bool {
     try {
-      return (bool) $this->query('SELECT JSON_TYPE(\'1\')');
+      return (bool) $this->connection->query("SELECT JSON_TYPE('1')");
     }
     catch (\Exception $e) {
       return FALSE;

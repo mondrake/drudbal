@@ -314,7 +314,7 @@ class Oci8Extension extends AbstractExtension {
    */
   public function delegateHasJson(): bool {
     try {
-      return (bool) $this->query("SELECT JSON_VALUE('{a:100}', '$.a' RETURNING NUMBER) AS value FROM DUAL");
+      return (bool) $this->connection->query("SELECT JSON_VALUE('{a:100}', '$.a' RETURNING NUMBER) AS value FROM DUAL");
     }
     catch (\Exception $e) {
       return FALSE;

@@ -671,12 +671,6 @@ class Connection extends DatabaseConnection {
    */
   public function hasJson(): bool {
     return $this->getDbalExtension()->delegateHasJson();
-    try {
-      return (bool) $this->query('SELECT JSON_TYPE(\'1\')');
-    }
-    catch (\Exception $e) {
-      return FALSE;
-    }
   }
 
   /**
