@@ -667,6 +667,19 @@ class Connection extends DatabaseConnection {
   }
 
   /**
+   * {@inheritdoc}
+   */
+  public function hasJson(): bool {
+    return $this->getDbalExtension()->delegateHasJson();
+    try {
+      return (bool) $this->query('SELECT JSON_TYPE(\'1\')');
+    }
+    catch (\Exception $e) {
+      return FALSE;
+    }
+  }
+
+  /**
    * @param array<int, mixed>|array<string, mixed>                               $params
    * @param array<int, int|string|Type|null>|array<string, int|string|Type|null> $types
    *

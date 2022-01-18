@@ -310,6 +310,18 @@ class Oci8Extension extends AbstractExtension {
   }
 
   /**
+   * {@inheritdoc}
+   */
+  public function delegateHasJson(): bool {
+    try {
+      return (bool) $this->query("SELECT JSON_VALUE('{a:100}', '$.a' RETURNING NUMBER) AS value FROM DUAL");
+    }
+    catch (\Exception $e) {
+      return FALSE;
+    }
+  }
+
+  /**
    * Formats a backtrace into a plain-text string.
    *
    * The calls show values for scalar arguments and type names for complex ones.

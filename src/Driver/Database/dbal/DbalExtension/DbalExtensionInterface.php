@@ -319,6 +319,14 @@ interface DbalExtensionInterface {
   public function delegateQueryRange($query, $from, $count, array $args = [], array $options = []);
 
   /**
+   * Runs a simple query to validate json datatype support.
+   *
+   * @return bool
+   *   Returns the query result.
+   */
+  public function delegateHasJson(): bool;
+
+  /**
    * Transaction delegated methods.
    */
 
