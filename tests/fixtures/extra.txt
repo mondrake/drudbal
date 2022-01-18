@@ -70,7 +70,7 @@
       run: |
         composer install --no-progress --ansi
         composer run-script drupal-phpunit-upgrade
-        composer require drush/drush --no-progress --ansi
+        composer require drush/drush:11.x-dev --no-progress --ansi
 
     - name: Composer require DruDbal from local staging
       run: |
@@ -99,7 +99,7 @@
 #      run: |
 #        php install_report.php
 #        vendor/bin/drush pml --type=module --no-core
-#        vendor/bin/drush core:status
+#        # vendor/bin/drush core:status
 #        vendor/bin/drush core:requirements
 
 #    - name: Run test ${{ matrix.test-args }}
@@ -182,7 +182,7 @@
       run: |
         composer install --no-progress --ansi
         composer run-script drupal-phpunit-upgrade
-        composer require drush/drush --no-progress --ansi
+        composer require drush/drush:11.x-dev --no-progress --ansi
 
     - name: Composer require DruDbal from local staging
       run: |
@@ -201,7 +201,7 @@
     - name: Report installation
       run: |
         php install_report.php
-        vendor/bin/drush core:status
+        # vendor/bin/drush core:status
         vendor/bin/drush core:requirements
         vendor/bin/drush pml --type=module --no-core
 
