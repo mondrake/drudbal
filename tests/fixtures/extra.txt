@@ -99,7 +99,7 @@
 #      run: |
 #        php install_report.php
 #        vendor/bin/drush pml --type=module --no-core
-#        vendor/bin/drush core:status
+#        # vendor/bin/drush core:status
 #        vendor/bin/drush core:requirements
 
 #    - name: Run test ${{ matrix.test-args }}
@@ -201,7 +201,7 @@
     - name: Report installation
       run: |
         php install_report.php
-        vendor/bin/drush core:status
+        # vendor/bin/drush core:status
         vendor/bin/drush core:requirements
         vendor/bin/drush pml --type=module --no-core
 
