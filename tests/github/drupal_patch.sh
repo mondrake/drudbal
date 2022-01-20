@@ -12,6 +12,7 @@ curl https://git.drupalcode.org/project/drupal/-/merge_requests/785.diff | git a
 #3256642 Autoload classes of database drivers modules' dependencies
 curl https://git.drupalcode.org/project/drupal/-/merge_requests/1626.diff | git apply -v
 
+#3259417 Missing typehints in test classes extending from Symfony
 curl https://git.drupalcode.org/project/drupal/-/merge_requests/1682.diff | git apply -v
 
 #ls -al drudbal_staging/tests/github/drupal_patch.sh
