@@ -101,7 +101,7 @@ jobs:
     - name: Report installation
       run: |
         php install_report.php
-        # vendor/bin/drush core:status
+        vendor/bin/drush core:status
         vendor/bin/drush core:requirements
         vendor/bin/drush pml --type=module --no-core
 
@@ -180,7 +180,7 @@ jobs:
     - name: Report installation
       run: |
         php install_report.php
-        # vendor/bin/drush core:status
+        vendor/bin/drush core:status
         vendor/bin/drush core:requirements
         vendor/bin/drush pml --type=module --no-core
 
