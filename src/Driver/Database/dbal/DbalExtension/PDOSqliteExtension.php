@@ -87,20 +87,11 @@ class PDOSqliteExtension extends AbstractExtension {
       return;
     }
 
-    // Attach databases per prefix.
-    $prefixes = [];
     $connection_options = $this->connection->getConnectionOptions();
 
-    // Main prefix.
+    // Prefix.
     $prefix = $connection_options['prefix'];
     $this->attachedDatabases['main'] = $connection_options['database'] . (empty($prefix) ? '' : ('-' . $prefix));
-    $prefixes['default'] = $prefix;
-
-    // Extra prefixes.
-    foreach ($connection_options['extra_prefix'] ?? [] as $key => $prefix) {
-      $this->delegateAttachDatabase($prefix);
-      $prefixes[$key] = $prefix;
-    }
     $this->connection->setPrefixPublic($prefixes);
   }
 
