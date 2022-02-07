@@ -92,7 +92,7 @@ class PDOSqliteExtension extends AbstractExtension {
     // Prefix.
     $prefix = $connection_options['prefix'];
     $this->attachedDatabases['main'] = $connection_options['database'] . (empty($prefix) ? '' : ('-' . $prefix));
-    $this->connection->setPrefixPublic($prefixes);
+    $this->connection->setPrefixPublic($prefix);
   }
 
   /**
