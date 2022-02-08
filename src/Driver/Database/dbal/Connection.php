@@ -100,15 +100,17 @@ class Connection extends DatabaseConnection {
   public function __construct(DbalConnection $dbal_connection, array $connection_options = []) {
     $this->connection = $dbal_connection;
     $this->connectionOptions = $connection_options;
-    $this->setPrefix($connection_options['prefix'] ?? '');
+
     $this->dbalPlatform = $dbal_connection->getDatabasePlatform();
+    $quote_identifier = $this->dbalPlatform->getIdentifierQuoteCharacter();
+    $this->identifierQuotes = [$quote_identifier, $quote_identifier];
+
+    $this->setPrefix($connection_options['prefix'] ?? '');
+
     $dbal_extension_class = static::getDbalExtensionClass($connection_options);
     $this->dbalExtension = new $dbal_extension_class($this);
     $this->statementWrapperClass = $this->dbalExtension->getStatementClass();
     $this->transactionalDDLSupport = $this->dbalExtension->delegateTransactionalDdlSupport($connection_options);
-
-    $quote_identifier = $this->dbalPlatform->getIdentifierQuoteCharacter();
-    $this->identifierQuotes = [$quote_identifier, $quote_identifier];
   }
 
   /**
@@ -157,8 +159,7 @@ class Connection extends DatabaseConnection {
       if (isset($this->dbTables['{' . $table . '}'])) {
         continue;
       }
-      $prefix = $this->prefixes[$table] ?? $this->prefixes['default'];
-      $this->dbTables['{' . $table . '}'] = $this->identifierQuotes[0] . $this->dbalExtension->getDbTableName($prefix, $table) . $this->identifierQuotes[1];
+      $this->dbTables['{' . $table . '}'] = $this->identifierQuotes[0] . $this->dbalExtension->getDbTableName($this->tablePrefix(), $table) . $this->identifierQuotes[1];
     }
     return str_replace(array_keys($this->dbTables), array_values($this->dbTables), $sql);
   }
@@ -545,9 +546,6 @@ class Connection extends DatabaseConnection {
    *   The DBAL extension class.
    */
   public static function getDbalExtensionClass(array $connection_options) {
-    if (isset($connection_options['dbal_extension_class'])) {
-      return $connection_options['dbal_extension_class'];
-    }
     $driver_name = $connection_options['dbal_driver'];
     if (isset(static::$driverSchemeAliases[$driver_name])) {
       $driver_name = static::$driverSchemeAliases[$driver_name];
@@ -646,24 +644,13 @@ class Connection extends DatabaseConnection {
   }
 
   /**
-   * Returns the table prefixes array.
-   *
-   * @return array
-   *   The connection options array.
-   */
-  public function getPrefixes() {
-    return $this->prefixes;
-  }
-
-  /**
    * Set the list of prefixes used by this database connection.
    *
-   * @param array|string $prefix
-   *   Either a single prefix, or an array of prefixes, in any of the multiple
-   *   forms documented in default.settings.php.
+   * @param string $prefix
+   *   A single prefix.
    */
-  public function setPrefixPublic($prefix) {
-    return $this->setPrefix($prefix);
+  public function setPrefixPublic(string $prefix): void {
+    $this->setPrefix($prefix);
   }
 
   /**
