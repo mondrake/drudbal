@@ -312,66 +312,6 @@ class SchemaTest extends SchemaTestBase {
   }
 
   /**
-   * Tests the findTables() method.
-   */
-  public function testFindTables() {
-    // We will be testing with three tables, two of them using the default
-    // prefix and the third one with an individually specified prefix.
-    // Set up a new connection with different connection info.
-    $connection_info = Database::getConnectionInfo();
-
-    // Add per-table prefix to the second table.
-    $new_connection_info = $connection_info['default'];
-    $new_connection_info['prefix'] = [
-      'default' => $connection_info['default']['prefix'],
-      'test2' => $connection_info['default']['prefix'] . 's_',
-    ];
-    Database::addConnectionInfo('test', 'default', $new_connection_info);
-    Database::setActiveConnection('test');
-    $test_schema = Database::getConnection()->schema();
-
-    // Create the tables.
-    $table_specification = [
-      'description' => 'Test table.',
-      'fields' => [
-        'id'  => [
-          'type' => 'int',
-          'default' => NULL,
-        ],
-      ],
-    ];
-    $test_schema->createTable('test_1_table', $table_specification);
-    $test_schema->createTable('test2', $table_specification);
-    $test_schema->createTable('table_3_test', $table_specification);
-
-    // Check the "all tables" syntax.
-    $tables = $test_schema->findTables('%');
-    sort($tables);
-    $expected = [
-      // The 'config' table is added by
-      // \Drupal\KernelTests\KernelTestBase::containerBuild().
-      'config',
-      'table_3_test',
-      // This table uses a per-table prefix, yet it is returned as un-prefixed.
-      'test2',
-      'test_1_table',
-    ];
-    $this->assertEquals($expected, $tables);
-
-    // Check the restrictive syntax.
-    $tables = $test_schema->findTables('test%');
-    sort($tables);
-    $expected = [
-      'test2',
-      'test_1_table',
-    ];
-    $this->assertEquals($expected, $tables);
-
-    // Go back to the initial connection.
-    Database::setActiveConnection('default');
-  }
-
-  /**
    * Tests handling of uppercase table names.
    */
   public function testUpperCaseTableName() {
