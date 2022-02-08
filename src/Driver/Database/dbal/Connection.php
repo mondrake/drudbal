@@ -100,15 +100,17 @@ class Connection extends DatabaseConnection {
   public function __construct(DbalConnection $dbal_connection, array $connection_options = []) {
     $this->connection = $dbal_connection;
     $this->connectionOptions = $connection_options;
-    $this->setPrefix($connection_options['prefix'] ?? '');
+
     $this->dbalPlatform = $dbal_connection->getDatabasePlatform();
+    $quote_identifier = $this->dbalPlatform->getIdentifierQuoteCharacter();
+    $this->identifierQuotes = [$quote_identifier, $quote_identifier];
+
+    $this->setPrefix($connection_options['prefix'] ?? '');
+
     $dbal_extension_class = static::getDbalExtensionClass($connection_options);
     $this->dbalExtension = new $dbal_extension_class($this);
     $this->statementWrapperClass = $this->dbalExtension->getStatementClass();
     $this->transactionalDDLSupport = $this->dbalExtension->delegateTransactionalDdlSupport($connection_options);
-
-    $quote_identifier = $this->dbalPlatform->getIdentifierQuoteCharacter();
-    $this->identifierQuotes = [$quote_identifier, $quote_identifier];
   }
 
   /**
@@ -544,9 +546,6 @@ class Connection extends DatabaseConnection {
    *   The DBAL extension class.
    */
   public static function getDbalExtensionClass(array $connection_options) {
-    if (isset($connection_options['dbal_extension_class'])) {
-      return $connection_options['dbal_extension_class'];
-    }
     $driver_name = $connection_options['dbal_driver'];
     if (isset(static::$driverSchemeAliases[$driver_name])) {
       $driver_name = static::$driverSchemeAliases[$driver_name];
