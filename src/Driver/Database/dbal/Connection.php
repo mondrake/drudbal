@@ -651,7 +651,7 @@ class Connection extends DatabaseConnection {
    *   A single prefix.
    */
   public function setPrefixPublic(string $prefix): void {
-    return $this->setPrefix($prefix);
+    $this->setPrefix($prefix);
   }
 
   /**
