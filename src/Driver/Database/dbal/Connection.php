@@ -157,8 +157,7 @@ class Connection extends DatabaseConnection {
       if (isset($this->dbTables['{' . $table . '}'])) {
         continue;
       }
-      $prefix = $this->prefixes[$table] ?? $this->prefixes['default'];
-      $this->dbTables['{' . $table . '}'] = $this->identifierQuotes[0] . $this->dbalExtension->getDbTableName($prefix, $table) . $this->identifierQuotes[1];
+      $this->dbTables['{' . $table . '}'] = $this->identifierQuotes[0] . $this->dbalExtension->getDbTableName($this->tablePrefix(), $table) . $this->identifierQuotes[1];
     }
     return str_replace(array_keys($this->dbTables), array_values($this->dbTables), $sql);
   }
@@ -646,23 +645,12 @@ class Connection extends DatabaseConnection {
   }
 
   /**
-   * Returns the table prefixes array.
-   *
-   * @return array
-   *   The connection options array.
-   */
-  public function getPrefixes() {
-    return $this->prefixes;
-  }
-
-  /**
    * Set the list of prefixes used by this database connection.
    *
-   * @param array|string $prefix
-   *   Either a single prefix, or an array of prefixes, in any of the multiple
-   *   forms documented in default.settings.php.
+   * @param string $prefix
+   *   A single prefix.
    */
-  public function setPrefixPublic($prefix) {
+  public function setPrefixPublic(string $prefix): void {
     return $this->setPrefix($prefix);
   }
 
