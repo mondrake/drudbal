@@ -312,6 +312,50 @@ class SchemaTest extends SchemaTestBase {
   }
 
   /**
+   * Tests the findTables() method.
+   */
+  public function testFindTables() {
+    // We will be testing with three tables.
+    $test_schema = Database::getConnection()->schema();
+
+    // Create the tables.
+    $table_specification = [
+      'description' => 'Test table.',
+      'fields' => [
+        'id'  => [
+          'type' => 'int',
+          'default' => NULL,
+        ],
+      ],
+    ];
+    $test_schema->createTable('test_1_table', $table_specification);
+    $test_schema->createTable('test2', $table_specification);
+    $test_schema->createTable('table_3_test', $table_specification);
+
+    // Check the "all tables" syntax.
+    $tables = $test_schema->findTables('%');
+    sort($tables);
+    $expected = [
+      // The 'config' table is added by
+      // \Drupal\KernelTests\KernelTestBase::containerBuild().
+      'config',
+      'table_3_test',
+      'test2',
+      'test_1_table',
+    ];
+    $this->assertEquals($expected, $tables, 'All tables were found.');
+
+    // Check the restrictive syntax.
+    $tables = $test_schema->findTables('test%');
+    sort($tables);
+    $expected = [
+      'test2',
+      'test_1_table',
+    ];
+    $this->assertEquals($expected, $tables, 'Two tables were found.');
+  }
+
+  /**
    * Tests handling of uppercase table names.
    */
   public function testUpperCaseTableName() {

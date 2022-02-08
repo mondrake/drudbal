@@ -198,7 +198,7 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function getDrupalTableName(string $drupal_default_prefix, string $db_table_name): string {
+  public function getDrupalTableName(string $prefix, string $db_table_name): ?string {
     // In SQLite, the prefix is the database.
     return $db_table_name;
   }
