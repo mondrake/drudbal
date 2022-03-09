@@ -18,7 +18,6 @@ env:
       "Drupal\\KernelTests\\Core\\Database\\SqlModeTest",
       "Drupal\\KernelTests\\Core\\Database\\StatementWrapperLegacyTest",
       "Drupal\\KernelTests\\Core\\Database\\StatementTest",
-      "Drupal\\Tests\\system\\Functional\\Database\\TemporaryQueryTest",
       "Drupal\\Tests\\views\\Functional\\Update\\ViewsSortIdentifiersUpdateTest",
       "Drupal\\Tests\\views\\Kernel\\ViewElementTest"
     ]'
@@ -82,7 +81,7 @@ jobs:
         composer install --no-progress --ansi
         composer run-script drupal-phpunit-upgrade
         composer config --no-plugins allow-plugins.composer/package-versions-deprecated true
-        composer require drush/drush:11.x-dev --no-progress --ansi
+        composer require drush/drush:^11 --no-progress --ansi
 
     - name: Composer require DruDbal from local staging
       run: |
@@ -160,7 +159,7 @@ jobs:
         composer install --no-progress --ansi
         composer run-script drupal-phpunit-upgrade
         composer config --no-plugins allow-plugins.composer/package-versions-deprecated true
-        composer require drush/drush:11.x-dev --no-progress --ansi
+        composer require drush/drush:^11 --no-progress --ansi
 
     - name: Composer require DruDbal from local staging
       run: |
