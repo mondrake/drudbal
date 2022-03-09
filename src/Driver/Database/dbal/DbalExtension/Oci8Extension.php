@@ -438,8 +438,6 @@ class Oci8Extension extends AbstractExtension {
    * {@inheritdoc}
    */
   public function alterStatement(&$query, array &$args) {
-    if ($this->getDebugging()) dump(['pre-alter', $query, $args]);
-
     // Reprocess args.
     $new_args = [];
     foreach ($args as $placeholder => $value) {
@@ -940,6 +938,7 @@ PLSQL
     }
 
     foreach ($sql as $exec) {
+      if ($this->getDebugging()) dump($exec);
       $this->getDbalConnection()->executeStatement($exec);
     }
 
