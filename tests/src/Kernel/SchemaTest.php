@@ -508,4 +508,9 @@ class SchemaTest extends SchemaTestBase {
     }
   }
 
+  public function testChangePrimaryKeyToSerial() {
+    $this->connection->getDbalExtension()->setDebugging(TRUE);
+    parent::testChangePrimaryKeyToSerial();
+    $this->connection->getDbalExtension()->setDebugging(FALSE);
+  }
 }
