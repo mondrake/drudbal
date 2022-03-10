@@ -62,9 +62,8 @@ jobs:
     - name: Install Composer dependencies
       run: |
         composer install --no-progress --ansi
-        composer run-script drupal-phpunit-upgrade
+        # composer run-script drupal-phpunit-upgrade
         composer config --no-plugins allow-plugins.composer/package-versions-deprecated true
-        composer require drush/drush:^11 --no-progress --ansi
 
     - name: Composer require DruDbal from local staging
       run: |
