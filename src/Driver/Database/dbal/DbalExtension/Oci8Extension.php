@@ -921,12 +921,20 @@ PLSQL
     }
 
     if ($new_db_field_is_serial) {
-      $prev_max_sequence = $this->connection->query("SELECT MAX({$db_field}) FROM {$db_table}")->fetchField();
-dump($prev_max_sequence);
+      $prev_max_sequence = (int) $this->connection->query("SELECT MAX({$db_field}) FROM {$db_table}")->fetchField() ?? 0;
       $autoincrement_sql = $this->connection->getDbalPlatform()->getCreateAutoincrementSql($new_db_field, $db_table);
       // Remove the auto primary key generation, which is the first element in
       // the array.
       array_shift($autoincrement_sql);
+      // Get the the sequence generation, which is the second element in the
+      // array.
+      $sequence_sql = array_shift($autoincrement_sql);
+      if ($prev_max_sequence) {
+        $sql[] = str_replace('START WITH 1', 'START WITH ' . $prev_max_sequence + 1, $sequence_sql);
+      }
+      else {
+        $sql[] = $sequence_sql;
+      }
       $sql = array_merge($sql, $autoincrement_sql);
     }
 
