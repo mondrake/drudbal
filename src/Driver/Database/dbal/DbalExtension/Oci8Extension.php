@@ -882,6 +882,7 @@ PLSQL
 
     $unquoted_new_db_field = $this->getDbFieldName($field_new_name, FALSE);
     $new_db_field = '"' . $unquoted_new_db_field . '"';
+    $new_db_field_is_serial = $drupal_field_new_specs['type'] === 'serial';
 
     $dbal_table = $dbal_schema->getTable($unquoted_db_table);
     $has_primary_key = $dbal_table->hasPrimaryKey();
@@ -919,7 +920,9 @@ PLSQL
       $sql[] = "ALTER TABLE $db_table MODIFY $new_db_field NOT NULL";
     }
 
-    if ($drupal_field_new_specs['type'] === 'serial') {
+    if ($new_db_field_is_serial) {
+      $prev_max_sequence = $this->connection->query("SELECT MAX({$db_field}) FROM {$db_table}")->fetchField();
+dump($prev_max_sequence);
       $autoincrement_sql = $this->connection->getDbalPlatform()->getCreateAutoincrementSql($new_db_field, $db_table);
       // Remove the auto primary key generation, which is the first element in
       // the array.
