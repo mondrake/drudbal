@@ -930,7 +930,7 @@ PLSQL
       // array.
       $sequence_sql = array_shift($autoincrement_sql);
       if ($prev_max_sequence) {
-        $sql[] = str_replace('START WITH 1', 'START WITH ' . $prev_max_sequence + 1, $sequence_sql);
+        $sql[] = str_replace('START WITH 1', 'START WITH ' . $prev_max_sequence, $sequence_sql);
       }
       else {
         $sql[] = $sequence_sql;
