@@ -67,10 +67,7 @@
 #      run: git apply -v drudbal_staging/test.patch
 
     - name: Install Composer dependencies
-      run: |
-        composer install --no-progress --ansi
-        composer run-script drupal-phpunit-upgrade
-        composer require drush/drush:^11 --no-progress --ansi
+      run: composer install --no-progress --ansi
 
     - name: Composer require DruDbal from local staging
       run: |
@@ -89,8 +86,7 @@
 
 #    - name: Install Drupal
 #      run: |
-#        # Use the custom installer.
-#        php install_cli.php
+#        vendor/bin/drush site-install standard --db-url=$SIMPLETEST_DB -y
 #        vendor/bin/drush runserver localhost:8080 &
 #        sleep 5s
 
@@ -179,10 +175,7 @@
       run: ./drudbal_staging/tests/github/drupal_patch.sh
 
     - name: Install Composer dependencies
-      run: |
-        composer install --no-progress --ansi
-        composer run-script drupal-phpunit-upgrade
-        composer require drush/drush:^11 --no-progress --ansi
+      run: composer install --no-progress --ansi
 
     - name: Composer require DruDbal from local staging
       run: |
@@ -193,8 +186,7 @@
     - name: Install Drupal
       run: |
         cp modules/contrib/drudbal/tests/github/install_* .
-        # Use the custom installer.
-        php install_cli.php
+        vendor/bin/drush site-install standard --db-url=$SIMPLETEST_DB -y
         vendor/bin/drush runserver localhost:8080 &
         sleep 1s
 
