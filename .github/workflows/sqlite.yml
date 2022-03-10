@@ -13,12 +13,8 @@ env:
     PHPUNIT_SKIP_CLASS: '[
       "Drupal\\KernelTests\\Core\\Cache\\ApcuBackendTest",
       "Drupal\\KernelTests\\Core\\Cache\\EndOfTransactionQueriesTest",
-      "Drupal\\KernelTests\\Core\\Database\\ConnectionUnitTest",
       "Drupal\\KernelTests\\Core\\Database\\DatabaseExceptionWrapperTest",
-      "Drupal\\KernelTests\\Core\\Database\\StatementTest",
-      "Drupal\\Tests\\file\\Functional\\DownloadTest",
-      "Drupal\\Tests\\system\\Functional\\Database\\TemporaryQueryTest",
-      "Drupal\\Tests\\views\\Functional\\Update\\ViewsSortIdentifiersUpdateTest"
+      "Drupal\\Tests\\file\\Functional\\DownloadTest"
     ]'
 
 jobs:
@@ -37,7 +33,6 @@ jobs:
       fail-fast: false
       matrix:
         php-version:
-          - "8.0"
           - "8.1"
         test-args:
           - "--group Database"
@@ -70,7 +65,8 @@ jobs:
       run: |
         composer install --no-progress --ansi
         composer run-script drupal-phpunit-upgrade
-        composer require drush/drush --no-progress --ansi
+        composer config --no-plugins allow-plugins.composer/package-versions-deprecated true
+        composer require drush/drush:^11 --no-progress --ansi
 
     - name: Composer require DruDbal from local staging
       run: |
@@ -83,7 +79,7 @@ jobs:
         cp modules/contrib/drudbal/tests/github/install_* .
         # Use the custom installer.
         php install_cli.php
-        vendor/bin/drush runserver localhost:8080 &
+        vendor/bin/drush runserver localhost:8080 --default-server=localhost:8080 &
         sleep 1s
 
     - name: Report installation

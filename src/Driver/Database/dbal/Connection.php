@@ -98,23 +98,19 @@ class Connection extends DatabaseConnection {
    * Constructs a Connection object.
    */
   public function __construct(DbalConnection $dbal_connection, array $connection_options = []) {
-    // The 'transactions' option is deprecated.
-    if (isset($connection_options['transactions'])) {
-      @trigger_error('Passing a \'transactions\' connection option to Drupal\\Core\\Database\\Connection::__construct is deprecated in drupal:9.1.0 and is removed in drupal:10.0.0. All database drivers must support transactions. See https://www.drupal.org/node/2278745', E_USER_DEPRECATED);
-      unset($connection_options['transactions']);
-    }
-
     $this->connection = $dbal_connection;
     $this->connectionOptions = $connection_options;
-    $this->setPrefix($connection_options['prefix'] ?? '');
+
     $this->dbalPlatform = $dbal_connection->getDatabasePlatform();
+    $quote_identifier = $this->dbalPlatform->getIdentifierQuoteCharacter();
+    $this->identifierQuotes = [$quote_identifier, $quote_identifier];
+
+    $this->setPrefix($connection_options['prefix'] ?? '');
+
     $dbal_extension_class = static::getDbalExtensionClass($connection_options);
     $this->dbalExtension = new $dbal_extension_class($this);
     $this->statementWrapperClass = $this->dbalExtension->getStatementClass();
     $this->transactionalDDLSupport = $this->dbalExtension->delegateTransactionalDdlSupport($connection_options);
-
-    $quote_identifier = $this->dbalPlatform->getIdentifierQuoteCharacter();
-    $this->identifierQuotes = [$quote_identifier, $quote_identifier];
   }
 
   /**
@@ -122,14 +118,6 @@ class Connection extends DatabaseConnection {
    */
   public function __destruct() {
     $this->schema = NULL;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function destroy() {
-    @trigger_error(__METHOD__ . '() is deprecated in drupal:9.1.0 and is removed from drupal:10.0.0. Move custom database destruction logic to __destruct(). See https://www.drupal.org/node/3142866', E_USER_DEPRECATED);
-    return;
   }
 
   /**
@@ -171,8 +159,7 @@ class Connection extends DatabaseConnection {
       if (isset($this->dbTables['{' . $table . '}'])) {
         continue;
       }
-      $prefix = $this->prefixes[$table] ?? $this->prefixes['default'];
-      $this->dbTables['{' . $table . '}'] = $this->identifierQuotes[0] . $this->dbalExtension->getDbTableName($prefix, $table) . $this->identifierQuotes[1];
+      $this->dbTables['{' . $table . '}'] = $this->identifierQuotes[0] . $this->dbalExtension->getDbTableName($this->tablePrefix(), $table) . $this->identifierQuotes[1];
     }
     return str_replace(array_keys($this->dbTables), array_values($this->dbTables), $sql);
   }
@@ -204,61 +191,8 @@ class Connection extends DatabaseConnection {
   /**
    * {@inheritdoc}
    */
-  public function query($query, array $args = [], $options = []) {
-    // Use default values if not already set.
-    $options += $this->defaultOptions();
-
-    // We allow either a pre-bound statement object (deprecated) or a literal
-    // string. In either case, we want to end up with an executed statement
-    // object, which we pass to StatementInterface::execute.
-    if ($query instanceof StatementInterface) {
-      @trigger_error('Passing a StatementInterface object as a $query argument to Drupal\Core\Database\Connection::query is deprecated in drupal:9.2.0 and is removed in drupal:10.0.0. Call the execute method from the StatementInterface object directly instead. See https://www.drupal.org/node/3154439', E_USER_DEPRECATED);
-      $stmt = $query;
-    }
-    else {
-      $this->expandArguments($query, $args);
-      $stmt = $this->prepareStatement($query, $options);
-    }
-
-    try {
-      if ($query instanceof StatementInterface) {
-        $stmt->execute(NULL, $options);
-      }
-      else {
-        $stmt->execute($args, $options);
-      }
-
-      // Depending on the type of query we may need to return a different value.
-      // See DatabaseConnection::defaultOptions() for a description of each
-      // value.
-      switch ($options['return']) {
-        case Database::RETURN_STATEMENT:
-          return $stmt;
-
-        case Database::RETURN_AFFECTED:
-          $stmt->allowRowCount = TRUE;
-          return $stmt->rowCount();
-
-        case Database::RETURN_INSERT_ID:
-          try {
-            $sequence_name = $options['sequence_name'] ?? NULL;
-            return (string) $this->getDbalConnection()->lastInsertId($sequence_name);
-          }
-          catch (\Exception $e) {
-            return '0';
-          }
-
-        case Database::RETURN_NULL:
-          return NULL;
-
-        default:
-          throw new DbalException('Invalid return directive: ' . $options['return']);
-
-      }
-    }
-    catch (\Exception $e) {
-      return $this->exceptionHandler()->handleExecutionException($e, $stmt, $args, $options);
-    }
+  public function lastInsertId(?string $name = NULL): string {
+    return (string) $this->getDbalConnection()->lastInsertId($name);
   }
 
   /**
@@ -383,14 +317,6 @@ class Connection extends DatabaseConnection {
   /**
    * {@inheritdoc}
    */
-  public function queryTemporary($query, array $args = [], array $options = []) {
-    @trigger_error('Connection::queryTemporary() is deprecated in drupal:9.3.0 and is removed from drupal:10.0.0. There is no replacement. See https://www.drupal.org/node/3211781', E_USER_DEPRECATED);
-    return '';
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function driver() {
     return 'dbal';
   }
@@ -399,7 +325,7 @@ class Connection extends DatabaseConnection {
    * {@inheritdoc}
    */
   public function databaseType() {
-    return $this->getDbalConnection()->getDriver()->getDatabasePlatform()->getName();
+    return $this->dbalExtension->getDbServerPlatform();
   }
 
   /**
@@ -620,9 +546,6 @@ class Connection extends DatabaseConnection {
    *   The DBAL extension class.
    */
   public static function getDbalExtensionClass(array $connection_options) {
-    if (isset($connection_options['dbal_extension_class'])) {
-      return $connection_options['dbal_extension_class'];
-    }
     $driver_name = $connection_options['dbal_driver'];
     if (isset(static::$driverSchemeAliases[$driver_name])) {
       $driver_name = static::$driverSchemeAliases[$driver_name];
@@ -721,24 +644,20 @@ class Connection extends DatabaseConnection {
   }
 
   /**
-   * Returns the table prefixes array.
+   * Set the list of prefixes used by this database connection.
    *
-   * @return array
-   *   The connection options array.
+   * @param string $prefix
+   *   A single prefix.
    */
-  public function getPrefixes() {
-    return $this->prefixes;
+  public function setPrefixPublic(string $prefix): void {
+    $this->setPrefix($prefix);
   }
 
   /**
-   * Set the list of prefixes used by this database connection.
-   *
-   * @param array|string $prefix
-   *   Either a single prefix, or an array of prefixes, in any of the multiple
-   *   forms documented in default.settings.php.
+   * {@inheritdoc}
    */
-  public function setPrefixPublic($prefix) {
-    return $this->setPrefix($prefix);
+  public function hasJson(): bool {
+    return $this->getDbalExtension()->delegateHasJson();
   }
 
   /**

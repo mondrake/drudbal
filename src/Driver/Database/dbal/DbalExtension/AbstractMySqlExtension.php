@@ -210,7 +210,8 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
    * {@inheritdoc}
    */
   public function delegateNextId(int $existing_id = 0): int {
-    $new_id = $this->connection->query('INSERT INTO {sequences} () VALUES ()', [], ['return' => Database::RETURN_INSERT_ID]);
+    $this->connection->query('INSERT INTO {sequences} () VALUES ()');
+    $new_id = $this->connection->lastInsertId();
     // This should only happen after an import or similar event.
     if ($existing_id >= $new_id) {
       // If we INSERT a value manually into the sequences table, on the next
@@ -221,7 +222,8 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
       // UPDATE in such a way that the UPDATE does not do anything. This way,
       // duplicate keys do not generate errors but everything else does.
       $this->connection->query('INSERT INTO {sequences} (value) VALUES (:value) ON DUPLICATE KEY UPDATE value = value', [':value' => $existing_id]);
-      $new_id = $this->connection->query('INSERT INTO {sequences} () VALUES ()', [], ['return' => Database::RETURN_INSERT_ID]);
+      $this->connection->query('INSERT INTO {sequences} () VALUES ()');
+      $new_id = $this->connection->lastInsertId();
     }
     $this->needsCleanup = TRUE;
     return $new_id;
@@ -285,12 +287,14 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function getDbServerPlatform(): string {
+  public function getDbServerPlatform(bool $strict = FALSE): string {
+    if (!$strict) {
+      return 'mysql';
+    }
     $dbal_server_version = $this->getDbalConnection()->getWrappedConnection()->getServerVersion();
     $regex = '/^(?:5\.5\.5-)?(\d+\.\d+\.\d+.*-mariadb.*)/i';
     preg_match($regex, $dbal_server_version, $matches);
     return (empty($matches[1])) ? 'mysql' : 'mariadb';
-
   }
 
   /**
@@ -519,7 +523,7 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
     ];
 
     // Ensure that the database server has the right minimum version.
-    $db_server_platform = $this->getDbServerPlatform();
+    $db_server_platform = $this->getDbServerPlatform(TRUE);
     $db_server_version = $this->getDbServerVersion();
     $db_server_min_version = $db_server_platform === 'mysql' ? self::MYSQL_MINIMUM_VERSION : self::MARIADB_MINIMUM_VERSION;
     if (version_compare($db_server_version, $db_server_min_version, '<')) {

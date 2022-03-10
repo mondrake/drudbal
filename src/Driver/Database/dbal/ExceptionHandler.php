@@ -36,13 +36,6 @@ class ExceptionHandler extends DatabaseExceptionHandler {
    * {@inheritdoc}
    */
   public function handleExecutionException(\Exception $exception, StatementInterface $statement, array $arguments = [], array $options = []): void {
-    if (array_key_exists('throw_exception', $options)) {
-      @trigger_error('Passing a \'throw_exception\' option to ' . __METHOD__ . ' is deprecated in drupal:9.2.0 and is removed in drupal:10.0.0. Always catch exceptions. See https://www.drupal.org/node/3201187', E_USER_DEPRECATED);
-      if (!($options['throw_exception'])) {
-        return;
-      }
-    }
-
     $query_string = $statement->getQueryString();
     $message = $exception->getMessage() . ": " . $query_string . "; " . print_r($arguments, TRUE);
     $this->connection->getDbalExtension()->delegateQueryExceptionProcess($query_string, $arguments, $options, $message, $exception);

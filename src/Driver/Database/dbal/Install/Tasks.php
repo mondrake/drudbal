@@ -52,7 +52,7 @@ class Tasks extends InstallTasks {
       }
       $connection = Database::getConnection();
       return t('Doctrine DBAL on @database_type/@database_server_version via @dbal_driver', [
-        '@database_type' => $connection->getDbalExtension()->getDbServerPlatform(),
+        '@database_type' => $connection->getDbalExtension()->getDbServerPlatform(TRUE),
         '@database_server_version' => $connection->getDbalExtension()->getDbServerVersion(),
         '@dbal_driver' => $connection->getConnectionOptions()['dbal_driver'],
       ]);
@@ -69,7 +69,7 @@ class Tasks extends InstallTasks {
     // Note: This is the minimum version of Doctrine DBAL; the minimum version
     // of the db server should be managed in
     // Drupal\drudbal\Driver\Database\dbal\DbalExtension\[dbal_driver_name]::runInstallTasks.
-    return '3.0.0';
+    return '3.2.0';
   }
 
   /**

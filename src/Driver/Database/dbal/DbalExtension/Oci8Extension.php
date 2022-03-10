@@ -290,6 +290,13 @@ class Oci8Extension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
+  public function getDbServerPlatform(bool $strict = FALSE): string {
+    return "oracle";
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function handleDropTableException(\Exception $e, string $drupal_table_name, string $db_table_name): void {
     // ORA-14452: attempt to create, alter or drop an index on temporary table
     // already in use.
@@ -300,6 +307,18 @@ class Oci8Extension extends AbstractExtension {
     }
 
     throw new DatabaseExceptionWrapper("Failed dropping table '$drupal_table_name', (on DBMS: '$db_table_name')", $e->getCode(), $e);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateHasJson(): bool {
+    try {
+      return (bool) $this->connection->query("SELECT JSON_VALUE('{a:100}', '$.a' RETURNING NUMBER) AS value FROM DUAL");
+    }
+    catch (\Exception $e) {
+      return FALSE;
+    }
   }
 
   /**
@@ -419,8 +438,6 @@ class Oci8Extension extends AbstractExtension {
    * {@inheritdoc}
    */
   public function alterStatement(&$query, array &$args) {
-    if ($this->getDebugging()) dump(['pre-alter', $query, $args]);
-
     // Reprocess args.
     $new_args = [];
     foreach ($args as $placeholder => $value) {
@@ -865,6 +882,7 @@ PLSQL
 
     $unquoted_new_db_field = $this->getDbFieldName($field_new_name, FALSE);
     $new_db_field = '"' . $unquoted_new_db_field . '"';
+    $new_db_field_is_serial = $drupal_field_new_specs['type'] === 'serial';
 
     $dbal_table = $dbal_schema->getTable($unquoted_db_table);
     $has_primary_key = $dbal_table->hasPrimaryKey();
@@ -902,11 +920,21 @@ PLSQL
       $sql[] = "ALTER TABLE $db_table MODIFY $new_db_field NOT NULL";
     }
 
-    if ($drupal_field_new_specs['type'] === 'serial') {
+    if ($new_db_field_is_serial) {
+      $prev_max_sequence = (int) $this->connection->query("SELECT MAX({$db_field}) FROM {$db_table}")->fetchField() ?? 0;
       $autoincrement_sql = $this->connection->getDbalPlatform()->getCreateAutoincrementSql($new_db_field, $db_table);
       // Remove the auto primary key generation, which is the first element in
       // the array.
       array_shift($autoincrement_sql);
+      // Get the the sequence generation, which is the second element in the
+      // array.
+      $sequence_sql = array_shift($autoincrement_sql);
+      if ($prev_max_sequence) {
+        $sql[] = str_replace('START WITH 1', 'START WITH ' . $prev_max_sequence, $sequence_sql);
+      }
+      else {
+        $sql[] = $sequence_sql;
+      }
       $sql = array_merge($sql, $autoincrement_sql);
     }
 
@@ -921,6 +949,7 @@ PLSQL
     }
 
     foreach ($sql as $exec) {
+      if ($this->getDebugging()) dump($exec);
       $this->getDbalConnection()->executeStatement($exec);
     }
 
