@@ -2,6 +2,6 @@
 
 namespace Drush\Sql;
 
-class SqlDbal extends SqlMysql
+class SqlDbal extends SqlBase
 {
 }
