@@ -2,19 +2,18 @@
 
 namespace Drupal\drudbal\Driver\Database\dbal\DbalExtension;
 
+use Doctrine\DBAL\Connection as DbalConnection;
+use Doctrine\DBAL\Exception as DbalException;
+use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
+use Doctrine\DBAL\Schema\Schema as DbalSchema;
 use Drupal\Component\Uuid\Php as Uuid;
 use Drupal\Core\Database\Database;
 use Drupal\Core\Database\DatabaseExceptionWrapper;
 use Drupal\Core\Database\DatabaseNotFoundException;
 use Drupal\Core\Database\IntegrityConstraintViolationException;
-use Drupal\Core\Database\Driver\sqlite\Connection as SqliteConnectionBase;
 use Drupal\drudbal\Driver\Database\dbal\Connection as DruDbalConnection;
 use Drupal\drudbal\Driver\Database\dbal\Statement\PrefetchingStatementWrapper;
-
-use Doctrine\DBAL\Connection as DbalConnection;
-use Doctrine\DBAL\Exception as DbalException;
-use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
-use Doctrine\DBAL\Schema\Schema as DbalSchema;
+use Drupal\sqlite\Driver\Database\sqlite\Connection as SqliteConnectionBase;
 
 /**
  * Driver specific methods for pdo_sqlite.
@@ -88,21 +87,12 @@ class PDOSqliteExtension extends AbstractExtension {
       return;
     }
 
-    // Attach databases per prefix.
-    $prefixes = [];
     $connection_options = $this->connection->getConnectionOptions();
 
-    // Main prefix.
+    // Prefix.
     $prefix = $connection_options['prefix'];
     $this->attachedDatabases['main'] = $connection_options['database'] . (empty($prefix) ? '' : ('-' . $prefix));
-    $prefixes['default'] = $prefix;
-
-    // Extra prefixes.
-    foreach ($connection_options['extra_prefix'] ?? [] as $key => $prefix) {
-      $this->delegateAttachDatabase($prefix);
-      $prefixes[$key] = $prefix;
-    }
-    $this->connection->setPrefixPublic($prefixes);
+    $this->connection->setPrefixPublic($prefix);
   }
 
   /**
@@ -187,6 +177,13 @@ class PDOSqliteExtension extends AbstractExtension {
   }
 
   /**
+   * {@inheritdoc}
+   */
+  public function getDbServerPlatform(bool $strict = FALSE): string {
+    return "sqlite";
+  }
+
+  /**
    * Database asset name resolution methods.
    */
 
@@ -201,7 +198,7 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function getDrupalTableName(string $drupal_default_prefix, string $db_table_name): string {
+  public function getDrupalTableName(string $prefix, string $db_table_name): ?string {
     // In SQLite, the prefix is the database.
     return $db_table_name;
   }

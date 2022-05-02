@@ -33,10 +33,14 @@ interface DbalExtensionInterface {
   /**
    * Gets the database server platform.
    *
+   * @param bool $strict
+   *   (Optional) If TRUE, returns a subfamily platform (e.g. mariadb), else the
+   *   platform family (e.g. mysql). Defaults to FALSE.
+   *
    * @return string
    *   The database server platform.
    */
-  public function getDbServerPlatform(): string;
+  public function getDbServerPlatform(bool $strict = FALSE): string;
 
   /**
    * Gets the database server version.
@@ -66,15 +70,16 @@ interface DbalExtensionInterface {
   /**
    * Get the Drupal table name, from a database-level table name.
    *
-   * @param string $drupal_default_prefix
-   *   A string with the default Drupal prefix for the tables.
+   * @param string $prefix
+   *   A string with the Drupal prefix for the tables.
    * @param string $db_table_name
    *   A string with the database-level name of the table.
    *
-   * @return string
-   *   The Drupal table name.
+   * @return string|null
+   *   The Drupal table name, or NULL if the database-level table name is not
+   *   relevant to the Drupal instance.
    */
-  public function getDrupalTableName(string $drupal_default_prefix, string $db_table_name): string;
+  public function getDrupalTableName(string $prefix, string $db_table_name): ?string;
 
   /**
    * Get the database table name, including the schema prefix.
@@ -313,6 +318,14 @@ interface DbalExtensionInterface {
    *   correctly.
    */
   public function delegateQueryRange($query, $from, $count, array $args = [], array $options = []);
+
+  /**
+   * Runs a simple query to validate json datatype support.
+   *
+   * @return bool
+   *   Returns the query result.
+   */
+  public function delegateHasJson(): bool;
 
   /**
    * Transaction delegated methods.

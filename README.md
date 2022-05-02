@@ -51,8 +51,8 @@ Very rough instructions to install Drupal from scratch with this db driver
 under the hood:
 
 1. Requirements:
-    * PHP 8.0+
-    * latest Drupal development branch code, 9.3.x
+    * PHP 8.1+
+    * latest Drupal development branch code, 10.0.x
     * codebase built via Composer
 
 2. Get the DruDbal module from Packagist via Composer, it will install Doctrine

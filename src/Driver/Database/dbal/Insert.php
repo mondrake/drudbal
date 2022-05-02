@@ -2,6 +2,7 @@
 
 namespace Drupal\drudbal\Driver\Database\dbal;
 
+use Doctrine\DBAL\Exception\DatabaseObjectNotFoundException;
 use Drupal\Core\Database\IntegrityConstraintViolationException;
 use Drupal\Core\Database\Query\Insert as QueryInsert;
 
@@ -14,6 +15,16 @@ use Drupal\Core\Database\Query\Insert as QueryInsert;
  * classes and execution handed over to there.
  */
 class Insert extends QueryInsert {
+
+  /**
+   * {@inheritdoc}
+   */
+  public function __construct(Connection $connection, string $table, array $options = []) {
+    // @todo Remove the __construct in Drupal 11.
+    // @see https://www.drupal.org/project/drupal/issues/3256524
+    parent::__construct($connection, $table, $options);
+    unset($this->queryOptions['return']);
+  }
 
   /**
    * {@inheritdoc}
@@ -34,7 +45,7 @@ class Insert extends QueryInsert {
 
     // Get from extension if a sequence name should be attached to the insert
     // query.
-    $this->queryOptions['sequence_name'] = $this->connection->getDbalExtension()->getSequenceNameForInsert($this->table);
+    $sequence_name = $this->connection->getDbalExtension()->getSequenceNameForInsert($this->table);
 
     $last_insert_id = NULL;
     if (empty($this->fromQuery)) {
@@ -47,7 +58,19 @@ class Insert extends QueryInsert {
             $values[':db_insert_placeholder_' . $max_placeholder++] = $value;
           }
           try {
-            $last_insert_id = $this->connection->query($sql, $values, $this->queryOptions);
+            try {
+              $stmt = $this->connection->prepareStatement($sql, $this->queryOptions);
+              $stmt->execute($values, $this->queryOptions);
+              try {
+                $last_insert_id = $this->connection->lastInsertId($sequence_name);
+              }
+              catch (DatabaseObjectNotFoundException $e) {
+                $last_insert_id = 0;
+              }
+            }
+            catch (\Exception $e) {
+              $this->connection->exceptionHandler()->handleExecutionException($e, $stmt, $values, $this->queryOptions);
+            }
           }
           catch (IntegrityConstraintViolationException $e) {
             // Abort the entire insert in case of integrity constraint violation
@@ -62,7 +85,19 @@ class Insert extends QueryInsert {
       else {
         // If there are no values, then this is a default-only query. We still
         // need to handle that.
-        $last_insert_id = $this->connection->query($sql, [], $this->queryOptions);
+        try {
+          $stmt = $this->connection->prepareStatement($sql, $this->queryOptions);
+          $stmt->execute([], $this->queryOptions);
+          try {
+            $last_insert_id = $this->connection->lastInsertId($sequence_name);
+          }
+          catch (DatabaseObjectNotFoundException $e) {
+            $last_insert_id = 0;
+          }
+        }
+        catch (\Exception $e) {
+          $this->connection->exceptionHandler()->handleExecutionException($e, $stmt, [], $this->queryOptions);
+        }
       }
     }
     else {
@@ -77,7 +112,19 @@ class Insert extends QueryInsert {
           $values[':db_insert_placeholder_' . $max_placeholder++] = $value;
         }
         try {
-          $last_insert_id = $this->connection->query($sql, $values, $this->queryOptions);
+          try {
+            $stmt = $this->connection->prepareStatement($sql, $this->queryOptions);
+            $stmt->execute($values, $this->queryOptions);
+            try {
+              $last_insert_id = $this->connection->lastInsertId($sequence_name);
+            }
+            catch (DatabaseObjectNotFoundException $e) {
+              $last_insert_id = 0;
+            }
+          }
+          catch (\Exception $e) {
+            $this->connection->exceptionHandler()->handleExecutionException($e, $stmt, $values, $this->queryOptions);
+          }
         }
         catch (IntegrityConstraintViolationException $e) {
           // Abort the entire insert in case of integrity constraint violation

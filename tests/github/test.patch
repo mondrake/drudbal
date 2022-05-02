@@ -1,20 +1,18 @@
-diff --git a/core/tests/Drupal/KernelTests/Core/Database/UpsertTest.php b/core/tests/Drupal/KernelTests/Core/Database/UpsertTest.php
-index f46fd41e66..2dc8242d84 100644
---- a/core/tests/Drupal/KernelTests/Core/Database/UpsertTest.php
-+++ b/core/tests/Drupal/KernelTests/Core/Database/UpsertTest.php
-@@ -60,6 +60,7 @@ public function testUpsert() {
-    * Confirms that we can upsert records with keywords successfully.
-    */
-   public function testUpsertWithKeywords() {
-+dump($this->connection->query('SELECT * FROM {select}')->fetchAll());
-     $num_records_before = $this->connection->query('SELECT COUNT(*) FROM {select}')->fetchField();
- 
-     $upsert = $this->connection->upsert('select')
-@@ -87,6 +88,7 @@ public function testUpsertWithKeywords() {
-     // https://dev.mysql.com/doc/c-api/8.0/en/mysql-affected-rows.html.
-     $this->assertGreaterThanOrEqual(2, $result, 'The result of the upsert operation should report that at least two rows were affected.');
- 
-+dump($this->connection->query('SELECT * FROM {select}')->fetchAll());
-     $num_records_after = $this->connection->query('SELECT COUNT(*) FROM {select}')->fetchField();
-     $this->assertEquals($num_records_before + 1, $num_records_after, 'Rows were inserted and updated properly.');
- 
+diff --git a/core/includes/install.core.inc b/core/includes/install.core.inc
+index 5a5f92339b..7632861426 100644
+--- a/core/includes/install.core.inc
++++ b/core/includes/install.core.inc
+@@ -960,10 +960,13 @@ function install_get_form($form_id, array &$install_state) {
+     // For non-interactive installs, submit the form programmatically with the
+     // values taken from the installation state.
+     $install_form_id = $form_builder->getFormId($form_id, $form_state);
++dump($install_form_id);
+     if (!empty($install_state['forms'][$install_form_id])) {
++dump($install_state['forms'][$install_form_id]);
+       $form_state->setValues($install_state['forms'][$install_form_id]);
+     }
+     $form_builder->submitForm($form_id, $form_state);
++dump($form_state->getErrors());
+
+     // Throw an exception in case of any form validation error.
+     if ($errors = $form_state->getErrors()) {

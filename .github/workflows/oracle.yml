@@ -7,7 +7,7 @@ on:
     - cron: "0 6 * * 2"
 
 env:
-    DRUDBAL_DRUPAL_VERSION: "9.3.x"
+    DRUDBAL_DRUPAL_VERSION: "10.0.x"
     DRUDBAL_DRUPAL_PROFILE: "standard"
     SIMPLETEST_BASE_URL: "http://localhost:8080"
     PHPUNIT_SKIP_CLASS: '[
@@ -17,10 +17,8 @@ env:
       "Drupal\\KernelTests\\Core\\Database\\ConnectionUnitTest",
       "Drupal\\KernelTests\\Core\\Database\\DatabaseExceptionWrapperTest",
       "Drupal\\KernelTests\\Core\\Database\\SchemaTest",
-      "Drupal\\KernelTests\\Core\\Database\\StatementWrapperLegacyTest",
       "Drupal\\KernelTests\\Core\\Database\\StatementTest",
-      "Drupal\\KernelTests\\Core\\Database\\TransactionTest",
-      "Drupal\\Tests\\system\\Functional\\Database\\TemporaryQueryTest"
+      "Drupal\\KernelTests\\Core\\Database\\TransactionTest"
     ]'
 
 jobs:
@@ -84,8 +82,7 @@ jobs:
     - name: Install Composer dependencies
       run: |
         composer install --no-progress --ansi
-        composer run-script drupal-phpunit-upgrade
-        composer require drush/drush --no-progress --ansi
+        composer config --no-plugins allow-plugins.composer/package-versions-deprecated true
 
     - name: Composer require DruDbal from local staging
       run: |
@@ -104,9 +101,8 @@ jobs:
 
     - name: Install Drupal
       run: |
-        # Use the custom installer.
-        php install_cli.php
-        vendor/bin/drush runserver localhost:8080 &
+        vendor/bin/drush site-install standard --db-url=$SIMPLETEST_DB -y
+        vendor/bin/drush runserver localhost:8080 --default-server=localhost:8080 &
         sleep 5s
 
     - name: Report installation

@@ -5,6 +5,12 @@
  * Initiates a command line installation of Drupal.
  */
 
+// Some minimal values for $_SERVER.
+$_SERVER['SERVER_NAME'] = 'localhost';
+$_SERVER['SERVER_PORT'] = 80;
+$_SERVER['HTTP_HOST'] = 'localhost';
+$_SERVER['REMOTE_ADDR'] = '127.0.0.1';
+
 // Store the Drupal root path.
 $root_path = realpath('');
 

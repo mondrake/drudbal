@@ -106,8 +106,8 @@ class AbstractExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function getDbServerPlatform(): string {
-    return $this->getDbalConnection()->getDriver()->getDatabasePlatform()->getName();
+  public function getDbServerPlatform(bool $strict = FALSE): string {
+    throw new \LogicException("Method " . __METHOD__ . " not implemented.");
   }
 
   /**
@@ -131,22 +131,14 @@ class AbstractExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function getDrupalTableName(string $drupal_default_prefix, string $db_table_name): string {
-    $individually_prefixed_tables = $this->connection->getUnprefixedTablesMap();
-    $default_prefix_length = strlen($drupal_default_prefix);
+  public function getDrupalTableName(string $prefix, string $db_table_name): ?string {
+    $prefix_length = strlen($prefix);
 
     // Take into account tables that have an individual prefix.
-    // @todo individual prefixes are deprecated as of D8.2
-    if (isset($individually_prefixed_tables[$db_table_name])) {
-      $prefix_length = strlen($this->connection->tablePrefix($individually_prefixed_tables[$db_table_name]));
-    }
-    elseif ($drupal_default_prefix && substr($db_table_name, 0, $default_prefix_length) !== $drupal_default_prefix) {
+    if ($prefix && substr($db_table_name, 0, $prefix_length) !== $prefix) {
       // This table name does not start the default prefix, which means that
       // it is not managed by Drupal so it should be excluded from the result.
-      return FALSE;
-    }
-    else {
-      $prefix_length = $default_prefix_length;
+      return NULL;
     }
 
     // Remove the prefix from the returned tables.
@@ -271,6 +263,18 @@ class AbstractExtension implements DbalExtensionInterface {
    */
   public function delegateQueryRange($query, $from, $count, array $args = [], array $options = []) {
     throw new \LogicException("Method " . __METHOD__ . " not implemented.");
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateHasJson(): bool {
+    try {
+      return (bool) $this->connection->query("SELECT JSON_TYPE('1')");
+    }
+    catch (\Exception $e) {
+      return FALSE;
+    }
   }
 
   /**
