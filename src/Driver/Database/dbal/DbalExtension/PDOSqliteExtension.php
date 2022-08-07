@@ -147,7 +147,7 @@ class PDOSqliteExtension extends AbstractExtension {
    * {@inheritdoc}
    */
   public function delegateClientVersion() {
-    return $this->getDbalConnection()->getWrappedConnection()->getAttribute(\PDO::ATTR_CLIENT_VERSION);
+    return $this->getDbalConnection()->getNativeConnection()->getAttribute(\PDO::ATTR_CLIENT_VERSION);
   }
 
   /**
@@ -283,7 +283,7 @@ class PDOSqliteExtension extends AbstractExtension {
    * {@inheritdoc}
    */
   public static function postConnectionOpen(DbalConnection $dbal_connection, array &$connection_options, array &$dbal_connection_options) {
-    $pdo = $dbal_connection->getWrappedConnection()->getWrappedConnection();
+    $pdo = $dbal_connection->getNativeConnection()->getNativeConnection();
 
     // Create functions needed by SQLite.
     $pdo->sqliteCreateFunction('if', [SqliteConnectionBase::class, 'sqlFunctionIf']);
@@ -666,7 +666,7 @@ class PDOSqliteExtension extends AbstractExtension {
     ];
 
     // Ensure that Sqlite has the right minimum version.
-    $db_server_version = $this->getDbalConnection()->getWrappedConnection()->getServerVersion();
+    $db_server_version = $this->getDbalConnection()->getNativeConnection()->getServerVersion();
     if (version_compare($db_server_version, self::SQLITE_MINIMUM_VERSION, '<')) {
       $results['fail'][] = t("The Sqlite version %version is less than the minimum required version %minimum_version.", [
         '%version' => $db_server_version,

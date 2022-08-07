@@ -291,7 +291,7 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
     if (!$strict) {
       return 'mysql';
     }
-    $dbal_server_version = $this->getDbalConnection()->getWrappedConnection()->getServerVersion();
+    $dbal_server_version = $this->getDbalConnection()->getNativeConnection()->getServerVersion();
     $regex = '/^(?:5\.5\.5-)?(\d+\.\d+\.\d+.*-mariadb.*)/i';
     preg_match($regex, $dbal_server_version, $matches);
     return (empty($matches[1])) ? 'mysql' : 'mariadb';
@@ -301,7 +301,7 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
    * {@inheritdoc}
    */
   public function getDbServerVersion(): string {
-    $dbal_server_version = $this->getDbalConnection()->getWrappedConnection()->getServerVersion();
+    $dbal_server_version = $this->getDbalConnection()->getNativeConnection()->getServerVersion();
     $regex = '/^(?:5\.5\.5-)?(\d+\.\d+\.\d+.*-mariadb.*)/i';
     preg_match($regex, $dbal_server_version, $matches);
     return $matches[1] ?? $dbal_server_version;

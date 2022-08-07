@@ -114,7 +114,7 @@ class AbstractExtension implements DbalExtensionInterface {
    * {@inheritdoc}
    */
   public function getDbServerVersion(): string {
-    return $this->getDbalConnection()->getWrappedConnection()->getServerVersion();
+    return $this->getDbalConnection()->getNativeConnection()->getServerVersion();
   }
 
   /**

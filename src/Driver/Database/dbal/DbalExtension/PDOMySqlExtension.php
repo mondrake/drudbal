@@ -40,7 +40,7 @@ class PDOMySqlExtension extends AbstractMySqlExtension {
    * {@inheritdoc}
    */
   public function delegateClientVersion() {
-    return $this->getDbalConnection()->getWrappedConnection()->getServerVersion();
+    return $this->getDbalConnection()->getNativeConnection()->getServerVersion();
   }
 
   /**
@@ -59,14 +59,14 @@ class PDOMySqlExtension extends AbstractMySqlExtension {
    * {@inheritdoc}
    */
   public function delegateInTransaction(): bool {
-    return $this->getDbalConnection()->getWrappedConnection()->getWrappedConnection()->inTransaction();
+    return $this->getDbalConnection()->getNativeConnection()->getNativeConnection()->inTransaction();
   }
 
   /**
    * {@inheritdoc}
    */
   public function delegateBeginTransaction(): bool {
-    return $this->getDbalConnection()->getWrappedConnection()->getWrappedConnection()->beginTransaction();;
+    return $this->getDbalConnection()->getNativeConnection()->getNativeConnection()->beginTransaction();;
   }
 
   /**
@@ -74,7 +74,7 @@ class PDOMySqlExtension extends AbstractMySqlExtension {
    */
   public function delegateRollBack(): bool {
     if ($this->delegateInTransaction()) {
-      return $this->getDbalConnection()->getWrappedConnection()->getWrappedConnection()->rollBack();
+      return $this->getDbalConnection()->getNativeConnection()->getNativeConnection()->rollBack();
     }
     trigger_error('Rollback attempted when there is no active transaction. This can cause data integrity issues.', E_USER_WARNING);
     return FALSE;
@@ -85,7 +85,7 @@ class PDOMySqlExtension extends AbstractMySqlExtension {
    */
   public function delegateCommit(): bool {
     if ($this->delegateInTransaction()) {
-      return $this->getDbalConnection()->getWrappedConnection()->getWrappedConnection()->commit();
+      return $this->getDbalConnection()->getNativeConnection()->getNativeConnection()->commit();
     }
     return FALSE;
   }
