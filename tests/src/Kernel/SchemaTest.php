@@ -17,6 +17,7 @@ class SchemaTest extends SchemaTestBase {
    * Tests database interactions.
    */
   public function testSchema() {
+    $this->connection->getDbalExtension()->setDebugging(TRUE);
     // Try creating a table.
     $table_specification = [
       'description' => 'Schema table description may contain "quotes" and could be long—very long indeed.',

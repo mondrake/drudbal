@@ -104,6 +104,10 @@ jobs:
         vendor/bin/drush runserver localhost:8080 --default-server=localhost:8080 &
         sleep 5s
 
+    - name: PHPStan checks
+      run: |
+        php vendor/bin/phpstan analyze --no-progress --configuration="modules/contrib/drudbal/phpstan.neon.dist"
+
     - name: Report installation
       continue-on-error: true
       run: |
