@@ -58,8 +58,8 @@ class Insert extends QueryInsert {
             $values[':db_insert_placeholder_' . $max_placeholder++] = $value;
           }
           try {
+            $stmt = $this->connection->prepareStatement($sql, $this->queryOptions);
             try {
-              $stmt = $this->connection->prepareStatement($sql, $this->queryOptions);
               $stmt->execute($values, $this->queryOptions);
               try {
                 $last_insert_id = $this->connection->lastInsertId($sequence_name);
@@ -85,8 +85,8 @@ class Insert extends QueryInsert {
       else {
         // If there are no values, then this is a default-only query. We still
         // need to handle that.
+        $stmt = $this->connection->prepareStatement($sql, $this->queryOptions);
         try {
-          $stmt = $this->connection->prepareStatement($sql, $this->queryOptions);
           $stmt->execute([], $this->queryOptions);
           try {
             $last_insert_id = $this->connection->lastInsertId($sequence_name);
@@ -112,8 +112,8 @@ class Insert extends QueryInsert {
           $values[':db_insert_placeholder_' . $max_placeholder++] = $value;
         }
         try {
+          $stmt = $this->connection->prepareStatement($sql, $this->queryOptions);
           try {
-            $stmt = $this->connection->prepareStatement($sql, $this->queryOptions);
             $stmt->execute($values, $this->queryOptions);
             try {
               $last_insert_id = $this->connection->lastInsertId($sequence_name);

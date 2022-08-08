@@ -48,7 +48,7 @@ class Truncate extends QueryTruncate {
       $this->connection->getDbalExtension()->postTruncate($this->table);
     }
 
-    return $result;
+    return $result ?? FALSE;
   }
 
   /**

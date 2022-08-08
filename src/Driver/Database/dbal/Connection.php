@@ -102,8 +102,8 @@ class Connection extends DatabaseConnection {
     $this->connectionOptions = $connection_options;
 
     $this->dbalPlatform = $dbal_connection->getDatabasePlatform();
-    $quote_identifier = $this->dbalPlatform->getIdentifierQuoteCharacter();
-    $this->identifierQuotes = [$quote_identifier, $quote_identifier];
+    $quote_identifier = $this->dbalPlatform->quoteIdentifier('');
+    $this->identifierQuotes = [$quote_identifier[0], $quote_identifier[1]];
 
     $this->setPrefix($connection_options['prefix'] ?? '');
 

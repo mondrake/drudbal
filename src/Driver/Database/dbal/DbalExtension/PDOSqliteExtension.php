@@ -1042,9 +1042,10 @@ class PDOSqliteExtension extends AbstractExtension {
     $columns = $dbal_table->getColumns();
     foreach ($columns as $column) {
       $dbal_type = $column->getType()->getName();
-      if (isset($mapped_fields[$dbal_type])) {
-        list($type, $size) = explode(':', $mapped_fields[$dbal_type]);
+      if (!isset($mapped_fields[$dbal_type])) {
+        throw new \RuntimeException('Invalid DBAL type ' . $dbal_type);
       }
+      [$type, $size] = explode(':', $mapped_fields[$dbal_type]);
       $schema['fields'][$column->getName()] = [
         'size' => $size,
         'not null' => $column->getNotNull() || in_array($column->getName(), $primary_key_columns),

@@ -167,9 +167,7 @@ class StatementWrapper extends BaseStatementWrapper {
     }
 
     $logger = $this->connection->getLogger();
-    if (!empty($logger)) {
-      $query_start = microtime(TRUE);
-    }
+    $query_start = microtime(TRUE);
 
     try {
       $this->dbalResult = $this->clientStatement->executeQuery($args);
@@ -178,8 +176,8 @@ class StatementWrapper extends BaseStatementWrapper {
       throw new DatabaseExceptionWrapper($e->getMessage(), $e->getCode(), $e);
     }
 
+    $query_end = microtime(TRUE);
     if (!empty($logger)) {
-      $query_end = microtime(TRUE);
       $logger->log($this, $args, $query_end - $query_start, $query_start);
     }
 
