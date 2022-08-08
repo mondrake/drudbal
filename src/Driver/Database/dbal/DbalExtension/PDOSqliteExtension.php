@@ -14,6 +14,7 @@ use Drupal\Core\Database\IntegrityConstraintViolationException;
 use Drupal\drudbal\Driver\Database\dbal\Connection as DruDbalConnection;
 use Drupal\drudbal\Driver\Database\dbal\Statement\PrefetchingStatementWrapper;
 use Drupal\sqlite\Driver\Database\sqlite\Connection as SqliteConnectionBase;
+use Symfony\Component\Filesystem\Filesystem;
 
 /**
  * Driver specific methods for pdo_sqlite.
@@ -338,7 +339,7 @@ class PDOSqliteExtension extends AbstractExtension {
   public function preCreateDatabase($database_name) {
     // Verify the database is writable.
     $db_directory = new \SplFileInfo(dirname($database_name));
-    if (!$db_directory->isDir() && !\Drupal::service('file_system')->mkdir($db_directory->getPathName(), 0755, TRUE)) {
+    if (!$db_directory->isDir() && !(new Filesystem())->mkdir($db_directory->getPathName(), 0755)) {
       throw new DatabaseNotFoundException('Unable to create database directory ' . $db_directory->getPathName());
     }
     return $this;

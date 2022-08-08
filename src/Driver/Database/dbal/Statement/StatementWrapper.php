@@ -89,6 +89,14 @@ class StatementWrapper extends BaseStatementWrapper {
   ];
 
   /**
+   * Holds the current fetch style (which will be used by the next fetch).
+   * @see \PDOStatement::fetch()
+   *
+   * @var int
+   */
+  protected $fetchStyle = \PDO::FETCH_OBJ;
+
+  /**
    * Constructs a Statement object.
    *
    * Preparation of the actual lower-level statement is deferred to the first
