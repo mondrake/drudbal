@@ -71,7 +71,9 @@ class Oci8Extension extends AbstractExtension {
    * {@inheritdoc}
    */
   public function getDbServerVersion(): string {
-    return oci_server_version($this->getDbalConnection()->getNativeConnection());
+    $version = oci_server_version($this->getDbalConnection()->getNativeConnection());
+    $result = preg_match('/\s+(\d+\.\d+\.\d+\.\d+\.\d+)\s+/', $version, $matches);
+    return $matches[1];
   }
 
   /**
