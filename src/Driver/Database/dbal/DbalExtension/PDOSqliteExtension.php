@@ -6,6 +6,7 @@ use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\Exception as DbalException;
 use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
 use Doctrine\DBAL\Schema\Schema as DbalSchema;
+use Doctrine\DBAL\Types\Type as DbalType;
 use Drupal\Component\Uuid\Php as Uuid;
 use Drupal\Core\Database\Database;
 use Drupal\Core\Database\DatabaseExceptionWrapper;
@@ -1012,6 +1013,7 @@ class PDOSqliteExtension extends AbstractExtension {
    *   If a column of the table could not be parsed.
    */
   protected function buildTableSpecFromDbalSchema(DbalSchema $dbal_schema, $table) {
+    $typeRegistry = DbalType::getTypeRegistry();
     $mapped_fields = array_flip($this->connection->schema()->getFieldTypeMap());
     $schema = [
       'fields' => [],
@@ -1041,7 +1043,7 @@ class PDOSqliteExtension extends AbstractExtension {
     // Columns.
     $columns = $dbal_table->getColumns();
     foreach ($columns as $column) {
-      $dbal_type = $column->getType()->getName();
+      $dbal_type = $typeRegistry->lookupName($column->getType());
       if (!isset($mapped_fields[$dbal_type])) {
         throw new \RuntimeException('Invalid DBAL type ' . $dbal_type);
       }
