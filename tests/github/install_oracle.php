@@ -3,7 +3,7 @@
 use Doctrine\DBAL\DriverManager;
 use Doctrine\DBAL\Schema\Comparator;
 use Doctrine\DBAL\Schema\Table;
-use Doctrine\DBAL\Schema\Types;
+use Doctrine\DBAL\Types\Types;
 
 /**
  * @file
