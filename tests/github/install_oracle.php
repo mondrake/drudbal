@@ -1,6 +1,7 @@
 <?php
 
 use Doctrine\DBAL\DriverManager;
+use Doctrine\DBAL\Schema\Comparator;
 
 /**
  * @file
