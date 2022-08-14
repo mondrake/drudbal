@@ -67,7 +67,7 @@ class MysqliExtension extends AbstractMySqlExtension {
    * {@inheritdoc}
    */
   public function delegateRowCount(DbalResult $dbal_result) {
-    $wrapped_connection = $this->getDbalConnection()->getNativeConnection()->getWrappedResourceHandle();
+    $wrapped_connection = $this->getDbalConnection()->getNativeConnection();
     if ($wrapped_connection->info === NULL) {
       return $dbal_result->rowCount();
     }
