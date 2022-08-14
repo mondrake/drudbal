@@ -22,7 +22,7 @@ $tmpConnection->executeStatement('CREATE USER DRUDBAL IDENTIFIED BY ORACLE');
 $tmpConnection->executeStatement('GRANT DBA TO DRUDBAL');
 $tmpConnection->close();
 
-
+/*
 $tmpConnection = DriverManager::getConnection(["url" => "oci8://DRUDBAL:ORACLE@0.0.0.0:1521/XE"]);
 
 $table = new Table('"tester"');
@@ -41,3 +41,4 @@ foreach ($schema_diff->toSql($tmpConnection->getDatabasePlatform()) as $sql) {
   print($sql . "\n");
   $tmpConnection->executeStatement($sql);
 }
+*/
