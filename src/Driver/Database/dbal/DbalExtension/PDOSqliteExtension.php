@@ -186,6 +186,13 @@ class PDOSqliteExtension extends AbstractExtension {
   }
 
   /**
+   * {@inheritdoc}
+   */
+  public function getDbServerVersion(): string {
+    return $this->getDbalConnection()->getNativeConnection()->getAttribute(\PDO::ATTR_SERVER_VERSION);
+  }
+
+  /**
    * Database asset name resolution methods.
    */
 
@@ -668,7 +675,7 @@ class PDOSqliteExtension extends AbstractExtension {
     ];
 
     // Ensure that Sqlite has the right minimum version.
-    $db_server_version = $this->getDbalConnection()->getNativeConnection()->getAttribute(\PDO::ATTR_SERVER_VERSION);
+    $db_server_version = $this->getDbServerVersion();
     if (version_compare($db_server_version, self::SQLITE_MINIMUM_VERSION, '<')) {
       $results['fail'][] = t("The Sqlite version %version is less than the minimum required version %minimum_version.", [
         '%version' => $db_server_version,

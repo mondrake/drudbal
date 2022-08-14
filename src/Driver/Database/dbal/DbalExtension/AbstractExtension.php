@@ -79,14 +79,14 @@ class AbstractExtension implements DbalExtensionInterface {
    * {@inheritdoc}
    */
   public function delegateClientVersion() {
-    throw new \LogicException("Method " . __METHOD__ . " not implemented.");
+    throw new \LogicException("Method " . __METHOD__ . "() not implemented.");
   }
 
   /**
    * {@inheritdoc}
    */
   public function delegateQueryExceptionProcess($query, array $args, array $options, $message, \Exception $e) {
-    throw new \LogicException("Method " . __METHOD__ . " not implemented.");
+    throw new \LogicException("Method " . __METHOD__ . "() not implemented.");
   }
 
   /**
