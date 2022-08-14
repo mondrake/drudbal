@@ -670,3 +670,548 @@ class PDOSqliteExtension extends AbstractExtension {
     // Ensure that Sqlite has the right minimum version.
     $db_server_version = $this->getDbalConnection()->getNativeConnection()->getAttribute(\PDO::ATTR_SERVER_VERSION);
     if (version_compare($db_server_version, self::SQLITE_MINIMUM_VERSION, '<')) {
+      $results['fail'][] = t("The Sqlite version %version is less than the minimum required version %minimum_version.", [
+        '%version' => $db_server_version,
+        '%minimum_version' => self::SQLITE_MINIMUM_VERSION,
+      ]);
+    }
+
+    return $results;
+  }
+
+  /**
+   * Schema delegated methods.
+   */
+
+  /**
+   * {@inheritdoc}
+   */
+  public function alterDefaultSchema(&$default_schema) {
+    $default_schema = 'main';
+    return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateListTableNames() {
+    try {
+      return $this->getDbalConnection()->createSchemaManager()->listTableNames();
+    }
+    catch (DbalDriverException $e) {
+      if ($e->getCode() === 17) {
+        return $this->getDbalConnection()->createSchemaManager()->listTableNames();
+      }
+      else {
+        throw $e;
+      }
+    }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateTableExists(&$result, $drupal_table_name) {
+    try {
+      $result = $this->getDbalConnection()->createSchemaManager()->tablesExist([$this->connection->getPrefixedTableName($drupal_table_name)]);
+    }
+    catch (DbalDriverException $e) {
+      if ($e->getCodeCode() === 17) {
+        $result = $this->getDbalConnection()->createSchemaManager()->tablesExist([$this->connection->getPrefixedTableName($drupal_table_name)]);
+      }
+      else {
+        throw $e;
+      }
+    }
+    return TRUE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateGetDbalColumnType(&$dbal_type, array $drupal_field_specs) {
+    if (isset($drupal_field_specs['sqlite_type'])) {
+      $dbal_type = $this->getDbalConnection()->getDatabasePlatform()->getDoctrineTypeMapping($drupal_field_specs['sqlite_type']);
+      return TRUE;
+    }
+    return FALSE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getStringForDefault($string) {
+    // Encode single quotes.
+    return str_replace('\'', self::SINGLE_QUOTE_IDENTIFIER_REPLACEMENT, $string);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function alterDbalColumnDefinition($context, &$dbal_column_definition, array &$dbal_column_options, $dbal_type, array $drupal_field_specs, $field_name) {
+    $matches = NULL;
+    if (preg_match('/^(.+)(\s\-\-.*)$/', $dbal_column_definition, $matches) === 1) {
+      $definition = $matches[1];
+      $comment = $matches[2];
+    }
+    else {
+      $definition = $dbal_column_definition;
+      $comment = '';
+    }
+
+    // DBAL does not support BINARY option for char/varchar columns.
+    if (isset($drupal_field_specs['binary']) && $drupal_field_specs['binary'] === FALSE) {
+      $definition = preg_replace('/CHAR\(([0-9]+)\)/', '$0 COLLATE NOCASE_UTF8', $definition);
+      $definition = preg_replace('/TEXT\(([0-9]+)\)/', '$0 COLLATE NOCASE_UTF8', $definition);
+    }
+
+    // @todo just setting 'unsigned' to true does not enforce values >=0 in the
+    // field in Sqlite, so add a CHECK >= 0 constraint.
+    if (isset($drupal_field_specs['type']) && in_array($drupal_field_specs['type'], [
+      'float', 'numeric', 'serial', 'int',
+    ]) && !empty($drupal_field_specs['unsigned']) && (bool) $drupal_field_specs['unsigned'] === TRUE) {
+      $definition .= ' CHECK (' . $field_name . '>= 0)';
+    }
+
+    // @todo added to avoid edge cases; maybe this can be overridden in
+    // alterDbalColumnOptions.
+    // @todo there is a duplication of single quotes when table is
+    // introspected and re-created.
+    if (array_key_exists('default', $drupal_field_specs) && $drupal_field_specs['default'] === '') {
+      $definition = preg_replace('/DEFAULT (?!:\'\')/', "$0 ''", $definition);
+    }
+    $definition = preg_replace('/DEFAULT\s+\'\'\'\'/', "DEFAULT ''", $definition);
+
+    // Decode single quotes.
+    if (array_key_exists('default', $dbal_column_options)) {
+      $dbal_column_options['default'] = str_replace(self::SINGLE_QUOTE_IDENTIFIER_REPLACEMENT, '\'\'', $dbal_column_options['default']);
+    }
+    $definition = str_replace(self::SINGLE_QUOTE_IDENTIFIER_REPLACEMENT, '\'\'', $definition);
+
+    $dbal_column_definition = $definition . $comment . "\n";
+
+    return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function postDropTable(DbalSchema $dbal_schema, string $drupal_table_name): void  {
+    // Signal that at least a table has been deleted so that housekeeping
+    // can happen when destructing the extension.
+    $this->tableDropped = TRUE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateAddField(&$primary_key_processed_by_extension, DbalSchema $dbal_schema, $drupal_table_name, $field_name, array $drupal_field_specs, array $keys_new_specs, array $dbal_column_options) {
+    // SQLite doesn't have a full-featured ALTER TABLE statement. It only
+    // supports adding new fields to a table, in some simple cases. In most
+    // cases, we have to create a new table and copy the data over.
+    if (empty($keys_new_specs) && (empty($drupal_field_specs['not null']) || isset($drupal_field_specs['default'])) && empty($drupal_field_specs['description'])) {
+      // When we don't have to create new keys and we are not creating a
+      // NOT NULL column without a default value, we can use the quicker
+      // version.
+      $dbal_type = $this->connection->schema()->getDbalColumnType($drupal_field_specs);
+      $dbal_column_options = $this->connection->schema()->getDbalColumnOptions('addField', $field_name, $dbal_type, $drupal_field_specs);
+      $query = 'ALTER TABLE {' . $drupal_table_name . '} ADD ' . $field_name . ' ' . $dbal_column_options['columnDefinition'];
+      $this->connection->query($query);
+    }
+    else {
+      // We cannot add the field directly. Use the slower table alteration
+      // method, starting from the old schema.
+      $old_schema = $this->buildTableSpecFromDbalSchema($dbal_schema, $drupal_table_name);
+      $new_schema = $old_schema;
+
+      // Add the new field.
+      $new_schema['fields'][$field_name] = $drupal_field_specs;
+
+      // Use the default value of the field.
+      $mapping[$field_name] = NULL;
+
+      // Add the new indexes.
+      $new_schema = array_merge($new_schema, $keys_new_specs);
+
+      // Avoid serial fields in composite primary key or fields not in the
+      // primary key.
+      if (isset($keys_new_specs['primary key'])) {
+        if (count($keys_new_specs['primary key']) === 1) {
+          foreach ($new_schema['fields'] as $field_name => &$field_value) {
+            if ($field_value['type'] === 'serial' && !in_array($field_name, $keys_new_specs['primary key'])) {
+              $field_value['type'] = 'int';
+            }
+          }
+        }
+        elseif (count($keys_new_specs['primary key']) > 1) {
+          foreach ($keys_new_specs['primary key'] as $key) {
+            if ($new_schema['fields'][$key]['type'] === 'serial') {
+              $new_schema['fields'][$key]['type'] = 'int';
+            }
+          }
+        }
+      }
+      $this->alterTable($drupal_table_name, $old_schema, $new_schema, $mapping);
+    }
+    return TRUE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateDropField(DbalSchema $dbal_schema, $drupal_table_name, $field_name) {
+    $old_schema = $this->buildTableSpecFromDbalSchema($dbal_schema, $drupal_table_name);
+    $new_schema = $old_schema;
+
+    unset($new_schema['fields'][$field_name]);
+
+    // Handle possible primary key changes.
+    if (isset($new_schema['primary key']) && ($key = array_search($field_name, $new_schema['primary key'])) !== FALSE) {
+      unset($new_schema['primary key'][$key]);
+    }
+
+    // Handle possible index changes.
+    foreach ($new_schema['indexes'] as $index => $fields) {
+      foreach ($fields as $key => $field) {
+        if ($field == $field_name) {
+          unset($new_schema['indexes'][$index][$key]);
+        }
+      }
+      // If this index has no more fields then remove it.
+      if (empty($new_schema['indexes'][$index])) {
+        unset($new_schema['indexes'][$index]);
+      }
+    }
+    $this->alterTable($drupal_table_name, $old_schema, $new_schema);
+    return TRUE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateChangeField(&$primary_key_processed_by_extension, DbalSchema $dbal_schema, $drupal_table_name, $field_name, $field_new_name, array $drupal_field_new_specs, array $keys_new_specs, array $dbal_column_options) {
+    $old_schema = $this->buildTableSpecFromDbalSchema($dbal_schema, $drupal_table_name);
+    $new_schema = $old_schema;
+
+    // Map the old field to the new field.
+    if ($field_name != $field_new_name) {
+      $mapping[$field_new_name] = $field_name;
+    }
+    else {
+      $mapping = [];
+    }
+
+    // Remove the previous definition and swap in the new one.
+    unset($new_schema['fields'][$field_name]);
+    $new_schema['fields'][$field_new_name] = $drupal_field_new_specs;
+
+    // Map the former indexes to the new column name.
+    $new_schema['primary key'] = $this->mapKeyDefinition($new_schema['primary key'], $mapping);
+    foreach (['unique keys', 'indexes'] as $k) {
+      foreach ($new_schema[$k] as &$key_definition) {
+        $key_definition = $this->mapKeyDefinition($key_definition, $mapping);
+      }
+    }
+
+    // Add in the keys from $keys_new_specs.
+    if (isset($keys_new_specs['primary key'])) {
+      $new_schema['primary key'] = $keys_new_specs['primary key'];
+    }
+    foreach (['unique keys', 'indexes'] as $k) {
+      if (!empty($keys_new_specs[$k])) {
+        $new_schema[$k] = $keys_new_specs[$k] + $new_schema[$k];
+      }
+    }
+
+    $this->alterTable($drupal_table_name, $old_schema, $new_schema, $mapping);
+    $primary_key_processed_by_extension = TRUE;
+    return TRUE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateAddUniqueKey(DbalSchema $dbal_schema, $table_full_name, $index_full_name, $drupal_table_name, $drupal_index_name, array $drupal_field_specs) {
+    // Avoid DBAL managing of this that would go through table re-creation.
+    $index_columns = $this->connection->schema()->dbalGetFieldList($drupal_field_specs);
+    $this->connection->query('CREATE UNIQUE INDEX ' . $index_full_name . ' ON ' . $table_full_name . ' (' . implode(', ', $index_columns) . ")");
+
+    // Update DBAL Schema.
+    $dbal_schema->getTable($table_full_name)->addUniqueIndex($index_columns, $index_full_name);
+
+    return TRUE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateAddIndex(DbalSchema $dbal_schema, $table_full_name, $index_full_name, $drupal_table_name, $drupal_index_name, array $drupal_field_specs, array $indexes_spec) {
+    // Avoid DBAL managing of this that would go through table re-creation.
+    $index_columns = $this->connection->schema()->dbalGetFieldList($drupal_field_specs);
+    $this->connection->query('CREATE INDEX ' . $index_full_name . ' ON ' . $table_full_name . ' (' . implode(', ', $index_columns) . ")");
+
+    // Update DBAL Schema.
+    $dbal_schema->getTable($table_full_name)->addIndex($index_columns, $index_full_name);
+
+    return TRUE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateDropPrimaryKey(bool &$primary_key_dropped_by_extension, string &$primary_key_asset_name, DbalSchema $dbal_schema, string $drupal_table_name): bool {
+    $old_schema = $this->buildTableSpecFromDbalSchema($dbal_schema, $drupal_table_name);
+    $new_schema = $old_schema;
+    $mapping = [];
+    if (!isset($new_schema['primary key'])) {
+      $primary_key_dropped_by_extension = FALSE;
+    }
+    else {
+      unset($new_schema['primary key']);
+      // Change any serial field to int otherwise DBAL will interpret it as a
+      // primary key.
+      foreach ($new_schema['fields'] as &$field) {
+        if ($field['type'] === 'serial') {
+          $field['type'] = 'int';
+        }
+      }
+      $this->alterTable($drupal_table_name, $old_schema, $new_schema, $mapping);
+      $primary_key_dropped_by_extension = TRUE;
+    }
+    return TRUE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateDropIndex(DbalSchema $dbal_schema, $table_full_name, $index_full_name, $drupal_table_name, $drupal_index_name) {
+    // Avoid DBAL managing of this that would go through table re-creation.
+    $this->connection->query('DROP INDEX ' . $index_full_name);
+
+    // Update DBAL Schema.
+    $dbal_schema->getTable($table_full_name)->dropIndex($index_full_name);
+
+    return TRUE;
+  }
+
+  /**
+   * Find out the schema of a table.
+   *
+   * This function uses introspection methods provided by the database to
+   * create a schema array. This is useful, for example, during update when
+   * the old schema is not available.
+   *
+   * @param \Doctrine\DBAL\Schema\Schema $dbal_schema
+   *   The DBAL schema object.
+   * @param string $table
+   *   Name of the table.
+   *
+   * @return array
+   *   An array representing the schema, from drupal_get_schema().
+   *
+   * @throws \Exception
+   *   If a column of the table could not be parsed.
+   */
+  protected function buildTableSpecFromDbalSchema(DbalSchema $dbal_schema, $table) {
+    $mapped_fields = array_flip($this->connection->schema()->getFieldTypeMap());
+    $schema = [
+      'fields' => [],
+      'primary key' => [],
+      'unique keys' => [],
+      'indexes' => [],
+      'full_index_names' => [],
+    ];
+
+    // Table.
+    $dbal_table = $dbal_schema->getTable($this->connection->getPrefixedTableName($table));
+
+    // Description.
+    if ($dbal_table->getComment() !== NULL) {
+      $schema['description'] = $dbal_table->getComment();
+    }
+
+    // Primary key.
+    try {
+      $primary_key = $dbal_table->getPrimaryKey();
+      $primary_key_columns = $primary_key ? $primary_key->getColumns() : [];
+    }
+    catch (DbalException $e) {
+      $primary_key_columns = [];
+    }
+
+    // Columns.
+    $columns = $dbal_table->getColumns();
+    foreach ($columns as $column) {
+      $dbal_type = $column->getType()->getName();
+      if (isset($mapped_fields[$dbal_type])) {
+        list($type, $size) = explode(':', $mapped_fields[$dbal_type]);
+      }
+      $schema['fields'][$column->getName()] = [
+        'size' => $size,
+        'not null' => $column->getNotNull() || in_array($column->getName(), $primary_key_columns),
+      ];
+      if (($column->getDefault() === NULL || strpos($column->getDefault(), 'NULL --') === 0) && $column->getNotNull() === FALSE) {
+        $schema['fields'][$column->getName()]['default'] = NULL;
+      }
+      else {
+        $default = $column->getDefault() === NULL ? NULL : str_replace("''", "'", $column->getDefault());
+        $schema['fields'][$column->getName()]['default'] = $default;
+      }
+      if ($column->getAutoincrement() === TRUE && in_array($dbal_type, [
+        'smallint', 'integer', 'bigint',
+      ])) {
+        $schema['fields'][$column->getName()]['type'] = 'serial';
+      }
+      else {
+        $schema['fields'][$column->getName()]['type'] = $type;
+      }
+      if ($column->getUnsigned() !== NULL) {
+        $schema['fields'][$column->getName()]['unsigned'] = $column->getUnsigned();
+      }
+      if ($column->getLength() !== NULL) {
+        $schema['fields'][$column->getName()]['length'] = $column->getLength();
+      }
+      if ($column->getComment() !== NULL) {
+        $schema['fields'][$column->getName()]['description'] = $column->getComment();
+      }
+    }
+
+    // Primary key.
+    if ($dbal_table->hasPrimaryKey()) {
+      $schema['primary key'] = $dbal_table->getPrimaryKey()->getColumns();
+    }
+
+    // Indexes.
+    $indexes = $dbal_table->getIndexes();
+    foreach ($indexes as $index) {
+      if ($index->isPrimary()) {
+        continue;
+      }
+      $schema_key = $index->isUnique() ? 'unique keys' : 'indexes';
+      // Get index name without prefix.
+      $matches = NULL;
+      preg_match('/.*____(.+)/', $index->getName(), $matches);
+      $index_name = $matches[1];
+      $schema[$schema_key][$index_name] = $index->getColumns();
+      $schema['full_index_names'][] = $index->getName();
+    }
+
+    return $schema;
+  }
+
+  /**
+   * Rename columns in an index definition according to a new mapping.
+   *
+   * @param array $key_definition
+   *   The key definition.
+   * @param array $mapping
+   *   The new mapping.
+   */
+  protected function mapKeyDefinition(array $key_definition, array $mapping) {
+    foreach ($key_definition as &$field) {
+      // The key definition can be an array [$field, $length].
+      if (is_array($field)) {
+        $field = &$field[0];
+      }
+      $mapped_field = array_search($field, $mapping, TRUE);
+      if ($mapped_field !== FALSE) {
+        $field = $mapped_field;
+      }
+    }
+    return $key_definition;
+  }
+
+  /**
+   * Create a table with a new schema containing the old content.
+   *
+   * As SQLite does not support ALTER TABLE (with a few exceptions) it is
+   * necessary to create a new table and copy over the old content.
+   *
+   * @param string $table
+   *   Name of the table to be altered.
+   * @param array $old_schema
+   *   The old schema array for the table.
+   * @param array $new_schema
+   *   The new schema array for the table.
+   * @param array $mapping
+   *   An optional mapping between the fields of the old specification and the
+   *   fields of the new specification. An associative array, whose keys are
+   *   the fields of the new table, and values can take two possible forms:
+   *     - a simple string, which is interpreted as the name of a field of the
+   *       old table,
+   *     - an associative array with two keys 'expression' and 'arguments',
+   *       that will be used as an expression field.
+   */
+  protected function alterTable($table, array $old_schema, array $new_schema, array $mapping = []) {
+    $i = 0;
+    do {
+      $new_table = $table . '_' . $i++;
+    } while ($this->connection->schema()->tableExists($new_table));
+
+    // Drop any existing index from the old table.
+    foreach ($old_schema['full_index_names'] as $full_index_name) {
+      $this->connection->query('DROP INDEX ' . $full_index_name);
+    }
+
+    $this->connection->schema()->createTable($new_table, $new_schema);
+
+    if ($this->copyTableData($table, $new_table, $new_schema, $mapping)) {
+      $this->connection->schema()->dropTable($table);
+      $this->connection->schema()->createTable($table, $new_schema);
+      $this->copyTableData($new_table, $table, $new_schema);
+      $this->connection->schema()->dropTable($new_table);
+    }
+  }
+
+  /**
+   * Copy data between two tables.
+   *
+   * @param string $from_table
+   *   Name of the table to be copied from.
+   * @param string $to_table
+   *   Name of the table to be copied to.
+   * @param array $schema
+   *   The schema array for the table.
+   * @param array $mapping
+   *   An optional mapping between the fields of the from-table and the
+   *   fields of to-table. An associative array, whose keys are the fields of
+   *   the to-table, and values can take two possible forms:
+   *     - a simple string, which is interpreted as the name of a field of the
+   *       from-table,
+   *     - an associative array with two keys 'expression' and 'arguments',
+   *       that will be used as an expression field.
+   */
+  protected function copyTableData(string $from_table, string $to_table, array $schema, array $mapping = []): bool {
+    // Build a SQL query to select data from the from-table.
+    $select = $this->connection->select($from_table);
+
+    // Complete the mapping.
+    $possible_keys = array_keys($schema['fields']);
+    $mapping += array_combine($possible_keys, $possible_keys);
+
+    // Now add the fields.
+    foreach ($mapping as $field_alias => $field_source) {
+      // Just ignore this field (ie. use it's default value).
+      if (!isset($field_source)) {
+        continue;
+      }
+
+      if (is_array($field_source)) {
+        $select->addExpression($field_source['expression'], $field_alias, $field_source['arguments']);
+      }
+      else {
+        $select->addField($from_table, $field_source, $field_alias);
+      }
+    }
+
+    // Execute the data migration query.
+    $this->connection->insert($to_table)
+      ->from($select)
+      ->execute();
+
+    $old_count = $this->connection->query('SELECT COUNT(*) FROM {' . $from_table . '}')->fetchField();
+    $new_count = $this->connection->query('SELECT COUNT(*) FROM {' . $to_table . '}')->fetchField();
+    return $old_count == $new_count;
+  }
+
+}
