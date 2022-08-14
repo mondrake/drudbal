@@ -11,38 +11,21 @@ env:
     PHPUNIT_SKIP_CLASS: '[
       "Drupal\\KernelTests\\Core\\Cache\\ApcuBackendTest",
       "Drupal\\KernelTests\\Core\\Cache\\EndOfTransactionQueriesTest",
-      "Drupal\\KernelTests\\Core\\Database\\BasicSyntaxTest",
-      "Drupal\\KernelTests\\Core\\Database\\ConnectionUnitTest",
       "Drupal\\KernelTests\\Core\\Database\\DatabaseExceptionWrapperTest",
-      "Drupal\\KernelTests\\Core\\Database\\SchemaTest",
-      "Drupal\\KernelTests\\Core\\Database\\StatementTest",
-      "Drupal\\KernelTests\\Core\\Database\\TransactionTest"
+      "Drupal\\Tests\\file\\Functional\\DownloadTest"
     ]'
 
 jobs:
 
 #################################
 
-  oracle-oci8:
-    name: "Oracle on Oci8"
+  sqlite-pdo:
+    name: "SQLite with PDO"
     runs-on: ubuntu-20.04
     env:
-        DRUDBAL_ENV: "dbal/oci8"
-        DBAL_URL: "oci8://DRUDBAL:ORACLE@0.0.0.0:1521/XE"
-        SIMPLETEST_DB: "dbal://DRUDBAL:ORACLE@0.0.0.0:1521/XE?module=drudbal&dbal_driver=oci8#dru"
-
-    services:
-      oracle:
-        image: gvenzl/oracle-xe:21
-        env:
-          ORACLE_PASSWORD: oracle
-        ports:
-          - "1521:1521"
-        options: >-
-          --health-cmd healthcheck.sh
-          --health-interval 20s
-          --health-timeout 10s
-          --health-retries 10
+        DRUDBAL_ENV: "dbal/sqlite/file"
+        DBAL_URL: "sqlite://localhost/sites/drudbal.sqlite"
+        SIMPLETEST_DB: "dbal://localhost/sites/drudbal.sqlite?module=drudbal&dbal_driver=pdo_sqlite"
 
     strategy:
       fail-fast: false
@@ -63,7 +46,6 @@ jobs:
       with:
         php-version: "${{ matrix.php-version }}"
         coverage: "none"
-        extensions: "oci8"
         ini-values: "zend.assertions=1"
 
     - name: Checkout Drupal
@@ -82,40 +64,25 @@ jobs:
         composer install --no-progress --ansi
         composer config --no-plugins allow-plugins.composer/package-versions-deprecated true
         composer require --dev --ansi phpstan/phpstan-deprecation-rules
-
     - name: Composer require DruDbal from local staging
       run: |
         git -C drudbal_staging checkout -b test-run-branch
         composer config repositories.test-run '{"type": "path", "url": "drudbal_staging", "options": {"symlink": false}}'
         composer require "mondrake/drudbal:dev-test-run-branch" --no-progress --ansi
-
-    - name: Patch doctrine/dbal
+    - name: PHPStan checks
       run: |
-        curl https://patch-diff.githubusercontent.com/raw/mondrake/dbal/pull/6.diff | patch -d vendor/doctrine/dbal -p1
-
-    - name: Create Oracle schema
-      run: |
-        cp modules/contrib/drudbal/tests/github/install_* .
-        php install_oracle.php
-
+        php vendor/bin/phpstan analyze --no-progress --configuration="modules/contrib/drudbal/phpstan.neon.dist"
     - name: Install Drupal
       run: |
+        cp modules/contrib/drudbal/tests/github/install_* .
         vendor/bin/drush site-install standard --db-url=$SIMPLETEST_DB -y
         vendor/bin/drush runserver localhost:8080 --default-server=localhost:8080 &
-        sleep 5s
-
+        sleep 1s
     - name: Report installation
-      continue-on-error: true
       run: |
         php install_report.php
         vendor/bin/drush core:status
         vendor/bin/drush core:requirements
         vendor/bin/drush pml --type=module --no-core
-
-    - name: PHPStan checks
-      run: |
-        php vendor/bin/phpstan analyze --no-progress --configuration="modules/contrib/drudbal/phpstan.neon.dist"
-
     - name: Run test ${{ matrix.test-args }}
       run: vendor/bin/phpunit -c core --color=always ${{ matrix.test-args }}
-#      run: vendor/bin/phpunit -c core --color=always modules/contrib/drudbal/tests/src/Kernel/SchemaTest.php
