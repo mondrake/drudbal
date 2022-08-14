@@ -385,7 +385,6 @@ class SchemaTest extends SchemaTestBase {
    * 38, differently from other core databases.
    */
   public function testSchemaAddFieldDefaultInitial() {
-    $this->connection->getDbalExtension()->setDebugging(TRUE);
     // Test varchar types.
     foreach ([1, 32, 128, 256, 512] as $length) {
       $base_field_spec = [
