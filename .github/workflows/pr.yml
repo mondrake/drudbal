@@ -117,5 +117,5 @@ jobs:
         php vendor/bin/phpstan analyze --no-progress --configuration="modules/contrib/drudbal/phpstan.neon.dist"
 
     - name: Run test ${{ matrix.test-args }}
-#      run: vendor/bin/phpunit -c core --color=always ${{ matrix.test-args }}
-      run: vendor/bin/phpunit -c core --color=always modules/contrib/drudbal/tests/src/Kernel/SchemaTest.php
+      run: vendor/bin/phpunit -c core --color=always ${{ matrix.test-args }}
+#      run: vendor/bin/phpunit -c core --color=always modules/contrib/drudbal/tests/src/Kernel/SchemaTest.php
