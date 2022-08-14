@@ -70,6 +70,15 @@ class Oci8Extension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
+  public function getDbServerVersion(): string {
+    $version = oci_server_version($this->getDbalConnection()->getNativeConnection());
+    $result = preg_match('/\s+(\d+\.\d+\.\d+\.\d+\.\d+)\s+/', $version, $matches);
+    return $matches[1];
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function getDbTableName(string $drupal_prefix, string $drupal_table_name): string {
     // @todo DBAL currently limits table identifiers lenght to 30. We limit
     // Drupal's table name to 24 to allow including '_AI_PK' suffix.

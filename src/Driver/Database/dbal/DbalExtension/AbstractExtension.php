@@ -79,14 +79,14 @@ class AbstractExtension implements DbalExtensionInterface {
    * {@inheritdoc}
    */
   public function delegateClientVersion() {
-    throw new \LogicException("Method " . __METHOD__ . " not implemented.");
+    throw new \LogicException("Method " . __METHOD__ . "() not implemented.");
   }
 
   /**
    * {@inheritdoc}
    */
   public function delegateQueryExceptionProcess($query, array $args, array $options, $message, \Exception $e) {
-    throw new \LogicException("Method " . __METHOD__ . " not implemented.");
+    throw new \LogicException("Method " . __METHOD__ . "() not implemented.");
   }
 
   /**
@@ -107,14 +107,14 @@ class AbstractExtension implements DbalExtensionInterface {
    * {@inheritdoc}
    */
   public function getDbServerPlatform(bool $strict = FALSE): string {
-    throw new \LogicException("Method " . __METHOD__ . " not implemented.");
+    throw new \LogicException("Method " . __METHOD__ . "() not implemented.");
   }
 
   /**
    * {@inheritdoc}
    */
   public function getDbServerVersion(): string {
-    return $this->getDbalConnection()->getWrappedConnection()->getServerVersion();
+    throw new \LogicException("Method " . __METHOD__ . "() not implemented.");
   }
 
   /**

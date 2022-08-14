@@ -259,9 +259,7 @@ class PrefetchingStatementWrapper implements \IteratorAggregate, StatementInterf
     }
 
     $logger = $this->connection->getLogger();
-    if (!empty($logger)) {
-      $query_start = microtime(TRUE);
-    }
+    $query_start = microtime(TRUE);
 
     try {
       $this->dbalResult = $this->dbalStatement->executeQuery($args);
@@ -296,8 +294,8 @@ class PrefetchingStatementWrapper implements \IteratorAggregate, StatementInterf
     // Initialize the first row in $this->currentRow.
     $this->next();
 
+    $query_end = microtime(TRUE);
     if (!empty($logger)) {
-      $query_end = microtime(TRUE);
       $logger->log($this, $args, $query_end - $query_start, $query_start);
     }
 
@@ -310,7 +308,7 @@ class PrefetchingStatementWrapper implements \IteratorAggregate, StatementInterf
   public function fetch($mode = NULL, $cursor_orientation = NULL, $cursor_offset = NULL) {
     if (isset($this->currentRow)) {
       // Set the fetch parameter.
-      $this->fetchStyle = isset($fetch_style) ? $fetch_style : $this->defaultFetchStyle;
+      $this->fetchStyle = $this->fetchStyle ?? $this->defaultFetchStyle;
       $this->fetchOptions = $this->defaultFetchOptions;
 
       // Grab the row in the format specified above.

@@ -6,6 +6,7 @@ use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\Exception as DbalException;
 use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
 use Doctrine\DBAL\Schema\Schema as DbalSchema;
+use Doctrine\DBAL\Types\Type as DbalType;
 use Drupal\Component\Uuid\Php as Uuid;
 use Drupal\Core\Database\Database;
 use Drupal\Core\Database\DatabaseExceptionWrapper;
@@ -14,6 +15,7 @@ use Drupal\Core\Database\IntegrityConstraintViolationException;
 use Drupal\drudbal\Driver\Database\dbal\Connection as DruDbalConnection;
 use Drupal\drudbal\Driver\Database\dbal\Statement\PrefetchingStatementWrapper;
 use Drupal\sqlite\Driver\Database\sqlite\Connection as SqliteConnectionBase;
+use Symfony\Component\Filesystem\Filesystem;
 
 /**
  * Driver specific methods for pdo_sqlite.
@@ -147,7 +149,7 @@ class PDOSqliteExtension extends AbstractExtension {
    * {@inheritdoc}
    */
   public function delegateClientVersion() {
-    return $this->getDbalConnection()->getWrappedConnection()->getAttribute(\PDO::ATTR_CLIENT_VERSION);
+    return $this->getDbalConnection()->getNativeConnection()->getAttribute(\PDO::ATTR_CLIENT_VERSION);
   }
 
   /**
@@ -181,6 +183,13 @@ class PDOSqliteExtension extends AbstractExtension {
    */
   public function getDbServerPlatform(bool $strict = FALSE): string {
     return "sqlite";
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getDbServerVersion(): string {
+    return $this->getDbalConnection()->getNativeConnection()->getAttribute(\PDO::ATTR_SERVER_VERSION);
   }
 
   /**
@@ -283,7 +292,7 @@ class PDOSqliteExtension extends AbstractExtension {
    * {@inheritdoc}
    */
   public static function postConnectionOpen(DbalConnection $dbal_connection, array &$connection_options, array &$dbal_connection_options) {
-    $pdo = $dbal_connection->getWrappedConnection()->getWrappedConnection();
+    $pdo = $dbal_connection->getNativeConnection();
 
     // Create functions needed by SQLite.
     $pdo->sqliteCreateFunction('if', [SqliteConnectionBase::class, 'sqlFunctionIf']);
@@ -338,7 +347,7 @@ class PDOSqliteExtension extends AbstractExtension {
   public function preCreateDatabase($database_name) {
     // Verify the database is writable.
     $db_directory = new \SplFileInfo(dirname($database_name));
-    if (!$db_directory->isDir() && !drupal_mkdir($db_directory->getPathName(), 0755, TRUE)) {
+    if (!$db_directory->isDir() && !(new Filesystem())->mkdir($db_directory->getPathName(), 0755)) {
       throw new DatabaseNotFoundException('Unable to create database directory ' . $db_directory->getPathName());
     }
     return $this;
@@ -666,7 +675,7 @@ class PDOSqliteExtension extends AbstractExtension {
     ];
 
     // Ensure that Sqlite has the right minimum version.
-    $db_server_version = $this->getDbalConnection()->getWrappedConnection()->getServerVersion();
+    $db_server_version = $this->getDbServerVersion();
     if (version_compare($db_server_version, self::SQLITE_MINIMUM_VERSION, '<')) {
       $results['fail'][] = t("The Sqlite version %version is less than the minimum required version %minimum_version.", [
         '%version' => $db_server_version,
@@ -1011,6 +1020,7 @@ class PDOSqliteExtension extends AbstractExtension {
    *   If a column of the table could not be parsed.
    */
   protected function buildTableSpecFromDbalSchema(DbalSchema $dbal_schema, $table) {
+    $typeRegistry = DbalType::getTypeRegistry();
     $mapped_fields = array_flip($this->connection->schema()->getFieldTypeMap());
     $schema = [
       'fields' => [],
@@ -1040,11 +1050,11 @@ class PDOSqliteExtension extends AbstractExtension {
     // Columns.
     $columns = $dbal_table->getColumns();
     foreach ($columns as $column) {
-      $dbal_type = $column->getType()->getName();
-      if (isset($mapped_fields[$dbal_type])) {
-        list($type, $size) = explode(':', $mapped_fields[$dbal_type]);
+      $dbal_type = $typeRegistry->lookupName($column->getType());
+      if (!isset($mapped_fields[$dbal_type])) {
+        throw new \RuntimeException('Invalid DBAL type ' . $dbal_type);
       }
-      $schema['fields'][$column->getName()] = [
+      [$type, $size] = explode(':', $mapped_fields[$dbal_type]);      $schema['fields'][$column->getName()] = [
         'size' => $size,
         'not null' => $column->getNotNull() || in_array($column->getName(), $primary_key_columns),
       ];

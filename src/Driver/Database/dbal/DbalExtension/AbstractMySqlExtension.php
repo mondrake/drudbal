@@ -287,29 +287,6 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function getDbServerPlatform(bool $strict = FALSE): string {
-    if (!$strict) {
-      return 'mysql';
-    }
-    $dbal_server_version = $this->getDbalConnection()->getWrappedConnection()->getServerVersion();
-    $regex = '/^(?:5\.5\.5-)?(\d+\.\d+\.\d+.*-mariadb.*)/i';
-    preg_match($regex, $dbal_server_version, $matches);
-    return (empty($matches[1])) ? 'mysql' : 'mariadb';
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function getDbServerVersion(): string {
-    $dbal_server_version = $this->getDbalConnection()->getWrappedConnection()->getServerVersion();
-    $regex = '/^(?:5\.5\.5-)?(\d+\.\d+\.\d+.*-mariadb.*)/i';
-    preg_match($regex, $dbal_server_version, $matches);
-    return $matches[1] ?? $dbal_server_version;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function delegateQueryRange($query, $from, $count, array $args = [], array $options = []) {
     return $this->connection->query($query . ' LIMIT ' . (int) $from . ', ' . (int) $count, $args, $options);
   }

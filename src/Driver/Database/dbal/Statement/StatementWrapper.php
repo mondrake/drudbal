@@ -89,6 +89,14 @@ class StatementWrapper extends BaseStatementWrapper {
   ];
 
   /**
+   * Holds the current fetch style (which will be used by the next fetch).
+   * @see \PDOStatement::fetch()
+   *
+   * @var int
+   */
+  protected $fetchStyle = \PDO::FETCH_OBJ;
+
+  /**
    * Constructs a Statement object.
    *
    * Preparation of the actual lower-level statement is deferred to the first
@@ -159,9 +167,7 @@ class StatementWrapper extends BaseStatementWrapper {
     }
 
     $logger = $this->connection->getLogger();
-    if (!empty($logger)) {
-      $query_start = microtime(TRUE);
-    }
+    $query_start = microtime(TRUE);
 
     try {
       $this->dbalResult = $this->clientStatement->executeQuery($args);
@@ -170,8 +176,8 @@ class StatementWrapper extends BaseStatementWrapper {
       throw new DatabaseExceptionWrapper($e->getMessage(), $e->getCode(), $e);
     }
 
+    $query_end = microtime(TRUE);
     if (!empty($logger)) {
-      $query_end = microtime(TRUE);
       $logger->log($this, $args, $query_end - $query_start, $query_start);
     }
 

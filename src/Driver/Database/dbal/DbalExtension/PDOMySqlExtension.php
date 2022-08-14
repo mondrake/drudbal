@@ -12,6 +12,29 @@ class PDOMySqlExtension extends AbstractMySqlExtension {
   /**
    * {@inheritdoc}
    */
+  public function getDbServerPlatform(bool $strict = FALSE): string {
+    if (!$strict) {
+      return 'mysql';
+    }
+    $dbal_server_version = $this->getDbalConnection()->getNativeConnection()->getAttribute(\PDO::ATTR_SERVER_VERSION);
+    $regex = '/^(?:5\.5\.5-)?(\d+\.\d+\.\d+.*-mariadb.*)/i';
+    preg_match($regex, $dbal_server_version, $matches);
+    return (empty($matches[1])) ? 'mysql' : 'mariadb';
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getDbServerVersion(): string {
+    $dbal_server_version = $this->getDbalConnection()->getNativeConnection()->getAttribute(\PDO::ATTR_SERVER_VERSION);
+    $regex = '/^(?:5\.5\.5-)?(\d+\.\d+\.\d+.*-mariadb.*)/i';
+    preg_match($regex, $dbal_server_version, $matches);
+    return $matches[1] ?? $dbal_server_version;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public static function preConnectionOpen(array &$connection_options, array &$dbal_connection_options) {
     parent::preConnectionOpen($connection_options, $dbal_connection_options);
     $dbal_connection_options['driverOptions'] += [
@@ -40,7 +63,7 @@ class PDOMySqlExtension extends AbstractMySqlExtension {
    * {@inheritdoc}
    */
   public function delegateClientVersion() {
-    return $this->getDbalConnection()->getWrappedConnection()->getServerVersion();
+    return $this->getDbalConnection()->getNativeConnection()->getAttribute(\PDO::ATTR_SERVER_VERSION);
   }
 
   /**
@@ -59,14 +82,14 @@ class PDOMySqlExtension extends AbstractMySqlExtension {
    * {@inheritdoc}
    */
   public function delegateInTransaction(): bool {
-    return $this->getDbalConnection()->getWrappedConnection()->getWrappedConnection()->inTransaction();
+    return $this->getDbalConnection()->getNativeConnection()->inTransaction();
   }
 
   /**
    * {@inheritdoc}
    */
   public function delegateBeginTransaction(): bool {
-    return $this->getDbalConnection()->getWrappedConnection()->getWrappedConnection()->beginTransaction();;
+    return $this->getDbalConnection()->getNativeConnection()->beginTransaction();;
   }
 
   /**
@@ -74,7 +97,7 @@ class PDOMySqlExtension extends AbstractMySqlExtension {
    */
   public function delegateRollBack(): bool {
     if ($this->delegateInTransaction()) {
-      return $this->getDbalConnection()->getWrappedConnection()->getWrappedConnection()->rollBack();
+      return $this->getDbalConnection()->getNativeConnection()->rollBack();
     }
     trigger_error('Rollback attempted when there is no active transaction. This can cause data integrity issues.', E_USER_WARNING);
     return FALSE;
@@ -85,7 +108,7 @@ class PDOMySqlExtension extends AbstractMySqlExtension {
    */
   public function delegateCommit(): bool {
     if ($this->delegateInTransaction()) {
-      return $this->getDbalConnection()->getWrappedConnection()->getWrappedConnection()->commit();
+      return $this->getDbalConnection()->getNativeConnection()->commit();
     }
     return FALSE;
   }
