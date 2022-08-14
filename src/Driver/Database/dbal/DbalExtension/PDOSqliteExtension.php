@@ -1013,6 +1013,7 @@ class PDOSqliteExtension extends AbstractExtension {
    *   If a column of the table could not be parsed.
    */
   protected function buildTableSpecFromDbalSchema(DbalSchema $dbal_schema, $table) {
+    $typeRegistry = DbalType::getTypeRegistry();
     $mapped_fields = array_flip($this->connection->schema()->getFieldTypeMap());
     $schema = [
       'fields' => [],
@@ -1042,11 +1043,11 @@ class PDOSqliteExtension extends AbstractExtension {
     // Columns.
     $columns = $dbal_table->getColumns();
     foreach ($columns as $column) {
-      $dbal_type = $column->getType()->getName();
-      if (isset($mapped_fields[$dbal_type])) {
-        list($type, $size) = explode(':', $mapped_fields[$dbal_type]);
+      $dbal_type = $typeRegistry->lookupName($column->getType());
+      if (!isset($mapped_fields[$dbal_type])) {
+        throw new \RuntimeException('Invalid DBAL type ' . $dbal_type);
       }
-      $schema['fields'][$column->getName()] = [
+      [$type, $size] = explode(':', $mapped_fields[$dbal_type]);      $schema['fields'][$column->getName()] = [
         'size' => $size,
         'not null' => $column->getNotNull() || in_array($column->getName(), $primary_key_columns),
       ];
