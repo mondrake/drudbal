@@ -13,6 +13,29 @@ class MysqliExtension extends AbstractMySqlExtension {
   /**
    * {@inheritdoc}
    */
+  public function getDbServerPlatform(bool $strict = FALSE): string {
+    if (!$strict) {
+      return 'mysql';
+    }
+    $dbal_server_version = $this->getDbalConnection()->getNativeConnection()->get_server_info();
+    $regex = '/^(?:5\.5\.5-)?(\d+\.\d+\.\d+.*-mariadb.*)/i';
+    preg_match($regex, $dbal_server_version, $matches);
+    return (empty($matches[1])) ? 'mysql' : 'mariadb';
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getDbServerVersion(): string {
+    $dbal_server_version = $this->getDbalConnection()->getNativeConnection()->get_server_info();
+    $regex = '/^(?:5\.5\.5-)?(\d+\.\d+\.\d+.*-mariadb.*)/i';
+    preg_match($regex, $dbal_server_version, $matches);
+    return $matches[1] ?? $dbal_server_version;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function delegateClientVersion() {
     return mysqli_get_client_info();
   }
