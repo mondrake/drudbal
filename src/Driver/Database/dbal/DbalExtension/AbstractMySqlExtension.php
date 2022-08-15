@@ -117,19 +117,13 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
 
   /**
    * Flag to indicate if the cleanup function in __destruct() should run.
-   *
-   * @var bool
    */
-  protected $needsCleanup = FALSE;
+  protected bool $needsCleanup = FALSE;
 
-  /**
-   * {@inheritdoc}
-   */
   public function __destruct() {
     if ($this->needsCleanup) {
       $this->nextIdDelete();
     }
-    parent::__destruct();
   }
 
   /**
@@ -226,7 +220,7 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
       $new_id = $this->connection->lastInsertId();
     }
     $this->needsCleanup = TRUE;
-    return $new_id;
+    return (int) $new_id;
   }
 
   /**

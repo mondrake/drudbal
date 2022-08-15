@@ -662,8 +662,8 @@ class Connection extends DatabaseConnection {
   }
 
   /**
-   * @param array<int, mixed>|array<string, mixed>                                   $params
-   * @param array<int, int|string|Type|null>|array<string, int|string|DbalType|null> $types
+   * @param array<int, mixed>|array<string, mixed>                                       $params
+   * @param array<int, int|string|DbalType|null>|array<string, int|string|DbalType|null> $types
    *
    * @return array{string, list<mixed>, array<int,DbalType|int|string|null>}
    */
