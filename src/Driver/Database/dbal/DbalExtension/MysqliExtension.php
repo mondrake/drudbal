@@ -2,6 +2,7 @@
 
 namespace Drupal\drudbal\Driver\Database\dbal\DbalExtension;
 
+use Drupal\drudbal\Driver\Database\dbal\Connection as DruDbalConnection;
 use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\Result as DbalResult;
 
