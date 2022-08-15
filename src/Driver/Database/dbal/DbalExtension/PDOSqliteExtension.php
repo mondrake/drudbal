@@ -44,14 +44,14 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  protected $statementClass = PrefetchingStatementWrapper::class;
+  protected string $statementClass = PrefetchingStatementWrapper::class;
 
   /**
    * A map of condition operators to SQLite operators.
    *
-   * @var array
+   * @var array<string, array>
    */
-  protected static $sqliteConditionOperatorMap = [
+  protected static array $sqliteConditionOperatorMap = [
     'LIKE' => ['postfix' => " ESCAPE '\\'"],
     'NOT LIKE' => ['postfix' => " ESCAPE '\\'"],
     'LIKE BINARY' => ['postfix' => " ESCAPE '\\'", 'operator' => 'GLOB'],
@@ -64,25 +64,29 @@ class PDOSqliteExtension extends AbstractExtension {
    * This is used to allow prefixes to be safely handled without locking the
    * table.
    *
-   * @var array
+   * @var array<string, string>
    */
-  protected $attachedDatabases = [];
+  protected array $attachedDatabases = [];
 
   /**
    * Indicates that at least one table has been dropped during this request.
    *
    * The destructor will only try to get rid of unnecessary databases if there
    * is potential of them being empty.
-   *
-   * @var bool
    */
-  protected $tableDropped = FALSE;
+  protected bool $tableDropped = FALSE;
 
   /**
-   * {@inheritdoc}
+   * The low-level pdo_sqlite connection object.
    */
-  public function __construct(DruDbalConnection $drudbal_connection) {
-    parent::__construct($drudbal_connection);
+  protected \PDO $pdoSqliteConnection;
+
+  /**
+   * Constructs a pdo_sqlite extension object.
+   */
+  public function __construct(DruDbalConnection $connection) {
+    parent::__construct($connection);
+    $this->pdoSqliteConnection = $this->getDbalConnection()->getNativeConnection();
 
     // If a memory database, then do not try to attach databases per prefix.
     if ($this->connection->getConnectionOptions()['database'] === ':memory:') {
@@ -149,7 +153,7 @@ class PDOSqliteExtension extends AbstractExtension {
    * {@inheritdoc}
    */
   public function delegateClientVersion() {
-    return $this->getDbalConnection()->getNativeConnection()->getAttribute(\PDO::ATTR_CLIENT_VERSION);
+    return $this->pdoSqliteConnection->getAttribute(\PDO::ATTR_CLIENT_VERSION);
   }
 
   /**
@@ -189,7 +193,7 @@ class PDOSqliteExtension extends AbstractExtension {
    * {@inheritdoc}
    */
   public function getDbServerVersion(): string {
-    return $this->getDbalConnection()->getNativeConnection()->getAttribute(\PDO::ATTR_SERVER_VERSION);
+    return $this->pdoSqliteConnection->getAttribute(\PDO::ATTR_SERVER_VERSION);
   }
 
   /**
@@ -292,6 +296,7 @@ class PDOSqliteExtension extends AbstractExtension {
    * {@inheritdoc}
    */
   public static function postConnectionOpen(DbalConnection $dbal_connection, array &$connection_options, array &$dbal_connection_options) {
+    /** @var \PDO $pdo */
     $pdo = $dbal_connection->getNativeConnection();
 
     // Create functions needed by SQLite.
