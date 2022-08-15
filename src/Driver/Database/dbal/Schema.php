@@ -54,7 +54,7 @@ class Schema extends DatabaseSchema {
   /**
    * Constructs a Schema object.
    *
-   * @var \Drupal\drudbal\Driver\Database\dbal\Connection
+   * @param \Drupal\drudbal\Driver\Database\dbal\Connection $connection
    *   The DBAL driver Drupal database connection.
    */
   public function __construct(Connection $connection) {
