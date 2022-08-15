@@ -11,6 +11,7 @@ use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
 use Doctrine\DBAL\ExpandArrayParameters;
 use Doctrine\DBAL\Platforms\AbstractPlatform as DbalAbstractPlatform;
 use Doctrine\DBAL\SQL\Parser;
+use Doctrine\DBAL\Types\Type as DbalType;
 use Drupal\Component\Uuid\Php as Uuid;
 use Drupal\Core\Database\Connection as DatabaseConnection;
 use Drupal\Core\Database\ConnectionNotDefinedException;
@@ -661,10 +662,10 @@ class Connection extends DatabaseConnection {
   }
 
   /**
-   * @param array<int, mixed>|array<string, mixed>                               $params
-   * @param array<int, int|string|Type|null>|array<string, int|string|Type|null> $types
+   * @param array<int, mixed>|array<string, mixed>                                   $params
+   * @param array<int, int|string|Type|null>|array<string, int|string|DbalType|null> $types
    *
-   * @return array{string, list<mixed>, array<int,Type|int|string|null>}
+   * @return array{string, list<mixed>, array<int,DbalType|int|string|null>}
    */
   public function expandArrayParameters(string $sql, array $params, array $types): array {
     if ($this->parser === null) {

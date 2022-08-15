@@ -90,7 +90,7 @@ interface DbalExtensionInterface {
    * @return string
    *   The database table name, including the schema prefix.
    */
-  public function getDbFullQualifiedTableName($drupal_table_name);
+  public function getDbFullQualifiedTableName(string $drupal_table_name): string;
 
   /**
    * Get the database field name, resolving platform specific constraints.
@@ -258,12 +258,12 @@ interface DbalExtensionInterface {
    * @param string $operator
    *   The condition operator, such as "IN", "BETWEEN", etc. Case-sensitive.
    *
-   * @return array
+   * @return array|null
    *   The extra handling directives for the specified operator, or NULL.
    *
    * @see \Drupal\Core\Database\Connection
    */
-  public function delegateMapConditionOperator($operator);
+  public function delegateMapConditionOperator(string $operator): ?array;
 
   /**
    * Retrieves an unique ID.
