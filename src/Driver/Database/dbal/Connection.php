@@ -10,7 +10,7 @@ use Doctrine\DBAL\DriverManager as DbalDriverManager;
 use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
 use Doctrine\DBAL\ExpandArrayParameters;
 use Doctrine\DBAL\Platforms\AbstractPlatform as DbalAbstractPlatform;
-use Doctrine\DBAL\SQL\Parser;
+use Doctrine\DBAL\SQL\Parser as DbalParser;
 use Doctrine\DBAL\Types\Type as DbalType;
 use Drupal\Component\Uuid\Php as Uuid;
 use Drupal\Core\Database\Connection as DatabaseConnection;
@@ -23,6 +23,7 @@ use Drupal\Core\Database\TransactionCommitFailedException;
 use Drupal\Core\Database\TransactionNameNonUniqueException;
 use Drupal\Core\Database\TransactionNoActiveException;
 use Drupal\Core\Database\TransactionOutOfOrderException;
+use Drupal\drudbal\Driver\Database\dbal\DbalExtension\DbalExtensionInterface;
 use Drupal\drudbal\Driver\Database\dbal\DbalExtension\MysqliExtension;
 use Drupal\drudbal\Driver\Database\dbal\DbalExtension\Oci8Extension;
 use Drupal\drudbal\Driver\Database\dbal\DbalExtension\PDOMySqlExtension;
@@ -58,9 +59,9 @@ class Connection extends DatabaseConnection {
    * maps this syntax to actual database tables, adding prefix and/or
    * resolving platform specific constraints.
    *
-   * @var string[]
+   * @var array<string, string>
    */
-  protected $dbTables = [];
+  protected array $dbTables = [];
 
   /**
    * List of URL schemes from a database URL and their mappings to driver.
@@ -76,10 +77,8 @@ class Connection extends DatabaseConnection {
 
   /**
    * The DruDbal extension for the DBAL driver.
-   *
-   * @var \Drupal\drudbal\Driver\Database\dbal\DbalExtension\DbalExtensionInterface
    */
-  protected $dbalExtension;
+  protected DbalExtensionInterface $dbalExtension;
 
   /**
    * Current connection DBAL platform.
@@ -90,10 +89,17 @@ class Connection extends DatabaseConnection {
 
   /**
    * The platform SQL parser.
-   *
-   * @var \Doctrine\DBAL\SQL\Parser|null
    */
-  protected $parser;
+  protected ?DbalParser $parser;
+
+  /**
+   * The schema object for this connection.
+   *
+   * Set to NULL when the schema is destroyed.
+   *
+   * @var \Drupal\drudbal\Driver\Database\dbal\Schema|null
+   */
+  protected $schema = NULL;
 
   /**
    * Constructs a Connection object.

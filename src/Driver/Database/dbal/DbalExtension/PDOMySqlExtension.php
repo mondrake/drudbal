@@ -30,7 +30,7 @@ class PDOMySqlExtension extends AbstractMySqlExtension {
     if (!$strict) {
       return 'mysql';
     }
-    $serverVersion = $this->mysqliConnection->get_server_info();
+    $serverVersion = $this->pdoMysqlConnection->get_server_info();
     $regex = '/^(?:5\.5\.5-)?(\d+\.\d+\.\d+.*-mariadb.*)/i';
     preg_match($regex, $serverVersion, $matches);
     return (empty($matches[1])) ? 'mysql' : 'mariadb';
@@ -40,7 +40,7 @@ class PDOMySqlExtension extends AbstractMySqlExtension {
    * {@inheritdoc}
    */
   public function getDbServerVersion(): string {
-    $serverVersion = $this->mysqliConnection->get_server_info();
+    $serverVersion = $this->pdoMysqlConnection->get_server_info();
     $regex = '/^(?:5\.5\.5-)?(\d+\.\d+\.\d+.*-mariadb.*)/i';
     preg_match($regex, $serverVersion, $matches);
     return $matches[1] ?? $serverVersion;

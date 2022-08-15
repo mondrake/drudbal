@@ -135,7 +135,6 @@ class PDOSqliteExtension extends AbstractExtension {
         }
       }
     }
-    parent::__destruct();
   }
 
   /**
@@ -728,7 +727,7 @@ class PDOSqliteExtension extends AbstractExtension {
       $result = $this->getDbalConnection()->createSchemaManager()->tablesExist([$this->connection->getPrefixedTableName($drupal_table_name)]);
     }
     catch (DbalDriverException $e) {
-      if ($e->getCodeCode() === 17) {
+      if ($e->getCode() === 17) {
         $result = $this->getDbalConnection()->createSchemaManager()->tablesExist([$this->connection->getPrefixedTableName($drupal_table_name)]);
       }
       else {
