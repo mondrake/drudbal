@@ -27,11 +27,16 @@ class Insert extends QueryInsert {
   }
 
   /**
+   * Returns the DruDbal connection.
+   */
+  private function connection(): Connection {
+    return $this->connection;
+  }
+
+  /**
    * {@inheritdoc}
    */
   public function execute() {
-    assert($this->connection instanceof Connection);
-
     if (!$this->preExecute()) {
       return NULL;
     }
@@ -42,12 +47,12 @@ class Insert extends QueryInsert {
     // transaction, and process separately each values set.
     if ((count($this->insertValues) > 1 || !empty($this->fromQuery))) {
       // @codingStandardsIgnoreLine
-      $trn = $this->connection->startTransaction();
+      $trn = $this->connection()->startTransaction();
     }
 
     // Get from extension if a sequence name should be attached to the insert
     // query.
-    $sequence_name = $this->connection->getDbalExtension()->getSequenceNameForInsert($this->table);
+    $sequence_name = $this->connection()->getDbalExtension()->getSequenceNameForInsert($this->table);
 
     $last_insert_id = NULL;
     if (empty($this->fromQuery)) {
@@ -60,25 +65,25 @@ class Insert extends QueryInsert {
             $values[':db_insert_placeholder_' . $max_placeholder++] = $value;
           }
           try {
-            $stmt = $this->connection->prepareStatement($sql, $this->queryOptions);
+            $stmt = $this->connection()->prepareStatement($sql, $this->queryOptions);
             try {
               $stmt->execute($values, $this->queryOptions);
               try {
-                $last_insert_id = $this->connection->lastInsertId($sequence_name);
+                $last_insert_id = $this->connection()->lastInsertId($sequence_name);
               }
               catch (DatabaseObjectNotFoundException $e) {
                 $last_insert_id = 0;
               }
             }
             catch (\Exception $e) {
-              $this->connection->exceptionHandler()->handleExecutionException($e, $stmt, $values, $this->queryOptions);
+              $this->connection()->exceptionHandler()->handleExecutionException($e, $stmt, $values, $this->queryOptions);
             }
           }
           catch (IntegrityConstraintViolationException $e) {
             // Abort the entire insert in case of integrity constraint violation
             // and a transaction is open.
-            if ($this->connection->inTransaction()) {
-              $this->connection->rollBack();
+            if ($this->connection()->inTransaction()) {
+              $this->connection()->rollBack();
             }
             throw $e;
           }
@@ -87,18 +92,18 @@ class Insert extends QueryInsert {
       else {
         // If there are no values, then this is a default-only query. We still
         // need to handle that.
-        $stmt = $this->connection->prepareStatement($sql, $this->queryOptions);
+        $stmt = $this->connection()->prepareStatement($sql, $this->queryOptions);
         try {
           $stmt->execute([], $this->queryOptions);
           try {
-            $last_insert_id = $this->connection->lastInsertId($sequence_name);
+            $last_insert_id = $this->connection()->lastInsertId($sequence_name);
           }
           catch (DatabaseObjectNotFoundException $e) {
             $last_insert_id = 0;
           }
         }
         catch (\Exception $e) {
-          $this->connection->exceptionHandler()->handleExecutionException($e, $stmt, [], $this->queryOptions);
+          $this->connection()->exceptionHandler()->handleExecutionException($e, $stmt, [], $this->queryOptions);
         }
       }
     }
@@ -114,25 +119,25 @@ class Insert extends QueryInsert {
           $values[':db_insert_placeholder_' . $max_placeholder++] = $value;
         }
         try {
-          $stmt = $this->connection->prepareStatement($sql, $this->queryOptions);
+          $stmt = $this->connection()->prepareStatement($sql, $this->queryOptions);
           try {
             $stmt->execute($values, $this->queryOptions);
             try {
-              $last_insert_id = $this->connection->lastInsertId($sequence_name);
+              $last_insert_id = $this->connection()->lastInsertId($sequence_name);
             }
             catch (DatabaseObjectNotFoundException $e) {
               $last_insert_id = 0;
             }
           }
           catch (\Exception $e) {
-            $this->connection->exceptionHandler()->handleExecutionException($e, $stmt, $values, $this->queryOptions);
+            $this->connection()->exceptionHandler()->handleExecutionException($e, $stmt, $values, $this->queryOptions);
           }
         }
         catch (IntegrityConstraintViolationException $e) {
           // Abort the entire insert in case of integrity constraint violation
           // and a transaction is open.
-          if ($this->connection->inTransaction()) {
-            $this->connection->rollBack();
+          if ($this->connection()->inTransaction()) {
+            $this->connection()->rollBack();
           }
           throw $e;
         }
@@ -149,11 +154,9 @@ class Insert extends QueryInsert {
    * {@inheritdoc}
    */
   public function __toString() {
-    assert($this->connection instanceof Connection);
-
-    $comments = $this->connection->makeComment($this->comments);
-    $dbal_connection = $this->connection->getDbalConnection();
-    $dbal_extension = $this->connection->getDbalExtension();
+    $comments = $this->connection()->makeComment($this->comments);
+    $dbal_connection = $this->connection()->getDbalConnection();
+    $dbal_extension = $this->connection()->getDbalExtension();
 
     $sql = '';
 
@@ -164,17 +167,17 @@ class Insert extends QueryInsert {
 
     // Use DBAL query builder to prepare the INSERT query. The table name has to
     // be quoted in DBAL.
-    $dbal_query = $dbal_connection->createQueryBuilder()->insert($this->connection->getPrefixedTableName($this->table, TRUE));
+    $dbal_query = $dbal_connection->createQueryBuilder()->insert($this->connection()->getPrefixedTableName($this->table, TRUE));
 
     // If we're selecting from a SelectQuery, and no fields are specified in
     // select (i.e. we have a SELECT * FROM ...), then we have to fetch the
     // target column names from the table to be INSERTed to, since DBAL does
     // not support 'INSERT INTO ... SELECT * FROM' constructs.
     if (!empty($this->fromQuery) && empty($this->fromQuery->getFields())) {
-      $insert_fields = array_keys($dbal_connection->createSchemaManager()->listTableColumns($this->connection->getPrefixedTableName($this->table)));
+      $insert_fields = array_keys($dbal_connection->createSchemaManager()->listTableColumns($this->connection()->getPrefixedTableName($this->table)));
     }
     else {
-      if ($this->connection->getDbalExtension()->getAddDefaultsExplicitlyOnInsert()) {
+      if ($this->connection()->getDbalExtension()->getAddDefaultsExplicitlyOnInsert()) {
         foreach ($this->defaultFields as $field) {
           $dbal_query->setValue($dbal_extension->getDbFieldName($field), 'default');
         }

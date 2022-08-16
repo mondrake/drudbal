@@ -33,16 +33,23 @@ class Update extends QueryUpdate {
   }
 
   /**
+   * Returns the DruDbal connection.
+   */
+  private function connection(): Connection {
+    return $this->connection;
+  }
+
+  /**
    * {@inheritdoc}
    */
   public function execute() {
-    $stmt = $this->connection->prepareStatement((string) $this, $this->queryOptions, TRUE);
+    $stmt = $this->connection()->prepareStatement((string) $this, $this->queryOptions, TRUE);
     try {
       $stmt->execute($this->dbalQuery->getParameters(), $this->queryOptions);
       return $stmt->rowCount();
     }
     catch (\Exception $e) {
-      $this->connection->exceptionHandler()->handleExecutionException($e, $stmt, $this->dbalQuery->getParameters(), $this->queryOptions);
+      $this->connection()->exceptionHandler()->handleExecutionException($e, $stmt, $this->dbalQuery->getParameters(), $this->queryOptions);
     }
   }
 
@@ -50,7 +57,7 @@ class Update extends QueryUpdate {
    * {@inheritdoc}
    */
   public function __toString() {
-    $comments = $this->connection->makeComment($this->comments);
+    $comments = $this->connection()->makeComment($this->comments);
     $this->compileDbalQuery();
     return $comments . $this->dbalQuery->getSQL();
   }
@@ -59,12 +66,12 @@ class Update extends QueryUpdate {
    * Builds the query via DBAL Query Builder.
    */
   protected function compileDbalQuery() {
-    $dbal_extension = $this->connection->getDbalExtension();
+    $dbal_extension = $this->connection()->getDbalExtension();
 
     // Need to pass the quoted table name here.
-    $this->dbalQuery = $this->connection->getDbalConnection()
+    $this->dbalQuery = $this->connection()->getDbalConnection()
       ->createQueryBuilder()
-      ->update($this->connection->getPrefixedTableName($this->table, TRUE));
+      ->update($this->connection()->getPrefixedTableName($this->table, TRUE));
 
     // Expressions take priority over literal fields, so we process those first
     // and remove any literal fields that conflict.

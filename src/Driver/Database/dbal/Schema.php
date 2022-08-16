@@ -546,7 +546,7 @@ class Schema extends DatabaseSchema {
   /**
    * {@inheritdoc}
    */
-  private function findPrimaryKeyColumns($table) {
+  protected function findPrimaryKeyColumns($table) {
     if (!$this->tableExists($table)) {
       return FALSE;
     }
@@ -564,7 +564,7 @@ class Schema extends DatabaseSchema {
   /**
    * {@inheritdoc}
    */
-  private function introspectIndexSchema($table) {
+  protected function introspectIndexSchema($table) {
     if (!$this->tableExists($table)) {
       throw new SchemaObjectDoesNotExistException("The table $table doesn't exist.");
     }
