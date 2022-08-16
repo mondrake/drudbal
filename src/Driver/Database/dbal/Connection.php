@@ -532,7 +532,7 @@ class Connection extends DatabaseConnection {
    *   The DBAL platform for this connection.
    */
   public function getDbalPlatform(): DbalAbstractPlatform {
-    return $this->getDbalConnection->getDatabasePlatform();
+    return $this->getDbalConnection()->getDatabasePlatform();
   }
 
   /**

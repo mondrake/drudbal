@@ -226,7 +226,7 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function getDbIndexName(string $context, DbalSchema $dbal_schema, string $drupal_table_name, string $drupal_index_name): string {
+  public function getDbIndexName(string $context, DbalSchema $dbal_schema, string $drupal_table_name, string $drupal_index_name): string|bool {
     // If checking for index existence or dropping, see if an index exists
     // with the Drupal name, regardless of prefix. A table can be renamed so
     // that the prefix is no longer relevant.

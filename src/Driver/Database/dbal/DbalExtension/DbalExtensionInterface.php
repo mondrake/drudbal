@@ -140,10 +140,11 @@ interface DbalExtensionInterface {
    * @param string $drupal_index_name
    *   A string with the Drupal name of the index.
    *
-   * @return string
-   *   A string with the name of the index to be used in the DBMS.
+   * @return string|bool
+   *   A string with the name of the index to be used in the DBMS, or false if
+   *   the name could not be calculated.
    */
-  public function getDbIndexName(string $context, DbalSchema $dbal_schema, string $drupal_table_name, string $drupal_index_name): string;
+  public function getDbIndexName(string $context, DbalSchema $dbal_schema, string $drupal_table_name, string $drupal_index_name): string|bool;
 
   /**
    * Get the Drupal index name, from a database-level index name.

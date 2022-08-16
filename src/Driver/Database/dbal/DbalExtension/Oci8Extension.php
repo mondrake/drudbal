@@ -56,7 +56,7 @@ class Oci8Extension extends AbstractExtension {
    * Gets the Oracle platform.
    */
   private function getOraclePlatform(): OraclePlatform {
-    return $this->connection->getDbalConnection->getDatabasePlatform();
+    return $this->connection->getDbalConnection()->getDatabasePlatform();
   }
 
   /**
@@ -168,7 +168,7 @@ class Oci8Extension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function getDbIndexName(string $context, DbalSchema $dbal_schema, string $drupal_table_name, string $drupal_index_name): string {
+  public function getDbIndexName(string $context, DbalSchema $dbal_schema, string $drupal_table_name, string $drupal_index_name): string|bool {
     // If checking for index existence or dropping, see if an index exists
     // with the Drupal name, regardless of prefix. It may be a table was
     // renamed so the prefix is no longer relevant.
