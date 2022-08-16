@@ -294,6 +294,8 @@ class Schema extends DatabaseSchema {
    * {@inheritdoc}
    */
   public function renameTable($table, $new_name) {
+    assert($this->connection instanceof Connection);
+
     if (!$this->tableExists($table)) {
       throw new SchemaObjectDoesNotExistException(t("Cannot rename @table to @table_new: table @table doesn't exist.", ['@table' => $table, '@table_new' => $new_name]));
     }
@@ -314,6 +316,8 @@ class Schema extends DatabaseSchema {
    * {@inheritdoc}
    */
   public function dropTable($table) {
+    assert($this->connection instanceof Connection);
+
     if (!$this->tableExists($table)) {
       return FALSE;
     }
@@ -356,6 +360,8 @@ class Schema extends DatabaseSchema {
    * {@inheritdoc}
    */
   public function addField($table, $field, $spec, $keys_new = []) {
+    assert($this->connection instanceof Connection);
+
     if (!$this->tableExists($table)) {
       throw new SchemaObjectDoesNotExistException(t("Cannot add field @table.@field: table doesn't exist.", ['@field' => $field, '@table' => $table]));
     }
@@ -435,6 +441,8 @@ class Schema extends DatabaseSchema {
    * {@inheritdoc}
    */
   public function dropField($table, $field) {
+    assert($this->connection instanceof Connection);
+
     if (!$this->fieldExists($table, $field)) {
       return FALSE;
     }
@@ -468,6 +476,8 @@ class Schema extends DatabaseSchema {
    * {@inheritdoc}
    */
   public function indexExists($table, $name) {
+    assert($this->connection instanceof Connection);
+
     if (!$this->tableExists($table)) {
       return FALSE;
     }
@@ -491,6 +501,8 @@ class Schema extends DatabaseSchema {
    * {@inheritdoc}
    */
   public function addPrimaryKey($table, $fields) {
+    assert($this->connection instanceof Connection);
+
     if (!$this->tableExists($table)) {
       throw new SchemaObjectDoesNotExistException(t("Cannot add primary key to table @table: table doesn't exist.", ['@table' => $table]));
     }
@@ -515,6 +527,8 @@ class Schema extends DatabaseSchema {
    * {@inheritdoc}
    */
   public function dropPrimaryKey($table) {
+    assert($this->connection instanceof Connection);
+
     if (!$this->tableExists($table)) {
       return FALSE;
     }
@@ -543,6 +557,8 @@ class Schema extends DatabaseSchema {
    * {@inheritdoc}
    */
   protected function findPrimaryKeyColumns($table) {
+    assert($this->connection instanceof Connection);
+
     if (!$this->tableExists($table)) {
       return FALSE;
     }
@@ -596,6 +612,8 @@ class Schema extends DatabaseSchema {
    * {@inheritdoc}
    */
   public function addUniqueKey($table, $name, $fields) {
+    assert($this->connection instanceof Connection);
+
     if (!$this->tableExists($table)) {
       throw new SchemaObjectDoesNotExistException(t("Cannot add unique key @name to table @table: table doesn't exist.", ['@table' => $table, '@name' => $name]));
     }
@@ -629,6 +647,8 @@ class Schema extends DatabaseSchema {
    * {@inheritdoc}
    */
   public function addIndex($table, $name, $fields, array $spec) {
+    assert($this->connection instanceof Connection);
+
     if (!$this->tableExists($table)) {
       throw new SchemaObjectDoesNotExistException(t("Cannot add index @name to table @table: table doesn't exist.", ['@table' => $table, '@name' => $name]));
     }
@@ -668,6 +688,8 @@ class Schema extends DatabaseSchema {
    * {@inheritdoc}
    */
   public function dropIndex($table, $name) {
+    assert($this->connection instanceof Connection);
+
     if (!$this->indexExists($table, $name)) {
       return FALSE;
     }
