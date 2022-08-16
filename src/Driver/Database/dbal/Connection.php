@@ -195,6 +195,16 @@ class Connection extends DatabaseConnection {
   /**
    * {@inheritdoc}
    */
+  public function schema(): Schema {
+    if (!isset($this->schema)) {
+      $this->schema = new Schema($this);
+    }
+    return $this->schema;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public static function open(array &$connection_options = []) {
     if (empty($connection_options['dbal_driver'])) {
       // If 'dbal_driver' is missing from the connection options, then we are

@@ -191,8 +191,8 @@ class PrefetchingStatementWrapper implements \IteratorAggregate, StatementInterf
    *
    * @param \Drupal\drudbal\Driver\Database\dbal\Connection $connection
    *   The database connection object for this statement.
-   * @param object $client_connection
-   *   Client database connection object, for example \PDO.
+   * @param \Doctrine\DBAL\Connection $dbal_connection
+   *   DBAL connection object.
    * @param string $query
    *   A string containing an SQL query.
    * @param array $driver_options
@@ -200,21 +200,28 @@ class PrefetchingStatementWrapper implements \IteratorAggregate, StatementInterf
    * @param bool $row_count_enabled
    *   (optional) Enables counting the rows affected. Defaults to FALSE.
    */
-  public function __construct(DruDbalConnection $connection, DbalConnection $client_connection, string $query, array $driver_options = [], bool $row_count_enabled = FALSE) {
+  public function __construct(DruDbalConnection $connection, DbalConnection $dbal_connection, string $query, array $driver_options = [], bool $row_count_enabled = FALSE) {
     $this->connection = $connection;
     $this->rowCountEnabled = $row_count_enabled;
 
     $this->queryString = $query;
-    $this->dbalConnection = $client_connection;
+    $this->dbalConnection = $dbal_connection;
     $this->setFetchMode(\PDO::FETCH_OBJ);
     $this->driverOpts = $driver_options;
+  }
+
+  /**
+   * Returns the DruDbal connection.
+   */
+  private function connection(): DruDbalConnection {
+    return $this->connection;
   }
 
   /**
    * {@inheritdoc}
    */
   public function getConnectionTarget(): string {
-    return $this->connection->getTarget();
+    return $this->connection()->getTarget();
   }
 
   /**
@@ -226,21 +233,21 @@ class PrefetchingStatementWrapper implements \IteratorAggregate, StatementInterf
     // Prepare the lower-level statement if it's not been prepared already.
     if (!$this->dbalStatement) {
       // Replace named placeholders with positional ones if needed.
-      if (!$this->connection->getDbalExtension()->delegateNamedPlaceholdersSupport()) {
+      if (!$this->connection()->getDbalExtension()->delegateNamedPlaceholdersSupport()) {
         $this->paramsPositions = array_flip(array_keys($args));
-        list($query, $args) = $this->connection->expandArrayParameters($this->queryString, $args, []);
+        list($query, $args) = $this->connection()->expandArrayParameters($this->queryString, $args, []);
         $this->queryString = $query;
       }
 
       try {
-        $this->connection->getDbalExtension()->alterStatement($this->queryString, $args);
-        $this->dbalStatement = $this->connection->getDbalConnection()->prepare($this->queryString);
+        $this->connection()->getDbalExtension()->alterStatement($this->queryString, $args);
+        $this->dbalStatement = $this->connection()->getDbalConnection()->prepare($this->queryString);
       }
       catch (DbalException $e) {
         throw new DatabaseExceptionWrapper($e->getMessage(), $e->getCode(), $e);
       }
     }
-    elseif (!$this->connection->getDbalExtension()->delegateNamedPlaceholdersSupport()) {
+    elseif (!$this->connection()->getDbalExtension()->delegateNamedPlaceholdersSupport()) {
       // Transform the $args to positional if needed.
       $tmp = [];
       foreach ($this->paramsPositions as $param => $pos) {
@@ -258,7 +265,7 @@ class PrefetchingStatementWrapper implements \IteratorAggregate, StatementInterf
       }
     }
 
-    $logger = $this->connection->getLogger();
+    $logger = $this->connection()->getLogger();
     $query_start = microtime(TRUE);
 
     try {

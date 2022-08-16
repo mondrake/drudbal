@@ -32,15 +32,22 @@ class Delete extends QueryDelete {
   }
 
   /**
+   * Returns the DruDbal connection.
+   */
+  private function connection(): Connection {
+    return $this->connection;
+  }
+
+  /**
    * {@inheritdoc}
    */
   public function execute() {
-    $stmt = $this->connection->prepareStatement((string) $this, $this->queryOptions, TRUE);
+    $stmt = $this->connection()->prepareStatement((string) $this, $this->queryOptions, TRUE);
     try {
       $stmt->execute($this->dbalQuery->getParameters(), $this->queryOptions);
     }
     catch (\Exception $e) {
-      $this->connection->exceptionHandler()->handleExecutionException($e, $stmt, $this->dbalQuery->getParameters(), $this->queryOptions);
+      $this->connection()->exceptionHandler()->handleExecutionException($e, $stmt, $this->dbalQuery->getParameters(), $this->queryOptions);
     }
     return $stmt->rowCount();
   }
@@ -49,7 +56,7 @@ class Delete extends QueryDelete {
    * {@inheritdoc}
    */
   public function __toString() {
-    $comments = $this->connection->makeComment($this->comments);
+    $comments = $this->connection()->makeComment($this->comments);
     $this->compileDbalQuery();
     return $comments . $this->dbalQuery->getSQL();
   }
@@ -59,14 +66,14 @@ class Delete extends QueryDelete {
    */
   protected function compileDbalQuery() {
     // Need to pass the quoted table name here.
-    $this->dbalQuery = $this->connection->getDbalConnection()
+    $this->dbalQuery = $this->connection()->getDbalConnection()
       ->createQueryBuilder()
-      ->delete($this->connection->getPrefixedTableName($this->table, TRUE));
+      ->delete($this->connection()->getPrefixedTableName($this->table, TRUE));
 
     // Adds a WHERE clause if necessary.
     // @todo this uses Drupal Condition API. Use DBAL expressions instead?
     if (count($this->condition)) {
-      $this->condition->compile($this->connection, $this);
+      $this->condition->compile($this->connection(), $this);
       $this->dbalQuery->where((string) $this->condition);
       foreach ($this->condition->arguments() as $placeholder => $value) {
         $this->dbalQuery->setParameter($placeholder, $value);
