@@ -81,16 +81,9 @@ class Connection extends DatabaseConnection {
   protected DbalExtensionInterface $dbalExtension;
 
   /**
-   * Current connection DBAL platform.
-   *
-   * @var \Doctrine\DBAL\Platforms\AbstractPlatform
-   */
-  protected $dbalPlatform;
-
-  /**
    * The platform SQL parser.
    */
-  protected ?DbalParser $parser;
+  protected DbalParser $parser;
 
   /**
    * The schema object for this connection.
@@ -108,8 +101,7 @@ class Connection extends DatabaseConnection {
     $this->connection = $dbal_connection;
     $this->connectionOptions = $connection_options;
 
-    $this->dbalPlatform = $dbal_connection->getDatabasePlatform();
-    $quote_identifier = $this->dbalPlatform->quoteIdentifier('');
+    $quote_identifier = $dbal_connection->getDatabasePlatform()->quoteIdentifier('');
     $this->identifierQuotes = [$quote_identifier[0], $quote_identifier[1]];
 
     $this->setPrefix($connection_options['prefix'] ?? '');
@@ -411,7 +403,7 @@ class Connection extends DatabaseConnection {
         if (empty($this->transactionLayers)) {
           break;
         }
-        $this->getDbalConnection()->executeStatement($this->dbalPlatform->rollbackSavePoint($savepoint));
+        $this->getDbalConnection()->executeStatement($this->getDbalPlatform()->rollbackSavePoint($savepoint));
         $this->popCommittableTransactions();
         if ($rolled_back_other_active_savepoints) {
           throw new TransactionOutOfOrderException();
@@ -446,7 +438,7 @@ class Connection extends DatabaseConnection {
     // If we're already in a transaction then we want to create a savepoint
     // rather than try to create another transaction.
     if ($this->inTransaction()) {
-      $this->getDbalConnection()->executeStatement($this->dbalPlatform->createSavePoint($name));
+      $this->getDbalConnection()->executeStatement($this->getDbalPlatform()->createSavePoint($name));
     }
     else {
       $this->getDbalExtension()->delegateBeginTransaction();
@@ -473,7 +465,7 @@ class Connection extends DatabaseConnection {
       else {
         // Attempt to release this savepoint in the standard way.
         try {
-          $this->getDbalConnection()->executeStatement($this->dbalPlatform->releaseSavePoint($name));
+          $this->getDbalConnection()->executeStatement($this->getDbalPlatform()->releaseSavePoint($name));
         }
         catch (DbalDriverException $e) {
           // If all SAVEPOINTs were released automatically, clean the
@@ -540,7 +532,7 @@ class Connection extends DatabaseConnection {
    *   The DBAL platform for this connection.
    */
   public function getDbalPlatform(): DbalAbstractPlatform {
-    return $this->dbalPlatform;
+    return $this->getDbalConnection->getDatabasePlatform();
   }
 
   /**
@@ -674,7 +666,7 @@ class Connection extends DatabaseConnection {
    * @return array{string, list<mixed>, array<int,DbalType|int|string|null>}
    */
   public function expandArrayParameters(string $sql, array $params, array $types): array {
-    if ($this->parser === null) {
+    if (!isset($this->parser)) {
       $this->parser = $this->getDbalConnection()->getDatabasePlatform()->createSQLParser();
     }
 
