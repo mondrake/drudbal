@@ -148,7 +148,6 @@ class StatementWrapper extends BaseStatementWrapper {
 
       try {
         $this->connection()->getDbalExtension()->alterStatement($this->queryString, $args);
-        /** @var \Doctrine\DBAL\Statement */
         $this->clientStatement = $this->dbalConnection->prepare($this->queryString);
       }
       catch (DbalException $e) {

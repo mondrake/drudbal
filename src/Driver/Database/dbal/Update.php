@@ -51,6 +51,7 @@ class Update extends QueryUpdate {
     catch (\Exception $e) {
       $this->connection()->exceptionHandler()->handleExecutionException($e, $stmt, $this->dbalQuery->getParameters(), $this->queryOptions);
     }
+    return NULL;
   }
 
   /**

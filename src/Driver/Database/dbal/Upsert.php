@@ -162,11 +162,8 @@ class Upsert extends QueryUpsert {
    * @param array $insert_values
    *   The values that failed insert, and that need instead to update the
    *   record identified by the unique key.
-   *
-   * @return int
-   *   The number of records updated (should be 1).
    */
-  protected function fallbackUpdate(array $insert_values): int {
+  private function fallbackUpdate(array $insert_values): void {
     // Use the DBAL query builder for the UPDATE. Need to pass the quoted table
     // name here.
     $dbal_query = $this->connection()->getDbalConnection()->createQueryBuilder()->update($this->connection()->getPrefixedTableName($this->table, TRUE));
@@ -192,7 +189,7 @@ class Upsert extends QueryUpsert {
       }
     }
 
-    return $dbal_query->execute();
+    $dbal_query->executeStatement();
   }
 
 }
