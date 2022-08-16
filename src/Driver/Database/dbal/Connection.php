@@ -86,15 +86,6 @@ class Connection extends DatabaseConnection {
   protected DbalParser $parser;
 
   /**
-   * The schema object for this connection.
-   *
-   * Set to NULL when the schema is destroyed.
-   *
-   * @var \Drupal\drudbal\Driver\Database\dbal\Schema|null
-   */
-  protected $schema = NULL;
-
-  /**
    * Constructs a Connection object.
    */
   public function __construct(DbalConnection $dbal_connection, array $connection_options = []) {
@@ -194,11 +185,18 @@ class Connection extends DatabaseConnection {
     return (string) $this->getDbalConnection()->lastInsertId($name);
   }
 
+  public function exceptionHandler() {
+    return new ExceptionHandler($this);
+  }
+
   /**
    * {@inheritdoc}
    */
-  public function exceptionHandler() {
-    return new ExceptionHandler($this);
+  public function schema() {
+    if (!isset($this->schema)) {
+      $this->schema = new Schema($this);
+    }
+    return $this->schema;
   }
 
   /**
