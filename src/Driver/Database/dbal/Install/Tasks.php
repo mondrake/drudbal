@@ -50,6 +50,7 @@ class Tasks extends InstallTasks {
       if (!$this->isConnectionActive() || !$this->getConnection() instanceof DruDbalConnection) {
         throw new ConnectionNotDefinedException('The database connection is not active or not a DruDbal connection');
       }
+      /** @var DruDbalConnection $connection */
       $connection = Database::getConnection();
       return t('Doctrine DBAL on @database_type/@database_server_version via @dbal_driver', [
         '@database_type' => $connection->getDbalExtension()->getDbServerPlatform(TRUE),
@@ -237,7 +238,9 @@ class Tasks extends InstallTasks {
    * Executes DBAL driver installation specific tasks.
    */
   public function runDbalInstallTasks(): void {
-    $results = Database::getConnection()->getDbalExtension()->runInstallTasks();
+    /** @var DruDbalConnection $connection */
+    $connection = Database::getConnection();
+    $results = $connection->getDbalExtension()->runInstallTasks();
     foreach ($results['pass'] as $result) {
       $this->pass($result);
     }

@@ -25,27 +25,34 @@ class Truncate extends QueryTruncate {
   }
 
   /**
+   * Returns the DruDbal connection.
+   */
+  private function connection(): Connection {
+    return $this->connection;
+  }
+
+  /**
    * {@inheritdoc}
    */
   public function execute() {
     // Allow DBAL extension to process commands before a DDL TRUNCATE.
-    if (!$this->connection->inTransaction()) {
-      $this->connection->getDbalExtension()->preTruncate($this->table);
+    if (!$this->connection()->inTransaction()) {
+      $this->connection()->getDbalExtension()->preTruncate($this->table);
     }
 
     // Process the truncate, either DDL or via DELETE.
-    $stmt = $this->connection->prepareStatement((string) $this, $this->queryOptions, TRUE);
+    $stmt = $this->connection()->prepareStatement((string) $this, $this->queryOptions, TRUE);
     try {
       $stmt->execute([], $this->queryOptions);
       $result = $stmt->rowCount();
     }
     catch (\Exception $e) {
-      $this->connection->exceptionHandler()->handleExecutionException($e, $stmt, [], $this->queryOptions);
+      $this->connection()->exceptionHandler()->handleExecutionException($e, $stmt, [], $this->queryOptions);
     }
 
     // Allow DBAL extension to process commands after a DDL TRUNCATE.
-    if (!$this->connection->inTransaction()) {
-      $this->connection->getDbalExtension()->postTruncate($this->table);
+    if (!$this->connection()->inTransaction()) {
+      $this->connection()->getDbalExtension()->postTruncate($this->table);
     }
 
     return $result ?? FALSE;
@@ -55,18 +62,18 @@ class Truncate extends QueryTruncate {
    * {@inheritdoc}
    */
   public function __toString() {
-    $comments = $this->connection->makeComment($this->comments);
-    $prefixed_table = $this->connection->getPrefixedTableName($this->table, TRUE);
+    $comments = $this->connection()->makeComment($this->comments);
+    $prefixed_table = $this->connection()->getPrefixedTableName($this->table, TRUE);
 
     // In most cases, TRUNCATE is not a transaction safe statement as it is a
     // DDL statement which results in an implicit COMMIT. When we are in a
     // transaction, fallback to the slower, but transactional, DELETE.
-    if ($this->connection->inTransaction()) {
-      $dbal_query = $this->connection->getDbalConnection()->createQueryBuilder()->delete($prefixed_table);
+    if ($this->connection()->inTransaction()) {
+      $dbal_query = $this->connection()->getDbalConnection()->createQueryBuilder()->delete($prefixed_table);
       return $comments . $dbal_query->getSQL();
     }
     else {
-      $sql = $this->connection->getDbalConnection()->getDatabasePlatform()->getTruncateTableSql($prefixed_table);
+      $sql = $this->connection()->getDbalConnection()->getDatabasePlatform()->getTruncateTableSql($prefixed_table);
       return $comments . $sql;
     }
   }

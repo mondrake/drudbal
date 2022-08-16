@@ -125,6 +125,13 @@ class StatementWrapper extends BaseStatementWrapper {
   }
 
   /**
+   * Returns the DruDbal connection.
+   */
+  private function connection(): DruDbalConnection {
+    return $this->connection;
+  }
+
+  /**
    * {@inheritdoc}
    */
   public function execute($args = [], $options = []) {
@@ -133,14 +140,14 @@ class StatementWrapper extends BaseStatementWrapper {
     // Prepare the lower-level statement if it's not been prepared already.
     if (!$this->clientStatement) {
       // Replace named placeholders with positional ones if needed.
-      if (!$this->connection->getDbalExtension()->delegateNamedPlaceholdersSupport()) {
+      if (!$this->connection()->getDbalExtension()->delegateNamedPlaceholdersSupport()) {
         $this->paramsPositions = array_flip(array_keys($args));
-        list($query, $args) = $this->connection->expandArrayParameters($this->queryString, $args, []);
+        list($query, $args) = $this->connection()->expandArrayParameters($this->queryString, $args, []);
         $this->queryString = $query;
       }
 
       try {
-        $this->connection->getDbalExtension()->alterStatement($this->queryString, $args);
+        $this->connection()->getDbalExtension()->alterStatement($this->queryString, $args);
         /** @var \Doctrine\DBAL\Statement */
         $this->clientStatement = $this->dbalConnection->prepare($this->queryString);
       }
@@ -148,7 +155,7 @@ class StatementWrapper extends BaseStatementWrapper {
         throw new DatabaseExceptionWrapper($e->getMessage(), $e->getCode(), $e);
       }
     }
-    elseif (!$this->connection->getDbalExtension()->delegateNamedPlaceholdersSupport()) {
+    elseif (!$this->connection()->getDbalExtension()->delegateNamedPlaceholdersSupport()) {
       // Transform the $args to positional if needed.
       $tmp = [];
       foreach ($this->paramsPositions as $param => $pos) {
@@ -166,7 +173,7 @@ class StatementWrapper extends BaseStatementWrapper {
       }
     }
 
-    $logger = $this->connection->getLogger();
+    $logger = $this->connection()->getLogger();
     $query_start = microtime(TRUE);
 
     try {
@@ -200,7 +207,7 @@ class StatementWrapper extends BaseStatementWrapper {
     if (!$dbal_row) {
       return FALSE;
     }
-    $row = $this->connection->getDbalExtension()->processFetchedRecord($dbal_row);
+    $row = $this->connection()->getDbalExtension()->processFetchedRecord($dbal_row);
     switch ($mode) {
       case \PDO::FETCH_ASSOC:
         return $row;
@@ -338,7 +345,7 @@ class StatementWrapper extends BaseStatementWrapper {
   public function rowCount() {
     // SELECT query should not use the method.
     if ($this->rowCountEnabled) {
-      return $this->connection->getDbalExtension()->delegateRowCount($this->dbalResult);
+      return $this->connection()->getDbalExtension()->delegateRowCount($this->dbalResult);
     }
     else {
       throw new RowCountException();
