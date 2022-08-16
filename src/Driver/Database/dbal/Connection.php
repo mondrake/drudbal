@@ -185,6 +185,9 @@ class Connection extends DatabaseConnection {
     return (string) $this->getDbalConnection()->lastInsertId($name);
   }
 
+  /**
+   * {@inheritdoc}
+   */
   public function exceptionHandler() {
     return new ExceptionHandler($this);
   }
@@ -192,7 +195,7 @@ class Connection extends DatabaseConnection {
   /**
    * {@inheritdoc}
    */
-  public function schema() {
+  public function schema(): Schema {
     if (!isset($this->schema)) {
       $this->schema = new Schema($this);
     }
