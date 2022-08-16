@@ -16,21 +16,11 @@ use Drupal\Core\Database\StatementInterface;
 class ExceptionHandler extends DatabaseExceptionHandler {
 
   /**
-   * The DruDbal connection.
-   *
-   * @var \Drupal\drudbal\Driver\Database\dbal\Connection
+   * Constructs a DruDbal exception handler object.
    */
-  protected $connection;
-
-  /**
-   * Constructs a DruDbal exception object.
-   *
-   * @param \Drupal\drudbal\Driver\Database\dbal\Connection $drudbal_connection
-   *   The Drupal database connection object for this extension.
-   */
-  public function __construct(Connection $connection) {
-    $this->connection = $connection;
-  }
+  public function __construct(
+    protected Connection $connection
+  ) {}
 
   /**
    * {@inheritdoc}
