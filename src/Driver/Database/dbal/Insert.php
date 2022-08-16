@@ -30,6 +30,8 @@ class Insert extends QueryInsert {
    * {@inheritdoc}
    */
   public function execute() {
+    assert($this->connection instanceof Connection);
+
     if (!$this->preExecute()) {
       return NULL;
     }
@@ -147,6 +149,8 @@ class Insert extends QueryInsert {
    * {@inheritdoc}
    */
   public function __toString() {
+    assert($this->connection instanceof Connection);
+
     $comments = $this->connection->makeComment($this->comments);
     $dbal_connection = $this->connection->getDbalConnection();
     $dbal_extension = $this->connection->getDbalExtension();
