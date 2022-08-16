@@ -35,20 +35,14 @@ class AbstractExtension implements DbalExtensionInterface {
   ) {}
 
   /**
-   * Sets debugging mode.
-   *
-   * @param bool $value
-   *   The debugging mode.
+   * {@inheritdoc}
    */
   public function setDebugging(bool $value): void {
     static::$isDebugging = $value;
   }
 
   /**
-   * Gets debugging mode.
-   *
-   * @return bool
-   *   The debugging mode.
+   * {@inheritdoc}
    */
   public function getDebugging(): bool {
     return static::$isDebugging;

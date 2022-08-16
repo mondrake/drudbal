@@ -15,6 +15,22 @@ use Doctrine\DBAL\Schema\Table as DbalTable;
 interface DbalExtensionInterface {
 
   /**
+   * Sets debugging mode.
+   *
+   * @param bool $value
+   *   The debugging mode.
+   */
+  public function setDebugging(bool $value);
+
+  /**
+   * Gets debugging mode.
+   *
+   * @return bool
+   *   The debugging mode.
+   */
+  public function getDebugging(): bool;
+
+  /**
    * Gets the DBAL connection.
    *
    * @return \Doctrine\DBAL\Connection

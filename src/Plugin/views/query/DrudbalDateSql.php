@@ -29,7 +29,7 @@ class DrudbalDateSql implements DateSqlInterface {
    * Returns the DruDbal connection.
    */
   private function connection(): DruDbalConnection {
-    return $this->connection;
+    return $this->database;
   }
 
   /**
@@ -50,14 +50,14 @@ class DrudbalDateSql implements DateSqlInterface {
    * {@inheritdoc}
    */
   public function setFieldTimezoneOffset(&$field, $offset) {
-    return $this->connection()->getDbalExtension()->delegateSetFieldTimezoneOffsetSql($field, $offset);
+    $this->connection()->getDbalExtension()->delegateSetFieldTimezoneOffsetSql($field, $offset);
   }
 
   /**
    * {@inheritdoc}
    */
   public function setTimezoneOffset($offset) {
-    return $this->connection()->getDbalExtension()->delegateSetTimezoneOffset($offset);
+    $this->connection()->getDbalExtension()->delegateSetTimezoneOffset($offset);
   }
 
 }

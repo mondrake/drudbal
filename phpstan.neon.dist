@@ -6,3 +6,7 @@ parameters:
     - src
     - drush
     - tests
+
+  ignoreErrors:
+    # \PDO::sqliteCreateCollation not identified by PHPStan
+    - "#^Call to an undefined method PDO::sqliteCreateCollation\(\)#"
