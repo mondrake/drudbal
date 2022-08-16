@@ -18,42 +18,21 @@ use Drupal\drudbal\Driver\Database\dbal\Statement\StatementWrapper;
 class AbstractExtension implements DbalExtensionInterface {
 
   /**
-   * The DruDbal connection.
-   *
-   * @var \Drupal\drudbal\Driver\Database\dbal\Connection
-   */
-  protected $connection;
-
-  /**
    * The Statement class to use for this extension.
-   *
-   * @var \Drupal\Core\Database\StatementInterface
    */
-  protected $statementClass = StatementWrapper::class;
+  protected string $statementClass = StatementWrapper::class;
 
   /**
    * Enables debugging.
-   *
-   * @var bool
    */
-  protected static $isDebugging = FALSE;
+  protected static bool $isDebugging = FALSE;
 
   /**
    * Constructs a DBAL extension object.
-   *
-   * @param \Drupal\drudbal\Driver\Database\dbal\Connection $drudbal_connection
-   *   The Drupal database connection object for this extension.
    */
-  public function __construct(DruDbalConnection $drudbal_connection) {
-    $this->connection = $drudbal_connection;
-  }
-
-  /**
-   * Destructs a DBAL extension object.
-   */
-  public function __destruct() {
-    $this->connection = NULL;
-  }
+  public function __construct(
+    protected DruDbalConnection $connection
+  ) {}
 
   /**
    * Sets debugging mode.
@@ -148,7 +127,7 @@ class AbstractExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function getDbFullQualifiedTableName($drupal_table_name) {
+  public function getDbFullQualifiedTableName(string $drupal_table_name): string {
     $options = $this->connection->getConnectionOptions();
     $prefix = $this->connection->tablePrefix($drupal_table_name);
     return $options['database'] . '.' . $this->getDbTableName($prefix, $drupal_table_name);
@@ -188,7 +167,7 @@ class AbstractExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function getDbIndexName(string $context, DbalSchema $dbal_schema, string $drupal_table_name, string $drupal_index_name): string {
+  public function getDbIndexName(string $context, DbalSchema $dbal_schema, string $drupal_table_name, string $drupal_index_name): string|bool {
     return $drupal_index_name;
   }
 
@@ -247,7 +226,7 @@ class AbstractExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function delegateMapConditionOperator($operator) {
+  public function delegateMapConditionOperator(string $operator): ?array {
     return NULL;
   }
 

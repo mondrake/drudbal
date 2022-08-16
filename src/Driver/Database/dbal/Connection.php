@@ -10,7 +10,8 @@ use Doctrine\DBAL\DriverManager as DbalDriverManager;
 use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
 use Doctrine\DBAL\ExpandArrayParameters;
 use Doctrine\DBAL\Platforms\AbstractPlatform as DbalAbstractPlatform;
-use Doctrine\DBAL\SQL\Parser;
+use Doctrine\DBAL\SQL\Parser as DbalParser;
+use Doctrine\DBAL\Types\Type as DbalType;
 use Drupal\Component\Uuid\Php as Uuid;
 use Drupal\Core\Database\Connection as DatabaseConnection;
 use Drupal\Core\Database\ConnectionNotDefinedException;
@@ -22,6 +23,7 @@ use Drupal\Core\Database\TransactionCommitFailedException;
 use Drupal\Core\Database\TransactionNameNonUniqueException;
 use Drupal\Core\Database\TransactionNoActiveException;
 use Drupal\Core\Database\TransactionOutOfOrderException;
+use Drupal\drudbal\Driver\Database\dbal\DbalExtension\DbalExtensionInterface;
 use Drupal\drudbal\Driver\Database\dbal\DbalExtension\MysqliExtension;
 use Drupal\drudbal\Driver\Database\dbal\DbalExtension\Oci8Extension;
 use Drupal\drudbal\Driver\Database\dbal\DbalExtension\PDOMySqlExtension;
@@ -57,9 +59,9 @@ class Connection extends DatabaseConnection {
    * maps this syntax to actual database tables, adding prefix and/or
    * resolving platform specific constraints.
    *
-   * @var string[]
+   * @var array<string, string>
    */
-  protected $dbTables = [];
+  protected array $dbTables = [];
 
   /**
    * List of URL schemes from a database URL and their mappings to driver.
@@ -75,24 +77,13 @@ class Connection extends DatabaseConnection {
 
   /**
    * The DruDbal extension for the DBAL driver.
-   *
-   * @var \Drupal\drudbal\Driver\Database\dbal\DbalExtension\DbalExtensionInterface
    */
-  protected $dbalExtension;
-
-  /**
-   * Current connection DBAL platform.
-   *
-   * @var \Doctrine\DBAL\Platforms\AbstractPlatform
-   */
-  protected $dbalPlatform;
+  protected DbalExtensionInterface $dbalExtension;
 
   /**
    * The platform SQL parser.
-   *
-   * @var \Doctrine\DBAL\SQL\Parser|null
    */
-  protected $parser;
+  protected DbalParser $parser;
 
   /**
    * Constructs a Connection object.
@@ -101,8 +92,7 @@ class Connection extends DatabaseConnection {
     $this->connection = $dbal_connection;
     $this->connectionOptions = $connection_options;
 
-    $this->dbalPlatform = $dbal_connection->getDatabasePlatform();
-    $quote_identifier = $this->dbalPlatform->quoteIdentifier('');
+    $quote_identifier = $dbal_connection->getDatabasePlatform()->quoteIdentifier('');
     $this->identifierQuotes = [$quote_identifier[0], $quote_identifier[1]];
 
     $this->setPrefix($connection_options['prefix'] ?? '');
@@ -404,7 +394,7 @@ class Connection extends DatabaseConnection {
         if (empty($this->transactionLayers)) {
           break;
         }
-        $this->getDbalConnection()->executeStatement($this->dbalPlatform->rollbackSavePoint($savepoint));
+        $this->getDbalConnection()->executeStatement($this->getDbalPlatform()->rollbackSavePoint($savepoint));
         $this->popCommittableTransactions();
         if ($rolled_back_other_active_savepoints) {
           throw new TransactionOutOfOrderException();
@@ -439,7 +429,7 @@ class Connection extends DatabaseConnection {
     // If we're already in a transaction then we want to create a savepoint
     // rather than try to create another transaction.
     if ($this->inTransaction()) {
-      $this->getDbalConnection()->executeStatement($this->dbalPlatform->createSavePoint($name));
+      $this->getDbalConnection()->executeStatement($this->getDbalPlatform()->createSavePoint($name));
     }
     else {
       $this->getDbalExtension()->delegateBeginTransaction();
@@ -466,7 +456,7 @@ class Connection extends DatabaseConnection {
       else {
         // Attempt to release this savepoint in the standard way.
         try {
-          $this->getDbalConnection()->executeStatement($this->dbalPlatform->releaseSavePoint($name));
+          $this->getDbalConnection()->executeStatement($this->getDbalPlatform()->releaseSavePoint($name));
         }
         catch (DbalDriverException $e) {
           // If all SAVEPOINTs were released automatically, clean the
@@ -533,7 +523,7 @@ class Connection extends DatabaseConnection {
    *   The DBAL platform for this connection.
    */
   public function getDbalPlatform(): DbalAbstractPlatform {
-    return $this->dbalPlatform;
+    return $this->getDbalConnection()->getDatabasePlatform();
   }
 
   /**
@@ -661,13 +651,13 @@ class Connection extends DatabaseConnection {
   }
 
   /**
-   * @param array<int, mixed>|array<string, mixed>                               $params
-   * @param array<int, int|string|Type|null>|array<string, int|string|Type|null> $types
+   * @param array<int, mixed>|array<string, mixed>                                       $params
+   * @param array<int, int|string|DbalType|null>|array<string, int|string|DbalType|null> $types
    *
-   * @return array{string, list<mixed>, array<int,Type|int|string|null>}
+   * @return array{string, list<mixed>, array<int,DbalType|int|string|null>}
    */
   public function expandArrayParameters(string $sql, array $params, array $types): array {
-    if ($this->parser === null) {
+    if (!isset($this->parser)) {
       $this->parser = $this->getDbalConnection()->getDatabasePlatform()->createSQLParser();
     }
 
