@@ -26,7 +26,6 @@ class Delete extends QueryDelete {
    */
   public function __construct(Connection $connection, string $table, array $options = []) {
     parent::__construct($connection, $table, $options);
-    assert($this->connection instanceof Connection);
     // @todo Remove the unset in Drupal 11.
     // @see https://www.drupal.org/project/drupal/issues/3256524
     unset($this->queryOptions['return']);
@@ -59,6 +58,8 @@ class Delete extends QueryDelete {
    * Builds the query via DBAL Query Builder.
    */
   protected function compileDbalQuery() {
+    assert($this->connection instanceof \Drupal\drudbal\Driver\Database\dbal\Connection);
+
     // Need to pass the quoted table name here.
     $this->dbalQuery = $this->connection->getDbalConnection()
       ->createQueryBuilder()
