@@ -11,21 +11,25 @@ env:
     PHPUNIT_SKIP_CLASS: '[
       "Drupal\\KernelTests\\Core\\Cache\\ApcuBackendTest",
       "Drupal\\KernelTests\\Core\\Cache\\EndOfTransactionQueriesTest",
+      "Drupal\\KernelTests\\Core\\Database\\ConnectionUnitTest",
       "Drupal\\KernelTests\\Core\\Database\\DatabaseExceptionWrapperTest",
-      "Drupal\\Tests\\file\\Functional\\DownloadTest"
+      "Drupal\\KernelTests\\Core\\Database\\SqlModeTest",
+      "Drupal\\KernelTests\\Core\\Database\\StatementTest",
+      "Drupal\\Tests\\views\\Functional\\Update\\ViewsSortIdentifiersUpdateTest",
+      "Drupal\\Tests\\views\\Kernel\\ViewElementTest"
     ]'
 
 jobs:
 
 #################################
 
-  sqlite-pdo:
-    name: "SQLite with PDO"
-    runs-on: ubuntu-20.04
+  mysql-pdo:
+    name: "MySql"
+    runs-on: ubuntu-latest
     env:
-        DRUDBAL_ENV: "dbal/sqlite/file"
-        DBAL_URL: "sqlite://localhost/sites/drudbal.sqlite"
-        SIMPLETEST_DB: "dbal://localhost/sites/drudbal.sqlite?module=drudbal&dbal_driver=pdo_sqlite"
+        DRUDBAL_ENV: "dbal/mysql"
+        DBAL_URL: "mysql://root:@0.0.0.0:3306/drudbal"
+        SIMPLETEST_DB: "dbal://root:@0.0.0.0:3306/drudbal?module=drudbal&dbal_driver=pdo_mysql"
 
     strategy:
       fail-fast: false
@@ -34,6 +38,20 @@ jobs:
           - "8.1"
         test-args:
           - "--group Database"
+          - "--group Entity"
+          - "--group Cache,Config"
+          - "--group field,Field"
+          - "--group file"
+          - "--group views"
+
+    services:
+      mysql:
+        image: "mysql:5.7"
+        options: >-
+          -e MYSQL_ALLOW_EMPTY_PASSWORD=yes
+          -e MYSQL_DATABASE=drudbal
+        ports:
+          - "3306:3306"
 
     steps:
     - name: Install PHP
@@ -41,6 +59,7 @@ jobs:
       with:
         php-version: "${{ matrix.php-version }}"
         coverage: "none"
+        extensions: "pdo_mysql"
         ini-values: "zend.assertions=1"
 
     - name: Checkout Drupal
@@ -58,31 +77,11 @@ jobs:
       run: |
         composer install --no-progress --ansi
         composer config --no-plugins allow-plugins.composer/package-versions-deprecated true
-        composer require --dev --ansi phpstan/phpstan-deprecation-rules
-
     - name: Composer require DruDbal from local staging
       run: |
         git -C drudbal_staging checkout -b test-run-branch
         composer config repositories.test-run '{"type": "path", "url": "drudbal_staging", "options": {"symlink": false}}'
         composer require "mondrake/drudbal:dev-test-run-branch" --no-progress --ansi
-
-    - name: PHPStan checks
-      run: |
-        php vendor/bin/phpstan analyze --no-progress --configuration="modules/contrib/drudbal/phpstan.neon.dist"
-
-    - name: Install Drupal
-      run: |
-        cp modules/contrib/drudbal/tests/github/install_* .
-        vendor/bin/drush site-install standard --db-url=$SIMPLETEST_DB -y
-        vendor/bin/drush runserver localhost:8080 --default-server=localhost:8080 &
-        sleep 1s
-
-    - name: Report installation
-      run: |
-        php install_report.php
-        vendor/bin/drush core:status
-        vendor/bin/drush core:requirements
-        vendor/bin/drush pml --type=module --no-core
-
     - name: Run test ${{ matrix.test-args }}
       run: vendor/bin/phpunit -c core --color=always ${{ matrix.test-args }}
+
