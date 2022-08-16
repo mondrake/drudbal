@@ -59,6 +59,7 @@ class Schema extends DatabaseSchema {
    */
   public function __construct(Connection $connection) {
     parent::__construct($connection);
+    assert($this->connection instanceof Connection);
     $this->dbalExtension = $this->connection->getDbalExtension();
     $this->dbalSchemaManager = $this->connection->getDbalConnection()->createSchemaManager();
     $this->dbalPlatform = $this->connection->getDbalConnection()->getDatabasePlatform();
@@ -69,6 +70,8 @@ class Schema extends DatabaseSchema {
    * {@inheritdoc}
    */
   public function createTable($name, $table) {
+    assert($this->connection instanceof Connection);
+
     if ($this->tableExists($name)) {
       throw new SchemaObjectExistsException(t('Table @name already exists.', ['@name' => $name]));
     }
