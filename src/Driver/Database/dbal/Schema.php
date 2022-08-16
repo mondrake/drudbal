@@ -59,19 +59,23 @@ class Schema extends DatabaseSchema {
    */
   public function __construct(Connection $connection) {
     parent::__construct($connection);
-    assert($this->connection instanceof Connection);
-    $this->dbalExtension = $this->connection->getDbalExtension();
-    $this->dbalSchemaManager = $this->connection->getDbalConnection()->createSchemaManager();
-    $this->dbalPlatform = $this->connection->getDbalConnection()->getDatabasePlatform();
+    $this->dbalExtension = $this->connection()->getDbalExtension();
+    $this->dbalSchemaManager = $this->connection()->getDbalConnection()->createSchemaManager();
+    $this->dbalPlatform = $this->connection()->getDbalConnection()->getDatabasePlatform();
     $this->dbalExtension->alterDefaultSchema($this->defaultSchema);
+  }
+
+  /**
+   * Returns the DruDbal connection.
+   */
+  private function connection(): Connection {
+    return $this->connection;
   }
 
   /**
    * {@inheritdoc}
    */
   public function createTable($name, $table) {
-    assert($this->connection instanceof Connection);
-
     if ($this->tableExists($name)) {
       throw new SchemaObjectExistsException(t('Table @name already exists.', ['@name' => $name]));
     }
@@ -84,11 +88,11 @@ class Schema extends DatabaseSchema {
     // Create table via DBAL.
     $current_schema = $this->dbalSchema();
     $to_schema = clone $current_schema;
-    $new_table = $to_schema->createTable($this->connection->getPrefixedTableName($name, TRUE));
+    $new_table = $to_schema->createTable($this->connection()->getPrefixedTableName($name, TRUE));
 
     // Add table comment.
     if (!empty($table['description'])) {
-      $comment = $this->connection->prefixTables($table['description']);
+      $comment = $this->connection()->prefixTables($table['description']);
       $this->dbalExtension->alterSetTableComment($comment, $name, $to_schema, $table);
       $new_table->addOption('comment', $this->prepareComment($comment));
     }
@@ -220,7 +224,7 @@ class Schema extends DatabaseSchema {
     }
 
     if (!empty($field['description'])) {
-      $comment = $this->connection->prefixTables($field['description']);
+      $comment = $this->connection()->prefixTables($field['description']);
       $this->dbalExtension->alterSetColumnComment($comment, $dbal_type, $field, $field_name);
       $options['comment'] = $this->prepareComment($comment);
     }
@@ -294,8 +298,6 @@ class Schema extends DatabaseSchema {
    * {@inheritdoc}
    */
   public function renameTable($table, $new_name) {
-    assert($this->connection instanceof Connection);
-
     if (!$this->tableExists($table)) {
       throw new SchemaObjectDoesNotExistException(t("Cannot rename @table to @table_new: table @table doesn't exist.", ['@table' => $table, '@table_new' => $new_name]));
     }
@@ -307,7 +309,7 @@ class Schema extends DatabaseSchema {
     // using the manager instead, that allows in-place renaming.
     // @see https://github.com/doctrine/migrations/issues/17
     $dbal_schema = $this->dbalSchema();
-    $this->dbalSchemaManager->renameTable($this->connection->getPrefixedTableName($table, TRUE), $this->connection->getPrefixedTableName($new_name, TRUE));
+    $this->dbalSchemaManager->renameTable($this->connection()->getPrefixedTableName($table, TRUE), $this->connection()->getPrefixedTableName($new_name, TRUE));
     $this->dbalExtension->postRenameTable($dbal_schema, $table, $new_name);
     $this->dbalSchemaForceReload();
   }
@@ -316,8 +318,6 @@ class Schema extends DatabaseSchema {
    * {@inheritdoc}
    */
   public function dropTable($table) {
-    assert($this->connection instanceof Connection);
-
     if (!$this->tableExists($table)) {
       return FALSE;
     }
@@ -329,11 +329,11 @@ class Schema extends DatabaseSchema {
     // @todo this will affect possibility to drop FKs in an orderly way, so
     // we would need to revise at later stage if we want the driver to support
     // a broader set of capabilities.
-    $table_full_name = $this->connection->getPrefixedTableName($table);
+    $table_full_name = $this->connection()->getPrefixedTableName($table);
     $current_schema = $this->dbalSchema();
     // Need to pass the quoted table name here.
     try {
-      $this->dbalSchemaManager->dropTable($this->connection->getPrefixedTableName($table, TRUE));
+      $this->dbalSchemaManager->dropTable($this->connection()->getPrefixedTableName($table, TRUE));
     }
     catch (\Exception $e) {
       $this->dbalExtension->handleDropTableException($e, $table, $table_full_name);
@@ -360,8 +360,6 @@ class Schema extends DatabaseSchema {
    * {@inheritdoc}
    */
   public function addField($table, $field, $spec, $keys_new = []) {
-    assert($this->connection instanceof Connection);
-
     if (!$this->tableExists($table)) {
       throw new SchemaObjectDoesNotExistException(t("Cannot add field @table.@field: table doesn't exist.", ['@field' => $field, '@table' => $table]));
     }
@@ -383,14 +381,14 @@ class Schema extends DatabaseSchema {
 
     $current_schema = $this->dbalSchema();
     $to_schema = clone $current_schema;
-    $dbal_table = $to_schema->getTable($this->connection->getPrefixedTableName($table));
+    $dbal_table = $to_schema->getTable($this->connection()->getPrefixedTableName($table));
 
     // Drop primary key if it is due to be changed.
     if (isset($keys_new['primary key']) && $dbal_table->hasPrimaryKey()) {
       $this->dropPrimaryKey($table);
       $current_schema = $this->dbalSchema();
       $to_schema = clone $current_schema;
-      $dbal_table = $to_schema->getTable($this->connection->getPrefixedTableName($table));
+      $dbal_table = $to_schema->getTable($this->connection()->getPrefixedTableName($table));
     }
 
     // Delegate to DBAL extension.
@@ -441,8 +439,6 @@ class Schema extends DatabaseSchema {
    * {@inheritdoc}
    */
   public function dropField($table, $field) {
-    assert($this->connection instanceof Connection);
-
     if (!$this->fieldExists($table, $field)) {
       return FALSE;
     }
@@ -467,7 +463,7 @@ class Schema extends DatabaseSchema {
     // DBAL extension did not pick up, proceed with DBAL.
     $current_schema = $this->dbalSchema();
     $to_schema = clone $current_schema;
-    $to_schema->getTable($this->connection->getPrefixedTableName($table))->dropColumn($this->dbalExtension->getDbFieldName($field));
+    $to_schema->getTable($this->connection()->getPrefixedTableName($table))->dropColumn($this->dbalExtension->getDbFieldName($field));
     $this->dbalExecuteSchemaChange($to_schema);
     return TRUE;
   }
@@ -476,12 +472,10 @@ class Schema extends DatabaseSchema {
    * {@inheritdoc}
    */
   public function indexExists($table, $name) {
-    assert($this->connection instanceof Connection);
-
     if (!$this->tableExists($table)) {
       return FALSE;
     }
-    $table_full_name = $this->connection->getPrefixedTableName($table);
+    $table_full_name = $this->connection()->getPrefixedTableName($table);
 
     // Delegate to DBAL extension.
     $result = FALSE;
@@ -493,7 +487,7 @@ class Schema extends DatabaseSchema {
     $index_full_name = $this->dbalExtension->getDbIndexName('indexExists', $this->dbalSchema(), $table, $name);
     return in_array($index_full_name, array_keys($this->dbalSchemaManager->listTableIndexes($table_full_name)));
     // @todo it would be preferred to do
-    // return $this->dbalSchema()->getTable($this->connection->getPrefixedTableName($table))->hasIndex($index_full_name);
+    // return $this->dbalSchema()->getTable($this->connection()->getPrefixedTableName($table))->hasIndex($index_full_name);
     // but this fails on Drupal\KernelTests\Core\Entity\EntityDefinitionUpdateTest::testBaseFieldCreateUpdateDeleteWithoutData
   }
 
@@ -501,12 +495,10 @@ class Schema extends DatabaseSchema {
    * {@inheritdoc}
    */
   public function addPrimaryKey($table, $fields) {
-    assert($this->connection instanceof Connection);
-
     if (!$this->tableExists($table)) {
       throw new SchemaObjectDoesNotExistException(t("Cannot add primary key to table @table: table doesn't exist.", ['@table' => $table]));
     }
-    $table_full_name = $this->connection->getPrefixedTableName($table);
+    $table_full_name = $this->connection()->getPrefixedTableName($table);
     if ($this->dbalSchema()->getTable($table_full_name)->hasPrimaryKey()) {
       throw new SchemaObjectExistsException(t("Cannot add primary key to table @table: primary key already exists.", ['@table' => $table]));
     }
@@ -527,8 +519,6 @@ class Schema extends DatabaseSchema {
    * {@inheritdoc}
    */
   public function dropPrimaryKey($table) {
-    assert($this->connection instanceof Connection);
-
     if (!$this->tableExists($table)) {
       return FALSE;
     }
@@ -542,7 +532,7 @@ class Schema extends DatabaseSchema {
     }
 
     // DBAL extension did not pick up, proceed with DBAL.
-    $table_full_name = $this->connection->getPrefixedTableName($table);
+    $table_full_name = $this->connection()->getPrefixedTableName($table);
     if (!$this->dbalSchema()->getTable($table_full_name)->hasPrimaryKey()) {
       return FALSE;
     }
@@ -556,15 +546,13 @@ class Schema extends DatabaseSchema {
   /**
    * {@inheritdoc}
    */
-  protected function findPrimaryKeyColumns($table) {
-    assert($this->connection instanceof Connection);
-
+  private function findPrimaryKeyColumns($table) {
     if (!$this->tableExists($table)) {
       return FALSE;
     }
     try {
       $this->dbalSchemaForceReload();
-      $primary_key = $this->dbalSchema()->getTable($this->connection->getPrefixedTableName($table))->getPrimaryKey();
+      $primary_key = $this->dbalSchema()->getTable($this->connection()->getPrefixedTableName($table))->getPrimaryKey();
       $columns = $primary_key ? $this->dbalExtension->delegateColumnNameList($primary_key->getColumns()) : [];
       return $columns;
     }
@@ -576,7 +564,7 @@ class Schema extends DatabaseSchema {
   /**
    * {@inheritdoc}
    */
-  protected function introspectIndexSchema($table) {
+  private function introspectIndexSchema($table) {
     if (!$this->tableExists($table)) {
       throw new SchemaObjectDoesNotExistException("The table $table doesn't exist.");
     }
@@ -592,7 +580,7 @@ class Schema extends DatabaseSchema {
       $index_schema['primary key'] = $this->findPrimaryKeyColumns($table);
 
       // Indexes.
-      foreach ($this->dbalSchema()->getTable($this->connection->getPrefixedTableName($table))->getIndexes() as $index) {
+      foreach ($this->dbalSchema()->getTable($this->connection()->getPrefixedTableName($table))->getIndexes() as $index) {
         if ($index->isPrimary()) {
           continue;
         }
@@ -612,8 +600,6 @@ class Schema extends DatabaseSchema {
    * {@inheritdoc}
    */
   public function addUniqueKey($table, $name, $fields) {
-    assert($this->connection instanceof Connection);
-
     if (!$this->tableExists($table)) {
       throw new SchemaObjectDoesNotExistException(t("Cannot add unique key @name to table @table: table doesn't exist.", ['@table' => $table, '@name' => $name]));
     }
@@ -621,7 +607,7 @@ class Schema extends DatabaseSchema {
       throw new SchemaObjectExistsException(t("Cannot add unique key @name to table @table: unique key already exists.", ['@table' => $table, '@name' => $name]));
     }
 
-    $table_full_name = $this->connection->getPrefixedTableName($table);
+    $table_full_name = $this->connection()->getPrefixedTableName($table);
     $index_full_name = $this->dbalExtension->getDbIndexName('addUniqueKey', $this->dbalSchema(), $table, $name);
 
     // Delegate to DBAL extension.
@@ -647,8 +633,6 @@ class Schema extends DatabaseSchema {
    * {@inheritdoc}
    */
   public function addIndex($table, $name, $fields, array $spec) {
-    assert($this->connection instanceof Connection);
-
     if (!$this->tableExists($table)) {
       throw new SchemaObjectDoesNotExistException(t("Cannot add index @name to table @table: table doesn't exist.", ['@table' => $table, '@name' => $name]));
     }
@@ -656,7 +640,7 @@ class Schema extends DatabaseSchema {
       throw new SchemaObjectExistsException(t("Cannot add index @name to table @table: index already exists.", ['@table' => $table, '@name' => $name]));
     }
 
-    $table_full_name = $this->connection->getPrefixedTableName($table);
+    $table_full_name = $this->connection()->getPrefixedTableName($table);
     $index_full_name = $this->dbalExtension->getDbIndexName('addIndex', $this->dbalSchema(), $table, $name);
 
     // Delegate to DBAL extension.
@@ -688,13 +672,11 @@ class Schema extends DatabaseSchema {
    * {@inheritdoc}
    */
   public function dropIndex($table, $name) {
-    assert($this->connection instanceof Connection);
-
     if (!$this->indexExists($table, $name)) {
       return FALSE;
     }
 
-    $table_full_name = $this->connection->getPrefixedTableName($table);
+    $table_full_name = $this->connection()->getPrefixedTableName($table);
     $index_full_name = $this->dbalExtension->getDbIndexName('dropIndex', $this->dbalSchema(), $table, $name);
 
     // Delegate to DBAL extension.
@@ -828,7 +810,7 @@ class Schema extends DatabaseSchema {
     }
 
     // DBAL extension did not pick up, proceed with DBAL.
-    return $this->dbalSchemaManager->tablesExist([$this->connection->getPrefixedTableName($table)]);
+    return $this->dbalSchemaManager->tablesExist([$this->connection()->getPrefixedTableName($table)]);
   }
 
   /**
@@ -845,7 +827,7 @@ class Schema extends DatabaseSchema {
       return FALSE;
     }
     // Column name must not be quoted here.
-    return in_array($this->dbalExtension->getDbFieldName($column, FALSE), array_keys($this->dbalSchemaManager->listTableColumns($this->connection->getPrefixedTableName($table))));
+    return in_array($this->dbalExtension->getDbFieldName($column, FALSE), array_keys($this->dbalSchemaManager->listTableColumns($this->connection()->getPrefixedTableName($table))));
   }
 
   /**
@@ -854,7 +836,7 @@ class Schema extends DatabaseSchema {
    * @return \Doctrine\DBAL\Schema\Schema
    *   The DBAL schema of the database.
    */
-  protected function dbalSchema() {
+  private function dbalSchema() {
     if ($this->dbalCurrentSchema === NULL) {
       $this->dbalSetCurrentSchema($this->dbalSchemaManager->createSchema());
     }
@@ -869,7 +851,7 @@ class Schema extends DatabaseSchema {
    *
    * @return $this
    */
-  protected function dbalSetCurrentSchema(DbalSchema $dbal_schema = NULL) {
+  private function dbalSetCurrentSchema(DbalSchema $dbal_schema = NULL) {
     $this->dbalCurrentSchema = $dbal_schema;
     return $this;
   }
@@ -892,13 +874,13 @@ class Schema extends DatabaseSchema {
    * @return bool
    *   TRUE if no exceptions were raised.
    */
-  protected function dbalExecuteSchemaChange(DbalSchema $to_schema) {
+  private function dbalExecuteSchemaChange(DbalSchema $to_schema) {
     $schema_diff = (new Comparator())->compareSchemas($this->dbalSchema(), $to_schema);
     foreach ($schema_diff->toSql($this->dbalPlatform) as $sql) {
       if ($this->dbalExtension->getDebugging()) {
         dump($sql);
       }
-      $this->connection->getDbalConnection()->executeStatement($sql);
+      $this->connection()->getDbalConnection()->executeStatement($sql);
     }
     $this->dbalSetCurrentSchema($to_schema);
     return TRUE;
@@ -935,7 +917,7 @@ class Schema extends DatabaseSchema {
   public function findTables($table_expression) {
     $tables = [];
     foreach ($this->dbalExtension->delegateListTableNames() as $table_name) {
-      $unprefixed_table_name = $this->dbalExtension->getDrupalTableName($this->connection->tablePrefix(), $table_name);
+      $unprefixed_table_name = $this->dbalExtension->getDrupalTableName($this->connection()->tablePrefix(), $table_name);
       if ($unprefixed_table_name !== NULL && $unprefixed_table_name !== '') {
         $tables[$unprefixed_table_name] = $unprefixed_table_name;
       }
