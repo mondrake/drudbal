@@ -105,8 +105,8 @@ class StatementWrapper extends BaseStatementWrapper {
    *
    * @param \Drupal\drudbal\Driver\Database\dbal\Connection $connection
    *   The database connection object for this statement.
-   * @param object $client_connection
-   *   Client database connection object, for example \PDO.
+   * @param \Doctrine\DBAL\Connection $dbal_connection
+   *   DBAL connection object.
    * @param string $query
    *   A string containing an SQL query.
    * @param array $driver_options
@@ -114,12 +114,12 @@ class StatementWrapper extends BaseStatementWrapper {
    * @param bool $row_count_enabled
    *   (optional) Enables counting the rows affected. Defaults to FALSE.
    */
-  public function __construct(DruDbalConnection $connection, DbalConnection $client_connection, string $query, array $driver_options = [], bool $row_count_enabled = FALSE) {
+  public function __construct(DruDbalConnection $connection, DbalConnection $dbal_connection, string $query, array $driver_options = [], bool $row_count_enabled = FALSE) {
     $this->connection = $connection;
     $this->rowCountEnabled = $row_count_enabled;
 
     $this->queryString = $query;
-    $this->dbalConnection = $client_connection;
+    $this->dbalConnection = $dbal_connection;
     $this->setFetchMode(\PDO::FETCH_OBJ);
     $this->driverOpts = $driver_options;
   }

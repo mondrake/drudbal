@@ -822,7 +822,9 @@ PLSQL
     $sql[] = "ALTER TABLE $db_table ADD $db_field $column_definition";
 
     if ($drupal_field_specs['type'] === 'serial') {
-      $autoincrement_sql = $this->connection->getDbalPlatform()->getCreateAutoincrementSql($db_field, $db_table);
+      /** @var OraclePlatform $platform */
+      $platform = $this->connection->getDbalPlatform();
+      $autoincrement_sql = $platform->getCreateAutoincrementSql($db_field, $db_table);
       // Remove the auto primary key generation, which is the first element in
       // the array.
       array_shift($autoincrement_sql);
@@ -930,7 +932,9 @@ PLSQL
 
     if ($new_db_field_is_serial) {
       $prev_max_sequence = (int) $this->connection->query("SELECT MAX({$db_field}) FROM {$db_table}")->fetchField() ?? 0;
-      $autoincrement_sql = $this->connection->getDbalPlatform()->getCreateAutoincrementSql($new_db_field, $db_table);
+      /** @var OraclePlatform $platform */
+      $platform = $this->connection->getDbalPlatform();
+      $autoincrement_sql = $platform->getCreateAutoincrementSql($new_db_field, $db_table);
       // Remove the auto primary key generation, which is the first element in
       // the array.
       array_shift($autoincrement_sql);
