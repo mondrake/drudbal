@@ -5,7 +5,8 @@ namespace Drupal\drudbal\Driver\Database\dbal\Statement;
 use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\Exception as DbalException;
 use Doctrine\DBAL\FetchMode;
-use Doctrine\DBAL\Result;
+use Doctrine\DBAL\Result as DbalResult;
+use Doctrine\DBAL\Statement as DbalStatement;
 use Drupal\Core\Database\Database;
 use Drupal\Core\Database\DatabaseExceptionWrapper;
 use Drupal\Core\Database\RowCountException;
@@ -38,10 +39,8 @@ class PrefetchingStatementWrapper implements \IteratorAggregate, StatementInterf
 
   /**
    * The DBAL statement.
-   *
-   * @var \Doctrine\DBAL\Statement
    */
-  protected $dbalStatement;
+  protected ?DbalStatement $dbalStatement;
 
   /**
    * The DBAL client connection.
@@ -52,10 +51,8 @@ class PrefetchingStatementWrapper implements \IteratorAggregate, StatementInterf
 
   /**
    * The DBAL executed statement result.
-   *
-   * @var \Doctrine\DBAL\Result
    */
-  protected $dbalResult;
+  protected ?DbalResult $dbalResult;
 
   /**
    * Holds supplementary driver options.
@@ -109,7 +106,7 @@ class PrefetchingStatementWrapper implements \IteratorAggregate, StatementInterf
   /**
    * The current row, retrieved in \PDO::FETCH_ASSOC format.
    */
-  protected array $currentRow;
+  protected ?array $currentRow;
 
   /**
    * The key of the current row.
