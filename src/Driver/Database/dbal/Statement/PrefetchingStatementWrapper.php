@@ -304,7 +304,6 @@ class PrefetchingStatementWrapper implements \IteratorAggregate, StatementInterf
   public function fetch($mode = NULL, $cursor_orientation = NULL, $cursor_offset = NULL) {
     if (isset($this->currentRow)) {
       // Set the fetch parameter.
-      $this->fetchStyle = $this->fetchStyle ?? $this->defaultFetchStyle;
       $this->fetchOptions = $this->defaultFetchOptions;
 
       // Grab the row in the format specified above.

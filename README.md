@@ -3,7 +3,7 @@
 [![MySql via mysqli](https://github.com/mondrake/drudbal/actions/workflows/mysqli.yml/badge.svg)](https://github.com/mondrake/drudbal/actions/workflows/mysqli.yml)
 [![SQLite via PDO](https://github.com/mondrake/drudbal/actions/workflows/sqlite.yml/badge.svg)](https://github.com/mondrake/drudbal/actions/workflows/sqlite.yml)
 [![Oracle via oci8](https://github.com/mondrake/drudbal/actions/workflows/oracle.yml/badge.svg)](https://github.com/mondrake/drudbal/actions/workflows/oracle.yml)
-[![PHPStan level](https://img.shields.io/badge/PHPStan%20level-3-brightgreen.svg?style=flat)](https://github.com/mondrake/drudbal/actions/workflows/code-quality.yml)
+[![PHPStan level](https://img.shields.io/badge/PHPStan%20level-4-brightgreen.svg?style=flat)](https://github.com/mondrake/drudbal/actions/workflows/code-quality.yml)
 [![License](https://img.shields.io/github/license/mondrake/drudbal.svg)](https://packagist.org/packages/mondrake/drudbal)
 
 (This README updated March 30, 2020)

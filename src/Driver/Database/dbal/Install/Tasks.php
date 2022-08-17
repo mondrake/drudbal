@@ -223,7 +223,7 @@ class Tasks extends InstallTasks {
       $form_state->setValue(['dbal', 'database'], substr($uri->getPath(), 1));
       $form_state->setValue(['dbal', 'username'], $user_info_elements[0]);
       $form_state->setValue(['dbal', 'password'], $user_info_elements[1] ?? '');
-      $form_state->setValue(['dbal', 'host'], $uri->getHost() ?? NULL);
+      $form_state->setValue(['dbal', 'host'], $uri->getHost());
       $form_state->setValue(['dbal', 'port'], $uri->getPort() ?? NULL);
       $form_state->setValue(['dbal', 'dbal_driver'], $uri->getScheme());
     }
