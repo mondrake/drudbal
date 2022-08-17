@@ -123,7 +123,7 @@ class Oci8Extension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function getDbAliasstring $alias, bool $quoted = TRUE): string {
+  public function getDbAlias(string $alias, bool $quoted = TRUE): string {
     if ($alias === '') {
       return '';
     }

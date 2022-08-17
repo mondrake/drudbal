@@ -139,7 +139,7 @@ class StatementWrapper extends BaseStatementWrapper {
    */
   public function execute($args = [], $options = []) {
     /** @var Statement|null $clientStatement */
-    $clientStatement = this->clientStatement;
+    $clientStatement = $this->clientStatement;
 
     $args = $args ?? [];
 
