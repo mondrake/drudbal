@@ -8,6 +8,7 @@ use Doctrine\DBAL\Result as DbalResult;
 use Doctrine\DBAL\Schema\Column as DbalColumn;
 use Doctrine\DBAL\Schema\Schema as DbalSchema;
 use Doctrine\DBAL\Schema\Table as DbalTable;
+use Drupal\Core\Database\DatabaseExceptionWrapper;
 
 /**
  * Provides an interface for Dbal extensions.
@@ -305,7 +306,7 @@ interface DbalExtensionInterface {
    *   An array of options on the query.
    * @param string $message
    *   The message to be re-thrown.
-   * @param \Exception $e
+   * @param DbalDriverException|DatabaseExceptionWrapper $e
    *   The exception thrown by query().
    *
    * @throws \Drupal\Core\Database\IntegrityConstraintViolationException
@@ -313,7 +314,7 @@ interface DbalExtensionInterface {
    * @throws \Drupal\Core\Database\DatabaseExceptionWrapper
    *   For any other error.
    */
-  public function delegateQueryExceptionProcess($query, array $args, array $options, $message, \Exception $e);
+  public function delegateQueryExceptionProcess($query, array $args, array $options, $message, DbalDriverException|DatabaseExceptionWrapper $e);
 
   /**
    * Runs a limited-range query.
