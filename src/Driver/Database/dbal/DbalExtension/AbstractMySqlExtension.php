@@ -257,6 +257,7 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
     if ($e instanceof DatabaseExceptionWrapper) {
       $e = $e->getPrevious();
     }
+    assert($e instanceof DbalDriverException);
     if (substr($e->getSqlState(), -6, -3) == '23' || $e->getCode() == 1364) {
       // Match all SQLSTATE 23xxx errors.
       // In case of attempted INSERT of a record with an undefined column and

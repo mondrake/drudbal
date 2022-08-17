@@ -8,5 +8,7 @@ parameters:
     - tests
 
   ignoreErrors:
-    # \PDO::sqliteCreateCollation not identified by PHPStan
+    # \PDO::sqliteCreateCollation not identified by PHPStan.
     - "#^Call to an undefined method PDO::sqliteCreateCollation\\(\\)#"
+    # Drupal's Insert::execute method is wrongly typehinted.
+    - "#^Method Drupal\drudbal\Driver\Database\dbal\Insert::execute\\(\\) should return Drupal\\\\Core\\\\Database\\\\StatementInterface\\|null but returns int\\|string\\|null#"

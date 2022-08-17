@@ -41,7 +41,7 @@ class PrefetchingStatementWrapper implements \IteratorAggregate, StatementInterf
    *
    * @var \Doctrine\DBAL\Statement
    */
-  protected $dbalStatement = NULL;
+  protected $dbalStatement;
 
   /**
    * The DBAL client connection.
@@ -55,7 +55,7 @@ class PrefetchingStatementWrapper implements \IteratorAggregate, StatementInterf
    *
    * @var \Doctrine\DBAL\Result
    */
-  protected $dbalResult = NULL;
+  protected $dbalResult;
 
   /**
    * Holds supplementary driver options.
@@ -108,38 +108,28 @@ class PrefetchingStatementWrapper implements \IteratorAggregate, StatementInterf
 
   /**
    * The current row, retrieved in \PDO::FETCH_ASSOC format.
-   *
-   * @var array
    */
-  protected $currentRow = NULL;
+  protected array $currentRow;
 
   /**
    * The key of the current row.
-   *
-   * @var int
    */
-  protected $currentKey = NULL;
+  protected int $currentKey;
 
   /**
    * The list of column names in this result set.
-   *
-   * @var array
    */
-  protected $columnNames = NULL;
+  protected array $columnNames;
 
   /**
    * The number of rows affected by the last query.
-   *
-   * @var int
    */
-  protected $rowCount = NULL;
+  protected int $rowCount;
 
   /**
    * The number of rows in this result set.
-   *
-   * @var int
    */
-  protected $resultRowCount = 0;
+  protected int $resultRowCount = 0;
 
   /**
    * Holds the current fetch style (which will be used by the next fetch).
