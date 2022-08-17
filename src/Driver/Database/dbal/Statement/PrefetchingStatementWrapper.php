@@ -220,7 +220,7 @@ class PrefetchingStatementWrapper implements \IteratorAggregate, StatementInterf
     $args = $args ?? [];
 
     // Prepare the lower-level statement if it's not been prepared already.
-    if (!$this->dbalStatement) {
+    if (!isset($this->dbalStatement)) {
       // Replace named placeholders with positional ones if needed.
       if (!$this->connection()->getDbalExtension()->delegateNamedPlaceholdersSupport()) {
         $this->paramsPositions = array_flip(array_keys($args));
