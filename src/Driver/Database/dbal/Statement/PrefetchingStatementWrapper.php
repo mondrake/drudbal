@@ -214,7 +214,9 @@ class PrefetchingStatementWrapper implements \IteratorAggregate, StatementInterf
    * Returns the DruDbal connection.
    */
   private function connection(): DruDbalConnection {
-    return $this->connection;
+    $connection = $this->connection;
+    assert($connection instanceof DruDbalConnection);
+    return $connection;
   }
 
   /**

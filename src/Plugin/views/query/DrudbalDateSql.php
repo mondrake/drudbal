@@ -29,7 +29,9 @@ class DrudbalDateSql implements DateSqlInterface {
    * Returns the DruDbal connection.
    */
   private function connection(): DruDbalConnection {
-    return $this->database;
+    $connection = $this->database;
+    assert($connection instanceof DruDbalConnection);
+    return $connection;
   }
 
   /**
