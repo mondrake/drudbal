@@ -893,7 +893,7 @@ class Schema extends DatabaseSchema {
    *
    * Normalizes fields with length to field name only.
    *
-   * @param array[] $fields
+   * @param list<string|array> $fields
    *   An array of field description arrays, as specified in the schema
    *   documentation.
    *
