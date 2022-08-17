@@ -6,6 +6,7 @@ use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\Exception as DbalException;
 use Doctrine\DBAL\FetchMode;
 use Doctrine\DBAL\Result;
+use Doctrine\DBAL\Statement;
 use Drupal\Core\Database\Database;
 use Drupal\Core\Database\DatabaseExceptionWrapper;
 use Drupal\Core\Database\RowCountException;
@@ -137,10 +138,13 @@ class StatementWrapper extends BaseStatementWrapper {
    * {@inheritdoc}
    */
   public function execute($args = [], $options = []) {
+    /** @var Statement|null $clientStatement */
+    $clientStatement = this->clientStatement;
+
     $args = $args ?? [];
 
     // Prepare the lower-level statement if it's not been prepared already.
-    if (!$this->clientStatement) {
+    if (!isset($clientStatement)) {
       // Replace named placeholders with positional ones if needed.
       if (!$this->connection()->getDbalExtension()->delegateNamedPlaceholdersSupport()) {
         $this->paramsPositions = array_flip(array_keys($args));

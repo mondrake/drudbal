@@ -96,8 +96,8 @@ class Oci8Extension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function getDbFieldName($field_name, bool $quoted = TRUE) {
-    if ($field_name === NULL || $field_name === '') {
+  public function getDbFieldName(string $field_name, bool $quoted = TRUE): string {
+    if ($field_name === '') {
       return '';
     }
 
@@ -123,8 +123,8 @@ class Oci8Extension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function getDbAlias($alias, bool $quoted = TRUE) {
-    if ($alias === NULL || $alias === '') {
+  public function getDbAliasstring $alias, bool $quoted = TRUE): string {
+    if ($alias === '') {
       return '';
     }
 
@@ -931,7 +931,7 @@ PLSQL
     }
 
     if ($new_db_field_is_serial) {
-      $prev_max_sequence = (int) $this->connection->query("SELECT MAX({$db_field}) FROM {$db_table}")->fetchField() ?? 0;
+      $prev_max_sequence = (int) $this->connection->query("SELECT MAX({$db_field}) FROM {$db_table}")->fetchField();
       /** @var OraclePlatform $platform */
       $platform = $this->connection->getDbalPlatform();
       $autoincrement_sql = $platform->getCreateAutoincrementSql($new_db_field, $db_table);

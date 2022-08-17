@@ -111,27 +111,13 @@ interface DbalExtensionInterface {
 
   /**
    * Get the database field name, resolving platform specific constraints.
-   *
-   * @param string $field_name
-   *   The name of the field in question.
-   * @todo
-   *
-   * @return string
-   *   The database field name.
    */
-  public function getDbFieldName($field_name, bool $quoted = TRUE);
+  public function getDbFieldName(string $field_name, bool $quoted = TRUE): string;
 
   /**
    * Get a valid alias, resolving platform specific constraints.
-   *
-   * @param string $alias
-   *   An alias.
-   * @todo
-   *
-   * @return string
-   *   The alias usable in the DBMS.
    */
-  public function getDbAlias($alias, bool $quoted = TRUE);
+  public function getDbAlias(string $alias, bool $quoted = TRUE): string;
 
   /**
    * Replaces unconstrained alias in a string.
