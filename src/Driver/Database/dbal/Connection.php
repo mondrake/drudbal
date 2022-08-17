@@ -199,7 +199,9 @@ class Connection extends DatabaseConnection {
     if (!isset($this->schema)) {
       $this->schema = new Schema($this);
     }
-    return $this->schema;
+    $schema = $this->schema;
+    assert($schema instanceof Schema);
+    return $schema;
   }
 
   /**

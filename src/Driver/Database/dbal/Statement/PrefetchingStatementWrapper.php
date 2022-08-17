@@ -5,7 +5,8 @@ namespace Drupal\drudbal\Driver\Database\dbal\Statement;
 use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\Exception as DbalException;
 use Doctrine\DBAL\FetchMode;
-use Doctrine\DBAL\Result;
+use Doctrine\DBAL\Result as DbalResult;
+use Doctrine\DBAL\Statement as DbalStatement;
 use Drupal\Core\Database\Database;
 use Drupal\Core\Database\DatabaseExceptionWrapper;
 use Drupal\Core\Database\RowCountException;
@@ -38,10 +39,8 @@ class PrefetchingStatementWrapper implements \IteratorAggregate, StatementInterf
 
   /**
    * The DBAL statement.
-   *
-   * @var \Doctrine\DBAL\Statement
    */
-  protected $dbalStatement = NULL;
+  protected ?DbalStatement $dbalStatement;
 
   /**
    * The DBAL client connection.
@@ -52,10 +51,8 @@ class PrefetchingStatementWrapper implements \IteratorAggregate, StatementInterf
 
   /**
    * The DBAL executed statement result.
-   *
-   * @var \Doctrine\DBAL\Result
    */
-  protected $dbalResult = NULL;
+  protected ?DbalResult $dbalResult;
 
   /**
    * Holds supplementary driver options.
@@ -108,38 +105,28 @@ class PrefetchingStatementWrapper implements \IteratorAggregate, StatementInterf
 
   /**
    * The current row, retrieved in \PDO::FETCH_ASSOC format.
-   *
-   * @var array
    */
-  protected $currentRow = NULL;
+  protected ?array $currentRow;
 
   /**
    * The key of the current row.
-   *
-   * @var int
    */
-  protected $currentKey = NULL;
+  protected int $currentKey;
 
   /**
    * The list of column names in this result set.
-   *
-   * @var array
    */
-  protected $columnNames = NULL;
+  protected array $columnNames;
 
   /**
    * The number of rows affected by the last query.
-   *
-   * @var int
    */
-  protected $rowCount = NULL;
+  protected int $rowCount;
 
   /**
    * The number of rows in this result set.
-   *
-   * @var int
    */
-  protected $resultRowCount = 0;
+  protected int $resultRowCount = 0;
 
   /**
    * Holds the current fetch style (which will be used by the next fetch).
@@ -214,7 +201,9 @@ class PrefetchingStatementWrapper implements \IteratorAggregate, StatementInterf
    * Returns the DruDbal connection.
    */
   private function connection(): DruDbalConnection {
-    return $this->connection;
+    $connection = $this->connection;
+    assert($connection instanceof DruDbalConnection);
+    return $connection;
   }
 
   /**
@@ -231,7 +220,7 @@ class PrefetchingStatementWrapper implements \IteratorAggregate, StatementInterf
     $args = $args ?? [];
 
     // Prepare the lower-level statement if it's not been prepared already.
-    if (!$this->dbalStatement) {
+    if (!isset($this->dbalStatement)) {
       // Replace named placeholders with positional ones if needed.
       if (!$this->connection()->getDbalExtension()->delegateNamedPlaceholdersSupport()) {
         $this->paramsPositions = array_flip(array_keys($args));

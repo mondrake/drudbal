@@ -9,6 +9,7 @@ use Doctrine\DBAL\Schema\Column as DbalColumn;
 use Doctrine\DBAL\Schema\Schema as DbalSchema;
 use Doctrine\DBAL\Schema\Table as DbalTable;
 use Doctrine\DBAL\Statement as DbalStatement;
+use Drupal\Core\Database\DatabaseExceptionWrapper;
 use Drupal\drudbal\Driver\Database\dbal\Connection as DruDbalConnection;
 use Drupal\drudbal\Driver\Database\dbal\Statement\StatementWrapper;
 
@@ -58,7 +59,7 @@ class AbstractExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function delegateQueryExceptionProcess($query, array $args, array $options, $message, \Exception $e) {
+  public function delegateQueryExceptionProcess($query, array $args, array $options, $message, DbalDriverException|DatabaseExceptionWrapper $e) {
     throw new \LogicException("Method " . __METHOD__ . "() not implemented.");
   }
 

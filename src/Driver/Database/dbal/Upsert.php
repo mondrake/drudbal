@@ -30,7 +30,9 @@ class Upsert extends QueryUpsert {
    * Returns the DruDbal connection.
    */
   private function connection(): Connection {
-    return $this->connection;
+    $connection = $this->connection;
+    assert($connection instanceof Connection);
+    return $connection;
   }
 
   /**
@@ -43,7 +45,7 @@ class Upsert extends QueryUpsert {
     // @see https://github.com/doctrine/dbal/issues/1320
     // @todo what to do if no transaction support.
     if (!$this->preExecute()) {
-      return NULL;
+      return 0;
     }
 
     $sql = (string) $this;

@@ -255,7 +255,7 @@ class Oci8Extension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateQueryExceptionProcess($query, array $args, array $options, $message, \Exception $e) {
+  public function delegateQueryExceptionProcess($query, array $args, array $options, $message, DbalDriverException|DatabaseExceptionWrapper $e) {
     if ($e instanceof DatabaseExceptionWrapper) {
       $e = $e->getPrevious();
     }

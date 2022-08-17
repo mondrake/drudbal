@@ -69,7 +69,9 @@ class Schema extends DatabaseSchema {
    * Returns the DruDbal connection.
    */
   private function connection(): Connection {
-    return $this->connection;
+    $connection = $this->connection;
+    assert($connection instanceof Connection);
+    return $connection;
   }
 
   /**
