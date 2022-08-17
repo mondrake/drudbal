@@ -5,6 +5,7 @@ namespace Drupal\drudbal\Driver\Database\dbal;
 use Doctrine\DBAL\Exception\DatabaseObjectNotFoundException;
 use Drupal\Core\Database\IntegrityConstraintViolationException;
 use Drupal\Core\Database\Query\Insert as QueryInsert;
+use Drupal\Core\Database\Query\SelectInterface;
 
 /**
  * DruDbal implementation of \Drupal\Core\Database\Query\Insert.
@@ -45,9 +46,12 @@ class Insert extends QueryInsert {
 
     $sql = (string) $this;
 
+    /** @var SelectInterface|null $fromQuery */
+    $fromQuery = $this->fromQuery;
+
     // DBAL does not support multiple insert statements. In such case, open a
     // transaction, and process separately each values set.
-    if ((count($this->insertValues) > 1 || isset($this->fromQuery))) {
+    if ((count($this->insertValues) > 1 || !empty($fromQuery))) {
       // @codingStandardsIgnoreLine
       $trn = $this->connection()->startTransaction();
     }
@@ -57,7 +61,7 @@ class Insert extends QueryInsert {
     $sequence_name = $this->connection()->getDbalExtension()->getSequenceNameForInsert($this->table);
 
     $last_insert_id = NULL;
-    if (empty($this->fromQuery)) {
+    if (empty($fromQuery)) {
       // Deal with a single INSERT or a bulk INSERT.
       if ($this->insertValues) {
         foreach ($this->insertValues as $insert_values) {
@@ -113,7 +117,7 @@ class Insert extends QueryInsert {
       // Deal with a INSERT INTO ... SELECT construct, that DBAL does not
       // support natively. Execute the SELECT subquery and INSERT its rows'
       // values to the target table.
-      $rows = $this->fromQuery->execute();
+      $rows = $fromQuery->execute();
       foreach ($rows as $row) {
         $max_placeholder = 0;
         $values = [];
@@ -156,6 +160,9 @@ class Insert extends QueryInsert {
    * {@inheritdoc}
    */
   public function __toString() {
+    /** @var SelectInterface|null $fromQuery */
+    $fromQuery = $this->fromQuery;
+
     $comments = $this->connection()->makeComment($this->comments);
     $dbal_connection = $this->connection()->getDbalConnection();
     $dbal_extension = $this->connection()->getDbalExtension();
@@ -163,7 +170,7 @@ class Insert extends QueryInsert {
     $sql = '';
 
     // Use special syntax, if available, for an insert of only default values.
-    if (count($this->insertFields) === 0 && empty($this->fromQuery) && $dbal_extension->delegateDefaultsOnlyInsertSql($sql, $this->table)) {
+    if (count($this->insertFields) === 0 && empty($fromQuery) && $dbal_extension->delegateDefaultsOnlyInsertSql($sql, $this->table)) {
       return $comments . $sql;
     }
 
@@ -175,7 +182,7 @@ class Insert extends QueryInsert {
     // select (i.e. we have a SELECT * FROM ...), then we have to fetch the
     // target column names from the table to be INSERTed to, since DBAL does
     // not support 'INSERT INTO ... SELECT * FROM' constructs.
-    if (!empty($this->fromQuery) && empty($this->fromQuery->getFields())) {
+    if (!empty($fromQuery) && empty($fromQuery->getFields())) {
       $insert_fields = array_keys($dbal_connection->createSchemaManager()->listTableColumns($this->connection()->getPrefixedTableName($this->table)));
     }
     else {
