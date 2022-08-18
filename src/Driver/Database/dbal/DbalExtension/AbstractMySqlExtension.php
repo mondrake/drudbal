@@ -269,7 +269,7 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
       // This should prevent the error from recurring if the exception is
       // logged to the database using dblog or the like.
       $message = Unicode::truncateBytes($e->getMessage(), self::MIN_MAX_ALLOWED_PACKET);
-      throw new DatabaseExceptionWrapper($message, $e->getSqlState(), $e);
+      throw new DatabaseExceptionWrapper($message, (int) $e->getSqlState(), $e);
     }
     else {
       throw new DatabaseExceptionWrapper($message, 0, $e);
