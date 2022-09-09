@@ -333,9 +333,7 @@ class PDOSqliteExtension extends AbstractExtension {
     ];
 
     // Execute sqlite init_commands.
-    if (isset($connection_options['init_commands'])) {
-      $dbal_connection->executeStatement(implode('; ', $connection_options['init_commands']));
-    }
+    $dbal_connection->executeStatement(implode('; ', $connection_options['init_commands']));
   }
 
   /**
