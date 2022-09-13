@@ -5,7 +5,8 @@ namespace Drupal\drudbal\Driver\Database\dbal\Statement;
 use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\Exception as DbalException;
 use Doctrine\DBAL\FetchMode;
-use Doctrine\DBAL\Result;
+use Doctrine\DBAL\Result as DbalResult;
+use Doctrine\DBAL\Statement as DbalStatement;
 use Drupal\Core\Database\Database;
 use Drupal\Core\Database\DatabaseExceptionWrapper;
 use Drupal\Core\Database\RowCountException;
@@ -38,10 +39,8 @@ class PrefetchingStatementWrapper implements \IteratorAggregate, StatementInterf
 
   /**
    * The DBAL statement.
-   *
-   * @var \Doctrine\DBAL\Statement
    */
-  protected $dbalStatement = NULL;
+  protected ?DbalStatement $dbalStatement;
 
   /**
    * The DBAL client connection.
@@ -52,10 +51,8 @@ class PrefetchingStatementWrapper implements \IteratorAggregate, StatementInterf
 
   /**
    * The DBAL executed statement result.
-   *
-   * @var \Doctrine\DBAL\Result
    */
-  protected $dbalResult = NULL;
+  protected ?DbalResult $dbalResult;
 
   /**
    * Holds supplementary driver options.
@@ -108,38 +105,28 @@ class PrefetchingStatementWrapper implements \IteratorAggregate, StatementInterf
 
   /**
    * The current row, retrieved in \PDO::FETCH_ASSOC format.
-   *
-   * @var array
    */
-  protected $currentRow = NULL;
+  protected ?array $currentRow;
 
   /**
    * The key of the current row.
-   *
-   * @var int
    */
-  protected $currentKey = NULL;
+  protected int $currentKey;
 
   /**
    * The list of column names in this result set.
-   *
-   * @var array
    */
-  protected $columnNames = NULL;
+  protected array $columnNames;
 
   /**
    * The number of rows affected by the last query.
-   *
-   * @var int
    */
-  protected $rowCount = NULL;
+  protected int $rowCount;
 
   /**
    * The number of rows in this result set.
-   *
-   * @var int
    */
-  protected $resultRowCount = 0;
+  protected int $resultRowCount = 0;
 
   /**
    * Holds the current fetch style (which will be used by the next fetch).
@@ -191,8 +178,8 @@ class PrefetchingStatementWrapper implements \IteratorAggregate, StatementInterf
    *
    * @param \Drupal\drudbal\Driver\Database\dbal\Connection $connection
    *   The database connection object for this statement.
-   * @param object $client_connection
-   *   Client database connection object, for example \PDO.
+   * @param \Doctrine\DBAL\Connection $dbal_connection
+   *   DBAL connection object.
    * @param string $query
    *   A string containing an SQL query.
    * @param array $driver_options
@@ -200,21 +187,30 @@ class PrefetchingStatementWrapper implements \IteratorAggregate, StatementInterf
    * @param bool $row_count_enabled
    *   (optional) Enables counting the rows affected. Defaults to FALSE.
    */
-  public function __construct(DruDbalConnection $connection, DbalConnection $client_connection, string $query, array $driver_options = [], bool $row_count_enabled = FALSE) {
+  public function __construct(DruDbalConnection $connection, DbalConnection $dbal_connection, string $query, array $driver_options = [], bool $row_count_enabled = FALSE) {
     $this->connection = $connection;
     $this->rowCountEnabled = $row_count_enabled;
 
     $this->queryString = $query;
-    $this->dbalConnection = $client_connection;
+    $this->dbalConnection = $dbal_connection;
     $this->setFetchMode(\PDO::FETCH_OBJ);
     $this->driverOpts = $driver_options;
+  }
+
+  /**
+   * Returns the DruDbal connection.
+   */
+  private function connection(): DruDbalConnection {
+    $connection = $this->connection;
+    assert($connection instanceof DruDbalConnection);
+    return $connection;
   }
 
   /**
    * {@inheritdoc}
    */
   public function getConnectionTarget(): string {
-    return $this->connection->getTarget();
+    return $this->connection()->getTarget();
   }
 
   /**
@@ -224,23 +220,23 @@ class PrefetchingStatementWrapper implements \IteratorAggregate, StatementInterf
     $args = $args ?? [];
 
     // Prepare the lower-level statement if it's not been prepared already.
-    if (!$this->dbalStatement) {
+    if (!isset($this->dbalStatement)) {
       // Replace named placeholders with positional ones if needed.
-      if (!$this->connection->getDbalExtension()->delegateNamedPlaceholdersSupport()) {
+      if (!$this->connection()->getDbalExtension()->delegateNamedPlaceholdersSupport()) {
         $this->paramsPositions = array_flip(array_keys($args));
-        list($query, $args) = $this->connection->expandArrayParameters($this->queryString, $args, []);
+        list($query, $args) = $this->connection()->expandArrayParameters($this->queryString, $args, []);
         $this->queryString = $query;
       }
 
       try {
-        $this->connection->getDbalExtension()->alterStatement($this->queryString, $args);
-        $this->dbalStatement = $this->connection->getDbalConnection()->prepare($this->queryString);
+        $this->connection()->getDbalExtension()->alterStatement($this->queryString, $args);
+        $this->dbalStatement = $this->connection()->getDbalConnection()->prepare($this->queryString);
       }
       catch (DbalException $e) {
         throw new DatabaseExceptionWrapper($e->getMessage(), $e->getCode(), $e);
       }
     }
-    elseif (!$this->connection->getDbalExtension()->delegateNamedPlaceholdersSupport()) {
+    elseif (!$this->connection()->getDbalExtension()->delegateNamedPlaceholdersSupport()) {
       // Transform the $args to positional if needed.
       $tmp = [];
       foreach ($this->paramsPositions as $param => $pos) {
@@ -258,10 +254,8 @@ class PrefetchingStatementWrapper implements \IteratorAggregate, StatementInterf
       }
     }
 
-    $logger = $this->connection->getLogger();
-    if (!empty($logger)) {
-      $query_start = microtime(TRUE);
-    }
+    $logger = $this->connection()->getLogger();
+    $query_start = microtime(TRUE);
 
     try {
       $this->dbalResult = $this->dbalStatement->executeQuery($args);
@@ -296,8 +290,8 @@ class PrefetchingStatementWrapper implements \IteratorAggregate, StatementInterf
     // Initialize the first row in $this->currentRow.
     $this->next();
 
+    $query_end = microtime(TRUE);
     if (!empty($logger)) {
-      $query_end = microtime(TRUE);
       $logger->log($this, $args, $query_end - $query_start, $query_start);
     }
 
@@ -310,7 +304,6 @@ class PrefetchingStatementWrapper implements \IteratorAggregate, StatementInterf
   public function fetch($mode = NULL, $cursor_orientation = NULL, $cursor_offset = NULL) {
     if (isset($this->currentRow)) {
       // Set the fetch parameter.
-      $this->fetchStyle = isset($fetch_style) ? $fetch_style : $this->defaultFetchStyle;
       $this->fetchOptions = $this->defaultFetchOptions;
 
       // Grab the row in the format specified above.

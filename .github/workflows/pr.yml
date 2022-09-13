@@ -35,11 +35,6 @@ jobs:
           
         test-args:
           - "--group Database"
-#          - "--group Entity"
-#          - "--group Cache,Config"
-#          - "--group field,Field"
-#          - "--group file"
-#          - "--group views"
 
     steps:
     - name: Install PHP
@@ -63,14 +58,18 @@ jobs:
     - name: Install Composer dependencies
       run: |
         composer install --no-progress --ansi
-        # composer run-script drupal-phpunit-upgrade
         composer config --no-plugins allow-plugins.composer/package-versions-deprecated true
+        composer require --dev --ansi phpstan/phpstan-deprecation-rules
 
     - name: Composer require DruDbal from local staging
       run: |
         git -C drudbal_staging checkout -b test-run-branch
         composer config repositories.test-run '{"type": "path", "url": "drudbal_staging", "options": {"symlink": false}}'
         composer require "mondrake/drudbal:dev-test-run-branch" --no-progress --ansi
+
+    - name: PHPStan checks
+      run: |
+        php vendor/bin/phpstan analyze --no-progress --configuration="modules/contrib/drudbal/phpstan.neon.dist"
 
     - name: Install Drupal
       run: |

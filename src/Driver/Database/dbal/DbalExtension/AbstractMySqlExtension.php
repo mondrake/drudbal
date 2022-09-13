@@ -117,19 +117,13 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
 
   /**
    * Flag to indicate if the cleanup function in __destruct() should run.
-   *
-   * @var bool
    */
-  protected $needsCleanup = FALSE;
+  protected bool $needsCleanup = FALSE;
 
-  /**
-   * {@inheritdoc}
-   */
   public function __destruct() {
     if ($this->needsCleanup) {
       $this->nextIdDelete();
     }
-    parent::__destruct();
   }
 
   /**
@@ -226,7 +220,7 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
       $new_id = $this->connection->lastInsertId();
     }
     $this->needsCleanup = TRUE;
-    return $new_id;
+    return (int) $new_id;
   }
 
   /**
@@ -259,12 +253,15 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateQueryExceptionProcess($query, array $args, array $options, $message, \Exception $e) {
+  public function delegateQueryExceptionProcess($query, array $args, array $options, $message, DbalDriverException|DatabaseExceptionWrapper $e) {
     if ($e instanceof DatabaseExceptionWrapper) {
       $e = $e->getPrevious();
     }
-    // Match all SQLSTATE 23xxx errors.
-    if (method_exists($e, 'getSqlState') && substr($e->getSqlState(), -6, -3) == '23') {
+    assert($e instanceof DbalDriverException);
+    if (substr($e->getSqlState(), -6, -3) == '23' || $e->getCode() == 1364) {
+      // Match all SQLSTATE 23xxx errors.
+      // In case of attempted INSERT of a record with an undefined column and
+      // no default value indicated in schema, MySql returns a 1364 error code.
       throw new IntegrityConstraintViolationException($message, $e->getCode(), $e);
     }
     elseif ($e->getCode() == 1153) {
@@ -272,39 +269,11 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
       // This should prevent the error from recurring if the exception is
       // logged to the database using dblog or the like.
       $message = Unicode::truncateBytes($e->getMessage(), self::MIN_MAX_ALLOWED_PACKET);
-      throw new DatabaseExceptionWrapper($message, $e->getSqlState(), $e);
-    }
-    elseif ($e->getCode() == 1364) {
-      // In case of attempted INSERT of a record with an undefined column and
-      // no default value indicated in schema, MySql returns a 1364 error code.
-      throw new IntegrityConstraintViolationException($message, $e->getCode(), $e);
+      throw new DatabaseExceptionWrapper($message, (int) $e->getSqlState(), $e);
     }
     else {
       throw new DatabaseExceptionWrapper($message, 0, $e);
     }
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function getDbServerPlatform(bool $strict = FALSE): string {
-    if (!$strict) {
-      return 'mysql';
-    }
-    $dbal_server_version = $this->getDbalConnection()->getWrappedConnection()->getServerVersion();
-    $regex = '/^(?:5\.5\.5-)?(\d+\.\d+\.\d+.*-mariadb.*)/i';
-    preg_match($regex, $dbal_server_version, $matches);
-    return (empty($matches[1])) ? 'mysql' : 'mariadb';
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function getDbServerVersion(): string {
-    $dbal_server_version = $this->getDbalConnection()->getWrappedConnection()->getServerVersion();
-    $regex = '/^(?:5\.5\.5-)?(\d+\.\d+\.\d+.*-mariadb.*)/i';
-    preg_match($regex, $dbal_server_version, $matches);
-    return $matches[1] ?? $dbal_server_version;
   }
 
   /**

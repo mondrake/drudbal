@@ -6,6 +6,7 @@ use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\Exception as DbalException;
 use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
 use Doctrine\DBAL\Schema\Schema as DbalSchema;
+use Doctrine\DBAL\Types\Type as DbalType;
 use Drupal\Component\Uuid\Php as Uuid;
 use Drupal\Core\Database\Database;
 use Drupal\Core\Database\DatabaseExceptionWrapper;
@@ -14,6 +15,7 @@ use Drupal\Core\Database\IntegrityConstraintViolationException;
 use Drupal\drudbal\Driver\Database\dbal\Connection as DruDbalConnection;
 use Drupal\drudbal\Driver\Database\dbal\Statement\PrefetchingStatementWrapper;
 use Drupal\sqlite\Driver\Database\sqlite\Connection as SqliteConnectionBase;
+use Symfony\Component\Filesystem\Filesystem;
 
 /**
  * Driver specific methods for pdo_sqlite.
@@ -42,14 +44,14 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  protected $statementClass = PrefetchingStatementWrapper::class;
+  protected string $statementClass = PrefetchingStatementWrapper::class;
 
   /**
    * A map of condition operators to SQLite operators.
    *
-   * @var array
+   * @var array<string, array>
    */
-  protected static $sqliteConditionOperatorMap = [
+  protected static array $sqliteConditionOperatorMap = [
     'LIKE' => ['postfix' => " ESCAPE '\\'"],
     'NOT LIKE' => ['postfix' => " ESCAPE '\\'"],
     'LIKE BINARY' => ['postfix' => " ESCAPE '\\'", 'operator' => 'GLOB'],
@@ -62,25 +64,29 @@ class PDOSqliteExtension extends AbstractExtension {
    * This is used to allow prefixes to be safely handled without locking the
    * table.
    *
-   * @var array
+   * @var array<string, string>
    */
-  protected $attachedDatabases = [];
+  protected array $attachedDatabases = [];
 
   /**
    * Indicates that at least one table has been dropped during this request.
    *
    * The destructor will only try to get rid of unnecessary databases if there
    * is potential of them being empty.
-   *
-   * @var bool
    */
-  protected $tableDropped = FALSE;
+  protected bool $tableDropped = FALSE;
 
   /**
-   * {@inheritdoc}
+   * The low-level pdo_sqlite connection object.
    */
-  public function __construct(DruDbalConnection $drudbal_connection) {
-    parent::__construct($drudbal_connection);
+  protected \PDO $pdoSqliteConnection;
+
+  /**
+   * Constructs a pdo_sqlite extension object.
+   */
+  public function __construct(DruDbalConnection $connection) {
+    parent::__construct($connection);
+    $this->pdoSqliteConnection = $this->getDbalConnection()->getNativeConnection();
 
     // If a memory database, then do not try to attach databases per prefix.
     if ($this->connection->getConnectionOptions()['database'] === ':memory:') {
@@ -129,7 +135,6 @@ class PDOSqliteExtension extends AbstractExtension {
         }
       }
     }
-    parent::__destruct();
   }
 
   /**
@@ -147,13 +152,13 @@ class PDOSqliteExtension extends AbstractExtension {
    * {@inheritdoc}
    */
   public function delegateClientVersion() {
-    return $this->getDbalConnection()->getWrappedConnection()->getAttribute(\PDO::ATTR_CLIENT_VERSION);
+    return $this->pdoSqliteConnection->getAttribute(\PDO::ATTR_CLIENT_VERSION);
   }
 
   /**
    * {@inheritdoc}
    */
-  public function delegateQueryExceptionProcess($query, array $args, array $options, $message, \Exception $e) {
+  public function delegateQueryExceptionProcess($query, array $args, array $options, $message, DbalDriverException|DatabaseExceptionWrapper $e) {
     if ($e instanceof DatabaseExceptionWrapper) {
       $e = $e->getPrevious();
     }
@@ -184,6 +189,13 @@ class PDOSqliteExtension extends AbstractExtension {
   }
 
   /**
+   * {@inheritdoc}
+   */
+  public function getDbServerVersion(): string {
+    return $this->pdoSqliteConnection->getAttribute(\PDO::ATTR_SERVER_VERSION);
+  }
+
+  /**
    * Database asset name resolution methods.
    */
 
@@ -206,7 +218,7 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function getDbFullQualifiedTableName($drupal_table_name) {
+  public function getDbFullQualifiedTableName(string $drupal_table_name): string {
     $prefix = $this->connection->tablePrefix($drupal_table_name);
     return empty($prefix) ? 'main.' . $drupal_table_name : $prefix . '.' . $drupal_table_name;
   }
@@ -214,7 +226,7 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function getDbIndexName(string $context, DbalSchema $dbal_schema, string $drupal_table_name, string $drupal_index_name): string {
+  public function getDbIndexName(string $context, DbalSchema $dbal_schema, string $drupal_table_name, string $drupal_index_name): string|bool {
     // If checking for index existence or dropping, see if an index exists
     // with the Drupal name, regardless of prefix. A table can be renamed so
     // that the prefix is no longer relevant.
@@ -283,7 +295,8 @@ class PDOSqliteExtension extends AbstractExtension {
    * {@inheritdoc}
    */
   public static function postConnectionOpen(DbalConnection $dbal_connection, array &$connection_options, array &$dbal_connection_options) {
-    $pdo = $dbal_connection->getWrappedConnection()->getWrappedConnection();
+    /** @var \PDO $pdo */
+    $pdo = $dbal_connection->getNativeConnection();
 
     // Create functions needed by SQLite.
     $pdo->sqliteCreateFunction('if', [SqliteConnectionBase::class, 'sqlFunctionIf']);
@@ -320,9 +333,7 @@ class PDOSqliteExtension extends AbstractExtension {
     ];
 
     // Execute sqlite init_commands.
-    if (isset($connection_options['init_commands'])) {
-      $dbal_connection->executeStatement(implode('; ', $connection_options['init_commands']));
-    }
+    $dbal_connection->executeStatement(implode('; ', $connection_options['init_commands']));
   }
 
   /**
@@ -338,7 +349,7 @@ class PDOSqliteExtension extends AbstractExtension {
   public function preCreateDatabase($database_name) {
     // Verify the database is writable.
     $db_directory = new \SplFileInfo(dirname($database_name));
-    if (!$db_directory->isDir() && !drupal_mkdir($db_directory->getPathName(), 0755, TRUE)) {
+    if (!$db_directory->isDir() && !(new Filesystem())->mkdir($db_directory->getPathName(), 0755)) {
       throw new DatabaseNotFoundException('Unable to create database directory ' . $db_directory->getPathName());
     }
     return $this;
@@ -347,7 +358,7 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateMapConditionOperator($operator) {
+  public function delegateMapConditionOperator(string $operator): ?array {
     return isset(static::$sqliteConditionOperatorMap[$operator]) ? static::$sqliteConditionOperatorMap[$operator] : NULL;
   }
 
@@ -666,7 +677,7 @@ class PDOSqliteExtension extends AbstractExtension {
     ];
 
     // Ensure that Sqlite has the right minimum version.
-    $db_server_version = $this->getDbalConnection()->getWrappedConnection()->getServerVersion();
+    $db_server_version = $this->getDbServerVersion();
     if (version_compare($db_server_version, self::SQLITE_MINIMUM_VERSION, '<')) {
       $results['fail'][] = t("The Sqlite version %version is less than the minimum required version %minimum_version.", [
         '%version' => $db_server_version,
@@ -714,7 +725,7 @@ class PDOSqliteExtension extends AbstractExtension {
       $result = $this->getDbalConnection()->createSchemaManager()->tablesExist([$this->connection->getPrefixedTableName($drupal_table_name)]);
     }
     catch (DbalDriverException $e) {
-      if ($e->getCodeCode() === 17) {
+      if ($e->getCode() === 17) {
         $result = $this->getDbalConnection()->createSchemaManager()->tablesExist([$this->connection->getPrefixedTableName($drupal_table_name)]);
       }
       else {
@@ -1011,6 +1022,7 @@ class PDOSqliteExtension extends AbstractExtension {
    *   If a column of the table could not be parsed.
    */
   protected function buildTableSpecFromDbalSchema(DbalSchema $dbal_schema, $table) {
+    $typeRegistry = DbalType::getTypeRegistry();
     $mapped_fields = array_flip($this->connection->schema()->getFieldTypeMap());
     $schema = [
       'fields' => [],
@@ -1040,11 +1052,11 @@ class PDOSqliteExtension extends AbstractExtension {
     // Columns.
     $columns = $dbal_table->getColumns();
     foreach ($columns as $column) {
-      $dbal_type = $column->getType()->getName();
-      if (isset($mapped_fields[$dbal_type])) {
-        list($type, $size) = explode(':', $mapped_fields[$dbal_type]);
+      $dbal_type = $typeRegistry->lookupName($column->getType());
+      if (!isset($mapped_fields[$dbal_type])) {
+        throw new \RuntimeException('Invalid DBAL type ' . $dbal_type);
       }
-      $schema['fields'][$column->getName()] = [
+      [$type, $size] = explode(':', $mapped_fields[$dbal_type]);      $schema['fields'][$column->getName()] = [
         'size' => $size,
         'not null' => $column->getNotNull() || in_array($column->getName(), $primary_key_columns),
       ];

@@ -8,11 +8,28 @@ use Doctrine\DBAL\Result as DbalResult;
 use Doctrine\DBAL\Schema\Column as DbalColumn;
 use Doctrine\DBAL\Schema\Schema as DbalSchema;
 use Doctrine\DBAL\Schema\Table as DbalTable;
+use Drupal\Core\Database\DatabaseExceptionWrapper;
 
 /**
  * Provides an interface for Dbal extensions.
  */
 interface DbalExtensionInterface {
+
+  /**
+   * Sets debugging mode.
+   *
+   * @param bool $value
+   *   The debugging mode.
+   */
+  public function setDebugging(bool $value);
+
+  /**
+   * Gets debugging mode.
+   *
+   * @return bool
+   *   The debugging mode.
+   */
+  public function getDebugging(): bool;
 
   /**
    * Gets the DBAL connection.
@@ -90,31 +107,17 @@ interface DbalExtensionInterface {
    * @return string
    *   The database table name, including the schema prefix.
    */
-  public function getDbFullQualifiedTableName($drupal_table_name);
+  public function getDbFullQualifiedTableName(string $drupal_table_name): string;
 
   /**
    * Get the database field name, resolving platform specific constraints.
-   *
-   * @param string $field_name
-   *   The name of the field in question.
-   * @todo
-   *
-   * @return string
-   *   The database field name.
    */
-  public function getDbFieldName($field_name, bool $quoted = TRUE);
+  public function getDbFieldName(string $field_name, bool $quoted = TRUE): string;
 
   /**
    * Get a valid alias, resolving platform specific constraints.
-   *
-   * @param string $alias
-   *   An alias.
-   * @todo
-   *
-   * @return string
-   *   The alias usable in the DBMS.
    */
-  public function getDbAlias($alias, bool $quoted = TRUE);
+  public function getDbAlias(string $alias, bool $quoted = TRUE): string;
 
   /**
    * Replaces unconstrained alias in a string.
@@ -140,10 +143,11 @@ interface DbalExtensionInterface {
    * @param string $drupal_index_name
    *   A string with the Drupal name of the index.
    *
-   * @return string
-   *   A string with the name of the index to be used in the DBMS.
+   * @return string|bool
+   *   A string with the name of the index to be used in the DBMS, or false if
+   *   the name could not be calculated.
    */
-  public function getDbIndexName(string $context, DbalSchema $dbal_schema, string $drupal_table_name, string $drupal_index_name): string;
+  public function getDbIndexName(string $context, DbalSchema $dbal_schema, string $drupal_table_name, string $drupal_index_name): string|bool;
 
   /**
    * Get the Drupal index name, from a database-level index name.
@@ -258,12 +262,12 @@ interface DbalExtensionInterface {
    * @param string $operator
    *   The condition operator, such as "IN", "BETWEEN", etc. Case-sensitive.
    *
-   * @return array
+   * @return array|null
    *   The extra handling directives for the specified operator, or NULL.
    *
    * @see \Drupal\Core\Database\Connection
    */
-  public function delegateMapConditionOperator($operator);
+  public function delegateMapConditionOperator(string $operator): ?array;
 
   /**
    * Retrieves an unique ID.
@@ -288,7 +292,7 @@ interface DbalExtensionInterface {
    *   An array of options on the query.
    * @param string $message
    *   The message to be re-thrown.
-   * @param \Exception $e
+   * @param DbalDriverException|DatabaseExceptionWrapper $e
    *   The exception thrown by query().
    *
    * @throws \Drupal\Core\Database\IntegrityConstraintViolationException
@@ -296,7 +300,7 @@ interface DbalExtensionInterface {
    * @throws \Drupal\Core\Database\DatabaseExceptionWrapper
    *   For any other error.
    */
-  public function delegateQueryExceptionProcess($query, array $args, array $options, $message, \Exception $e);
+  public function delegateQueryExceptionProcess($query, array $args, array $options, $message, DbalDriverException|DatabaseExceptionWrapper $e);
 
   /**
    * Runs a limited-range query.
@@ -842,7 +846,7 @@ interface DbalExtensionInterface {
    *
    * @param string $drupal_table_name
    *   The Drupal name of the table.
-   * @param string $field_name
+   * @param string $drupal_field_name
    *   The Drupal name of the field.
    * @param array $drupal_field_specs
    *   The field specification array, as taken from a schema definition.
@@ -1010,7 +1014,7 @@ interface DbalExtensionInterface {
    * @param bool $primary_key_dropped_by_extension
    *   Passed by reference. Set to true if the extension dropped the primary
    *   key, to FALSE otherwise.
-   * @param bool $primary_key_constraint_name
+   * @param string $primary_key_asset_name
    *   Passed by reference. The database name of the object dropped, if
    *   available.
    * @param \Doctrine\DBAL\Schema\Schema $dbal_schema
@@ -1055,7 +1059,7 @@ interface DbalExtensionInterface {
    * @return string
    *   The table comment.
    *
-   * @throws \RuntimeExceptions
+   * @throws \RuntimeException
    *   When table comments are not supported.
    */
   public function delegateGetTableComment(DbalSchema $dbal_schema, $drupal_table_name);
@@ -1073,7 +1077,7 @@ interface DbalExtensionInterface {
    * @return string
    *   The column comment.
    *
-   * @throws \RuntimeExceptions
+   * @throws \RuntimeException
    *   When column comments are not supported.
    */
   public function delegateGetColumnComment(DbalSchema $dbal_schema, $drupal_table_name, $column);

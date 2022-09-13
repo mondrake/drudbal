@@ -9,6 +9,7 @@ use Doctrine\DBAL\Schema\Column as DbalColumn;
 use Doctrine\DBAL\Schema\Schema as DbalSchema;
 use Doctrine\DBAL\Schema\Table as DbalTable;
 use Doctrine\DBAL\Statement as DbalStatement;
+use Drupal\Core\Database\DatabaseExceptionWrapper;
 use Drupal\drudbal\Driver\Database\dbal\Connection as DruDbalConnection;
 use Drupal\drudbal\Driver\Database\dbal\Statement\StatementWrapper;
 
@@ -18,58 +19,31 @@ use Drupal\drudbal\Driver\Database\dbal\Statement\StatementWrapper;
 class AbstractExtension implements DbalExtensionInterface {
 
   /**
-   * The DruDbal connection.
-   *
-   * @var \Drupal\drudbal\Driver\Database\dbal\Connection
-   */
-  protected $connection;
-
-  /**
    * The Statement class to use for this extension.
-   *
-   * @var \Drupal\Core\Database\StatementInterface
    */
-  protected $statementClass = StatementWrapper::class;
+  protected string $statementClass = StatementWrapper::class;
 
   /**
    * Enables debugging.
-   *
-   * @var bool
    */
-  protected static $isDebugging = FALSE;
+  protected static bool $isDebugging = FALSE;
 
   /**
    * Constructs a DBAL extension object.
-   *
-   * @param \Drupal\drudbal\Driver\Database\dbal\Connection $drudbal_connection
-   *   The Drupal database connection object for this extension.
    */
-  public function __construct(DruDbalConnection $drudbal_connection) {
-    $this->connection = $drudbal_connection;
-  }
+  public function __construct(
+    protected DruDbalConnection $connection
+  ) {}
 
   /**
-   * Destructs a DBAL extension object.
-   */
-  public function __destruct() {
-    $this->connection = NULL;
-  }
-
-  /**
-   * Sets debugging mode.
-   *
-   * @param bool $value
-   *   The debugging mode.
+   * {@inheritdoc}
    */
   public function setDebugging(bool $value): void {
     static::$isDebugging = $value;
   }
 
   /**
-   * Gets debugging mode.
-   *
-   * @return bool
-   *   The debugging mode.
+   * {@inheritdoc}
    */
   public function getDebugging(): bool {
     return static::$isDebugging;
@@ -79,14 +53,14 @@ class AbstractExtension implements DbalExtensionInterface {
    * {@inheritdoc}
    */
   public function delegateClientVersion() {
-    throw new \LogicException("Method " . __METHOD__ . " not implemented.");
+    throw new \LogicException("Method " . __METHOD__ . "() not implemented.");
   }
 
   /**
    * {@inheritdoc}
    */
-  public function delegateQueryExceptionProcess($query, array $args, array $options, $message, \Exception $e) {
-    throw new \LogicException("Method " . __METHOD__ . " not implemented.");
+  public function delegateQueryExceptionProcess($query, array $args, array $options, $message, DbalDriverException|DatabaseExceptionWrapper $e) {
+    throw new \LogicException("Method " . __METHOD__ . "() not implemented.");
   }
 
   /**
@@ -107,14 +81,14 @@ class AbstractExtension implements DbalExtensionInterface {
    * {@inheritdoc}
    */
   public function getDbServerPlatform(bool $strict = FALSE): string {
-    throw new \LogicException("Method " . __METHOD__ . " not implemented.");
+    throw new \LogicException("Method " . __METHOD__ . "() not implemented.");
   }
 
   /**
    * {@inheritdoc}
    */
   public function getDbServerVersion(): string {
-    return $this->getDbalConnection()->getWrappedConnection()->getServerVersion();
+    throw new \LogicException("Method " . __METHOD__ . "() not implemented.");
   }
 
   /**
@@ -148,7 +122,7 @@ class AbstractExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function getDbFullQualifiedTableName($drupal_table_name) {
+  public function getDbFullQualifiedTableName(string $drupal_table_name): string {
     $options = $this->connection->getConnectionOptions();
     $prefix = $this->connection->tablePrefix($drupal_table_name);
     return $options['database'] . '.' . $this->getDbTableName($prefix, $drupal_table_name);
@@ -157,8 +131,8 @@ class AbstractExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function getDbFieldName($field_name, bool $quoted = TRUE) {
-    if ($quoted && $field_name !== NULL && $field_name !== '' && substr($field_name, 0, 1) !== '"') {
+  public function getDbFieldName(string $field_name, bool $quoted = TRUE): string {
+    if ($quoted && $field_name !== '' && substr($field_name, 0, 1) !== '"') {
       return '"' . str_replace('.', '"."', $field_name) . '"';
     }
     else {
@@ -169,8 +143,8 @@ class AbstractExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function getDbAlias($alias, bool $quoted = TRUE) {
-    if ($quoted && $alias !== NULL && $alias !== '' && substr($alias, 0, 1) !== '"') {
+  public function getDbAlias(string $alias, bool $quoted = TRUE): string {
+    if ($quoted && $alias !== '' && substr($alias, 0, 1) !== '"') {
       return '"' . str_replace('.', '"."', $alias) . '"';
     }
     else {
@@ -188,7 +162,7 @@ class AbstractExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function getDbIndexName(string $context, DbalSchema $dbal_schema, string $drupal_table_name, string $drupal_index_name): string {
+  public function getDbIndexName(string $context, DbalSchema $dbal_schema, string $drupal_table_name, string $drupal_index_name): string|bool {
     return $drupal_index_name;
   }
 
@@ -247,7 +221,7 @@ class AbstractExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function delegateMapConditionOperator($operator) {
+  public function delegateMapConditionOperator(string $operator): ?array {
     return NULL;
   }
 
