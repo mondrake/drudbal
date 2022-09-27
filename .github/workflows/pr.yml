@@ -67,9 +67,9 @@ jobs:
         composer config repositories.test-run '{"type": "path", "url": "drudbal_staging", "options": {"symlink": false}}'
         composer require "mondrake/drudbal:dev-test-run-branch" --no-progress --ansi
 
-    - name: PHPStan checks
-      run: |
-        php vendor/bin/phpstan analyze --no-progress --configuration="modules/contrib/drudbal/phpstan.neon.dist"
+#    - name: PHPStan checks
+#      run: |
+#        php vendor/bin/phpstan analyze --no-progress --configuration="modules/contrib/drudbal/phpstan.neon.dist"
 
     - name: Install Drupal
       run: |
