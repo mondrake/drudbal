@@ -867,7 +867,7 @@ interface DbalExtensionInterface {
    *   TRUE if the extension dropped the field, FALSE if it has to be handled
    *   by DBAL.
    */
-  public function delegateDropField(DbalSchema $dbal_schema, $drupal_table_name, $field_name);
+  public function delegateDropField(DbalSchema $dbal_schema, string $drupal_table_name, string $field_name): bool;
 
   /**
    * Change a field definition.
