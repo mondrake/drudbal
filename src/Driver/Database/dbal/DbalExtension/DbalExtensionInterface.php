@@ -856,6 +856,8 @@ interface DbalExtensionInterface {
   /**
    * Drops a field from a table.
    *
+   * @param bool $delegatedResult
+   *   Passed by reference. TRUE if the field was dropped, FALSE otherwise.
    * @param \Doctrine\DBAL\Schema\Schema $dbal_schema
    *   The DBAL schema object.
    * @param string $drupal_table_name
@@ -864,10 +866,10 @@ interface DbalExtensionInterface {
    *   The name of the field.
    *
    * @return bool
-   *   TRUE if the extension dropped the field, FALSE if it has to be handled
-   *   by DBAL.
+   *   TRUE if the extension managed the drop, FALSE if it has to be handled by
+   *   DBAL.
    */
-  public function delegateDropField(DbalSchema $dbal_schema, string $drupal_table_name, string $field_name): bool;
+  public function delegateDropField(bool &$delegatedResult, DbalSchema $dbal_schema, string $drupal_table_name, string $field_name): bool;
 
   /**
    * Change a field definition.
