@@ -991,6 +991,7 @@ PLSQL
          WHERE ind.table_name = '$unquoted_db_table' AND con.constraint_type = 'P'
 SQL
     )->fetch();
+    assert(is_object($db_constraint));
     $primary_key_asset_name = $db_constraint->name;
     $exec = "ALTER TABLE $db_table DROP CONSTRAINT \"$primary_key_asset_name\"";
     $this->getDbalConnection()->executeStatement($exec);

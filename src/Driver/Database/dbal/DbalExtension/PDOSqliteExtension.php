@@ -868,7 +868,7 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateDropField(DbalSchema $dbal_schema, $drupal_table_name, $field_name) {
+  public function delegateDropField(bool &$delegatedResult, DbalSchema $dbal_schema, string $drupal_table_name, string $field_name): bool {
     $old_schema = $this->buildTableSpecFromDbalSchema($dbal_schema, $drupal_table_name);
     $new_schema = $old_schema;
 
@@ -892,6 +892,8 @@ class PDOSqliteExtension extends AbstractExtension {
       }
     }
     $this->alterTable($drupal_table_name, $old_schema, $new_schema);
+
+    $delegatedResult = TRUE;
     return TRUE;
   }
 
