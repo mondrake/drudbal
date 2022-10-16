@@ -1,8 +1,9 @@
 <?php
 
-namespace Drupal\Tests\drudbal\Kernel;
+namespace Drupal\Tests\drudbal\Kernel\dbal;
 
 use Drupal\Component\Render\FormattableMarkup;
+use Drupal\Component\Utility\Unicode;
 use Drupal\Core\Database\Database;
 use Drupal\drudbal\Driver\Database\dbal\Connection as DruDbalConnection;
 use Drupal\KernelTests\Core\Database\DriverSpecificSchemaTestBase;
@@ -13,6 +14,11 @@ use Drupal\KernelTests\Core\Database\DriverSpecificSchemaTestBase;
  * @group Database
  */
 class SchemaTest extends DriverSpecificSchemaTestBase {
+
+  /**
+   * A global counter for table and field creation.
+   */
+  protected int $counter;
 
   /**
    * Returns the DruDbal connection.
@@ -199,7 +205,7 @@ class SchemaTest extends DriverSpecificSchemaTestBase {
       $count = $this->connection
         ->select($table_name)
         ->fields($table_name, ['serial_column'])
-        ->condition($field_name, 100, '<>')
+        ->condition($field_name, '100', '<>')
         ->countQuery()
         ->execute()
         ->fetchField();
