@@ -5,14 +5,14 @@ namespace Drupal\Tests\drudbal\Kernel;
 use Drupal\Component\Render\FormattableMarkup;
 use Drupal\Core\Database\Database;
 use Drupal\drudbal\Driver\Database\dbal\Connection as DruDbalConnection;
-use Drupal\KernelTests\Core\Database\SchemaTest as SchemaTestBase;
+use Drupal\KernelTests\Core\Database\DriverSpecificSchemaTestBase;
 
 /**
  * Tests table creation and modification via the schema API.
  *
  * @group Database
  */
-class SchemaTest extends SchemaTestBase {
+class SchemaTest extends DriverSpecificSchemaTestBase {
 
   /**
    * Returns the DruDbal connection.
