@@ -8,12 +8,6 @@ env:
     DRUDBAL_DRUPAL_VERSION: "10.0.x"
     DRUDBAL_DRUPAL_PROFILE: "standard"
     SIMPLETEST_BASE_URL: "http://localhost:8080"
-#    PHPUNIT_SKIP_CLASS: '[
-#      "Drupal\\KernelTests\\Core\\Cache\\ApcuBackendTest",
-#      "Drupal\\KernelTests\\Core\\Cache\\EndOfTransactionQueriesTest",
-#      "Drupal\\KernelTests\\Core\\Database\\DatabaseExceptionWrapperTest",
-#      "Drupal\\Tests\\file\\Functional\\DownloadTest"
-#    ]'
     PHPUNIT_SKIP_CLASS: '[
       "Drupal\\KernelTests\\Core\\Cache\\ApcuBackendTest",
       "Drupal\\KernelTests\\Core\\Cache\\EndOfTransactionQueriesTest",
@@ -84,4 +78,4 @@ jobs:
         vendor/bin/drush pml --type=module --no-core
 
     - name: Run test ${{ matrix.test-args }}
-      run: vendor/bin/phpunit -c core --color=always ${{ matrix.test-args }}
+      run: vendor/bin/phpunit -c core --color=always -v ${{ matrix.test-args }}
