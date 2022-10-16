@@ -14,7 +14,6 @@ env:
       "Drupal\\KernelTests\\Core\\Cache\\ApcuBackendTest",
       "Drupal\\KernelTests\\Core\\Cache\\EndOfTransactionQueriesTest",
       "Drupal\\KernelTests\\Core\\Database\\ConnectionUnitTest",
-      "Drupal\\KernelTests\\Core\\Database\\DatabaseExceptionWrapperTest",
       "Drupal\\KernelTests\\Core\\Database\\SqlModeTest",
       "Drupal\\KernelTests\\Core\\Database\\StatementTest",
       "Drupal\\KernelTests\\Core\\Database\\TransactionTest",

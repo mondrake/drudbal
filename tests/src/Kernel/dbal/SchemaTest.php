@@ -1,18 +1,24 @@
 <?php
 
-namespace Drupal\Tests\drudbal\Kernel;
+namespace Drupal\Tests\drudbal\Kernel\dbal;
 
 use Drupal\Component\Render\FormattableMarkup;
+use Drupal\Component\Utility\Unicode;
 use Drupal\Core\Database\Database;
 use Drupal\drudbal\Driver\Database\dbal\Connection as DruDbalConnection;
-use Drupal\KernelTests\Core\Database\SchemaTest as SchemaTestBase;
+use Drupal\KernelTests\Core\Database\DriverSpecificSchemaTestBase;
 
 /**
  * Tests table creation and modification via the schema API.
  *
  * @group Database
  */
-class SchemaTest extends SchemaTestBase {
+class SchemaTest extends DriverSpecificSchemaTestBase {
+
+  /**
+   * A global counter for table and field creation.
+   */
+  protected int $counter = 0;
 
   /**
    * Returns the DruDbal connection.
@@ -21,6 +27,206 @@ class SchemaTest extends SchemaTestBase {
     $connection = $this->connection;
     assert($connection instanceof DruDbalConnection);
     return $connection;
+  }
+
+  /**
+   * Tests inserting data into an existing table.
+   *
+   * @param string $table
+   *   The database table to insert data into.
+   *
+   * @return bool
+   *   TRUE if the insert succeeded, FALSE otherwise.
+   */
+  public function tryInsert($table = 'test_table') {
+    try {
+      $this->connection
+        ->insert($table)
+        ->fields(['id' => mt_rand(10, 20)])
+        ->execute();
+      return TRUE;
+    }
+    catch (\Exception $e) {
+      return FALSE;
+    }
+  }
+
+  /**
+   * Tries to insert a negative value into columns defined as unsigned.
+   *
+   * @param string $table_name
+   *   The table to insert.
+   * @param string $column_name
+   *   The column to insert.
+   *
+   * @return bool
+   *   TRUE if the insert succeeded, FALSE otherwise.
+   */
+  public function tryUnsignedInsert($table_name, $column_name) {
+    try {
+      $this->connection
+        ->insert($table_name)
+        ->fields([$column_name => -1])
+        ->execute();
+      return TRUE;
+    }
+    catch (\Exception $e) {
+      return FALSE;
+    }
+  }
+
+  /**
+   * Checks that a table or column comment matches a given description.
+   *
+   * @param $description
+   *   The asserted description.
+   * @param $table
+   *   The table to test.
+   * @param $column
+   *   Optional column to test.
+   */
+  public function checkSchemaComment($description, $table, $column = NULL) {
+    if (method_exists($this->schema, 'getComment')) {
+      $comment = $this->schema->getComment($table, $column);
+      // The schema comment truncation for mysql is different.
+      if ($this->connection->databaseType() === 'mysql') {
+        $max_length = $column ? 255 : 60;
+        $description = Unicode::truncate($description, $max_length, TRUE, TRUE);
+      }
+      $this->assertEquals($description, $comment, 'The comment matches the schema description.');
+    }
+  }
+
+  /**
+   * Asserts that a given field can be added and removed from a table.
+   *
+   * The addition test covers both defining a field of a given specification
+   * when initially creating at table and extending an existing table.
+   *
+   * @param array $field_spec
+   *   The schema specification of the field.
+   *
+   * @internal
+   */
+  protected function assertFieldAdditionRemoval(array $field_spec): void {
+    // Try creating the field on a new table.
+    $table_name = 'test_table_' . ($this->counter++);
+    $table_spec = [
+      'fields' => [
+        'serial_column' => ['type' => 'serial', 'unsigned' => TRUE, 'not null' => TRUE],
+        'test_nullable_field' => ['type' => 'int', 'not null' => FALSE],
+        'test_field' => $field_spec,
+      ],
+      'primary key' => ['serial_column'],
+    ];
+    $this->schema->createTable($table_name, $table_spec);
+
+    // Check the characteristics of the field.
+    $this->assertFieldCharacteristics($table_name, 'test_field', $field_spec);
+
+    // Clean-up.
+    $this->schema->dropTable($table_name);
+
+    // Try adding a field to an existing table.
+    $table_name = 'test_table_' . ($this->counter++);
+    $table_spec = [
+      'fields' => [
+        'serial_column' => ['type' => 'serial', 'unsigned' => TRUE, 'not null' => TRUE],
+        'test_nullable_field' => ['type' => 'int', 'not null' => FALSE],
+      ],
+      'primary key' => ['serial_column'],
+    ];
+    $this->schema->createTable($table_name, $table_spec);
+
+    // Insert some rows to the table to test the handling of initial values.
+    for ($i = 0; $i < 3; $i++) {
+      $this->connection
+        ->insert($table_name)
+        ->useDefaults(['serial_column'])
+        ->fields(['test_nullable_field' => 100])
+        ->execute();
+    }
+
+    // Add another row with no value for the 'test_nullable_field' column.
+    $this->connection
+      ->insert($table_name)
+      ->useDefaults(['serial_column'])
+      ->execute();
+
+    $this->schema->addField($table_name, 'test_field', $field_spec);
+
+    // Check the characteristics of the field.
+    $this->assertFieldCharacteristics($table_name, 'test_field', $field_spec);
+
+    // Clean-up.
+    $this->schema->dropField($table_name, 'test_field');
+
+    // Add back the field and then try to delete a field which is also a primary
+    // key.
+    $this->schema->addField($table_name, 'test_field', $field_spec);
+    $this->schema->dropField($table_name, 'serial_column');
+    $this->schema->dropTable($table_name);
+  }
+
+  /**
+   * Asserts that a newly added field has the correct characteristics.
+   *
+   * @internal
+   */
+  protected function assertFieldCharacteristics(string $table_name, string $field_name, array $field_spec): void {
+    // Check that the initial value has been registered.
+    if (isset($field_spec['initial'])) {
+      // There should be no row with a value different then $field_spec['initial'].
+      $count = $this->connection
+        ->select($table_name)
+        ->fields($table_name, ['serial_column'])
+        ->condition($field_name, $field_spec['initial'], '<>')
+        ->countQuery()
+        ->execute()
+        ->fetchField();
+      $this->assertEquals(0, $count, 'Initial values filled out.');
+    }
+
+    // Check that the initial value from another field has been registered.
+    if (isset($field_spec['initial_from_field']) && !isset($field_spec['initial'])) {
+      // There should be no row with a value different than
+      // $field_spec['initial_from_field'].
+      $count = $this->connection
+        ->select($table_name)
+        ->fields($table_name, ['serial_column'])
+        ->where("[$table_name].[{$field_spec['initial_from_field']}] <> [$table_name].[$field_name]")
+        ->countQuery()
+        ->execute()
+        ->fetchField();
+      $this->assertEquals(0, $count, 'Initial values from another field filled out.');
+    }
+    elseif (isset($field_spec['initial_from_field']) && isset($field_spec['initial'])) {
+      // There should be no row with a value different than '100'.
+      $count = $this->connection
+        ->select($table_name)
+        ->fields($table_name, ['serial_column'])
+        ->condition($field_name, '100', '<>')
+        ->countQuery()
+        ->execute()
+        ->fetchField();
+      $this->assertEquals(0, $count, 'Initial values from another field or a default value filled out.');
+    }
+
+    // Check that the default value has been registered.
+    if (isset($field_spec['default'])) {
+      // Try inserting a row, and check the resulting value of the new column.
+      $id = $this->connection
+        ->insert($table_name)
+        ->useDefaults(['serial_column'])
+        ->execute();
+      $field_value = $this->connection
+        ->select($table_name)
+        ->fields($table_name, [$field_name])
+        ->condition('serial_column', $id)
+        ->execute()
+        ->fetchField();
+      $this->assertEquals($field_spec['default'], $field_value, 'Default value registered.');
+    }
   }
 
   /**
