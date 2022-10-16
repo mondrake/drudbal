@@ -457,9 +457,10 @@ class Schema extends DatabaseSchema {
     }
 
     // Delegate to DBAL extension.
-    if ($this->dbalExtension->delegateDropField($this->dbalSchema(), $table, $field)) {
+    $result = FALSE;
+    if ($this->dbalExtension->delegateDropField($result, $this->dbalSchema(), $table, $field)) {
       $this->dbalSchemaForceReload();
-      return;
+      return $result;
     }
 
     // DBAL extension did not pick up, proceed with DBAL.

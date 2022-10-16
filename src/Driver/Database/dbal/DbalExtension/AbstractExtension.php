@@ -580,7 +580,7 @@ class AbstractExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function delegateDropField(DbalSchema $dbal_schema, $drupal_table_name, $field_name) {
+  public function delegateDropField(bool &$delegatedResult, DbalSchema $dbal_schema, string $drupal_table_name, string $field_name): bool {
     return FALSE;
   }
 
