@@ -18,7 +18,7 @@ class SchemaTest extends DriverSpecificSchemaTestBase {
   /**
    * A global counter for table and field creation.
    */
-  protected int $counter;
+  protected int $counter = 0;
 
   /**
    * Returns the DruDbal connection.
