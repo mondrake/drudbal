@@ -29,8 +29,11 @@ class SchemaTest extends DriverSpecificSchemaTestBase {
    */
   public function checkSchemaComment(string $description, string $table, string $column = NULL): void {
     $comment = $this->schema->getComment($table, $column);
-    $max_length = $column ? 255 : 60;
-    $description = Unicode::truncate($description, $max_length, TRUE, TRUE);
+    // The schema comment truncation for mysql is different.
+    if ($this->connection->databaseType() === 'mysql') {
+      $max_length = $column ? 255 : 60;
+      $description = Unicode::truncate($description, $max_length, TRUE, TRUE);
+    }
     $this->assertSame($description, $comment, 'The comment matches the schema description.');
   }
 
