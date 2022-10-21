@@ -7,6 +7,8 @@ use Drupal\Component\Utility\Unicode;
 use Drupal\Core\Database\Database;
 use Drupal\Core\Database\IntegrityConstraintViolationException;
 use Drupal\Core\Database\SchemaException;
+use Drupal\Core\Database\SchemaObjectDoesNotExistException;
+use Drupal\Core\Database\SchemaObjectExistsException;
 use Drupal\drudbal\Driver\Database\dbal\Connection as DruDbalConnection;
 use Drupal\drudbal\Driver\Database\dbal\Schema as DruDbalSchema;
 use Drupal\KernelTests\Core\Database\DriverSpecificSchemaTestBase;
@@ -77,6 +79,10 @@ class SchemaTest extends DriverSpecificSchemaTestBase {
    * @see \Drupal\mysql\Driver\Database\mysql\Schema::getNormalizedIndexes()
    */
   public function testIndexLength(): void {
+    if ($this->connection()->databaseType() !== 'mysql') {
+      $this->markTestSkipped('Only for MySql');
+    }
+
     $table_specification = [
       'fields' => [
         'id'  => [
