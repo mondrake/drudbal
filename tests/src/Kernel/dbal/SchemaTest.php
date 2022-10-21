@@ -74,6 +74,15 @@ class SchemaTest extends DriverSpecificSchemaTestBase {
   }
 
   /**
+   * {@inheritdoc}
+   */
+  protected function tryInsertExpectsIntegrityConstraintViolationException(string $tableName): void {
+    if ($this->connection()->databaseType() !== 'sqlite') {
+      parent::tryInsertExpectsIntegrityConstraintViolationException($tableName);
+    }
+  }
+
+  /**
    * Tests that indexes on string fields are limited to 191 characters on MySQL.
    *
    * @see \Drupal\mysql\Driver\Database\mysql\Schema::getNormalizedIndexes()
