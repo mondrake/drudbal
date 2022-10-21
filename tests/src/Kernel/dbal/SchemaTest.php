@@ -5,6 +5,8 @@ namespace Drupal\Tests\drudbal\Kernel\dbal;
 use Drupal\Component\Render\FormattableMarkup;
 use Drupal\Component\Utility\Unicode;
 use Drupal\Core\Database\Database;
+use Drupal\Core\Database\IntegrityConstraintViolationException;
+use Drupal\Core\Database\SchemaException;
 use Drupal\drudbal\Driver\Database\dbal\Connection as DruDbalConnection;
 use Drupal\drudbal\Driver\Database\dbal\Schema as DruDbalSchema;
 use Drupal\KernelTests\Core\Database\DriverSpecificSchemaTestBase;
@@ -251,8 +253,7 @@ class SchemaTest extends DriverSpecificSchemaTestBase {
     unset($table_specification['fields']);
 
     $introspect_index_schema = new \ReflectionMethod(get_class($this->schema), 'introspectIndexSchema');
-    $introspect_index_schema()->setAccessible(TRUE);
-    $index_schema = $introspect_index_schema()->invoke($this->schema, $table_name);
+    $index_schema = $introspect_index_schema->invoke($this->schema, $table_name);
 
     // Oracle is using a custom naming scheme for its indexes, so
     // we need to adjust the initial table specification.
