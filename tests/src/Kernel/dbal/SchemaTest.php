@@ -216,6 +216,27 @@ class SchemaTest extends DriverSpecificSchemaTestBase {
   }
 
   /**
+   * {@inheritdoc}
+   */
+  public function testTableWithSpecificDataType(): void {
+    $table_specification = [
+      'description' => 'Schema table description.',
+      'fields' => [
+        'timestamp'  => [
+          'mysql_type' => 'timestamp',
+          'pgsql_type' => 'timestamp',
+          'sqlite_type' => 'datetime',
+          'oracle_type' => 'date',
+          'not null' => FALSE,
+          'default' => NULL,
+        ],
+      ],
+    ];
+    $this->schema->createTable('test_timestamp', $table_specification);
+    $this->assertTrue($this->schema->tableExists('test_timestamp'));
+  }
+
+  /**
    * @covers \Drupal\drudbal\Driver\Database\dbal\Schema::introspectIndexSchema
    *
    * In this override, we need to change Oracle index names, since they cannot
@@ -485,4 +506,5 @@ class SchemaTest extends DriverSpecificSchemaTestBase {
       }
     }
   }
+
 }
