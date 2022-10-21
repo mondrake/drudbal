@@ -28,7 +28,7 @@ class SchemaTest extends DriverSpecificSchemaTestBase {
   /**
    * Returns the DruDbal schema.
    */
-  private function connection(): DruDbalSchema {
+  private function schema(): DruDbalSchema {
     $schema = $this->schema;
     assert($schema instanceof DruDbalSchema);
     return $schema;
