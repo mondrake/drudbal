@@ -54,6 +54,8 @@ class SchemaTest extends DriverSpecificSchemaTestBase {
     if ($this->connection()->databaseType() === 'mysql') {
       // Make sure that varchar fields have the correct collations.
       $columns = $this->connection()->query('SHOW FULL COLUMNS FROM {test_table}');
+      $string_check = null;
+      $string_ascii_check = null;
       foreach ($columns as $column) {
         if ($column->Field == 'test_field_string') {
           $string_check = $column->Collation;
@@ -202,7 +204,7 @@ class SchemaTest extends DriverSpecificSchemaTestBase {
    * In this override, we need to change Oracle index names, since they cannot
    * exceed the 30 chars limit in Oracle 11.
    */
-  public function testIntrospectIndexSchema() {
+  public function testIntrospectIndexSchema(): void {
     $table_specification = [
       'fields' => [
         'id'  => [
@@ -274,7 +276,7 @@ class SchemaTest extends DriverSpecificSchemaTestBase {
   /**
    * Tests the findTables() method.
    */
-  public function testFindTables() {
+  public function testFindTables(): void {
     // We will be testing with three tables.
     $test_schema = Database::getConnection()->schema();
 
@@ -318,7 +320,7 @@ class SchemaTest extends DriverSpecificSchemaTestBase {
   /**
    * Tests handling of uppercase table names.
    */
-  public function testUpperCaseTableName() {
+  public function testUpperCaseTableName(): void {
     $table_name = 'UPPER_CASE';
 
     // Create the tables.
@@ -344,7 +346,7 @@ class SchemaTest extends DriverSpecificSchemaTestBase {
    * In this override, we need to change maximum precision in Oracle, that is
    * 38, differently from other core databases.
    */
-  public function testSchemaAddFieldDefaultInitial() {
+  public function testSchemaAddFieldDefaultInitial(): void {
     // Test varchar types.
     foreach ([1, 32, 128, 256, 512] as $length) {
       $base_field_spec = [
@@ -438,7 +440,7 @@ class SchemaTest extends DriverSpecificSchemaTestBase {
    * Drupal core raises an exception, but not in Oracle where a trigger forces
    * the value to be next-in-sequence regardless of what is passed in.
    */
-  public function testUnsignedColumns() {
+  public function testUnsignedColumns(): void {
     // First create the table with just a serial column.
     $table_name = 'unsigned_table';
     $table_spec = [
