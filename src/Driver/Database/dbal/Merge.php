@@ -37,14 +37,16 @@ global $xxx; if ($xxx) dump(['merge:__construct', $table, $options]);
     $select = $this->connection->select($this->conditionTable)
       ->condition($this->condition);
     $select->addExpression('1');
-global $xxx; if ($xxx) dump(['merge:execute:select', $tselect, (string) $select]);
+global $xxx; if ($xxx) dump(['merge:execute:select', $select, (string) $select]);
 
     if (!$select->execute()->fetchField()) {
       try {
         $insert = $this->connection->insert($this->table)->fields($this->insertFields);
+if ($xxx) dump(['merge:insert:1', $this->table,$this->insertFields]);
         if ($this->defaultFields) {
           $insert->useDefaults($this->defaultFields);
         }
+if ($xxx) dump(['merge:insert:2', (string) $insert]);
         $insert->execute();
         return QueryMerge::STATUS_INSERT;
       }
