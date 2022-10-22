@@ -2,6 +2,7 @@
 
 namespace Drupal\Tests\drudbal\Kernel\dbal;
 
+use Drupal\Core\Database\Database;
 use Drupal\KernelTests\Core\Cache\DriverSpecificEndOfTransactionQueriesTestBase;
 
 /**
@@ -29,7 +30,7 @@ class EndOfTransactionQueriesTest extends DriverSpecificEndOfTransactionQueriesT
    * {@inheritdoc}
    */
   protected static function statementToTableName($statement) {
-    $prefix = $this->connection->tablePrefix();
+    $prefix = Database::getConnection()->tablePrefix();
     if (preg_match('/.*\{([^\}]+)\}.*/', $statement, $matches)) {
       return $matches[1];
     }
