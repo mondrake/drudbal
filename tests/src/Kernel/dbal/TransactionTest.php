@@ -3,6 +3,7 @@
 namespace Drupal\Tests\drudbal\Kernel\dbal;
 
 use Drupal\KernelTests\Core\Database\DriverSpecificTransactionTestBase;
+use PHPUnit\Framework\Error\Warning;
 
 /**
  * Tests transaction for the DBAL driver.
