@@ -1,16 +1,16 @@
 <?php
 
-namespace Drupal\Tests\drudbal\Kernel;
+namespace Drupal\Tests\drudbal\Kernel\dbal;
 
-use Drupal\KernelTests\Core\Database\TransactionTest as TransactionTestBase;
+use Drupal\KernelTests\Core\Database\DriverSpecificTransactionTestBase;
 use PHPUnit\Framework\Error\Warning;
 
 /**
- * Tests the transaction abstraction system.
+ * Tests transaction for the DBAL driver.
  *
  * @group Database
  */
-class TransactionTest extends TransactionTestBase {
+class TransactionTest extends DriverSpecificTransactionTestBase {
 
   /**
    * Tests the compatibility of transactions with DDL statements.
