@@ -24,4 +24,45 @@ class Merge extends QueryMerge {
     unset($this->queryOptions['return']);
   }
 
+  public function execute() {
+
+    $select = $this->connection->select($this->conditionTable)
+      ->condition($this->condition);
+    $select->addExpression('1');
+global $xxx; if ($xxx) dump(['merge:execute:select', $this->select, (string) $this->select]);
+
+    if (!$select->execute()->fetchField()) {
+      try {
+        $insert = $this->connection->insert($this->table)->fields($this->insertFields);
+        if ($this->defaultFields) {
+          $insert->useDefaults($this->defaultFields);
+        }
+        $insert->execute();
+        return self::STATUS_INSERT;
+      }
+      catch (IntegrityConstraintViolationException $e) {
+        // The insert query failed, maybe it's because a racing insert query
+        // beat us in inserting the same row. Retry the select query, if it
+        // returns a row, ignore the error and continue with the update
+        // query below.
+        if (!$select->execute()->fetchField()) {
+          throw $e;
+        }
+      }
+    }
+
+    if ($this->needsUpdate) {
+      $update = $this->connection->update($this->table)
+        ->fields($this->updateFields)
+        ->condition($this->condition);
+      if ($this->expressionFields) {
+        foreach ($this->expressionFields as $field => $data) {
+          $update->expression($field, $data['expression'], $data['arguments']);
+        }
+      }
+      $update->execute();
+      return self::STATUS_UPDATE;
+    }
+    return NULL;
+  }
 }
