@@ -498,6 +498,7 @@ class Connection extends DatabaseConnection {
     if (!empty($this->rootTransactionEndCallbacks)) {
       $callbacks = $this->rootTransactionEndCallbacks;
       $this->rootTransactionEndCallbacks = [];
+dump(['** CALLBACKS', $callbacks]);
       foreach ($callbacks as $callback) {
         call_user_func($callback, $success);
       }
