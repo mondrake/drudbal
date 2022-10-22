@@ -3,6 +3,10 @@
 namespace Drupal\drudbal\Driver\Database\dbal;
 
 use Drupal\Core\Database\Query\Merge as QueryMerge;
+use Drupal\Core\Database\Query\InvalidMergeQueryException;
+use Drupal\Core\Database\Database;
+use Drupal\Core\Database\Connection;
+use Drupal\Core\Database\IntegrityConstraintViolationException;
 
 /**
  * DruDbal implementation of \Drupal\Core\Database\Query\Merge.
@@ -26,11 +30,14 @@ global $xxx; if ($xxx) dump(['merge:__construct', $table, $options]);
   }
 
   public function execute() {
+    if (!count($this->condition)) {
+      throw new InvalidMergeQueryException('Invalid merge query: no conditions');
+    }
 
     $select = $this->connection->select($this->conditionTable)
       ->condition($this->condition);
     $select->addExpression('1');
-global $xxx; if ($xxx) dump(['merge:execute:select', $this->select, (string) $this->select]);
+global $xxx; if ($xxx) dump(['merge:execute:select', $tselect, (string) $select]);
 
     if (!$select->execute()->fetchField()) {
       try {
@@ -39,7 +46,7 @@ global $xxx; if ($xxx) dump(['merge:execute:select', $this->select, (string) $th
           $insert->useDefaults($this->defaultFields);
         }
         $insert->execute();
-        return self::STATUS_INSERT;
+        return QueryMerge::STATUS_INSERT;
       }
       catch (IntegrityConstraintViolationException $e) {
         // The insert query failed, maybe it's because a racing insert query
@@ -62,7 +69,7 @@ global $xxx; if ($xxx) dump(['merge:execute:select', $this->select, (string) $th
         }
       }
       $update->execute();
-      return self::STATUS_UPDATE;
+      return QueryMerge::STATUS_UPDATE;
     }
     return NULL;
   }
