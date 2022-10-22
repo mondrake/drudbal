@@ -25,4 +25,20 @@ class EndOfTransactionQueriesTest extends DriverSpecificEndOfTransactionQueriesT
     return $info;
   }
 
+  /**
+   * {@inheritdoc}
+   */
+  protected static function statementToTableName($statement) {
+    $prefix = $this->connection->tablePrefix();
+    if (preg_match('/.*\{([^\}]+)\}.*/', $statement, $matches)) {
+      return $matches[1];
+    }
+    elseif (preg_match('/.*FROM \"(' . $prefix . '[a-z0-9]*)\".*', $statement, $matches)) {
+      return $matches[1];
+    }
+    else {
+      return NULL;
+    }
+  }
+
 }
