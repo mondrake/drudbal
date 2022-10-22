@@ -87,7 +87,6 @@ class Select extends QuerySelect {
         $escaped_table = '(' . (string) $subquery . ')';
       }
       else {
-global $xxx; if ($xxx) dump(['select:__toString', $table]);
         // Do not attempt prefixing cross database / schema queries.
         if (strpos($table['table'], '.') === FALSE) {
           $escaped_table = $this->connection()->getPrefixedTableName($table['table'], TRUE);

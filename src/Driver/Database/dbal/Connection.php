@@ -142,8 +142,10 @@ class Connection extends DatabaseConnection {
    * {@inheritdoc}
    */
   public function prefixTables($sql) {
+global $xxx; if ($xxx) dump(['prefixTables:1', $sql]);
     $matches = [];
     preg_match_all('/{(\S*)}/', $sql, $matches, PREG_SET_ORDER, 0);
+if ($xxx) dump(['prefixTables:2', $matches]);
     foreach ($matches as $match) {
       $table = $match[1];
       if (isset($this->dbTables['{' . $table . '}'])) {
@@ -151,6 +153,7 @@ class Connection extends DatabaseConnection {
       }
       $this->dbTables['{' . $table . '}'] = $this->identifierQuotes[0] . $this->dbalExtension->getDbTableName($this->tablePrefix(), $table) . $this->identifierQuotes[1];
     }
+if ($xxx) dump(['prefixTables:3', $this->dbTables]);
     return str_replace(array_keys($this->dbTables), array_values($this->dbTables), $sql);
   }
 
@@ -174,6 +177,7 @@ class Connection extends DatabaseConnection {
     }
 
     $prefixed_table_name = $this->prefixTables('{' . $table_name . '}');
+global $xxx; if ($xxx) dump(['getPrefixedTableName', $table_name, $prefixed_table_name]);
     // @todo use substr  instead
     return $quoted ? $prefixed_table_name : str_replace($this->identifierQuotes, ['', ''], $prefixed_table_name);
   }
