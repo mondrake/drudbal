@@ -3,10 +3,6 @@
 namespace Drupal\drudbal\Driver\Database\dbal;
 
 use Drupal\Core\Database\Query\Merge as QueryMerge;
-use Drupal\Core\Database\Query\InvalidMergeQueryException;
-use Drupal\Core\Database\Database;
-use Drupal\Core\Database\Connection;
-use Drupal\Core\Database\IntegrityConstraintViolationException;
 
 /**
  * DruDbal implementation of \Drupal\Core\Database\Query\Merge.
