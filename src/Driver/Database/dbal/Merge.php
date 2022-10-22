@@ -37,7 +37,7 @@ global $xxx; if ($xxx) dump(['merge:__construct', $table, $options]);
     $select = $this->connection->select($this->conditionTable)
       ->condition($this->condition);
     $select->addExpression('1');
-global $xxx; if ($xxx) dump(['merge:execute:select', $select, (string) $select]);
+global $xxx; if ($xxx) dump(['merge:execute:select', (string) $select]);
 
     if (!$select->execute()->fetchField()) {
       try {
