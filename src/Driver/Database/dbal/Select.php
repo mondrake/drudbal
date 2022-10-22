@@ -19,7 +19,6 @@ class Select extends QuerySelect {
     * {@inheritdoc}
     */
    public function __construct(Connection $connection, $table, $alias = NULL, array $options = []) {
-global $xxx; if ($xxx) dump(['select:__construct', $table, $alias]);
      // @todo Remove the __construct in Drupal 11.
      // @see https://www.drupal.org/project/drupal/issues/3256524
      parent::__construct($connection, $table, $alias, $options);
@@ -88,6 +87,7 @@ global $xxx; if ($xxx) dump(['select:__construct', $table, $alias]);
         $escaped_table = '(' . (string) $subquery . ')';
       }
       else {
+global $xxx; if ($xxx) dump(['select:__toString', $table]);
         // Do not attempt prefixing cross database / schema queries.
         if (strpos($table['table'], '.') === FALSE) {
           $escaped_table = $this->connection()->getPrefixedTableName($table['table'], TRUE);
