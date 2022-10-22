@@ -41,7 +41,6 @@ global $xxx; if ($xxx) dump(['merge:execute:select', (string) $select]);
     if (!$select->execute()->fetchField()) {
       try {
         $insert = $this->connection->insert($this->table)->fields($this->insertFields);
-if ($xxx) dump(['merge:insert:1', $this->table,$this->insertFields]);
         if ($this->defaultFields) {
           $insert->useDefaults($this->defaultFields);
         }
