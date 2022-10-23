@@ -2,6 +2,7 @@
 
 namespace Drupal\drudbal\Driver\Database\dbal;
 
+use Drupal\Core\Utility\Error;
 use Composer\InstalledVersions;
 use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\ConnectionException as DbalConnectionException;
@@ -436,7 +437,7 @@ global $xxx; if ($xxx) dump(['rollBack', $savepoint_name]);
    * {@inheritdoc}
    */
   public function pushTransaction($name) {
-global $xxx; if ($xxx) dump(['pushTransaction', $name]);
+global $xxx; if ($xxx) dump(['pushTransaction', $name, Error::formatBacktrace(debug_backtrace())]);
     if (isset($this->transactionLayers[$name])) {
       throw new TransactionNameNonUniqueException($name . " is already in use.");
     }
@@ -455,7 +456,7 @@ global $xxx; if ($xxx) dump(['pushTransaction', $name]);
    * {@inheritdoc}
    */
   protected function popCommittableTransactions() {
-global $xxx; if ($xxx) dump(['popCommittableTransactions']);
+global $xxx; if ($xxx) dump(['popCommittableTransactions', Error::formatBacktrace(debug_backtrace())]);
     // Commit all the committable layers.
     foreach (array_reverse($this->transactionLayers) as $name => $active) {
       // Stop once we found an active transaction.
