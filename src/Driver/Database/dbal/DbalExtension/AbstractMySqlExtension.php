@@ -299,7 +299,6 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
     // To avoid exceptions when no actual error has occurred, we silently
     // succeed for MySQL error code 1305 ("SAVEPOINT does not exist").
     if ($e->getCode() == '1305') {
-global $xxx; if ($xxx) dump(['delegateReleaseSavepointExceptionProcess']);
       // We also have to explain to PDO that the transaction stack has
       // been cleaned-up.
       try {
@@ -311,7 +310,6 @@ global $xxx; if ($xxx) dump(['delegateReleaseSavepointExceptionProcess']);
       // If one SAVEPOINT was released automatically, then all were.
       // Therefore, clean the transaction stack.
       // @todo use a const
-if ($xxx) dump(['delegateReleaseSavepointExceptionProcess:out']);
       return 'all';
     }
     else {

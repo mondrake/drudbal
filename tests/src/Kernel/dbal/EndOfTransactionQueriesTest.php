@@ -32,13 +32,16 @@ class EndOfTransactionQueriesTest extends DriverSpecificEndOfTransactionQueriesT
    */
   protected static function statementToTableName($statement) {
     $prefix = Database::getConnection()->tablePrefix();
+global $xxx; if ($xxx) dump(['statementToTableName', $statement, $prefix]);
     if (preg_match('/.*\{([^\}]+)\}.*/', $statement, $matches)) {
       return $matches[1];
     }
     elseif (preg_match('/.*FROM [\"\`](' . $prefix . '[a-z0-9]*)[\"\`].*/', $statement, $matches)) {
+if ($xxx) dump(['statementToTableName:1', $matches]);
       return $matches[1];
     }
     elseif (preg_match('/.*FROM [\"\`]([a-z0-9]*)[\"\`].*/', $statement, $matches)) {
+if ($xxx) dump(['statementToTableName:2', $matches]);
       return $matches[1];
     }
     return NULL;
