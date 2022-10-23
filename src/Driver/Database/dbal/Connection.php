@@ -495,6 +495,7 @@ class Connection extends DatabaseConnection {
       $success = FALSE;
     }
 
+global $xxx; if ($xxx) dump(['doCommit', 'success' => $success, 'rootTransactionEndCallbacks' => $this->rootTransactionEndCallbacks]);
     if (!empty($this->rootTransactionEndCallbacks)) {
       $callbacks = $this->rootTransactionEndCallbacks;
       $this->rootTransactionEndCallbacks = [];
