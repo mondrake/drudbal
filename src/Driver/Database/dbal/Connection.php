@@ -479,9 +479,10 @@ if ($xxx) dump(['popCommittableTransactions:4', $name]);
         catch (DbalDriverException $e) {
 if ($xxx) dump(['popCommittableTransactions:5', $e->getMessage()]);
           // If all SAVEPOINTs were released automatically, clean the
-          // transaction stack.
+          // transaction stack and commit.
           if ($this->dbalExtension->delegateReleaseSavepointExceptionProcess($e) === 'all') {
             $this->transactionLayers = [];
+            $this->doCommit();
           };
         }
       }
