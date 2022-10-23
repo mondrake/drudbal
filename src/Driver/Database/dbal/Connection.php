@@ -385,6 +385,7 @@ class Connection extends DatabaseConnection {
    * {@inheritdoc}
    */
   public function rollBack($savepoint_name = 'drupal_transaction') {
+global $xxx; if ($xxx) dump(['rollBack', $savepoint_name]);
     if (!$this->inTransaction()) {
       throw new TransactionNoActiveException();
     }
@@ -435,6 +436,7 @@ class Connection extends DatabaseConnection {
    * {@inheritdoc}
    */
   public function pushTransaction($name) {
+global $xxx; if ($xxx) dump(['pushTransaction', $name]);
     if (isset($this->transactionLayers[$name])) {
       throw new TransactionNameNonUniqueException($name . " is already in use.");
     }
@@ -453,6 +455,7 @@ class Connection extends DatabaseConnection {
    * {@inheritdoc}
    */
   protected function popCommittableTransactions() {
+global $xxx; if ($xxx) dump(['popCommittableTransactions']);
     // Commit all the committable layers.
     foreach (array_reverse($this->transactionLayers) as $name => $active) {
       // Stop once we found an active transaction.
