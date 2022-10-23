@@ -496,12 +496,13 @@ global $xxx; if ($xxx) dump(['popCommittableTransactions', $this->transactionDep
    * @internal
    */
   protected function doCommit() {
-//global $xxx; if ($xxx) dump(['doCommit']);
+global $xxx; if ($xxx) dump(['doCommit']);
     try {
       $this->getDbalExtension()->delegateCommit();
       $success = TRUE;
     }
     catch (DbalConnectionException $e) {
+if ($xxx) dump(['doCommit:exc'], $e);
       $success = FALSE;
     }
 
