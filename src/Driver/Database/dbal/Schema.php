@@ -841,7 +841,7 @@ class Schema extends DatabaseSchema {
    */
   private function dbalSchema() {
     if ($this->dbalCurrentSchema === NULL) {
-      $this->dbalSetCurrentSchema($this->dbalSchemaManager->createSchema());
+      $this->dbalSetCurrentSchema($this->dbalSchemaManager->introspectSchema());
     }
     return $this->dbalCurrentSchema;
   }
