@@ -6,7 +6,7 @@ use Doctrine\DBAL\Exception as DbalException;
 use Doctrine\DBAL\Schema\Column as DbalColumn;
 use Doctrine\DBAL\Schema\Comparator;
 use Doctrine\DBAL\Schema\Schema as DbalSchema;
-use Doctrine\DBAL\Schema\SchemaException as DbalSchemaException;
+use Doctrine\DBAL\Schema\TableDoesNotExist as DbalTableDoesNotExist;
 use Doctrine\DBAL\Types\Type as DbalType;
 use Drupal\Component\Utility\Unicode;
 use Drupal\Core\Database\Schema as DatabaseSchema;
@@ -346,12 +346,9 @@ class Schema extends DatabaseSchema {
     try {
       $current_schema->dropTable($table_full_name);
     }
-    catch (DbalSchemaException $e) {
-      if ($e->getCode() === DbalSchemaException::TABLE_DOESNT_EXIST) {
-        // If the table is not in the DBAL schema, then we are good anyway.
-        return TRUE;
-      }
-      throw $e;
+    catch (DbalTableDoesNotExist $e) {
+      // If the table is not in the DBAL schema, then we are good anyway.
+      return TRUE;
     }
 
     $this->dbalExtension->postDropTable($current_schema, $table);
@@ -879,7 +876,7 @@ class Schema extends DatabaseSchema {
    */
   private function dbalExecuteSchemaChange(DbalSchema $to_schema) {
     $schema_diff = (new Comparator())->compareSchemas($this->dbalSchema(), $to_schema);
-    foreach ($schema_diff->toSql($this->dbalPlatform) as $sql) {
+    foreach ($this->dbalPlatform->getAlterSchemaSQL($schema_diff) as $sql) {
       if ($this->dbalExtension->getDebugging()) {
         dump($sql);
       }
