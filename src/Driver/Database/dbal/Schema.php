@@ -6,7 +6,7 @@ use Doctrine\DBAL\Exception as DbalException;
 use Doctrine\DBAL\Schema\Column as DbalColumn;
 use Doctrine\DBAL\Schema\Comparator;
 use Doctrine\DBAL\Schema\Schema as DbalSchema;
-use Doctrine\DBAL\Schema\TableDoesNotExist as DbalTableDoesNotExist;
+use Doctrine\DBAL\Schema\Exception\TableDoesNotExist as DbalTableDoesNotExist;
 use Doctrine\DBAL\Types\Type as DbalType;
 use Drupal\Component\Utility\Unicode;
 use Drupal\Core\Database\Schema as DatabaseSchema;
