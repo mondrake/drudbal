@@ -9,21 +9,20 @@ env:
     DRUDBAL_DRUPAL_PROFILE: "standard"
     SIMPLETEST_BASE_URL: "http://localhost:8080"
     PHPUNIT_SKIP_CLASS: '[
-      "Drupal\\KernelTests\\Core\\Cache\\ApcuBackendTest",
-      "Drupal\\Tests\\file\\Functional\\DownloadTest"
+      "Drupal\\KernelTests\\Core\\Cache\\ApcuBackendTest"
     ]'
 
 jobs:
 
 #################################
 
-  mysql-pdo:
-    name: "MySql"
+  mysql-mysqli:
+    name: "MySql with mysqli"
     runs-on: ubuntu-latest
     env:
-        DRUDBAL_ENV: "dbal/mysql"
-        DBAL_URL: "mysql://root:@0.0.0.0:3306/drudbal"
-        SIMPLETEST_DB: "dbal://root:@0.0.0.0:3306/drudbal?module=drudbal&dbal_driver=pdo_mysql"
+        DRUDBAL_ENV: "dbal/mysqli"
+        DBAL_URL: "mysqli://root:@0.0.0.0:3306/drudbal"
+        SIMPLETEST_DB: "dbal://root:@0.0.0.0:3306/drudbal?module=drudbal&dbal_driver=mysqli"
 
     strategy:
       fail-fast: false
@@ -31,6 +30,7 @@ jobs:
         php-version:
           - "8.1"
         test-args:
+          - "--group Database"
           - "--group Cache"
 
     services:
@@ -48,7 +48,7 @@ jobs:
       with:
         php-version: "${{ matrix.php-version }}"
         coverage: "none"
-        extensions: "pdo_mysql"
+        extensions: "mysqli"
         ini-values: "zend.assertions=1"
 
     - name: Checkout Drupal
@@ -88,66 +88,4 @@ jobs:
 #        vendor/bin/drush pml --type=module --no-core
 
     - name: Run test ${{ matrix.test-args }}
-      run: vendor/bin/phpunit -c core --color=always modules/contrib/drudbal/tests/src/Kernel/dbal/EndOfTransactionQueriesTest.php
-
-  sqlite-pdo:
-    name: "SQLite with PDO"
-    runs-on: ubuntu-20.04
-    env:
-        DRUDBAL_ENV: "dbal/sqlite/file"
-        DBAL_URL: "sqlite://localhost/sites/drudbal.sqlite"
-        SIMPLETEST_DB: "dbal://localhost/sites/drudbal.sqlite?module=drudbal&dbal_driver=pdo_sqlite"
-
-    strategy:
-      fail-fast: false
-      matrix:
-        php-version:
-          - "8.1"
-        test-args:
-          - "--group Cache"
-
-    steps:
-    - name: Install PHP
-      uses: "shivammathur/setup-php@v2"
-      with:
-        php-version: "${{ matrix.php-version }}"
-        coverage: "none"
-        ini-values: "zend.assertions=1"
-
-    - name: Checkout Drupal
-      run: git clone --depth=5 --branch=$DRUDBAL_DRUPAL_VERSION http://git.drupal.org/project/drupal.git .
-
-    - name: Checkout DruDbal
-      uses: actions/checkout@v2
-      with:
-        path: drudbal_staging
-
-    - name: Patch Drupal
-      run: ./drudbal_staging/tests/github/drupal_patch.sh
-
-    - name: Install Composer dependencies
-      run: |
-        composer install --no-progress --ansi
-
-    - name: Composer require DruDbal from local staging
-      run: |
-        git -C drudbal_staging checkout -b test-run-branch
-        composer config repositories.test-run '{"type": "path", "url": "drudbal_staging", "options": {"symlink": false}}'
-        composer require "mondrake/drudbal:dev-test-run-branch" --no-progress --ansi
-
-#    - name: Install Drupal
-#      run: |
-#        cp modules/contrib/drudbal/tests/github/install_* .
-#        vendor/bin/drush site-install standard --db-url=$SIMPLETEST_DB -y
-#        vendor/bin/drush runserver localhost:8080 --default-server=localhost:8080 &
-#        sleep 1s
-
-#    - name: Report installation
-#      run: |
-#        php install_report.php
-#        vendor/bin/drush core:status
-#        vendor/bin/drush core:requirements
-#        vendor/bin/drush pml --type=module --no-core
-
-    - name: Run test ${{ matrix.test-args }}
-      run: vendor/bin/phpunit -c core --color=always modules/contrib/drudbal/tests/src/Kernel/dbal/EndOfTransactionQueriesTest.php
+      run: vendor/bin/phpunit -c core --color=always ${{ matrix.test-args }}
