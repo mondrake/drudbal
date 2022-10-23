@@ -437,7 +437,7 @@ global $xxx; if ($xxx) dump(['rollBack', $savepoint_name]);
    * {@inheritdoc}
    */
   public function pushTransaction($name) {
-global $xxx; if ($xxx) dump(['pushTransaction', $name, Error::formatBacktrace(debug_backtrace())]);
+global $xxx; if ($xxx) dump(['pushTransaction', $name]);
     if (isset($this->transactionLayers[$name])) {
       throw new TransactionNameNonUniqueException($name . " is already in use.");
     }
@@ -456,9 +456,10 @@ global $xxx; if ($xxx) dump(['pushTransaction', $name, Error::formatBacktrace(de
    * {@inheritdoc}
    */
   protected function popCommittableTransactions() {
-global $xxx; if ($xxx) dump(['popCommittableTransactions', Error::formatBacktrace(debug_backtrace())]);
+global $xxx; //if ($xxx) dump(['popCommittableTransactions']);
     // Commit all the committable layers.
     foreach (array_reverse($this->transactionLayers) as $name => $active) {
+if ($xxx) dump(['popCommittableTransactions:1', $name, $active]);
       // Stop once we found an active transaction.
       if ($active) {
         break;
@@ -467,14 +468,17 @@ global $xxx; if ($xxx) dump(['popCommittableTransactions', Error::formatBacktrac
       // If there are no more layers left then we should commit.
       unset($this->transactionLayers[$name]);
       if (empty($this->transactionLayers)) {
+if ($xxx) dump(['popCommittableTransactions:commit']);
         $this->doCommit();
       }
       else {
         // Attempt to release this savepoint in the standard way.
         try {
           $this->getDbalConnection()->executeStatement($this->getDbalPlatform()->releaseSavePoint($name));
+if ($xxx) dump(['popCommittableTransactions:4', $name]);
         }
         catch (DbalDriverException $e) {
+if ($xxx) dump(['popCommittableTransactions:5', $e->getMessage()]);
           // If all SAVEPOINTs were released automatically, clean the
           // transaction stack.
           if ($this->dbalExtension->delegateReleaseSavepointExceptionProcess($e) === 'all') {
