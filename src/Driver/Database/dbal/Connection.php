@@ -487,6 +487,7 @@ class Connection extends DatabaseConnection {
    * @internal
    */
   protected function doCommit() {
+global $xxx; if ($xxx) dump(['doCommit']);
     try {
       $this->getDbalExtension()->delegateCommit();
       $success = TRUE;
@@ -495,7 +496,7 @@ class Connection extends DatabaseConnection {
       $success = FALSE;
     }
 
-global $xxx; if ($xxx) dump(['doCommit', 'success' => $success, 'rootTransactionEndCallbacks' => $this->rootTransactionEndCallbacks]);
+if ($xxx) dump(['doCommit:1', 'success' => $success, 'rootTransactionEndCallbacks' => $this->rootTransactionEndCallbacks]);
     if (!empty($this->rootTransactionEndCallbacks)) {
       $callbacks = $this->rootTransactionEndCallbacks;
       $this->rootTransactionEndCallbacks = [];
