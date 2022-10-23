@@ -39,7 +39,7 @@ if ($xxx) dump(['statementToTableName:1', $matches]);
     }
     elseif (preg_match('/.*FROM [\"\`](' . $prefix . ')([a-z0-9]*)[\"\`].*/', $statement, $matches)) {
 if ($xxx) dump(['statementToTableName:2', $matches]);
-      return $matches[1];
+      return $matches[2];
     }
     elseif (preg_match('/.*FROM [\"\`]([a-z0-9]*)[\"\`].*/', $statement, $matches)) {
 if ($xxx) dump(['statementToTableName:3', $matches]);
