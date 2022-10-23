@@ -459,7 +459,7 @@ global $xxx; if ($xxx) dump(['pushTransaction', $name]);
 global $xxx; //if ($xxx) dump(['popCommittableTransactions']);
     // Commit all the committable layers.
     foreach (array_reverse($this->transactionLayers) as $name => $active) {
-if ($xxx) dump(['popCommittableTransactions:1', $name, $active]);
+if ($xxx) dump(['popCommittableTransactions:1', $this->transactionLayers, $name, $active]);
       // Stop once we found an active transaction.
       if ($active) {
         break;
@@ -468,7 +468,6 @@ if ($xxx) dump(['popCommittableTransactions:1', $name, $active]);
       // If there are no more layers left then we should commit.
       unset($this->transactionLayers[$name]);
       if (empty($this->transactionLayers)) {
-if ($xxx) dump(['popCommittableTransactions:commit']);
         $this->doCommit();
       }
       else {
