@@ -16,13 +16,26 @@ jobs:
 
 #################################
 
-  mysql-mysqli:
-    name: "MySql with mysqli"
-    runs-on: ubuntu-latest
+  oracle-oci8:
+    name: "Oracle on Oci8"
+    runs-on: ubuntu-20.04
     env:
-        DRUDBAL_ENV: "dbal/mysqli"
-        DBAL_URL: "mysqli://root:@0.0.0.0:3306/drudbal"
-        SIMPLETEST_DB: "dbal://root:@0.0.0.0:3306/drudbal?module=drudbal&dbal_driver=mysqli"
+        DRUDBAL_ENV: "dbal/oci8"
+        DBAL_URL: "oci8://DRUDBAL:ORACLE@0.0.0.0:1521/XE"
+        SIMPLETEST_DB: "dbal://DRUDBAL:ORACLE@0.0.0.0:1521/XE?module=drudbal&dbal_driver=oci8#dru"
+
+    services:
+      oracle:
+        image: gvenzl/oracle-xe:21
+        env:
+          ORACLE_PASSWORD: oracle
+        ports:
+          - "1521:1521"
+        options: >-
+          --health-cmd healthcheck.sh
+          --health-interval 20s
+          --health-timeout 10s
+          --health-retries 10
 
     strategy:
       fail-fast: false
@@ -31,16 +44,11 @@ jobs:
           - "8.1"
         test-args:
           - "--group Database"
-          - "--group Cache"
-
-    services:
-      mysql:
-        image: "mysql:5.7"
-        options: >-
-          -e MYSQL_ALLOW_EMPTY_PASSWORD=yes
-          -e MYSQL_DATABASE=drudbal
-        ports:
-          - "3306:3306"
+#          - "--group Entity"
+          - "--group Cache,Config"
+#          - "--group field,Field"
+#          - "--group file"
+#          - "--group views"
 
     steps:
     - name: Install PHP
@@ -48,7 +56,7 @@ jobs:
       with:
         php-version: "${{ matrix.php-version }}"
         coverage: "none"
-        extensions: "mysqli"
+        extensions: "oci8"
         ini-values: "zend.assertions=1"
 
     - name: Checkout Drupal
@@ -73,14 +81,23 @@ jobs:
         composer config repositories.test-run '{"type": "path", "url": "drudbal_staging", "options": {"symlink": false}}'
         composer require "mondrake/drudbal:dev-test-run-branch" --no-progress --ansi
 
-    - name: Install Drupal
+    - name: Patch doctrine/dbal
+      run: |
+        curl https://patch-diff.githubusercontent.com/raw/mondrake/dbal/pull/6.diff | patch -d vendor/doctrine/dbal -p1
+
+    - name: Create Oracle schema
       run: |
         cp modules/contrib/drudbal/tests/github/install_* .
+        php install_oracle.php
+
+    - name: Install Drupal
+      run: |
         vendor/bin/drush site-install standard --db-url=$SIMPLETEST_DB -y
         vendor/bin/drush runserver localhost:8080 --default-server=localhost:8080 &
-        sleep 1s
+        sleep 5s
 
     - name: Report installation
+      continue-on-error: true
       run: |
         php install_report.php
         vendor/bin/drush core:status
