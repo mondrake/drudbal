@@ -456,7 +456,7 @@ global $xxx; if ($xxx) dump(['pushTransaction', $name]);
    * {@inheritdoc}
    */
   protected function popCommittableTransactions() {
-global $xxx; //if ($xxx) dump(['popCommittableTransactions']);
+global $xxx; //if ($xxx) dump(['popCommit tableTransactions']);
     // Commit all the committable layers.
     foreach (array_reverse($this->transactionLayers) as $name => $active) {
 if ($xxx) dump(['popCommittableTransactions:1', $this->transactionLayers, $name, $active]);

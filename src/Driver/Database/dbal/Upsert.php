@@ -74,7 +74,7 @@ class Upsert extends QueryUpsert {
       else {
         // Emulated UPSERT.
         // @codingStandardsIgnoreLine
-global $xxx; if ($xxx) dump(['upsert:1']);
+global $xxx; if ($xxx) dump(['upsert:execute']);
         $trn = $this->connection()->startTransaction();
 
         $affected_rows = 0;
