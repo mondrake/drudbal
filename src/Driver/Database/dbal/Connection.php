@@ -386,7 +386,7 @@ class Connection extends DatabaseConnection {
    * {@inheritdoc}
    */
   public function rollBack($savepoint_name = 'drupal_transaction') {
-global $xxx; if ($xxx) dump(['rollBack', $savepoint_name]);
+global $xxx; if ($xxx) dump(['rollBack', $savepoint_name, $this->transactionDepth(), array_reverse($this->transactionLayers)]);
     if (!$this->inTransaction()) {
       throw new TransactionNoActiveException();
     }
@@ -437,7 +437,7 @@ global $xxx; if ($xxx) dump(['rollBack', $savepoint_name]);
    * {@inheritdoc}
    */
   public function pushTransaction($name) {
-global $xxx; if ($xxx) dump(['pushTransaction', $name, $this->transactionLayers]);
+global $xxx; if ($xxx) dump(['pushTransaction', $this->transactionDepth(), $name, array_reverse($this->transactionLayers)]);
     if (isset($this->transactionLayers[$name])) {
       throw new TransactionNameNonUniqueException($name . " is already in use.");
     }
@@ -456,7 +456,7 @@ global $xxx; if ($xxx) dump(['pushTransaction', $name, $this->transactionLayers]
    * {@inheritdoc}
    */
   protected function popCommittableTransactions() {
-global $xxx; if ($xxx) dump(['popCommittableTransactions'], array_reverse($this->transactionLayers));
+global $xxx; if ($xxx) dump(['popCommittableTransactions', $this->transactionDepth(), array_reverse($this->transactionLayers)]);
     // Commit all the committable layers.
     foreach (array_reverse($this->transactionLayers) as $name => $active) {
 //if ($xxx) dump(['popCommittableTransactions:1', $this->transactionLayers, $name, $active]);
