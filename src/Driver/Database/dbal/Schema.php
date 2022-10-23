@@ -386,7 +386,7 @@ class Schema extends DatabaseSchema {
     $dbal_table = $to_schema->getTable($this->connection()->getPrefixedTableName($table));
 
     // Drop primary key if it is due to be changed.
-    if (isset($keys_new['primary key']) && $dbal_table->hasPrimaryKey()) {
+    if (isset($keys_new['primary key']) && $dbal_table->getPrimaryKey()) {
       $this->dropPrimaryKey($table);
       $current_schema = $this->dbalSchema();
       $to_schema = clone $current_schema;
@@ -502,7 +502,7 @@ class Schema extends DatabaseSchema {
       throw new SchemaObjectDoesNotExistException(t("Cannot add primary key to table @table: table doesn't exist.", ['@table' => $table]));
     }
     $table_full_name = $this->connection()->getPrefixedTableName($table);
-    if ($this->dbalSchema()->getTable($table_full_name)->hasPrimaryKey()) {
+    if ($this->dbalSchema()->getTable($table_full_name)->getPrimaryKey()) {
       throw new SchemaObjectExistsException(t("Cannot add primary key to table @table: primary key already exists.", ['@table' => $table]));
     }
 
@@ -536,7 +536,7 @@ class Schema extends DatabaseSchema {
 
     // DBAL extension did not pick up, proceed with DBAL.
     $table_full_name = $this->connection()->getPrefixedTableName($table);
-    if (!$this->dbalSchema()->getTable($table_full_name)->hasPrimaryKey()) {
+    if (!$this->dbalSchema()->getTable($table_full_name)->getPrimaryKey()) {
       return FALSE;
     }
     $current_schema = $this->dbalSchema();

@@ -1089,7 +1089,7 @@ class PDOSqliteExtension extends AbstractExtension {
     }
 
     // Primary key.
-    if ($dbal_table->hasPrimaryKey()) {
+    if ($dbal_table->getPrimaryKey()) {
       $schema['primary key'] = $dbal_table->getPrimaryKey()->getColumns();
     }
 
