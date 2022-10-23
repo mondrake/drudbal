@@ -499,7 +499,7 @@ global $xxx; if ($xxx) dump(['doCommit']);
       $success = FALSE;
     }
 
-if ($xxx) dump(['doCommit:1', 'success' => $success, 'rootTransactionEndCallbacks' => $this->rootTransactionEndCallbacks]);
+if ($xxx) dump(['doCommit:1', 'success' => $success);
     if (!empty($this->rootTransactionEndCallbacks)) {
       $callbacks = $this->rootTransactionEndCallbacks;
       $this->rootTransactionEndCallbacks = [];
