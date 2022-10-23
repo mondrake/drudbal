@@ -6,7 +6,7 @@ use Doctrine\DBAL\Exception as DbalException;
 use Doctrine\DBAL\Schema\Column as DbalColumn;
 use Doctrine\DBAL\Schema\Comparator;
 use Doctrine\DBAL\Schema\Schema as DbalSchema;
-use Doctrine\DBAL\Schema\SchemaException as DbalSchemaException;
+use Doctrine\DBAL\Schema\Exception\TableDoesNotExist as DbalTableDoesNotExist;
 use Doctrine\DBAL\Types\Type as DbalType;
 use Drupal\Component\Utility\Unicode;
 use Drupal\Core\Database\Schema as DatabaseSchema;
@@ -346,12 +346,9 @@ class Schema extends DatabaseSchema {
     try {
       $current_schema->dropTable($table_full_name);
     }
-    catch (DbalSchemaException $e) {
-      if ($e->getCode() === DbalSchemaException::TABLE_DOESNT_EXIST) {
-        // If the table is not in the DBAL schema, then we are good anyway.
-        return TRUE;
-      }
-      throw $e;
+    catch (DbalTableDoesNotExist $e) {
+      // If the table is not in the DBAL schema, then we are good anyway.
+      return TRUE;
     }
 
     $this->dbalExtension->postDropTable($current_schema, $table);
@@ -386,7 +383,7 @@ class Schema extends DatabaseSchema {
     $dbal_table = $to_schema->getTable($this->connection()->getPrefixedTableName($table));
 
     // Drop primary key if it is due to be changed.
-    if (isset($keys_new['primary key']) && $dbal_table->hasPrimaryKey()) {
+    if (isset($keys_new['primary key']) && $dbal_table->getPrimaryKey()) {
       $this->dropPrimaryKey($table);
       $current_schema = $this->dbalSchema();
       $to_schema = clone $current_schema;
@@ -502,7 +499,7 @@ class Schema extends DatabaseSchema {
       throw new SchemaObjectDoesNotExistException(t("Cannot add primary key to table @table: table doesn't exist.", ['@table' => $table]));
     }
     $table_full_name = $this->connection()->getPrefixedTableName($table);
-    if ($this->dbalSchema()->getTable($table_full_name)->hasPrimaryKey()) {
+    if ($this->dbalSchema()->getTable($table_full_name)->getPrimaryKey()) {
       throw new SchemaObjectExistsException(t("Cannot add primary key to table @table: primary key already exists.", ['@table' => $table]));
     }
 
@@ -536,7 +533,7 @@ class Schema extends DatabaseSchema {
 
     // DBAL extension did not pick up, proceed with DBAL.
     $table_full_name = $this->connection()->getPrefixedTableName($table);
-    if (!$this->dbalSchema()->getTable($table_full_name)->hasPrimaryKey()) {
+    if (!$this->dbalSchema()->getTable($table_full_name)->getPrimaryKey()) {
       return FALSE;
     }
     $current_schema = $this->dbalSchema();
@@ -841,7 +838,7 @@ class Schema extends DatabaseSchema {
    */
   private function dbalSchema() {
     if ($this->dbalCurrentSchema === NULL) {
-      $this->dbalSetCurrentSchema($this->dbalSchemaManager->createSchema());
+      $this->dbalSetCurrentSchema($this->dbalSchemaManager->introspectSchema());
     }
     return $this->dbalCurrentSchema;
   }
@@ -879,7 +876,7 @@ class Schema extends DatabaseSchema {
    */
   private function dbalExecuteSchemaChange(DbalSchema $to_schema) {
     $schema_diff = (new Comparator())->compareSchemas($this->dbalSchema(), $to_schema);
-    foreach ($schema_diff->toSql($this->dbalPlatform) as $sql) {
+    foreach ($this->dbalPlatform->getAlterSchemaSQL($schema_diff) as $sql) {
       if ($this->dbalExtension->getDebugging()) {
         dump($sql);
       }

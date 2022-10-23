@@ -674,7 +674,7 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
    */
   public function delegateIndexExists(&$result, DbalSchema $dbal_schema, $table_full_name, $drupal_table_name, $drupal_index_name) {
     if ($drupal_index_name == 'PRIMARY') {
-      $result = $dbal_schema->getTable($table_full_name)->hasPrimaryKey();
+      $result = (bool) $dbal_schema->getTable($table_full_name)->getPrimaryKey();
       return TRUE;
     }
     return FALSE;

@@ -33,7 +33,7 @@ $table->addColumn('"test_field"', Types::STRING);
 $schemaManager = $tmpConnection->createSchemaManager();
 $schemaManager->dropAndCreateTable($table);
 
-$current_schema = $schemaManager->createSchema();
+$current_schema = $schemaManager->introspectSchema();
 $to_schema = clone $current_schema;
 $to_schema->getTable('"tester"')->dropColumn('"test_field"');
 $schema_diff = (new Comparator())->compareSchemas($current_schema, $to_schema);
