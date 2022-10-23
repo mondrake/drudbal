@@ -74,6 +74,7 @@ class Upsert extends QueryUpsert {
       else {
         // Emulated UPSERT.
         // @codingStandardsIgnoreLine
+global $xxx; if ($xxx) dump(['upsert:1']);
         $trn = $this->connection()->startTransaction();
 
         $affected_rows = 0;
@@ -86,6 +87,7 @@ class Upsert extends QueryUpsert {
           try {
             $stmt = $this->connection()->prepareStatement($sql, $this->queryOptions, TRUE);
             try {
+if ($xxx) dump(['upsert:2', $sql]);
               $stmt->execute($values, $this->queryOptions);
               $affected_rows += $stmt->rowCount();
             }
@@ -94,6 +96,7 @@ class Upsert extends QueryUpsert {
             }
           }
           catch (IntegrityConstraintViolationException $e) {
+if ($xxx) dump(['upsert:3', $e->getMessage()]);
             // Update the record at key in case of integrity constraint
             // violation.
             $this->fallbackUpdate($insert_values);
@@ -166,6 +169,7 @@ class Upsert extends QueryUpsert {
    *   record identified by the unique key.
    */
   private function fallbackUpdate(array $insert_values): void {
+global $xxx; if ($xxx) dump(['upsert:fallbackUpdate:1']);
     // Use the DBAL query builder for the UPDATE. Need to pass the quoted table
     // name here.
     $dbal_query = $this->connection()->getDbalConnection()->createQueryBuilder()->update($this->connection()->getPrefixedTableName($this->table, TRUE));
