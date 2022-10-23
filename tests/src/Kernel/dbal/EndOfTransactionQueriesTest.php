@@ -34,10 +34,10 @@ class EndOfTransactionQueriesTest extends DriverSpecificEndOfTransactionQueriesT
     if (preg_match('/.*\{([^\}]+)\}.*/', $statement, $matches)) {
       return $matches[1];
     }
-    elseif (preg_match('/.*FROM \"(' . $prefix . '[a-z0-9]*)\".*/', $statement, $matches)) {
+    elseif (preg_match('/.*FROM [\"\`](' . $prefix . '[a-z0-9]*)[\"\`].*/', $statement, $matches)) {
       return $matches[1];
     }
-    elseif (preg_match('/.*FROM \"([a-z0-9]*)\".*/', $statement, $matches)) {
+    elseif (preg_match('/.*FROM [\"\`]([a-z0-9]*)[\"\`].*/', $statement, $matches)) {
       return $matches[1];
     }
     return NULL;
