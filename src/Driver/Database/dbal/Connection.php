@@ -483,6 +483,7 @@ class Connection extends DatabaseConnection {
           if ($this->dbalExtension->delegateReleaseSavepointExceptionProcess($e) === 'all') {
             $this->transactionLayers = [];
             $this->doCommit();
+            return;
           };
         }
       }
