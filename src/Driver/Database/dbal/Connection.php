@@ -437,7 +437,7 @@ global $xxx; if ($xxx) dump(['rollBack', $savepoint_name]);
    * {@inheritdoc}
    */
   public function pushTransaction($name) {
-global $xxx; if ($xxx) dump(['pushTransaction', $name]);
+global $xxx; if ($xxx) dump(['pushTransaction', $name, $this->transactionLayers]);
     if (isset($this->transactionLayers[$name])) {
       throw new TransactionNameNonUniqueException($name . " is already in use.");
     }
