@@ -45,7 +45,7 @@ jobs:
         test-args:
           - "--group Database"
 #          - "--group Entity"
-          - "--group Cache,Config"
+          - "--group Cache"
 #          - "--group field,Field"
 #          - "--group file"
 #          - "--group views"
@@ -105,4 +105,4 @@ jobs:
         vendor/bin/drush pml --type=module --no-core
 
     - name: Run test ${{ matrix.test-args }}
-      run: vendor/bin/phpunit -c core --color=always ${{ matrix.test-args }}
+      run: vendor/bin/phpunit -v -c core --color=always ${{ matrix.test-args }}
