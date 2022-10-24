@@ -1,19 +1,15 @@
 <?php
 
-namespace Drupal\Tests\drudbal\Kernel;
+namespace Drupal\Tests\drudbal\Kernel\dbal;
 
-use Drupal\KernelTests\Core\Database\BasicSyntaxTest as BasicSyntaxTestBase;
+use Drupal\KernelTests\Core\Database\DriverSpecificSyntaxTestBase;
 
 /**
- * Tests SQL syntax interpretation.
- *
- * In order to ensure consistent SQL handling throughout Drupal
- * across multiple kinds of database systems, we test that the
- * database system interprets SQL syntax in an expected fashion.
+ * Tests SQLite syntax interpretation.
  *
  * @group Database
  */
-class BasicSyntaxTest extends BasicSyntaxTestBase {
+class SyntaxTest extends DriverSpecificSyntaxTestBase {
 
   /**
    * Tests allowing square brackets in queries.

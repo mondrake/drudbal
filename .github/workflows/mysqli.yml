@@ -33,6 +33,7 @@ jobs:
           - "8.1"
         test-args:
           - "--group Database"
+          - "--group Cache"
           - "--group Entity"
 
     services:
