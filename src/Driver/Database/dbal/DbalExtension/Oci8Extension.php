@@ -804,8 +804,8 @@ PLSQL
     $db_field = '"' . $unquoted_db_field . '"';
 
     $dbal_table = $dbal_schema->getTable($unquoted_db_table);
-    $has_primary_key = $dbal_table->hasPrimaryKey();
-    $dbal_primary_key = $has_primary_key ? $dbal_table->getPrimaryKey() : NULL;
+    $dbal_primary_key = $dbal_table->getPrimaryKey();
+    $has_primary_key = (bool) $dbal_primary_key;
 
     $drop_primary_key = $has_primary_key && !empty($keys_new_specs['primary key']);
     $db_primary_key_columns = !empty($keys_new_specs['primary key']) ? $this->connection->schema()->dbalGetFieldList($keys_new_specs['primary key']) : [];
@@ -895,8 +895,8 @@ PLSQL
     $new_db_field_is_serial = $drupal_field_new_specs['type'] === 'serial';
 
     $dbal_table = $dbal_schema->getTable($unquoted_db_table);
-    $has_primary_key = $dbal_table->hasPrimaryKey();
-    $dbal_primary_key = $has_primary_key ? $dbal_table->getPrimaryKey() : NULL;
+    $dbal_primary_key = $dbal_table->getPrimaryKey();
+    $has_primary_key = (bool) $dbal_primary_key;
 
     $db_primary_key_columns = $dbal_primary_key ? $dbal_primary_key->getColumns() : [];
     $drop_primary_key = $has_primary_key && (!empty($keys_new_specs['primary key']) || in_array($db_field, $db_primary_key_columns));
@@ -991,6 +991,7 @@ PLSQL
          WHERE ind.table_name = '$unquoted_db_table' AND con.constraint_type = 'P'
 SQL
     )->fetch();
+    assert(is_object($db_constraint));
     $primary_key_asset_name = $db_constraint->name;
     $exec = "ALTER TABLE $db_table DROP CONSTRAINT \"$primary_key_asset_name\"";
     $this->getDbalConnection()->executeStatement($exec);

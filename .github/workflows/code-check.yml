@@ -1,0 +1,61 @@
+name: Code quality
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  schedule:
+    - cron: "0 6 * * 2"
+
+env:
+    DRUDBAL_DRUPAL_VERSION: "10.0.x"
+
+jobs:
+
+#################################
+
+  phpstan:
+    name: "PHPStan check"
+    runs-on: ubuntu-20.04
+
+    strategy:
+      fail-fast: false
+      matrix:
+        php-version:
+          - "8.1"
+
+    steps:
+    - name: Install PHP
+      uses: "shivammathur/setup-php@v2"
+      with:
+        php-version: "${{ matrix.php-version }}"
+        coverage: "none"
+        ini-values: "zend.assertions=1"
+
+    - name: Checkout Drupal
+      run: git clone --depth=5 --branch=$DRUDBAL_DRUPAL_VERSION http://git.drupal.org/project/drupal.git .
+
+    - name: Checkout DruDbal
+      uses: actions/checkout@v2
+      with:
+        path: drudbal_staging
+
+    - name: Patch Drupal
+      run: ./drudbal_staging/tests/github/drupal_patch.sh
+
+    - name: Install Composer dependencies
+      run: |
+        composer install --no-progress --ansi
+        composer config --no-plugins allow-plugins.composer/package-versions-deprecated true
+        composer require --dev --ansi phpstan/phpstan-deprecation-rules
+
+    - name: Composer require DruDbal from local staging
+      run: |
+        git -C drudbal_staging checkout -b test-run-branch
+        composer config repositories.test-run '{"type": "path", "url": "drudbal_staging", "options": {"symlink": false}}'
+        composer require "mondrake/drudbal:dev-test-run-branch" --no-progress --ansi
+
+    - name: PHPStan checks
+      run: |
+        php vendor/bin/phpstan analyze --no-progress --configuration="modules/contrib/drudbal/phpstan.neon.dist"
