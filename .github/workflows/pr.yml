@@ -9,8 +9,7 @@ env:
     DRUDBAL_DRUPAL_PROFILE: "standard"
     SIMPLETEST_BASE_URL: "http://localhost:8080"
     PHPUNIT_SKIP_CLASS: '[
-      "Drupal\\KernelTests\\Core\\Cache\\ApcuBackendTest",
-      "Drupal\\Tests\\file\\Functional\\DownloadTest"
+      "Drupal\\KernelTests\\Core\\Cache\\ApcuBackendTest"
     ]'
 
 jobs:
@@ -30,13 +29,13 @@ jobs:
       matrix:
         php-version:
           - "8.1"
-          - "8.2"
+#          - "8.2"
         test-args:
-          - "--group Database"
+#          - "--group Database"
 #          - "--group Entity"
 #          - "--group Cache,Config"
 #          - "--group field,Field"
-#          - "--group file"
+          - "--group file"
 #          - "--group views"
 
     steps:
