@@ -4,6 +4,7 @@ namespace Drupal\drudbal\Driver\Database\dbal\DbalExtension;
 
 use Drupal\drudbal\Driver\Database\dbal\Connection as DruDbalConnection;
 use Doctrine\DBAL\Connection as DbalConnection;
+use Doctrine\DBAL\ConnectionException as DbalConnectionException;
 use Doctrine\DBAL\Result as DbalResult;
 
 /**
@@ -52,6 +53,22 @@ class MysqliExtension extends AbstractMySqlExtension {
    */
   public function delegateClientVersion() {
     return mysqli_get_client_info();
+  }
+
+  /**
+   * Transaction delegated methods.
+   */
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateCommit(): bool {
+    try {
+     return parent::delegateCommit();
+    }
+    catch (DbalConnectionException $e) {
+     return FALSE;
+    }
   }
 
   /**

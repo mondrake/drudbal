@@ -56,7 +56,7 @@
       run: git clone --depth=5 --branch=$DRUDBAL_DRUPAL_VERSION http://git.drupal.org/project/drupal.git .
 
     - name: Checkout DruDbal
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         path: drudbal_staging
 
@@ -167,7 +167,7 @@
       run: git clone --depth=5 --branch=$DRUDBAL_DRUPAL_VERSION http://git.drupal.org/project/drupal.git .
 
     - name: Checkout DruDbal
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         path: drudbal_staging
 
