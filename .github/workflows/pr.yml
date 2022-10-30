@@ -30,11 +30,11 @@ jobs:
       matrix:
         php-version:
           - "8.1"
-          - "8.2"
+#          - "8.2"
         test-args:
-          - "--group Database"
+#          - "--group Database"
 #          - "--group Entity"
-#          - "--group Cache,Config"
+          - "--group Cache"
 #          - "--group field,Field"
 #          - "--group file"
 #          - "--group views"
