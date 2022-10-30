@@ -2,6 +2,7 @@
 
 namespace Drupal\drudbal\Driver\Database\dbal;
 
+use Drupal\Core\Utility\Error;
 use Composer\InstalledVersions;
 use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\ConnectionException as DbalConnectionException;
@@ -385,6 +386,7 @@ class Connection extends DatabaseConnection {
    * {@inheritdoc}
    */
   public function rollBack($savepoint_name = 'drupal_transaction') {
+//global $xxx; if ($xxx) dump(['rollBack', $savepoint_name, $this->transactionDepth(), array_reverse($this->transactionLayers), Error::formatBacktrace(debug_backtrace())]);
     if (!$this->inTransaction()) {
       throw new TransactionNoActiveException();
     }
@@ -435,6 +437,7 @@ class Connection extends DatabaseConnection {
    * {@inheritdoc}
    */
   public function pushTransaction($name) {
+//global $xxx; if ($xxx) dump(['pushTransaction', $this->transactionDepth(), $name, array_reverse($this->transactionLayers)]);
     if (isset($this->transactionLayers[$name])) {
       throw new TransactionNameNonUniqueException($name . " is already in use.");
     }
@@ -453,8 +456,10 @@ class Connection extends DatabaseConnection {
    * {@inheritdoc}
    */
   protected function popCommittableTransactions() {
+//global $xxx; if ($xxx) dump(['popCommittableTransactions', $this->transactionDepth(), array_reverse($this->transactionLayers)]);
     // Commit all the committable layers.
     foreach (array_reverse($this->transactionLayers) as $name => $active) {
+//if ($xxx) dump(['popCommittableTransactions:1', $this->transactionLayers, $name, $active]);
       // Stop once we found an active transaction.
       if ($active) {
         break;
@@ -469,12 +474,16 @@ class Connection extends DatabaseConnection {
         // Attempt to release this savepoint in the standard way.
         try {
           $this->getDbalConnection()->executeStatement($this->getDbalPlatform()->releaseSavePoint($name));
+//if ($xxx) dump(['popCommittableTransactions:4', $name]);
         }
         catch (DbalDriverException $e) {
+//if ($xxx) dump(['popCommittableTransactions:5', $e->getMessage()]);
           // If all SAVEPOINTs were released automatically, clean the
-          // transaction stack.
+          // transaction stack and commit.
           if ($this->dbalExtension->delegateReleaseSavepointExceptionProcess($e) === 'all') {
             $this->transactionLayers = [];
+            $this->doCommit();
+            return;
           };
         }
       }
@@ -487,14 +496,17 @@ class Connection extends DatabaseConnection {
    * @internal
    */
   protected function doCommit() {
+//global $xxx; if ($xxx) dump(['doCommit']);
     try {
       $this->getDbalExtension()->delegateCommit();
       $success = TRUE;
     }
     catch (DbalConnectionException $e) {
+//if ($xxx) dump(['doCommit:exc'], $e);
       $success = FALSE;
     }
 
+//if ($xxx) dump(['doCommit:1', 'success' => $success]);
     if (!empty($this->rootTransactionEndCallbacks)) {
       $callbacks = $this->rootTransactionEndCallbacks;
       $this->rootTransactionEndCallbacks = [];
