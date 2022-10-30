@@ -3,7 +3,7 @@
 namespace Drupal\drudbal\Driver\Database\dbal\Statement;
 
 use Doctrine\DBAL\Connection as DbalConnection;
-use Doctrine\DBAL\Exception as DbalException;
+use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
 use Doctrine\DBAL\FetchMode;
 use Doctrine\DBAL\Result;
 use Doctrine\DBAL\Statement;
@@ -156,7 +156,7 @@ class StatementWrapper extends BaseStatementWrapper {
         $this->connection()->getDbalExtension()->alterStatement($this->queryString, $args);
         $this->clientStatement = $this->dbalConnection->prepare($this->queryString);
       }
-      catch (DbalException $e) {
+      catch (DbalDriverException $e) {
         throw new DatabaseExceptionWrapper($e->getMessage(), $e->getCode(), $e);
       }
     }
@@ -184,7 +184,7 @@ class StatementWrapper extends BaseStatementWrapper {
     try {
       $this->dbalResult = $this->clientStatement->executeQuery($args);
     }
-    catch (DbalException $e) {
+    catch (DbalDriverException $e) {
       throw new DatabaseExceptionWrapper($e->getMessage(), $e->getCode(), $e);
     }
 
@@ -243,7 +243,7 @@ class StatementWrapper extends BaseStatementWrapper {
         return $class_obj;
 
       default:
-          throw new DbalException("Unknown fetch type '{$mode}'");
+          throw new DbalDriverException("Unknown fetch type '{$mode}'");
     }
   }
 

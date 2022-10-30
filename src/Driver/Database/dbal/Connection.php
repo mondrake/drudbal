@@ -183,7 +183,8 @@ class Connection extends DatabaseConnection {
    * {@inheritdoc}
    */
   public function lastInsertId(?string $name = NULL): string {
-    return (string) $this->getDbalConnection()->lastInsertId($name);
+    // @todo DBAL 4 dropped the sequence name, delegate to driver if nneded.
+    return (string) $this->getDbalConnection()->lastInsertId();
   }
 
   /**

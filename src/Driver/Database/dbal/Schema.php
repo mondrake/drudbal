@@ -3,6 +3,7 @@
 namespace Drupal\drudbal\Driver\Database\dbal;
 
 use Doctrine\DBAL\Exception as DbalException;
+use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Schema\Column as DbalColumn;
 use Doctrine\DBAL\Schema\Comparator;
 use Doctrine\DBAL\Schema\Schema as DbalSchema;
@@ -32,10 +33,8 @@ class Schema extends DatabaseSchema {
 
   /**
    * DBAL platform.
-   *
-   * @var \Doctrine\DBAL\Platforms\AbstractPlatform
    */
-  protected $dbalPlatform;
+  protected AbstractPlatform $dbalPlatform;
 
   /**
    * Current DBAL schema.
@@ -875,7 +874,7 @@ class Schema extends DatabaseSchema {
    *   TRUE if no exceptions were raised.
    */
   private function dbalExecuteSchemaChange(DbalSchema $to_schema) {
-    $schema_diff = (new Comparator())->compareSchemas($this->dbalSchema(), $to_schema);
+    $schema_diff = (new Comparator($this->dbalPlatform))->compareSchemas($this->dbalSchema(), $to_schema);
     foreach ($this->dbalPlatform->getAlterSchemaSQL($schema_diff) as $sql) {
       if ($this->dbalExtension->getDebugging()) {
         dump($sql);
