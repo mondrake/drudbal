@@ -243,7 +243,7 @@ class StatementWrapper extends BaseStatementWrapper {
         return $class_obj;
 
       default:
-          throw new DbalDriverException("Unknown fetch type '{$mode}'");
+          throw new DatabaseExceptionWrapper("Unknown fetch type '{$mode}'");
     }
   }
 
