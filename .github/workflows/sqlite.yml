@@ -72,6 +72,7 @@ jobs:
 
     - name: Install Drupal
       run: |
+        cp modules/contrib/drudbal/tests/github/install_* .
         vendor/bin/drush site-install standard --db-url=$SIMPLETEST_DB -y
         vendor/bin/drush runserver localhost:8080 --default-server=localhost:8080 &
         sleep 1s
