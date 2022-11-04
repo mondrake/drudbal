@@ -136,7 +136,9 @@ class AbstractExtension implements DbalExtensionInterface {
       return '"' . str_replace('.', '"."', $field_name) . '"';
     }
     else {
-      return $field_name;
+      return $this->connection->getDatabasePlatform()>getReservedKeywordsList()->isKeyword($field_name) ?
+        $this->connection->getDatabasePlatform()->quoteIdentifier($field_name) :
+        $field_name;
     }
   }
 

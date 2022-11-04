@@ -3,10 +3,12 @@
 namespace Drupal\drudbal\Driver\Database\dbal;
 
 use Doctrine\DBAL\Exception as DbalException;
+use Doctrine\DBAL\Platforms\AbstractPlatform as DbalAbstractPlatform;
+use Doctrine\DBAL\Schema\AbstractSchemaManager as DbalAbstractSchemaManager;
 use Doctrine\DBAL\Schema\Column as DbalColumn;
 use Doctrine\DBAL\Schema\Comparator;
-use Doctrine\DBAL\Schema\Schema as DbalSchema;
 use Doctrine\DBAL\Schema\Exception\TableDoesNotExist as DbalTableDoesNotExist;
+use Doctrine\DBAL\Schema\Schema as DbalSchema;
 use Doctrine\DBAL\Types\Type as DbalType;
 use Drupal\Component\Utility\Unicode;
 use Drupal\Core\Database\Schema as DatabaseSchema;
@@ -25,24 +27,18 @@ class Schema extends DatabaseSchema {
 
   /**
    * DBAL schema manager.
-   *
-   * @var \Doctrine\DBAL\Schema\AbstractSchemaManager
    */
-  protected $dbalSchemaManager;
+  protected DbalAbstractSchemaManager $dbalSchemaManager;
 
   /**
    * DBAL platform.
-   *
-   * @var \Doctrine\DBAL\Platforms\AbstractPlatform
    */
-  protected $dbalPlatform;
+  protected DbalAbstractPlatform $dbalPlatform;
 
   /**
    * Current DBAL schema.
-   *
-   * @var \Doctrine\DBAL\Schema\Schema
    */
-  protected $dbalCurrentSchema;
+  protected DbalSchema $dbalCurrentSchema;
 
   /**
    * The Dbal extension for the DBAL driver.
@@ -831,7 +827,7 @@ if ($xxx) dump(['fieldExists notableexist']);
       return FALSE;
     }
 if ($xxx) dump([
-  'fieldExists notableexist',
+  'fieldExists list',
   $this->dbalExtension->getDbFieldName($column, FALSE),
   array_keys($this->dbalSchemaManager->listTableColumns($this->connection()->getPrefixedTableName($table)))
 ]);
