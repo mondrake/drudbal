@@ -830,8 +830,16 @@ if ($xxx) dump(['fieldExists delegated', $result]);
 if ($xxx) dump(['fieldExists notableexist']);
       return FALSE;
     }
+if ($xxx) dump([
+  'fieldExists notableexist',
+  $this->dbalExtension->getDbFieldName($column, FALSE),
+  array_keys($this->dbalSchemaManager->listTableColumns($this->connection()->getPrefixedTableName($table)))
+]);
     // Column name must not be quoted here.
-    return in_array($this->dbalExtension->getDbFieldName($column, FALSE), array_keys($this->dbalSchemaManager->listTableColumns($this->connection()->getPrefixedTableName($table))));
+    return in_array(
+      $this->dbalExtension->getDbFieldName($column, FALSE),
+      array_keys($this->dbalSchemaManager->listTableColumns($this->connection()->getPrefixedTableName($table)))
+    );
   }
 
   /**
