@@ -38,7 +38,7 @@ class Schema extends DatabaseSchema {
   /**
    * Current DBAL schema.
    */
-  protected DbalSchema $dbalCurrentSchema;
+  protected ?DbalSchema $dbalCurrentSchema;
 
   /**
    * The Dbal extension for the DBAL driver.
@@ -845,7 +845,7 @@ if ($xxx) dump([
    *   The DBAL schema of the database.
    */
   private function dbalSchema() {
-    if ($this->dbalCurrentSchema === NULL) {
+    if (!isset($this->dbalCurrentSchema)) {
       $this->dbalSetCurrentSchema($this->dbalSchemaManager->introspectSchema());
     }
     return $this->dbalCurrentSchema;
