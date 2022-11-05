@@ -559,23 +559,6 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateFieldExists(&$result, $drupal_table_name, $field_name) {
-    // The DBAL Schema manager is quite slow here.
-    // Instead, we try to select from the table and field in question. If it
-    // fails, the most likely reason is that it does not exist.
-    try {
-      $this->getDbalConnection()->executeQuery("SELECT $field_name FROM " . $this->connection->getPrefixedTableName($drupal_table_name) . " LIMIT 1 OFFSET 0");
-      $result = TRUE;
-    }
-    catch (\Exception $e) {
-      $result = FALSE;
-    }
-    return TRUE;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function alterCreateTableOptions(DbalTable $dbal_table, DbalSchema $dbal_schema, array &$drupal_table_specs, $drupal_table_name) {
     // Provide defaults if needed.
     $drupal_table_specs += [
