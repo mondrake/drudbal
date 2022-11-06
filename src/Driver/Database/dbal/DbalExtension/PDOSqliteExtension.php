@@ -253,15 +253,6 @@ class PDOSqliteExtension extends AbstractExtension {
   }
 
   /**
-   * {@inheritdoc}
-   */
-  public function getDrupalIndexName(string $drupal_table_name, string $db_index_name): string {
-    $matches = [];
-    preg_match('/.*____(.+)/', $db_index_name, $matches);
-    return $matches[1] ?: null;
-  }
-
-  /**
    * Connection delegated methods.
    */
 
@@ -824,7 +815,7 @@ class PDOSqliteExtension extends AbstractExtension {
       // version.
       $dbal_type = $this->connection->schema()->getDbalColumnType($drupal_field_specs);
       $dbal_column_options = $this->connection->schema()->getDbalColumnOptions('addField', $field_name, $dbal_type, $drupal_field_specs);
-      $query = 'ALTER TABLE {' . $drupal_table_name . '} ADD ' . $field_name . ' ' . $dbal_column_options['columnDefinition'];
+      $query = 'ALTER TABLE {' . $drupal_table_name . '} ADD "' . $field_name . '" ' . $dbal_column_options['columnDefinition'];
       $this->connection->query($query);
     }
     else {
@@ -945,7 +936,7 @@ class PDOSqliteExtension extends AbstractExtension {
   public function delegateAddUniqueKey(DbalSchema $dbal_schema, $table_full_name, $index_full_name, $drupal_table_name, $drupal_index_name, array $drupal_field_specs) {
     // Avoid DBAL managing of this that would go through table re-creation.
     $index_columns = $this->connection->schema()->dbalGetFieldList($drupal_field_specs);
-    $this->connection->query('CREATE UNIQUE INDEX ' . $index_full_name . ' ON ' . $table_full_name . ' (' . implode(', ', $index_columns) . ")");
+    $this->connection->query('CREATE UNIQUE INDEX "' . $index_full_name . '" ON "' . $table_full_name . '" (' . implode(', ', $index_columns) . ")");
 
     // Update DBAL Schema.
     $dbal_schema->getTable($table_full_name)->addUniqueIndex($index_columns, $index_full_name);
@@ -959,7 +950,7 @@ class PDOSqliteExtension extends AbstractExtension {
   public function delegateAddIndex(DbalSchema $dbal_schema, $table_full_name, $index_full_name, $drupal_table_name, $drupal_index_name, array $drupal_field_specs, array $indexes_spec) {
     // Avoid DBAL managing of this that would go through table re-creation.
     $index_columns = $this->connection->schema()->dbalGetFieldList($drupal_field_specs);
-    $this->connection->query('CREATE INDEX ' . $index_full_name . ' ON ' . $table_full_name . ' (' . implode(', ', $index_columns) . ")");
+    $this->connection->query('CREATE INDEX "' . $index_full_name . '" ON "' . $table_full_name . '" (' . implode(', ', $index_columns) . ")");
 
     // Update DBAL Schema.
     $dbal_schema->getTable($table_full_name)->addIndex($index_columns, $index_full_name);
