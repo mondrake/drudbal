@@ -607,7 +607,7 @@ class SchemaTest extends DriverSpecificSchemaTestBase {
     // Check the index columns.
     // @todo this differs from core in the sense that the index name must be
     //   recalculated via ::getDbIndexName().
-    $dbIndexName = $this->connection()->getDbalExtension()->getDbIndexName('indexExists', $this->schema->dbalSchema(), $table_name_new, $index_name);
+    $dbIndexName = $this->connection()->getDbalExtension()->getDbIndexName('indexExists', $this->schema()->dbalSchema(), $table_name_new, $index_name);
     $this->assertEquals(['insert'], $introspect_index_schema->invoke($this->schema, $table_name_new)['indexes'][$dbIndexName]);
 
     // Dropping an index.
