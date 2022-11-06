@@ -524,6 +524,11 @@ class SchemaTest extends DriverSpecificSchemaTestBase {
           'type' => 'varchar',
           'length' => 255,
         ],
+        'insert' => [
+          'description' => 'Another column with reserved name.',
+          'type' => 'varchar',
+          'length' => 255,
+        ],
       ],
       'primary key' => ['primary'],
       'unique keys' => [
@@ -552,7 +557,6 @@ class SchemaTest extends DriverSpecificSchemaTestBase {
 
     // Adding a field.
     $field_name = 'delete';
-global $xxx; $xxx=TRUE;
     $this->schema->addField($table_name_new, $field_name, ['type' => 'int', 'not null' => TRUE]);
     $this->assertTrue($this->schema->fieldExists($table_name_new, $field_name));
 
@@ -580,10 +584,11 @@ global $xxx; $xxx=TRUE;
     $this->schema->addUniqueKey($table_name_new, $unique_key_name, [$field_name_new]);
 
     // Check the unique key columns.
+    // @todo this differs from core in the sense that the index name must be
+    //   recalculated via ::getDbIndexName().
     $introspect_index_schema = new \ReflectionMethod(get_class($this->schema), 'introspectIndexSchema');
-    $dbUniqueIndexName = $this->connection()->getDbalExtension()->getDbIndexName('indexExists', $this->schema->dbalSchema(), $table_name_new, $unique_key_name);
-dump([$dbUniqueIndexName, $unique_key_name, $table_name_new, $introspect_index_schema->invoke($this->schema, $table_name_new)]);
-//    $this->assertEquals([$field_name_new], $introspect_index_schema->invoke($this->schema, $table_name_new)['unique keys'][$unique_key_introspect_name]);
+    $dbUniqueIndexName = $this->connection()->getDbalExtension()->getDbIndexName('indexExists', $this->schema()->dbalSchema(), $table_name_new, $unique_key_name);
+    $this->assertEquals([$field_name_new], $introspect_index_schema->invoke($this->schema, $table_name_new)['unique keys'][$dbUniqueIndexName]);
 
     // Dropping an unique key
     $this->schema->dropUniqueKey($table_name_new, $unique_key_name);
@@ -593,12 +598,17 @@ dump([$dbUniqueIndexName, $unique_key_name, $table_name_new, $introspect_index_s
     $this->assertFalse($this->schema->fieldExists($table_name_new, $field_name_new));
 
     // Adding an index.
+    // @todo this differs from core in the sense that we use a  different column
+    //   than 'update' - that would lead to duplicated index on Oracle.
     $index_name = $index_introspect_name = 'index';
-    $this->schema->addIndex($table_name_new, $index_name, ['update'], $table_specification);
+    $this->schema->addIndex($table_name_new, $index_name, ['insert'], $table_specification);
     $this->assertTrue($this->schema->indexExists($table_name_new, $index_name));
 
     // Check the index columns.
-    $this->assertEquals(['update'], $introspect_index_schema->invoke($this->schema, $table_name_new)['indexes'][$index_introspect_name]);
+    // @todo this differs from core in the sense that the index name must be
+    //   recalculated via ::getDbIndexName().
+    $dbIndexName = $this->connection()->getDbalExtension()->getDbIndexName('indexExists', $this->schema->dbalSchema(), $table_name_new, $index_name);
+    $this->assertEquals(['insert'], $introspect_index_schema->invoke($this->schema, $table_name_new)['indexes'][$dbIndexName]);
 
     // Dropping an index.
     $this->schema->dropIndex($table_name_new, $index_name);
