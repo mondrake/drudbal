@@ -159,6 +159,9 @@ interface DbalExtensionInterface {
    *
    * @return string
    *   The Drupal index name.
+   *
+   * @todo consider removing this method, no longer needed since when driver
+   *   specific tests have been available. Only SQLite was using it.
    */
   public function getDrupalIndexName(string $drupal_table_name, string $db_index_name): string;
 

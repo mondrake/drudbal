@@ -291,20 +291,18 @@ class SchemaTest extends DriverSpecificSchemaTestBase {
     $introspect_index_schema = new \ReflectionMethod(get_class($this->schema), 'introspectIndexSchema');
     $index_schema = $introspect_index_schema->invoke($this->schema, $table_name);
 
-    // Oracle is using a custom naming scheme for its indexes, so
+    // Oracle and SQLite are using a custom naming scheme for their indexes, so
     // we need to adjust the initial table specification.
-    if ($this->connection()->databaseType() === 'oracle') {
-      foreach ($table_specification['unique keys'] as $original_index_name => $columns) {
-        unset($table_specification['unique keys'][$original_index_name]);
-        $new_index_name = $this->connection()->getDbalExtension()->getDbIndexName('indexExists', $this->connection()->getDbalConnection()->createSchemaManager()->introspectSchema(), $table_name, $original_index_name);
-        $table_specification['unique keys'][$new_index_name] = $columns;
-      }
+    foreach ($table_specification['unique keys'] as $original_index_name => $columns) {
+      unset($table_specification['unique keys'][$original_index_name]);
+      $new_index_name = $this->connection()->getDbalExtension()->getDbIndexName('indexExists', $this->connection()->getDbalConnection()->createSchemaManager()->introspectSchema(), $table_name, $original_index_name);
+      $table_specification['unique keys'][$new_index_name] = $columns;
+    }
 
-      foreach ($table_specification['indexes'] as $original_index_name => $columns) {
-        unset($table_specification['indexes'][$original_index_name]);
-        $new_index_name = $this->connection()->getDbalExtension()->getDbIndexName('indexExists', $this->connection()->getDbalConnection()->createSchemaManager()->introspectSchema(), $table_name, $original_index_name);
-        $table_specification['indexes'][$new_index_name] = $columns;
-      }
+    foreach ($table_specification['indexes'] as $original_index_name => $columns) {
+      unset($table_specification['indexes'][$original_index_name]);
+      $new_index_name = $this->connection()->getDbalExtension()->getDbIndexName('indexExists', $this->connection()->getDbalConnection()->createSchemaManager()->introspectSchema(), $table_name, $original_index_name);
+      $table_specification['indexes'][$new_index_name] = $columns;
     }
 
     $this->assertEquals($table_specification, $index_schema);
