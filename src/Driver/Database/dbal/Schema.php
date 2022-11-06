@@ -14,6 +14,7 @@ use Drupal\Component\Utility\Unicode;
 use Drupal\Core\Database\Schema as DatabaseSchema;
 use Drupal\Core\Database\SchemaObjectDoesNotExistException;
 use Drupal\Core\Database\SchemaObjectExistsException;
+use Drupal\drudbal\Driver\Database\dbal\DbalExtension\DbalExtensionInterface;
 
 /**
  * DruDbal implementation of \Drupal\Core\Database\Schema.
@@ -42,10 +43,8 @@ class Schema extends DatabaseSchema {
 
   /**
    * The Dbal extension for the DBAL driver.
-   *
-   * @var \Drupal\drudbal\Driver\Database\dbal\DbalExtension\DbalExtensionInterface
    */
-  protected $dbalExtension;
+  protected DbalExtensionInterface $dbalExtension;
 
   /**
    * Constructs a Schema object.
@@ -844,7 +843,7 @@ class Schema extends DatabaseSchema {
    * @return \Doctrine\DBAL\Schema\Schema
    *   The DBAL schema of the database.
    */
-  private function dbalSchema() {
+  public function dbalSchema() {
     if (!isset($this->dbalCurrentSchema)) {
       $this->dbalSetCurrentSchema($this->dbalSchemaManager->introspectSchema());
     }
