@@ -30,13 +30,13 @@ jobs:
       fail-fast: false
       matrix:
         php-version:
-          - "8.1"
+          - "8.2"
         test-args:
           - "--group Database"
           - "-v --group Cache"
           - "-v --group Config"
           - "-v --group Entity"
-          - "-v --group Installer"
+#          - "-v --group Installer"
 
     services:
       mysql:
