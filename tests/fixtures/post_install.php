@@ -22,7 +22,7 @@ $connectionParams = [
 ];
 
 $dbal_connection = DBALDriverManager::getConnection($connectionParams);
-echo($dbal_connection->getWrappedConnection()->getServerVersion() . "\n");
+echo($dbal_connection->getNativeConnection()->getServerVersion() . "\n");
 
 // Drop all tables.
 $tables = $dbal_connection->createSchemaManager()->listTableNames();

@@ -2,6 +2,8 @@
 
 namespace Drupal\drudbal\Driver\Database\dbal;
 
+use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
+use Drupal\Core\Database\DatabaseExceptionWrapper;
 use Drupal\Core\Database\ExceptionHandler as DatabaseExceptionHandler;
 use Drupal\Core\Database\StatementInterface;
 
@@ -16,26 +18,17 @@ use Drupal\Core\Database\StatementInterface;
 class ExceptionHandler extends DatabaseExceptionHandler {
 
   /**
-   * The DruDbal connection.
-   *
-   * @var \Drupal\drudbal\Driver\Database\dbal\Connection
+   * Constructs a DruDbal exception handler object.
    */
-  protected $connection;
-
-  /**
-   * Constructs a DruDbal exception object.
-   *
-   * @param \Drupal\drudbal\Driver\Database\dbal\Connection $drudbal_connection
-   *   The Drupal database connection object for this extension.
-   */
-  public function __construct(Connection $connection) {
-    $this->connection = $connection;
-  }
+  public function __construct(
+    protected Connection $connection
+  ) {}
 
   /**
    * {@inheritdoc}
    */
   public function handleExecutionException(\Exception $exception, StatementInterface $statement, array $arguments = [], array $options = []): void {
+    assert($exception instanceof DbalDriverException || $exception instanceof DatabaseExceptionWrapper);
     $query_string = $statement->getQueryString();
     $message = $exception->getMessage() . ": " . $query_string . "; " . print_r($arguments, TRUE);
     $this->connection->getDbalExtension()->delegateQueryExceptionProcess($query_string, $arguments, $options, $message, $exception);

@@ -12,8 +12,6 @@ env:
     SIMPLETEST_BASE_URL: "http://localhost:8080"
     PHPUNIT_SKIP_CLASS: '[
       "Drupal\\KernelTests\\Core\\Cache\\ApcuBackendTest",
-      "Drupal\\KernelTests\\Core\\Cache\\EndOfTransactionQueriesTest",
-      "Drupal\\KernelTests\\Core\\Database\\DatabaseExceptionWrapperTest",
       "Drupal\\Tests\\file\\Functional\\DownloadTest"
     ]'
 
@@ -34,6 +32,7 @@ jobs:
       matrix:
         php-version:
           - "8.1"
+          - "8.2"
         test-args:
           - "--group Database"
           - "--group Entity"
@@ -54,7 +53,7 @@ jobs:
       run: git clone --depth=5 --branch=$DRUDBAL_DRUPAL_VERSION http://git.drupal.org/project/drupal.git .
 
     - name: Checkout DruDbal
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         path: drudbal_staging
 
@@ -64,7 +63,6 @@ jobs:
     - name: Install Composer dependencies
       run: |
         composer install --no-progress --ansi
-        composer config --no-plugins allow-plugins.composer/package-versions-deprecated true
 
     - name: Composer require DruDbal from local staging
       run: |

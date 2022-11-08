@@ -6,6 +6,7 @@ use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\Exception as DbalException;
 use Doctrine\DBAL\FetchMode;
 use Doctrine\DBAL\Result;
+use Doctrine\DBAL\Statement;
 use Drupal\Core\Database\Database;
 use Drupal\Core\Database\DatabaseExceptionWrapper;
 use Drupal\Core\Database\RowCountException;
@@ -34,7 +35,7 @@ class StatementWrapper extends BaseStatementWrapper {
    *
    * @var \Doctrine\DBAL\Result
    */
-  protected $dbalResult = NULL;
+  protected $dbalResult;
 
   /**
    * Holds supplementary driver options.
@@ -89,6 +90,14 @@ class StatementWrapper extends BaseStatementWrapper {
   ];
 
   /**
+   * Holds the current fetch style (which will be used by the next fetch).
+   * @see \PDOStatement::fetch()
+   *
+   * @var int
+   */
+  protected $fetchStyle = \PDO::FETCH_OBJ;
+
+  /**
    * Constructs a Statement object.
    *
    * Preparation of the actual lower-level statement is deferred to the first
@@ -97,8 +106,8 @@ class StatementWrapper extends BaseStatementWrapper {
    *
    * @param \Drupal\drudbal\Driver\Database\dbal\Connection $connection
    *   The database connection object for this statement.
-   * @param object $client_connection
-   *   Client database connection object, for example \PDO.
+   * @param \Doctrine\DBAL\Connection $dbal_connection
+   *   DBAL connection object.
    * @param string $query
    *   A string containing an SQL query.
    * @param array $driver_options
@@ -106,41 +115,52 @@ class StatementWrapper extends BaseStatementWrapper {
    * @param bool $row_count_enabled
    *   (optional) Enables counting the rows affected. Defaults to FALSE.
    */
-  public function __construct(DruDbalConnection $connection, DbalConnection $client_connection, string $query, array $driver_options = [], bool $row_count_enabled = FALSE) {
+  public function __construct(DruDbalConnection $connection, DbalConnection $dbal_connection, string $query, array $driver_options = [], bool $row_count_enabled = FALSE) {
     $this->connection = $connection;
     $this->rowCountEnabled = $row_count_enabled;
 
     $this->queryString = $query;
-    $this->dbalConnection = $client_connection;
+    $this->dbalConnection = $dbal_connection;
     $this->setFetchMode(\PDO::FETCH_OBJ);
     $this->driverOpts = $driver_options;
+  }
+
+  /**
+   * Returns the DruDbal connection.
+   */
+  private function connection(): DruDbalConnection {
+    $connection = $this->connection;
+    assert($connection instanceof DruDbalConnection);
+    return $connection;
   }
 
   /**
    * {@inheritdoc}
    */
   public function execute($args = [], $options = []) {
+    /** @var Statement|null $clientStatement */
+    $clientStatement = $this->clientStatement;
+
     $args = $args ?? [];
 
     // Prepare the lower-level statement if it's not been prepared already.
-    if (!$this->clientStatement) {
+    if (!isset($clientStatement)) {
       // Replace named placeholders with positional ones if needed.
-      if (!$this->connection->getDbalExtension()->delegateNamedPlaceholdersSupport()) {
+      if (!$this->connection()->getDbalExtension()->delegateNamedPlaceholdersSupport()) {
         $this->paramsPositions = array_flip(array_keys($args));
-        list($query, $args) = $this->connection->expandArrayParameters($this->queryString, $args, []);
+        list($query, $args) = $this->connection()->expandArrayParameters($this->queryString, $args, []);
         $this->queryString = $query;
       }
 
       try {
-        $this->connection->getDbalExtension()->alterStatement($this->queryString, $args);
-        /** @var \Doctrine\DBAL\Statement */
+        $this->connection()->getDbalExtension()->alterStatement($this->queryString, $args);
         $this->clientStatement = $this->dbalConnection->prepare($this->queryString);
       }
       catch (DbalException $e) {
         throw new DatabaseExceptionWrapper($e->getMessage(), $e->getCode(), $e);
       }
     }
-    elseif (!$this->connection->getDbalExtension()->delegateNamedPlaceholdersSupport()) {
+    elseif (!$this->connection()->getDbalExtension()->delegateNamedPlaceholdersSupport()) {
       // Transform the $args to positional if needed.
       $tmp = [];
       foreach ($this->paramsPositions as $param => $pos) {
@@ -158,10 +178,8 @@ class StatementWrapper extends BaseStatementWrapper {
       }
     }
 
-    $logger = $this->connection->getLogger();
-    if (!empty($logger)) {
-      $query_start = microtime(TRUE);
-    }
+    $logger = $this->connection()->getLogger();
+    $query_start = microtime(TRUE);
 
     try {
       $this->dbalResult = $this->clientStatement->executeQuery($args);
@@ -170,8 +188,8 @@ class StatementWrapper extends BaseStatementWrapper {
       throw new DatabaseExceptionWrapper($e->getMessage(), $e->getCode(), $e);
     }
 
+    $query_end = microtime(TRUE);
     if (!empty($logger)) {
-      $query_end = microtime(TRUE);
       $logger->log($this, $args, $query_end - $query_start, $query_start);
     }
 
@@ -194,7 +212,7 @@ class StatementWrapper extends BaseStatementWrapper {
     if (!$dbal_row) {
       return FALSE;
     }
-    $row = $this->connection->getDbalExtension()->processFetchedRecord($dbal_row);
+    $row = $this->connection()->getDbalExtension()->processFetchedRecord($dbal_row);
     switch ($mode) {
       case \PDO::FETCH_ASSOC:
         return $row;
@@ -332,7 +350,7 @@ class StatementWrapper extends BaseStatementWrapper {
   public function rowCount() {
     // SELECT query should not use the method.
     if ($this->rowCountEnabled) {
-      return $this->connection->getDbalExtension()->delegateRowCount($this->dbalResult);
+      return $this->connection()->getDbalExtension()->delegateRowCount($this->dbalResult);
     }
     else {
       throw new RowCountException();

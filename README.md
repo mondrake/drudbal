@@ -3,6 +3,7 @@
 [![MySql via mysqli](https://github.com/mondrake/drudbal/actions/workflows/mysqli.yml/badge.svg)](https://github.com/mondrake/drudbal/actions/workflows/mysqli.yml)
 [![SQLite via PDO](https://github.com/mondrake/drudbal/actions/workflows/sqlite.yml/badge.svg)](https://github.com/mondrake/drudbal/actions/workflows/sqlite.yml)
 [![Oracle via oci8](https://github.com/mondrake/drudbal/actions/workflows/oracle.yml/badge.svg)](https://github.com/mondrake/drudbal/actions/workflows/oracle.yml)
+[![PHPStan level](https://img.shields.io/badge/PHPStan%20level-5-brightgreen.svg?style=flat)](https://github.com/mondrake/drudbal/actions/workflows/code-quality.yml)
 [![License](https://img.shields.io/github/license/mondrake/drudbal.svg)](https://packagist.org/packages/mondrake/drudbal)
 
 (This README updated March 30, 2020)
@@ -35,8 +36,9 @@ operations that are db- or Drupal-specific are delegated.
 ## Status
 
 The code in the ```master``` branch is working on a __MySql database__, using
-either the 'mysql' or the 'mysqli' DBAL driver, and on a __SQlite database__,
-using the 'sqlite' DBAL driver.
+either the 'mysql' or the 'mysqli' DBAL drivers, on a __SQlite database__, using
+the 'sqlite' DBAL driver, or on a __Oracle database__ using the 'oci8' database
+driver.
 
 'Working' means:
 1. it is possible to install a Drupal site via the installer, selecting
@@ -64,7 +66,7 @@ under the hood:
 3. Launch the interactive installer. Proceed as usual and when on the db
    selection form, select 'Doctrine DBAL' and enter a 'database URL' compliant
    with Doctrine DBAL syntax. __Note:__ the driver works only with _mysql,
-   mysqli or sqlite_ DBAL drivers.
+   mysqli, oci8 or sqlite_ DBAL drivers.
 
 ![configuration](https://cloud.githubusercontent.com/assets/1174864/24586418/7f86feb4-17a0-11e7-820f-eb1483dad07f.png)
 
@@ -82,14 +84,14 @@ https://github.com/doctrine/dbal/issues/1320     | DBAL-163: Upsert support in D
 https://github.com/doctrine/dbal/pull/2762       | Bulk inserts                                                                 |                |
 https://github.com/doctrine/dbal/issues/1033     | DBAL-1096: schema-tool:update does not understand columnDefinition correctly |                |
 https://github.com/doctrine/migrations/issues/17 | Data loss on table renaming.                                                 |                |
-https://github.com/doctrine/dbal/issues/2676     | Optimize Oracle SchemaManager                                                |                |
 https://github.com/doctrine/dbal/pull/2415       | Add some MySQL platform data in Tables                                       | fixed in 2.9.0 |
 
 ## Related Drupal issues
 Issue                                                           | Description                                                                                                                             |
 ----------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------|
-tbd                                                             | Add tests for Upsert with default values                                                                                     |
+tbd                                                             | Add tests for Upsert with default values |
 tbd                                                             | Ensure that when INSERTing a NULL value in a database column, SELECTing it back returns NULL and not empty string - for all fetch modes |
-tbd                                                             | UpdateTestBase::runUpdate should reset database schema after updating                                                             |
-[2992274](https://www.drupal.org/project/drupal/issues/2992274) | Installer tests fail if contrib driver hides database credentials form fields                                                           |
-[3125987](https://www.drupal.org/project/drupal/issues/3125987) | EndOfTransactionQueriesTest fails with contrib db driver                                                                                  |
+tbd                                                             | UpdateTestBase::runUpdate should reset database schema after updating  |
+[2992274](https://www.drupal.org/project/drupal/issues/2992274) | Installer tests fail if contrib driver hides database credentials form fields |
+[3191623](https://www.drupal.org/project/drupal/issues/3191623) | Views aggregate queries do not escape the fields |
+[3256642](https://www.drupal.org/project/drupal/issues/3256642) | Autoload classes of database drivers modules' dependencies |

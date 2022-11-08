@@ -26,48 +26,57 @@ class Select extends QuerySelect {
    }
 
   /**
+   * Returns the DruDbal connection.
+   */
+  private function connection(): Connection {
+    $connection = $this->connection;
+    assert($connection instanceof Connection);
+    return $connection;
+  }
+
+  /**
    * {@inheritdoc}
    */
   public function __toString() {
-    $dbal_extension = $this->connection->getDbalExtension();
+    $dbal_extension = $this->connection()->getDbalExtension();
 
     // For convenience, we compile the query ourselves if the caller forgot
     // to do it. This allows constructs like "(string) $query" to work. When
     // the query will be executed, it will be recompiled using the proper
     // placeholder generator anyway.
     if (!$this->compiled()) {
-      $this->compile($this->connection, $this);
+      $this->compile($this->connection(), $this);
     }
 
     // Create a sanitized comment string to prepend to the query.
-    $comments = $this->connection->makeComment($this->comments);
+    $comments = $this->connection()->makeComment($this->comments);
 
     // Use DBAL query builder to prepare the SELECT query.
-    $dbal_connection = $this->connection->getDbalConnection();
+    $dbal_connection = $this->connection()->getDbalConnection();
     $dbal_query = $dbal_connection->createQueryBuilder();
 
     // FIELDS and EXPRESSIONS
     $fields = [];
     foreach ($this->tables as $alias => $table) {
       if (!empty($table['all_fields'])) {
-        $dbal_query->addSelect($dbal_extension->getDbAlias($this->connection->escapeTable($alias)) . '.*');
+        $dbal_query->addSelect($dbal_extension->getDbAlias($this->connection()->escapeTable($alias)) . '.*');
       }
     }
     foreach ($this->fields as $field) {
-      $field_prefix = isset($field['table']) ? $dbal_extension->getDbAlias($this->connection->escapeTable($field['table'])) . '.' : '';
-      $escaped_field_field = $this->connection->escapeField($field['field']);
-      $escaped_field_alias = $this->connection->escapeAlias($field['alias']);
+      $field_prefix = isset($field['table']) ? $dbal_extension->getDbAlias($this->connection()->escapeTable($field['table'])) . '.' : '';
+      $escaped_field_field = $this->connection()->escapeField($field['field']);
+      $escaped_field_alias = $this->connection()->escapeAlias($field['alias']);
       $dbal_query->addSelect($field_prefix . $escaped_field_field . ' AS ' . $escaped_field_alias);
     }
     foreach ($this->expressions as $expression) {
-      $dbal_query->addSelect($expression['expression'] . ' AS ' . $dbal_extension->getDbAlias($this->connection->escapeAlias($expression['alias'])));
+      $dbal_query->addSelect($expression['expression'] . ' AS ' . $dbal_extension->getDbAlias($this->connection()->escapeAlias($expression['alias'])));
     }
 
     // FROM - We presume all queries have a FROM, as any query that doesn't
     // won't need the query builder anyway.
     $root_alias = NULL;
     foreach ($this->tables as $table) {
-      $escaped_alias = $dbal_extension->getDbAlias($this->connection->escapeTable($table['alias']));
+      $escaped_alias = $dbal_extension->getDbAlias($this->connection()->escapeTable($table['alias']));
 
       // If the table is a subquery, compile it and integrate it into this
       // query.
@@ -80,7 +89,7 @@ class Select extends QuerySelect {
       else {
         // Do not attempt prefixing cross database / schema queries.
         if (strpos($table['table'], '.') === FALSE) {
-          $escaped_table = $this->connection->getPrefixedTableName($table['table'], TRUE);
+          $escaped_table = $this->connection()->getPrefixedTableName($table['table'], TRUE);
         }
         else {
           $escaped_table = $dbal_extension->alterFullQualifiedTableName($table['table']);
@@ -127,10 +136,10 @@ class Select extends QuerySelect {
       $fields = $this->getFields();
       foreach ($this->group as $expression) {
         if (strpos($expression, '.') === FALSE && isset($fields[$expression])) {
-          $dbal_query->addGroupBy($this->connection->escapeAlias($fields[$expression]['table']) . '.' . $this->connection->escapeAlias($fields[$expression]['field']));
+          $dbal_query->addGroupBy($this->connection()->escapeAlias($fields[$expression]['table']) . '.' . $this->connection()->escapeAlias($fields[$expression]['field']));
         }
         else {
-          $dbal_query->addGroupBy($this->connection->escapeAlias($expression));
+          $dbal_query->addGroupBy($this->connection()->escapeAlias($expression));
         }
       }
     }

@@ -8,14 +8,13 @@ use Drupal\Core\Database\Database;
 use Drupal\Core\Database\DatabaseExceptionWrapper;
 use Drupal\Core\Database\DatabaseNotFoundException;
 use Drupal\Core\Database\IntegrityConstraintViolationException;
-
 use Drupal\drudbal\Driver\Database\dbal\Connection as DruDbalConnection;
-
 use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
-use Doctrine\DBAL\Schema\Schema as DbalSchema;
-use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\DBAL\Exception\NotNullConstraintViolationException;
+use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
+use Doctrine\DBAL\Schema\Schema as DbalSchema;
+use Doctrine\DBAL\Platforms\OraclePlatform;
 
 /**
  * Driver specific methods for oci8 (Oracle).
@@ -51,7 +50,7 @@ class Oci8Extension extends AbstractExtension {
    *
    * @var string[]
    */
-  private $dbIdentifiersMap = [];
+  private array $dbIdentifiersMap = [];
 
   /**
    * Database asset name resolution methods.
@@ -70,6 +69,15 @@ class Oci8Extension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
+  public function getDbServerVersion(): string {
+    $version = oci_server_version($this->getDbalConnection()->getNativeConnection());
+    $result = preg_match('/\s+(\d+\.\d+\.\d+\.\d+\.\d+)\s+/', $version, $matches);
+    return $matches[1];
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function getDbTableName(string $drupal_prefix, string $drupal_table_name): string {
     // @todo DBAL currently limits table identifiers lenght to 30. We limit
     // Drupal's table name to 24 to allow including '_AI_PK' suffix.
@@ -79,7 +87,7 @@ class Oci8Extension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function getDbFullQualifiedTableName($drupal_table_name) {
+  public function getDbFullQualifiedTableName(string $drupal_table_name): string {
     $options = $this->connection->getConnectionOptions();
     $prefix = $this->connection->tablePrefix($drupal_table_name);
     return $options['username'] . '."' . $this->getDbTableName($prefix, $drupal_table_name) . '"';
@@ -88,8 +96,8 @@ class Oci8Extension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function getDbFieldName($field_name, bool $quoted = TRUE) {
-    if ($field_name === NULL || $field_name === '') {
+  public function getDbFieldName(string $field_name, bool $quoted = TRUE): string {
+    if ($field_name === '') {
       return '';
     }
 
@@ -115,8 +123,8 @@ class Oci8Extension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function getDbAlias($alias, bool $quoted = TRUE) {
-    if ($alias === NULL || $alias === '') {
+  public function getDbAlias(string $alias, bool $quoted = TRUE): string {
+    if ($alias === '') {
       return '';
     }
 
@@ -153,7 +161,7 @@ class Oci8Extension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function getDbIndexName(string $context, DbalSchema $dbal_schema, string $drupal_table_name, string $drupal_index_name): string {
+  public function getDbIndexName(string $context, DbalSchema $dbal_schema, string $drupal_table_name, string $drupal_index_name): string|bool {
     // If checking for index existence or dropping, see if an index exists
     // with the Drupal name, regardless of prefix. It may be a table was
     // renamed so the prefix is no longer relevant.
@@ -208,7 +216,7 @@ class Oci8Extension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateMapConditionOperator($operator) {
+  public function delegateMapConditionOperator(string $operator): ?array {
     return isset(static::$oracleConditionOperatorMap[$operator]) ? static::$oracleConditionOperatorMap[$operator] : NULL;
   }
 
@@ -247,7 +255,7 @@ class Oci8Extension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateQueryExceptionProcess($query, array $args, array $options, $message, \Exception $e) {
+  public function delegateQueryExceptionProcess($query, array $args, array $options, $message, DbalDriverException|DatabaseExceptionWrapper $e) {
     if ($e instanceof DatabaseExceptionWrapper) {
       $e = $e->getPrevious();
     }
@@ -796,8 +804,8 @@ PLSQL
     $db_field = '"' . $unquoted_db_field . '"';
 
     $dbal_table = $dbal_schema->getTable($unquoted_db_table);
-    $has_primary_key = $dbal_table->hasPrimaryKey();
-    $dbal_primary_key = $has_primary_key ? $dbal_table->getPrimaryKey() : NULL;
+    $dbal_primary_key = $dbal_table->getPrimaryKey();
+    $has_primary_key = (bool) $dbal_primary_key;
 
     $drop_primary_key = $has_primary_key && !empty($keys_new_specs['primary key']);
     $db_primary_key_columns = !empty($keys_new_specs['primary key']) ? $this->connection->schema()->dbalGetFieldList($keys_new_specs['primary key']) : [];
@@ -814,7 +822,9 @@ PLSQL
     $sql[] = "ALTER TABLE $db_table ADD $db_field $column_definition";
 
     if ($drupal_field_specs['type'] === 'serial') {
-      $autoincrement_sql = $this->connection->getDbalPlatform()->getCreateAutoincrementSql($db_field, $db_table);
+      /** @var OraclePlatform $platform */
+      $platform = $this->connection->getDbalPlatform();
+      $autoincrement_sql = $platform->getCreateAutoincrementSql($db_field, $db_table);
       // Remove the auto primary key generation, which is the first element in
       // the array.
       array_shift($autoincrement_sql);
@@ -885,8 +895,8 @@ PLSQL
     $new_db_field_is_serial = $drupal_field_new_specs['type'] === 'serial';
 
     $dbal_table = $dbal_schema->getTable($unquoted_db_table);
-    $has_primary_key = $dbal_table->hasPrimaryKey();
-    $dbal_primary_key = $has_primary_key ? $dbal_table->getPrimaryKey() : NULL;
+    $dbal_primary_key = $dbal_table->getPrimaryKey();
+    $has_primary_key = (bool) $dbal_primary_key;
 
     $db_primary_key_columns = $dbal_primary_key ? $dbal_primary_key->getColumns() : [];
     $drop_primary_key = $has_primary_key && (!empty($keys_new_specs['primary key']) || in_array($db_field, $db_primary_key_columns));
@@ -921,8 +931,10 @@ PLSQL
     }
 
     if ($new_db_field_is_serial) {
-      $prev_max_sequence = (int) $this->connection->query("SELECT MAX({$db_field}) FROM {$db_table}")->fetchField() ?? 0;
-      $autoincrement_sql = $this->connection->getDbalPlatform()->getCreateAutoincrementSql($new_db_field, $db_table);
+      $prev_max_sequence = (int) $this->connection->query("SELECT MAX({$db_field}) FROM {$db_table}")->fetchField();
+      /** @var OraclePlatform $platform */
+      $platform = $this->connection->getDbalPlatform();
+      $autoincrement_sql = $platform->getCreateAutoincrementSql($new_db_field, $db_table);
       // Remove the auto primary key generation, which is the first element in
       // the array.
       array_shift($autoincrement_sql);
@@ -979,6 +991,7 @@ PLSQL
          WHERE ind.table_name = '$unquoted_db_table' AND con.constraint_type = 'P'
 SQL
     )->fetch();
+    assert(is_object($db_constraint));
     $primary_key_asset_name = $db_constraint->name;
     $exec = "ALTER TABLE $db_table DROP CONSTRAINT \"$primary_key_asset_name\"";
     $this->getDbalConnection()->executeStatement($exec);
