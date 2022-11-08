@@ -8,14 +8,13 @@ use Drupal\Core\Database\Database;
 use Drupal\Core\Database\DatabaseExceptionWrapper;
 use Drupal\Core\Database\DatabaseNotFoundException;
 use Drupal\Core\Database\IntegrityConstraintViolationException;
-
 use Drupal\drudbal\Driver\Database\dbal\Connection as DruDbalConnection;
-
 use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
-use Doctrine\DBAL\Schema\Schema as DbalSchema;
-use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\DBAL\Exception\NotNullConstraintViolationException;
+use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
+use Doctrine\DBAL\Schema\Schema as DbalSchema;
+use Doctrine\DBAL\Platforms\OraclePlatform;
 
 /**
  * Abstract DBAL Extension for Oracle drivers.
@@ -27,6 +26,13 @@ class AbstractOracleExtension extends AbstractExtension {
   const ORACLE_EMPTY_STRING_REPLACEMENT = "\010"; // it's the Backspace, dec=8, hex=8, oct=10.
 
   /**
+   * Oracle 12+ allows 128 chars long identifiers.
+   *
+   * Oracle 11 only 30 chars.
+   */
+  const ORACLE_MAX_IDENTIFIER_LENGHT = 128;
+
+  /**
    * A map of condition operators to SQLite operators.
    *
    * @var array
@@ -36,8 +42,6 @@ class AbstractOracleExtension extends AbstractExtension {
     'NOT LIKE' => ['postfix' => " ESCAPE '\\'"],
   ];
 
-  private $tempTables = [];
-
   /**
    * Map of database identifiers.
    *
@@ -46,29 +50,13 @@ class AbstractOracleExtension extends AbstractExtension {
    *
    * @var string[]
    */
-  private $dbIdentifiersMap = [];
-
-  /**
-   * Destructs an Oci8 extension object.
-   */
-  public function __destruct() {
-    foreach ($this->tempTables as $db_table) {
-      try {
-        $this->getDbalConnection()->exec("TRUNCATE TABLE $db_table");
-        $this->getDbalConnection()->exec("DROP TABLE $db_table");
-      }
-      catch (\Exception $e) {
-        throw new \RuntimeException("Missing temp table $db_table", $e->getCode(), $e);
-      }
-    }
-    parent::__destruct();
-  }
+  private array $dbIdentifiersMap = [];
 
   /**
    * Database asset name resolution methods.
    */
 
-  private function getLimitedIdentifier(string $identifier, int $max_length = 30): string {
+  private function getLimitedIdentifier(string $identifier, int $max_length = self::ORACLE_MAX_IDENTIFIER_LENGHT): string {
     if (strlen($identifier) > $max_length) {
       $identifier_crc = hash('crc32b', $identifier);
       $limited_identifier = substr($identifier, 0, $max_length - 8) . $identifier_crc;
@@ -81,21 +69,25 @@ class AbstractOracleExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function getDbTableName(string $drupal_prefix, string $drupal_table_name): string {
-    $prefixed_table_name = $drupal_prefix . $drupal_table_name;
-    // Max length for Oracle is 30 chars, but should be even lower to allow
-    // DBAL creating triggers/sequences with table name + suffix.
-    if (strlen($prefixed_table_name) > 24) {
-      $identifier_crc = hash('crc32b', $prefixed_table_name);
-      $prefixed_table_name = substr($prefixed_table_name, 0, 16) . $identifier_crc;
-    }
-    return $prefixed_table_name;
+  public function getDbServerVersion(): string {
+    $version = oci_server_version($this->getDbalConnection()->getNativeConnection());
+    $result = preg_match('/\s+(\d+\.\d+\.\d+\.\d+\.\d+)\s+/', $version, $matches);
+    return $matches[1];
   }
 
   /**
    * {@inheritdoc}
    */
-  public function getDbFullQualifiedTableName($drupal_table_name) {
+  public function getDbTableName(string $drupal_prefix, string $drupal_table_name): string {
+    // @todo DBAL currently limits table identifiers lenght to 30. We limit
+    // Drupal's table name to 24 to allow including '_AI_PK' suffix.
+    return $this->getLimitedIdentifier($drupal_prefix . $drupal_table_name, 24);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getDbFullQualifiedTableName(string $drupal_table_name): string {
     $options = $this->connection->getConnectionOptions();
     $prefix = $this->connection->tablePrefix($drupal_table_name);
     return $options['username'] . '."' . $this->getDbTableName($prefix, $drupal_table_name) . '"';
@@ -104,8 +96,8 @@ class AbstractOracleExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function getDbFieldName($field_name, bool $quoted = TRUE) {
-    if ($field_name === NULL || $field_name === '') {
+  public function getDbFieldName(string $field_name, bool $quoted = TRUE): string {
+    if ($field_name === '') {
       return '';
     }
 
@@ -131,8 +123,8 @@ class AbstractOracleExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function getDbAlias($alias, bool $quoted = TRUE) {
-    if ($alias === NULL || $alias === '') {
+  public function getDbAlias(string $alias, bool $quoted = TRUE): string {
+    if ($alias === '') {
       return '';
     }
 
@@ -169,7 +161,7 @@ class AbstractOracleExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function getDbIndexName(string $context, DbalSchema $dbal_schema, string $drupal_table_name, string $drupal_index_name): string {
+  public function getDbIndexName(string $context, DbalSchema $dbal_schema, string $drupal_table_name, string $drupal_index_name): string|bool {
     // If checking for index existence or dropping, see if an index exists
     // with the Drupal name, regardless of prefix. It may be a table was
     // renamed so the prefix is no longer relevant.
@@ -210,7 +202,7 @@ class AbstractOracleExtension extends AbstractExtension {
    * {@inheritdoc}
    */
   public static function postConnectionOpen(DbalConnection $dbal_connection, array &$connection_options, array &$dbal_connection_options) {
-    $dbal_connection->exec('ALTER SESSION SET NLS_LENGTH_SEMANTICS=CHAR');
+    $dbal_connection->executeStatement('ALTER SESSION SET NLS_LENGTH_SEMANTICS=CHAR');
   }
 
   /**
@@ -224,7 +216,7 @@ class AbstractOracleExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateMapConditionOperator($operator) {
+  public function delegateMapConditionOperator(string $operator): ?array {
     return isset(static::$oracleConditionOperatorMap[$operator]) ? static::$oracleConditionOperatorMap[$operator] : NULL;
   }
 
@@ -234,10 +226,15 @@ class AbstractOracleExtension extends AbstractExtension {
   public function delegateNextId(int $existing_id = 0): int {
     // @codingStandardsIgnoreLine
     $trn = $this->connection->startTransaction();
-    $affected = $this->connection->query('UPDATE {sequences} SET [value] = GREATEST([value], :existing_id) + 1', [
-      ':existing_id' => $existing_id,
-    ], ['return' => Database::RETURN_AFFECTED]);
-    if (!$affected) {
+    $stmt = $this->connection->prepareStatement('UPDATE {sequences} SET [value] = GREATEST([value], :existing_id) + 1', [], TRUE);
+    $args = [':existing_id' => $existing_id];
+    try {
+      $stmt->execute($args);
+    }
+    catch (\Exception $e) {
+      $this->connection->exceptionHandler()->handleExecutionException($e, $stmt, $args, []);
+    }
+    if ($stmt->rowCount() === 0) {
       $this->connection->query('INSERT INTO {sequences} ([value]) VALUES (:new_id)', [
         ':new_id' => $existing_id + 1,
       ]);
@@ -256,39 +253,9 @@ class AbstractOracleExtension extends AbstractExtension {
   }
 
   /**
-   * Generates a temporary table name.
-   *
-   * @return string
-   *   A table name.
-   */
-  protected function generateTemporaryTableName() {
-    return $this->getLimitedIdentifier(parent::generateTemporaryTableName(), 24);
-  }
-
-  /**
    * {@inheritdoc}
    */
-  public function delegateQueryTemporary(string $query, array $args = [], array $options = []): string {
-    $table_name = $this->generateTemporaryTableName();
-    $this->connection->query("CREATE GLOBAL TEMPORARY TABLE \"$table_name\" ON COMMIT PRESERVE ROWS AS $query", $args, $options);
-
-    // @todo Oracle 18 allows session scoped temporary tables, but until then
-    //   we need to store away the table being created and drop it during
-    //   destruction.
-    $this->tempTables[$table_name] = '"' . $table_name . '"';
-
-    // Temp tables should not be prefixed.
-    $prefixes = $this->connection->getPrefixes();
-    $prefixes[$table_name] = '';
-    $this->connection->setPrefixPublic($prefixes);
-
-    return $table_name;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function delegateQueryExceptionProcess($query, array $args, array $options, $message, \Exception $e) {
+  public function delegateQueryExceptionProcess($query, array $args, array $options, $message, DbalDriverException|DatabaseExceptionWrapper $e) {
     if ($e instanceof DatabaseExceptionWrapper) {
       $e = $e->getPrevious();
     }
@@ -331,6 +298,13 @@ class AbstractOracleExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
+  public function getDbServerPlatform(bool $strict = FALSE): string {
+    return "oracle";
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function handleDropTableException(\Exception $e, string $drupal_table_name, string $db_table_name): void {
     // ORA-14452: attempt to create, alter or drop an index on temporary table
     // already in use.
@@ -341,6 +315,18 @@ class AbstractOracleExtension extends AbstractExtension {
     }
 
     throw new DatabaseExceptionWrapper("Failed dropping table '$drupal_table_name', (on DBMS: '$db_table_name')", $e->getCode(), $e);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delegateHasJson(): bool {
+    try {
+      return (bool) $this->connection->query("SELECT JSON_VALUE('{a:100}', '$.a' RETURNING NUMBER) AS value FROM DUAL");
+    }
+    catch (\Exception $e) {
+      return FALSE;
+    }
   }
 
   /**
@@ -399,7 +385,7 @@ class AbstractOracleExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateGetDateFieldSql(string $field, bool $string_date) : string {
+  public function delegateGetDateFieldSql(string $field, bool $string_date): string {
     if ($string_date) {
       return $field;
     }
@@ -410,7 +396,7 @@ class AbstractOracleExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateGetDateFormatSql(string $field, string $format) : string {
+  public function delegateGetDateFormatSql(string $field, string $format): string {
     // An array of PHP-to-Oracle date replacement patterns.
     static $replace = [
       'Y' => 'YYYY',
@@ -441,14 +427,14 @@ class AbstractOracleExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateSetTimezoneOffset(string $offset) : void {
+  public function delegateSetTimezoneOffset(string $offset): void {
     // Nothing to do here.
   }
 
   /**
    * {@inheritdoc}
    */
-  public function delegateSetFieldTimezoneOffsetSql(string &$field, int $offset) : void {
+  public function delegateSetFieldTimezoneOffsetSql(string &$field, int $offset): void {
     // Nothing to do here.
   }
 
@@ -460,8 +446,6 @@ class AbstractOracleExtension extends AbstractExtension {
    * {@inheritdoc}
    */
   public function alterStatement(&$query, array &$args) {
-//    if ($this->getDebugging()) dump(['pre-alter', $query, $args]);
-
     // Reprocess args.
     $new_args = [];
     foreach ($args as $placeholder => $value) {
@@ -502,7 +486,7 @@ class AbstractOracleExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function processFetchedRecord(array $record) : array {
+  public function processFetchedRecord(array $record): array {
     // Enforce all values are of type 'string'.
     $result = [];
     foreach ($record as $column => $value) {
@@ -510,9 +494,12 @@ class AbstractOracleExtension extends AbstractExtension {
       if ($column === 'doctrine_rownum') {
         continue;
       }
-      if (isset($this->dbIdentifiersMap[$column])) {
-        $column = $this->dbIdentifiersMap[$column];
-      }
+      // @todo with Oracle 21, there's very low chance of limited column names.
+      // We skip checking the map for performance opportunities. Leaving code
+      // commented in case this needs reconsideration.
+      // if (isset($this->dbIdentifiersMap[$column])) {
+      //  $column = $this->dbIdentifiersMap[$column];
+      // }
       switch ($value) {
         case self::ORACLE_EMPTY_STRING_REPLACEMENT:
           $result[$column] = '';
@@ -569,7 +556,7 @@ class AbstractOracleExtension extends AbstractExtension {
 
     // Install a CONCAT_WS function.
     try {
-      $this->getDbalConnection()->exec(<<<PLSQL
+      $this->getDbalConnection()->executeStatement(<<<PLSQL
 CREATE OR REPLACE FUNCTION CONCAT_WS(p_delim IN VARCHAR2
                                     , p_str1 IN VARCHAR2 DEFAULT NULL
                                     , p_str2 IN VARCHAR2 DEFAULT NULL
@@ -639,7 +626,7 @@ PLSQL
 
     // Install a GREATEST function.
     try {
-      $this->getDbalConnection()->exec(<<<PLSQL
+      $this->getDbalConnection()->executeStatement(<<<PLSQL
 create or replace function greatest(p1 number, p2 number, p3 number default null)
 return number
 as
@@ -663,7 +650,7 @@ PLSQL
 
     // Install a RAND function.
     try {
-      $this->getDbalConnection()->exec(<<<PLSQL
+      $this->getDbalConnection()->executeStatement(<<<PLSQL
 create or replace function rand
 return number
 as
@@ -692,7 +679,7 @@ PLSQL
     // Instead, we try to select from the table in question.  If it fails,
     // the most likely reason is that it does not exist.
     try {
-      $this->getDbalConnection()->query("SELECT 1 FROM " . $this->connection->getPrefixedTableName($drupal_table_name, TRUE) . " WHERE ROWNUM <= 1");
+      $this->getDbalConnection()->executeQuery("SELECT 1 FROM " . $this->connection->getPrefixedTableName($drupal_table_name, TRUE) . " WHERE ROWNUM <= 1");
       $result = TRUE;
     }
     catch (\Exception $e) {
@@ -710,7 +697,7 @@ PLSQL
     // fails, the most likely reason is that it does not exist.
     $db_field = $this->getDbFieldName($field_name, TRUE);
     try {
-      $this->getDbalConnection()->query("SELECT $db_field FROM " . $this->connection->getPrefixedTableName($drupal_table_name, TRUE) . " WHERE ROWNUM <= 1");
+      $this->getDbalConnection()->executeQuery("SELECT $db_field FROM " . $this->connection->getPrefixedTableName($drupal_table_name, TRUE) . " WHERE ROWNUM <= 1");
       $result = TRUE;
     }
     catch (\Exception $e) {
@@ -723,7 +710,7 @@ PLSQL
    * {@inheritdoc}
    */
   public function delegateListTableNames() {
-    $db_table_names = $this->getDbalConnection()->getSchemaManager()->listTableNames();
+    $db_table_names = $this->getDbalConnection()->createSchemaManager()->listTableNames();
     $table_names = [];
     foreach ($db_table_names as $db_table_name) {
       $table_names[] = rtrim(ltrim($db_table_name, '"'), '"');
@@ -817,8 +804,8 @@ PLSQL
     $db_field = '"' . $unquoted_db_field . '"';
 
     $dbal_table = $dbal_schema->getTable($unquoted_db_table);
-    $has_primary_key = $dbal_table->hasPrimaryKey();
-    $dbal_primary_key = $has_primary_key ? $dbal_table->getPrimaryKey() : NULL;
+    $dbal_primary_key = $dbal_table->getPrimaryKey();
+    $has_primary_key = (bool) $dbal_primary_key;
 
     $drop_primary_key = $has_primary_key && !empty($keys_new_specs['primary key']);
     $db_primary_key_columns = !empty($keys_new_specs['primary key']) ? $this->connection->schema()->dbalGetFieldList($keys_new_specs['primary key']) : [];
@@ -835,7 +822,9 @@ PLSQL
     $sql[] = "ALTER TABLE $db_table ADD $db_field $column_definition";
 
     if ($drupal_field_specs['type'] === 'serial') {
-      $autoincrement_sql = $this->connection->getDbalPlatform()->getCreateAutoincrementSql($db_field, $db_table);
+      /** @var OraclePlatform $platform */
+      $platform = $this->connection->getDbalPlatform();
+      $autoincrement_sql = $platform->getCreateAutoincrementSql($db_field, $db_table);
       // Remove the auto primary key generation, which is the first element in
       // the array.
       array_shift($autoincrement_sql);
@@ -853,10 +842,7 @@ PLSQL
     }
 
     foreach ($sql as $exec) {
-      if ($this->getDebugging()) {
-        dump($exec);
-      }
-      $this->getDbalConnection()->exec($exec);
+      $this->getDbalConnection()->executeStatement($exec);
     }
 
     return TRUE;
@@ -906,10 +892,11 @@ PLSQL
 
     $unquoted_new_db_field = $this->getDbFieldName($field_new_name, FALSE);
     $new_db_field = '"' . $unquoted_new_db_field . '"';
+    $new_db_field_is_serial = $drupal_field_new_specs['type'] === 'serial';
 
     $dbal_table = $dbal_schema->getTable($unquoted_db_table);
-    $has_primary_key = $dbal_table->hasPrimaryKey();
-    $dbal_primary_key = $has_primary_key ? $dbal_table->getPrimaryKey() : NULL;
+    $dbal_primary_key = $dbal_table->getPrimaryKey();
+    $has_primary_key = (bool) $dbal_primary_key;
 
     $db_primary_key_columns = $dbal_primary_key ? $dbal_primary_key->getColumns() : [];
     $drop_primary_key = $has_primary_key && (!empty($keys_new_specs['primary key']) || in_array($db_field, $db_primary_key_columns));
@@ -943,11 +930,23 @@ PLSQL
       $sql[] = "ALTER TABLE $db_table MODIFY $new_db_field NOT NULL";
     }
 
-    if ($drupal_field_new_specs['type'] === 'serial') {
-      $autoincrement_sql = $this->connection->getDbalPlatform()->getCreateAutoincrementSql($new_db_field, $db_table);
+    if ($new_db_field_is_serial) {
+      $prev_max_sequence = (int) $this->connection->query("SELECT MAX({$db_field}) FROM {$db_table}")->fetchField();
+      /** @var OraclePlatform $platform */
+      $platform = $this->connection->getDbalPlatform();
+      $autoincrement_sql = $platform->getCreateAutoincrementSql($new_db_field, $db_table);
       // Remove the auto primary key generation, which is the first element in
       // the array.
       array_shift($autoincrement_sql);
+      // Get the the sequence generation, which is the second element in the
+      // array.
+      $sequence_sql = array_shift($autoincrement_sql);
+      if ($prev_max_sequence) {
+        $sql[] = str_replace('START WITH 1', 'START WITH ' . $prev_max_sequence, $sequence_sql);
+      }
+      else {
+        $sql[] = $sequence_sql;
+      }
       $sql = array_merge($sql, $autoincrement_sql);
     }
 
@@ -962,10 +961,8 @@ PLSQL
     }
 
     foreach ($sql as $exec) {
-      if ($this->getDebugging()) {
-        dump($exec);
-      }
-      $this->getDbalConnection()->exec($exec);
+      if ($this->getDebugging()) dump($exec);
+      $this->getDbalConnection()->executeStatement($exec);
     }
 
     return TRUE;
@@ -976,7 +973,7 @@ PLSQL
    */
   public function delegateIndexExists(&$result, DbalSchema $dbal_schema, $table_full_name, $drupal_table_name, $drupal_index_name) {
     $index_full_name = $this->getDbIndexName('indexExists', $dbal_schema, $drupal_table_name, $drupal_index_name);
-    $result = in_array($index_full_name, array_keys($this->getDbalConnection()->getSchemaManager()->listTableIndexes("\"$table_full_name\"")));
+    $result = in_array($index_full_name, array_keys($this->getDbalConnection()->createSchemaManager()->listTableIndexes("\"$table_full_name\"")));
     return TRUE;
   }
 
@@ -994,12 +991,10 @@ PLSQL
          WHERE ind.table_name = '$unquoted_db_table' AND con.constraint_type = 'P'
 SQL
     )->fetch();
+    assert(is_object($db_constraint));
     $primary_key_asset_name = $db_constraint->name;
     $exec = "ALTER TABLE $db_table DROP CONSTRAINT \"$primary_key_asset_name\"";
-    if ($this->getDebugging()) {
-      dump($exec);
-    }
-    $this->getDbalConnection()->exec($exec);
+    $this->getDbalConnection()->executeStatement($exec);
     $primary_key_dropped_by_extension = TRUE;
     return TRUE;
   }
