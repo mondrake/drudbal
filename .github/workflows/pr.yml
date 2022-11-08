@@ -17,20 +17,34 @@ jobs:
 
 #################################
 
-  sqlite-pdo:
-    name: "SQLite with PDO"
+  oracle-pdo:
+    name: "Oracle with PDO"
     runs-on: ubuntu-20.04
     env:
-        DRUDBAL_ENV: "dbal/sqlite/file"
-        DBAL_URL: "sqlite://localhost/sites/drudbal.sqlite"
-        SIMPLETEST_DB: "dbal://localhost/sites/drudbal.sqlite?module=drudbal&dbal_driver=pdo_sqlite"
+        DRUDBAL_ENV: "dbal/pdo_oci"
+        DBAL_URL: "pdo-oci://DRUDBAL:ORACLE@0.0.0.0:1521/XE"
+        SIMPLETEST_DB: "dbal://DRUDBAL:ORACLE@0.0.0.0:1521/XE?module=drudbal&dbal_driver=pdo_oci#dru"
+        ORACLE_PASSWORD: oracle
+
+    services:
+      oracle:
+        image: gvenzl/oracle-xe:21
+        ports:
+          - "1521:1521"
+        env:
+          ORACLE_PASSWORD: oracle
+        options: >-
+          --health-cmd healthcheck.sh
+          --health-interval 20s
+          --health-timeout 10s
+          --health-retries 10
 
     strategy:
       fail-fast: false
       matrix:
         php-version:
-          - "8.1"
-#          - "8.2"
+#          - "8.1"
+          - "8.2"
         test-args:
           - "--group Database"
 #          - "--group Entity"
@@ -45,6 +59,7 @@ jobs:
       with:
         php-version: "${{ matrix.php-version }}"
         coverage: "none"
+        extensions: "pdo_oci"
         ini-values: "zend.assertions=1"
 
     - name: Checkout Drupal
@@ -58,6 +73,9 @@ jobs:
     - name: Patch Drupal
       run: ./drudbal_staging/tests/github/drupal_patch.sh
 
+#    - name: Test Drupal patch
+#      run: git apply -v drudbal_staging/test.patch
+
     - name: Install Composer dependencies
       run: |
         composer install --no-progress --ansi
@@ -68,19 +86,49 @@ jobs:
         composer config repositories.test-run '{"type": "path", "url": "drudbal_staging", "options": {"symlink": false}}'
         composer require "mondrake/drudbal:dev-test-run-branch" --no-progress --ansi
 
-    - name: Install Drupal
+    - name: Patch doctrine/dbal
+      run: |
+        curl https://patch-diff.githubusercontent.com/raw/mondrake/dbal/pull/6.diff | patch -d vendor/doctrine/dbal -p1
+
+    - name: Create Oracle schema
       run: |
         cp modules/contrib/drudbal/tests/github/install_* .
-        vendor/bin/drush site-install standard --db-url=$SIMPLETEST_DB -y
-        vendor/bin/drush runserver localhost:8080 --default-server=localhost:8080 &
-        sleep 1s
+        php install_oracle.php
 
-    - name: Report installation
-      run: |
-        php install_report.php
-        vendor/bin/drush core:status
-        vendor/bin/drush core:requirements
-        vendor/bin/drush pml --type=module --no-core
+#    - name: Install Drupal
+#      run: |
+#        cp modules/contrib/drudbal/tests/github/install_* .
+#        vendor/bin/drush site-install standard --db-url=$SIMPLETEST_DB -y
+#        vendor/bin/drush runserver localhost:8080 --default-server=localhost:8080 &
+#        sleep 1s
+
+#    - name: Report installation
+#      run: |
+#        php install_report.php
+#        vendor/bin/drush core:status
+#        vendor/bin/drush core:requirements
+#        vendor/bin/drush pml --type=module --no-core
 
     - name: Run test ${{ matrix.test-args }}
+      continue-on-error: true
       run: vendor/bin/phpunit -c core --color=always ${{ matrix.test-args }}
+
+#    - name: Run test a
+#      continue-on-error: true
+#      run: vendor/bin/phpunit -c core --color=always modules/contrib/drudbal/tests/src/Kernel/SchemaTest.php
+
+#    - name: Run test b
+#      continue-on-error: true
+#      run: vendor/bin/phpunit -c core --color=always core/tests/Drupal/KernelTests/Core/Database/InsertTest.php
+
+#    - name: Run test c
+#      continue-on-error: true
+#      run: vendor/bin/phpunit -c core --color=always core/tests/Drupal/KernelTests/Core/Entity/EntityDefinitionUpdateTest.php
+
+#    - name: Run test d
+#      continue-on-error: true
+#      run: vendor/bin/phpunit -c core --color=always core/tests/Drupal/KernelTests/Core/Entity/EntityCrudHookTest.php
+
+#    - name: Run test e
+#      continue-on-error: true
+#      run: vendor/bin/phpunit -c core --color=always core/tests/Drupal/KernelTests/Core/Entity/EntityQueryAggregateTest.php
