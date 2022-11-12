@@ -2,6 +2,7 @@
 
 namespace Drupal\drudbal\Driver\Database\dbal;
 
+use Doctrine\DBAL\Driver\Exception\NoIdentityValue;
 use Doctrine\DBAL\Exception\DatabaseObjectNotFoundException;
 use Drupal\Core\Database\IntegrityConstraintViolationException;
 use Drupal\Core\Database\Query\Insert as QueryInsert;
@@ -77,7 +78,7 @@ class Insert extends QueryInsert {
               try {
                 $last_insert_id = $this->connection()->lastInsertId($sequence_name);
               }
-              catch (DatabaseObjectNotFoundException $e) {
+              catch (DatabaseObjectNotFoundException|NoIdentityValue $e) {
                 $last_insert_id = 0;
               }
             }
