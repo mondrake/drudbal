@@ -356,7 +356,7 @@ interface DbalExtensionInterface {
   /**
    * Handles rollback of the current transaction.
    */
-  public function delegateCommit(): bool;
+  public function delegateCommit(): void;
 
   /**
    * Handles exceptions thrown by Connection::popCommittableTransactions().
