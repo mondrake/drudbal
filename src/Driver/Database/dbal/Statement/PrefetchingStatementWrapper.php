@@ -258,7 +258,10 @@ class PrefetchingStatementWrapper implements \IteratorAggregate, StatementInterf
     $query_start = microtime(TRUE);
 
     try {
-      $this->dbalResult = $this->dbalStatement->execute($args);
+      foreach($args as $param => $value) {
+        $this->dbalStatement->bindValue($param, $value);
+      }
+      $this->dbalResult = $this->dbalStatement->executeQuery();
     }
     catch (DbalException $e) {
       throw new DatabaseExceptionWrapper($e->getMessage(), $e->getCode(), $e);
