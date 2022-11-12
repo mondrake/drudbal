@@ -23,7 +23,7 @@ jobs:
     env:
         DRUDBAL_ENV: "dbal/sqlite/file"
         DBAL_URL: "pdo-sqlite://localhost/sites/drudbal.sqlite"
-        SIMPLETEST_DB: "dbal://localhost/sites/drudbal.sqlite?module=drudbal&dbal_driver=pdo-sqlite"
+        SIMPLETEST_DB: "dbal://localhost/sites/drudbal.sqlite?module=drudbal&dbal_driver=pdo_sqlite"
 
     strategy:
       fail-fast: false
