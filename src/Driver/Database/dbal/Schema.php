@@ -184,7 +184,7 @@ class Schema extends DatabaseSchema {
     $options['type'] = DbalType::getType($dbal_type);
 
     if (isset($field['length'])) {
-      $options['length'] = $field['length'];
+      $options['length'] = (int) $field['length'];
     }
 
     if (isset($field['precision']) && isset($field['scale'])) {
