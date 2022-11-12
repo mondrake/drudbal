@@ -3,7 +3,7 @@
 namespace Drupal\drudbal\Driver\Database\dbal\Statement;
 
 use Doctrine\DBAL\Connection as DbalConnection;
-use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
+use Doctrine\DBAL\Exception as DbalException;
 use Doctrine\DBAL\FetchMode;
 use Doctrine\DBAL\Result as DbalResult;
 use Doctrine\DBAL\Statement as DbalStatement;
@@ -232,7 +232,7 @@ class PrefetchingStatementWrapper implements \IteratorAggregate, StatementInterf
         $this->connection()->getDbalExtension()->alterStatement($this->queryString, $args);
         $this->dbalStatement = $this->connection()->getDbalConnection()->prepare($this->queryString);
       }
-      catch (DbalDriverException $e) {
+      catch (DbalException $e) {
         throw new DatabaseExceptionWrapper($e->getMessage(), $e->getCode(), $e);
       }
     }
@@ -261,7 +261,7 @@ class PrefetchingStatementWrapper implements \IteratorAggregate, StatementInterf
       // @todo DBAL 4 removes $args from executeQuery
       $this->dbalResult = $this->dbalStatement->executeQuery();
     }
-    catch (DbalDriverException $e) {
+    catch (DbalException $e) {
       throw new DatabaseExceptionWrapper($e->getMessage(), $e->getCode(), $e);
     }
 
