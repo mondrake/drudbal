@@ -82,7 +82,6 @@ class Insert extends QueryInsert {
               }
             }
             catch (\Exception $e) {
-dump($e);
               $this->connection()->exceptionHandler()->handleExecutionException($e, $stmt, $values, $this->queryOptions);
             }
           }
