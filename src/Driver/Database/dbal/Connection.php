@@ -49,8 +49,8 @@ class Connection extends DatabaseConnection {
   protected static $dbalClassMap = [
     'mysqli' => MysqliExtension::class,
     'oci8' => Oci8Extension::class,
-    'pdo-mysql' => PDOMySqlExtension::class,
-    'pdo-sqlite' => PDOSqliteExtension::class,
+    'pdo_mysql' => PDOMySqlExtension::class,
+    'pdo_sqlite' => PDOSqliteExtension::class,
   ];
 
   /**
@@ -228,6 +228,8 @@ class Connection extends DatabaseConnection {
       $uri = new Uri($connection_options['dbal_url']);
       $connection_options['dbal_driver'] = $uri->getScheme();
     }
+
+    $connection_options['dbal_driver'] = str_replace('-', '_', $connection_options['dbal_driver']);
 
     $dbal_extension_class = static::getDbalExtensionClass($connection_options);
     try {
