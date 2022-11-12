@@ -258,8 +258,7 @@ class PrefetchingStatementWrapper implements \IteratorAggregate, StatementInterf
     $query_start = microtime(TRUE);
 
     try {
-      // @todo DBAL 4 removes $args from executeQuery
-      $this->dbalResult = $this->dbalStatement->executeQuery();
+      $this->dbalResult = $this->dbalStatement->execute($args);
     }
     catch (DbalException $e) {
       throw new DatabaseExceptionWrapper($e->getMessage(), $e->getCode(), $e);
