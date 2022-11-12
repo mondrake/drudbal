@@ -49,8 +49,8 @@ class Connection extends DatabaseConnection {
   protected static $dbalClassMap = [
     'mysqli' => MysqliExtension::class,
     'oci8' => Oci8Extension::class,
-    'pdo_mysql' => PDOMySqlExtension::class,
-    'pdo_sqlite' => PDOSqliteExtension::class,
+    'pdo-mysql' => PDOMySqlExtension::class,
+    'pdo-sqlite' => PDOSqliteExtension::class,
   ];
 
   /**
