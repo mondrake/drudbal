@@ -62,12 +62,12 @@ class MysqliExtension extends AbstractMySqlExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateCommit(): bool {
+  public function delegateCommit(): void {
     try {
-     return parent::delegateCommit();
+     parent::delegateCommit();
     }
     catch (DbalConnectionException $e) {
-     return FALSE;
+     return;
     }
   }
 
