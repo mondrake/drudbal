@@ -182,7 +182,10 @@ class StatementWrapper extends BaseStatementWrapper {
     $query_start = microtime(TRUE);
 
     try {
-      $this->dbalResult = $this->clientStatement->executeQuery($args);
+      foreach($args as $param => $value) {
+        $this->dbalStatement->bindValue($param, $value);
+      }
+      $this->dbalResult = $this->clientStatement->executeQuery();
     }
     catch (DbalException $e) {
       throw new DatabaseExceptionWrapper($e->getMessage(), $e->getCode(), $e);
