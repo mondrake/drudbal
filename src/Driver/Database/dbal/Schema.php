@@ -184,7 +184,7 @@ global $xxx;
 
     $options['type'] = DbalType::getType($dbal_type);
 
-if ($xxx) dump([__METHOD__, 1, $dbal_type, field['precision'] ?? '*und']);
+if ($xxx) dump([__METHOD__, 1, $dbal_type, $field['precision'] ?? '*und']);
     if ($dbal_type === 'decimal' && !isset($field['precision'])) {
       $field['precision'] = 1;
     }
