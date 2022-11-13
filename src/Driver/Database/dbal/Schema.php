@@ -179,12 +179,12 @@ class Schema extends DatabaseSchema {
    *   specification in the 'columnDefinition' option.
    */
   public function getDbalColumnOptions($context, $field_name, $dbal_type, array $field) {
-global $xxx;
+//global $xxx;
     $options = [];
 
     $options['type'] = DbalType::getType($dbal_type);
 
-if ($xxx) dump([__METHOD__, 1, $dbal_type, $field]);
+//if ($xxx) dump([__METHOD__, 1, $dbal_type, $field]);
     if ($dbal_type === 'decimal') {
       $field['scale'] ??= 0;
       $field['precision'] ??= 1;
@@ -198,7 +198,7 @@ if ($xxx) dump([__METHOD__, 1, $dbal_type, $field]);
       $options['precision'] = $field['precision'];
       $options['scale'] = $field['scale'];
     }
-if ($xxx) dump([__METHOD__, 2, $field, $options]);
+//if ($xxx) dump([__METHOD__, 2, $field, $options]);
 
     if (!empty($field['unsigned'])) {
       $options['unsigned'] = $field['unsigned'];
@@ -240,7 +240,7 @@ if ($xxx) dump([__METHOD__, 2, $field, $options]);
     // Get the column definition from DBAL, and trim the field name.
     $dbal_column = new DbalColumn($field_name, DbalType::getType($dbal_type), $options);
     $this->dbalExtension->setDbalPlatformColumnOptions($context, $dbal_column, $options, $dbal_type, $field, $field_name);
-if ($xxx) dump([__METHOD__, 3, $field_name, $dbal_column]);
+//if ($xxx) dump([__METHOD__, 3, $field_name, $dbal_column]);
     $dbal_column_definition = substr($this->dbalPlatform->getColumnDeclarationSQL($field_name, $dbal_column->toArray()), strlen($field_name) + 1);
 
     // Let DBAL extension alter the column definition if required.
