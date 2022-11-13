@@ -1156,6 +1156,7 @@ class PDOSqliteExtension extends AbstractExtension {
       $this->connection->query('DROP INDEX ' . $full_index_name);
     }
 
+global $xxx; if ($xxx) dump([$new_table, $old_schema, $new_schema, $mapping]);
     $this->connection->schema()->createTable($new_table, $new_schema);
 
     if ($this->copyTableData($table, $new_table, $new_schema, $mapping)) {

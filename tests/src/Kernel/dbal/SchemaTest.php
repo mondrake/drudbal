@@ -462,7 +462,7 @@ class SchemaTest extends DriverSpecificSchemaTestBase {
 
         foreach ($variations as $variation) {
           $field_spec = $variation + $base_field_spec;
-dump($field_spec);
+global $xxx; $xxx=true; dump($field_spec);
           $this->assertFieldAdditionRemoval($field_spec);
         }
       }
