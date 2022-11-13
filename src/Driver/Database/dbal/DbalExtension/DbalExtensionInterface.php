@@ -341,7 +341,7 @@ interface DbalExtensionInterface {
   /**
    * Handles checking if a transaction is currently active.
    */
-  public function delegateInTransaction(): void;
+  public function delegateInTransaction(): bool;
 
   /**
    * Handles starting a new transaction.

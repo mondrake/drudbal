@@ -95,8 +95,8 @@ class PDOMySqlExtension extends AbstractMySqlExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateInTransaction(): void {
-    $this->pdoMysqlConnection->inTransaction();
+  public function delegateInTransaction(): bool {
+    return $this->pdoMysqlConnection->inTransaction();
   }
 
   /**
@@ -122,10 +122,9 @@ class PDOMySqlExtension extends AbstractMySqlExtension {
    * {@inheritdoc}
    */
   public function delegateCommit(): void {
-dump([__METHOD__, 1, $this->delegateInTransaction()]);
-//    if ($this->delegateInTransaction()) {
+    if ($this->delegateInTransaction()) {
       $this->pdoMysqlConnection->commit();
-//    }
+    }
   }
 
 }
