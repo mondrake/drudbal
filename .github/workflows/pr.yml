@@ -32,14 +32,14 @@ jobs:
 #          - "8.1"
           - "8.2"
         test-args:
-          - "--group Database"
-          - "--group Entity"
-          - "--group Cache"
-          - "--group Config"
-          - "-v --group Installer"
+#          - "--group Database"
+#          - "--group Entity"
+#          - "--group Cache"
+#          - "--group Config"
+#          - "-v --group Installer"
           - "--group field,Field"
           - "--group file"
-          - "--group views"
+#          - "--group views"
 
     steps:
     - name: Install PHP

@@ -195,8 +195,8 @@ class Schema extends DatabaseSchema {
     }
 
     if (isset($field['precision']) && isset($field['scale'])) {
-      $options['precision'] = $field['precision'];
-      $options['scale'] = $field['scale'];
+      $options['precision'] = (int) $field['precision'];
+      $options['scale'] = (int) $field['scale'];
     }
 //if ($xxx) dump([__METHOD__, 2, $field, $options]);
 
