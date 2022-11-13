@@ -29,15 +29,17 @@ jobs:
       fail-fast: false
       matrix:
         php-version:
-          - "8.1"
-#          - "8.2"
+#          - "8.1"
+          - "8.2"
         test-args:
           - "--group Database"
-#          - "--group Entity"
-#          - "--group Cache,Config"
-#          - "--group field,Field"
-#          - "--group file"
-#          - "--group views"
+          - "--group Entity"
+          - "--group Cache"
+          - "--group Config"
+          - "-v --group Installer"
+          - "--group field,Field"
+          - "--group file"
+          - "--group views"
 
     steps:
     - name: Install PHP
