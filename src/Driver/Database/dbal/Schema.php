@@ -100,6 +100,7 @@ class Schema extends DatabaseSchema {
     // Add columns.
     foreach ($table['fields'] as $field_name => $field) {
       $dbal_type = $this->getDbalColumnType($field);
+global $xxx; if ($xxx) dump([__METHOD__, $field_name, $this->dbalExtension->getDbFieldName($field_name), $dbal_type, $this->getDbalColumnOptions('createTable', $field_name, $dbal_type, $field)]);
       $new_table->addColumn($this->dbalExtension->getDbFieldName($field_name), $dbal_type, $this->getDbalColumnOptions('createTable', $field_name, $dbal_type, $field));
     }
 
