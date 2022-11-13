@@ -493,11 +493,13 @@ class Connection extends DatabaseConnection {
    * @internal
    */
   protected function doCommit() {
+dump([__METHOD__, 1, $this->transactionDepth()]);
     try {
       $this->getDbalExtension()->delegateCommit();
       $success = TRUE;
     }
     catch (DbalConnectionException $e) {
+dump([__METHOD__, 2, $this->transactionDepth()]);
       $success = FALSE;
     }
 
