@@ -103,7 +103,7 @@ class PDOMySqlExtension extends AbstractMySqlExtension {
    * {@inheritdoc}
    */
   public function delegateBeginTransaction(): void {
-    $this->pdoMysqlConnection->beginTransaction();;
+    $this->pdoMysqlConnection->beginTransaction();
   }
 
   /**
