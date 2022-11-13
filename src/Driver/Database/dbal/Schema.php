@@ -100,7 +100,6 @@ class Schema extends DatabaseSchema {
     // Add columns.
     foreach ($table['fields'] as $field_name => $field) {
       $dbal_type = $this->getDbalColumnType($field);
-global $xxx; if ($xxx) dump([__METHOD__, $field_name, $this->dbalExtension->getDbFieldName($field_name), $dbal_type, $this->getDbalColumnOptions('createTable', $field_name, $dbal_type, $field)]);
       $new_table->addColumn($this->dbalExtension->getDbFieldName($field_name), $dbal_type, $this->getDbalColumnOptions('createTable', $field_name, $dbal_type, $field));
     }
 
@@ -233,6 +232,7 @@ global $xxx; if ($xxx) dump([__METHOD__, $field_name, $this->dbalExtension->getD
     // Get the column definition from DBAL, and trim the field name.
     $dbal_column = new DbalColumn($field_name, DbalType::getType($dbal_type), $options);
     $this->dbalExtension->setDbalPlatformColumnOptions($context, $dbal_column, $options, $dbal_type, $field, $field_name);
+global $xxx; if ($xxx) dump([__METHOD__, $field_name, $dbal_column]);
     $dbal_column_definition = substr($this->dbalPlatform->getColumnDeclarationSQL($field_name, $dbal_column->toArray()), strlen($field_name) + 1);
 
     // Let DBAL extension alter the column definition if required.
