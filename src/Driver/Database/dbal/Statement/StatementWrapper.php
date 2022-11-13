@@ -183,7 +183,7 @@ class StatementWrapper extends BaseStatementWrapper {
 
     try {
       foreach($args as $param => $value) {
-        $this->dbalStatement->bindValue($param, $value);
+        $this->clientStatement->bindValue($param, $value);
       }
       $this->dbalResult = $this->clientStatement->executeQuery();
     }
