@@ -179,6 +179,7 @@ class Schema extends DatabaseSchema {
    *   specification in the 'columnDefinition' option.
    */
   public function getDbalColumnOptions($context, $field_name, $dbal_type, array $field) {
+global $xxx; if ($xxx) dump([__METHOD__, 1, $context, $field_name, $dbal_type, $field]);
     $options = [];
 
     $options['type'] = DbalType::getType($dbal_type);
@@ -232,7 +233,7 @@ class Schema extends DatabaseSchema {
     // Get the column definition from DBAL, and trim the field name.
     $dbal_column = new DbalColumn($field_name, DbalType::getType($dbal_type), $options);
     $this->dbalExtension->setDbalPlatformColumnOptions($context, $dbal_column, $options, $dbal_type, $field, $field_name);
-global $xxx; if ($xxx) dump([__METHOD__, $field_name, $dbal_column]);
+if ($xxx) dump([__METHOD__, 2, $field_name, $dbal_column]);
     $dbal_column_definition = substr($this->dbalPlatform->getColumnDeclarationSQL($field_name, $dbal_column->toArray()), strlen($field_name) + 1);
 
     // Let DBAL extension alter the column definition if required.
@@ -692,7 +693,6 @@ global $xxx; if ($xxx) dump([__METHOD__, $field_name, $dbal_column]);
    * {@inheritdoc}
    */
   public function changeField($table, $field, $field_new, $spec, $keys_new = []) {
-//global $xxx; if ($xxx) dump([$table, $field, $field_new, $spec, $keys_new]);
     if (!$this->fieldExists($table, $field)) {
       throw new SchemaObjectDoesNotExistException(t("Cannot change the definition of field @table.@name: field doesn't exist.", [
         '@table' => $table,
@@ -814,23 +814,16 @@ global $xxx; if ($xxx) dump([__METHOD__, $field_name, $dbal_column]);
    * {@inheritdoc}
    */
   public function fieldExists($table, $column) {
-//global $xxx; if ($xxx) dump(['fieldExists', $table, $column]);
     $result = NULL;
     if ($this->dbalExtension->delegateFieldExists($result, $table, $column)) {
-//if ($xxx) dump(['fieldExists delegated', $result]);
       return $result;
     }
 
     // DBAL extension did not pick up, proceed with DBAL.
     if (!$this->tableExists($table)) {
-//if ($xxx) dump(['fieldExists notableexist']);
       return FALSE;
     }
-/*if ($xxx) dump([
-  'fieldExists list',
-  $this->dbalExtension->getDbFieldName($column, FALSE),
-  array_keys($this->dbalSchemaManager->listTableColumns($this->connection()->getPrefixedTableName($table)))
-]);*/
+
     // Column name must not be quoted here.
     return in_array(
       $this->dbalExtension->getDbFieldName($column, FALSE),
