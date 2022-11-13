@@ -184,6 +184,10 @@ global $xxx; if ($xxx) dump([__METHOD__, 1, $context, $field_name, $dbal_type, $
 
     $options['type'] = DbalType::getType($dbal_type);
 
+    if ($dbal_type === 'decimal' && !isset($field['precision'])) {
+      $field['precision'] = 1;
+    }
+
     if (isset($field['length'])) {
       $options['length'] = (int) $field['length'];
     }
