@@ -16,7 +16,7 @@ class Transaction extends TransactionBase {
 
   public function __construct(Connection $connection, $name = NULL) {
     $this->connection = $connection;
-dump([__METHOD__, 1, $connection->transactionDepth()]);
+dump([__METHOD__, 1, $connection->transactionDepth(), $name]);
     // If there is no transaction depth, then no transaction has started. Name
     // the transaction 'drupal_transaction'.
     if (!$depth = $connection->transactionDepth()) {
