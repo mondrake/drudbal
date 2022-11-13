@@ -20,7 +20,7 @@ dump([__METHOD__, 1, $connection->transactionDepth(), \Drupal\Core\Utility\Error
   }
 
   public function __destruct() {
-dump([__METHOD__, 1, $connection->transactionDepth(), \Drupal\Core\Utility\Error::formatBacktrace(debug_backtrace())]);
+dump([__METHOD__, 1, $this->connection->transactionDepth(), \Drupal\Core\Utility\Error::formatBacktrace(debug_backtrace())]);
     parent::__destruct();
   }
 
@@ -30,7 +30,7 @@ dump([__METHOD__, 1]);
   }
 
   public function rollBack() {
-dump([__METHOD__, 1, $connection->transactionDepth(), \Drupal\Core\Utility\Error::formatBacktrace(debug_backtrace())]);
+dump([__METHOD__, 1, $this->connection->transactionDepth(), \Drupal\Core\Utility\Error::formatBacktrace(debug_backtrace())]);
     return parent::rollBack();
   }
 
