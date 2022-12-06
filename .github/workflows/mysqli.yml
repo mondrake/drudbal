@@ -30,11 +30,13 @@ jobs:
       fail-fast: false
       matrix:
         php-version:
-          - "8.1"
+          - "8.2"
         test-args:
           - "--group Database"
-          - "--group Cache"
-          - "--group Entity"
+          - "-v --group Cache"
+          - "-v --group Config"
+          - "-v --group Entity"
+#          - "-v --group Installer"
 
     services:
       mysql:
@@ -58,7 +60,7 @@ jobs:
       run: git clone --depth=5 --branch=$DRUDBAL_DRUPAL_VERSION http://git.drupal.org/project/drupal.git .
 
     - name: Checkout DruDbal
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         path: drudbal_staging
 

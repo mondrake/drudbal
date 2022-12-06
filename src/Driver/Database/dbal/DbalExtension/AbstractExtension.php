@@ -132,12 +132,10 @@ class AbstractExtension implements DbalExtensionInterface {
    * {@inheritdoc}
    */
   public function getDbFieldName(string $field_name, bool $quoted = TRUE): string {
-    if ($quoted && $field_name !== '' && substr($field_name, 0, 1) !== '"') {
-      return '"' . str_replace('.', '"."', $field_name) . '"';
+    if (($quoted ||  $this->getDbalConnection()->getDatabasePlatform()->getReservedKeywordsList()->isKeyword($field_name)) && $field_name !== '' && substr($field_name, 0, 1) !== '"') {
+      return $this->getDbalConnection()->getDatabasePlatform()->quoteIdentifier($field_name);
     }
-    else {
-      return $field_name;
-    }
+    return $field_name;
   }
 
   /**

@@ -3,15 +3,18 @@
 namespace Drupal\drudbal\Driver\Database\dbal;
 
 use Doctrine\DBAL\Exception as DbalException;
+use Doctrine\DBAL\Platforms\AbstractPlatform as DbalAbstractPlatform;
+use Doctrine\DBAL\Schema\AbstractSchemaManager as DbalAbstractSchemaManager;
 use Doctrine\DBAL\Schema\Column as DbalColumn;
 use Doctrine\DBAL\Schema\Comparator;
-use Doctrine\DBAL\Schema\Schema as DbalSchema;
 use Doctrine\DBAL\Schema\Exception\TableDoesNotExist as DbalTableDoesNotExist;
+use Doctrine\DBAL\Schema\Schema as DbalSchema;
 use Doctrine\DBAL\Types\Type as DbalType;
 use Drupal\Component\Utility\Unicode;
 use Drupal\Core\Database\Schema as DatabaseSchema;
 use Drupal\Core\Database\SchemaObjectDoesNotExistException;
 use Drupal\Core\Database\SchemaObjectExistsException;
+use Drupal\drudbal\Driver\Database\dbal\DbalExtension\DbalExtensionInterface;
 
 /**
  * DruDbal implementation of \Drupal\Core\Database\Schema.
@@ -25,31 +28,23 @@ class Schema extends DatabaseSchema {
 
   /**
    * DBAL schema manager.
-   *
-   * @var \Doctrine\DBAL\Schema\AbstractSchemaManager
    */
-  protected $dbalSchemaManager;
+  protected DbalAbstractSchemaManager $dbalSchemaManager;
 
   /**
    * DBAL platform.
-   *
-   * @var \Doctrine\DBAL\Platforms\AbstractPlatform
    */
-  protected $dbalPlatform;
+  protected DbalAbstractPlatform $dbalPlatform;
 
   /**
    * Current DBAL schema.
-   *
-   * @var \Doctrine\DBAL\Schema\Schema
    */
-  protected $dbalCurrentSchema;
+  protected ?DbalSchema $dbalCurrentSchema;
 
   /**
    * The Dbal extension for the DBAL driver.
-   *
-   * @var \Drupal\drudbal\Driver\Database\dbal\DbalExtension\DbalExtensionInterface
    */
-  protected $dbalExtension;
+  protected DbalExtensionInterface $dbalExtension;
 
   /**
    * Constructs a Schema object.
@@ -696,6 +691,7 @@ class Schema extends DatabaseSchema {
    * {@inheritdoc}
    */
   public function changeField($table, $field, $field_new, $spec, $keys_new = []) {
+//global $xxx; if ($xxx) dump([$table, $field, $field_new, $spec, $keys_new]);
     if (!$this->fieldExists($table, $field)) {
       throw new SchemaObjectDoesNotExistException(t("Cannot change the definition of field @table.@name: field doesn't exist.", [
         '@table' => $table,
@@ -817,17 +813,28 @@ class Schema extends DatabaseSchema {
    * {@inheritdoc}
    */
   public function fieldExists($table, $column) {
+//global $xxx; if ($xxx) dump(['fieldExists', $table, $column]);
     $result = NULL;
     if ($this->dbalExtension->delegateFieldExists($result, $table, $column)) {
+//if ($xxx) dump(['fieldExists delegated', $result]);
       return $result;
     }
 
     // DBAL extension did not pick up, proceed with DBAL.
     if (!$this->tableExists($table)) {
+//if ($xxx) dump(['fieldExists notableexist']);
       return FALSE;
     }
+/*if ($xxx) dump([
+  'fieldExists list',
+  $this->dbalExtension->getDbFieldName($column, FALSE),
+  array_keys($this->dbalSchemaManager->listTableColumns($this->connection()->getPrefixedTableName($table)))
+]);*/
     // Column name must not be quoted here.
-    return in_array($this->dbalExtension->getDbFieldName($column, FALSE), array_keys($this->dbalSchemaManager->listTableColumns($this->connection()->getPrefixedTableName($table))));
+    return in_array(
+      $this->dbalExtension->getDbFieldName($column, FALSE),
+      array_keys($this->dbalSchemaManager->listTableColumns($this->connection()->getPrefixedTableName($table)))
+    );
   }
 
   /**
@@ -836,8 +843,8 @@ class Schema extends DatabaseSchema {
    * @return \Doctrine\DBAL\Schema\Schema
    *   The DBAL schema of the database.
    */
-  private function dbalSchema() {
-    if ($this->dbalCurrentSchema === NULL) {
+  public function dbalSchema() {
+    if (!isset($this->dbalCurrentSchema)) {
       $this->dbalSetCurrentSchema($this->dbalSchemaManager->introspectSchema());
     }
     return $this->dbalCurrentSchema;
