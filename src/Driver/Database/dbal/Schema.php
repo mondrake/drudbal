@@ -924,7 +924,7 @@ class Schema extends DatabaseSchema {
   public function findTables($table_expression) {
     $tables = [];
     foreach ($this->dbalExtension->delegateListTableNames() as $table_name) {
-      $unprefixed_table_name = $this->dbalExtension->getDrupalTableName($this->connection()->tablePrefix(), $table_name);
+      $unprefixed_table_name = $this->dbalExtension->getDrupalTableName($this->connection()->getPrefix(), $table_name);
       if ($unprefixed_table_name !== NULL && $unprefixed_table_name !== '') {
         $tables[$unprefixed_table_name] = $unprefixed_table_name;
       }

@@ -150,7 +150,7 @@ class Connection extends DatabaseConnection {
       if (isset($this->dbTables['{' . $table . '}'])) {
         continue;
       }
-      $this->dbTables['{' . $table . '}'] = $this->identifierQuotes[0] . $this->dbalExtension->getDbTableName($this->tablePrefix(), $table) . $this->identifierQuotes[1];
+      $this->dbTables['{' . $table . '}'] = $this->identifierQuotes[0] . $this->dbalExtension->getDbTableName($this->getPrefix(), $table) . $this->identifierQuotes[1];
     }
     return str_replace(array_keys($this->dbTables), array_values($this->dbTables), $sql);
   }

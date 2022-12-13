@@ -89,8 +89,7 @@ class Oci8Extension extends AbstractExtension {
    */
   public function getDbFullQualifiedTableName(string $drupal_table_name): string {
     $options = $this->connection->getConnectionOptions();
-    $prefix = $this->connection->tablePrefix($drupal_table_name);
-    return $options['username'] . '."' . $this->getDbTableName($prefix, $drupal_table_name) . '"';
+    return $options['username'] . '."' . $this->getDbTableName($this->connection->getPrefix(), $drupal_table_name) . '"';
   }
 
   /**
