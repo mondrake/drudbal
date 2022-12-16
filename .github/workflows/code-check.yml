@@ -48,7 +48,7 @@ jobs:
       run: |
         composer install --no-progress --ansi
         composer config --no-plugins allow-plugins.composer/package-versions-deprecated true
-        composer require --dev --ansi phpstan/phpstan-deprecation-rules
+        composer require --dev --ansi -W phpstan/phpstan-deprecation-rules
 
     - name: Composer require DruDbal from local staging
       run: |
