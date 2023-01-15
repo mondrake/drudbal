@@ -54,7 +54,7 @@ under the hood:
 
 1. Requirements:
     * PHP 8.1+
-    * latest Drupal development branch code, 10.0.x
+    * latest Drupal development branch code, 10.1.x
     * codebase built via Composer
 
 2. Get the DruDbal module from Packagist via Composer, it will install Doctrine
