@@ -93,5 +93,4 @@ tbd                                                             | Add tests for 
 tbd                                                             | Ensure that when INSERTing a NULL value in a database column, SELECTing it back returns NULL and not empty string - for all fetch modes |
 tbd                                                             | UpdateTestBase::runUpdate should reset database schema after updating  |
 [2992274](https://www.drupal.org/project/drupal/issues/2992274) | Installer tests fail if contrib driver hides database credentials form fields |
-[3191623](https://www.drupal.org/project/drupal/issues/3191623) | Views aggregate queries do not escape the fields |
 [3256642](https://www.drupal.org/project/drupal/issues/3256642) | Autoload classes of database drivers modules' dependencies |
