@@ -9,35 +9,41 @@ env:
     DRUDBAL_DRUPAL_PROFILE: "standard"
     SIMPLETEST_BASE_URL: "http://localhost:8080"
     PHPUNIT_SKIP_CLASS: '[
-      "Drupal\\KernelTests\\Core\\Cache\\ApcuBackendTest",
-      "Drupal\\Tests\\file\\Functional\\DownloadTest"
+      "Drupal\\KernelTests\\Core\\Cache\\ApcuBackendTest"
     ]'
 
 jobs:
 
 #################################
 
-  sqlite-pdo:
-    name: "SQLite with PDO"
-    runs-on: ubuntu-20.04
+  mysql-mysqli:
+    name: "MySql with mysqli"
+    runs-on: ubuntu-latest
     env:
-        DRUDBAL_ENV: "dbal/sqlite/file"
-        DBAL_URL: "sqlite://localhost/sites/drudbal.sqlite"
-        SIMPLETEST_DB: "dbal://localhost/sites/drudbal.sqlite?module=drudbal&dbal_driver=pdo_sqlite"
+        DRUDBAL_ENV: "dbal/mysqli"
+        DBAL_URL: "mysqli://root:@0.0.0.0:3306/drudbal"
+        SIMPLETEST_DB: "dbal://root:@0.0.0.0:3306/drudbal?module=drudbal&dbal_driver=mysqli"
 
     strategy:
       fail-fast: false
       matrix:
         php-version:
-          - "8.1"
-#          - "8.2"
+          - "8.2"
         test-args:
           - "--group Database"
-#          - "--group Entity"
-#          - "--group Cache,Config"
-#          - "--group field,Field"
-#          - "--group file"
-#          - "--group views"
+#          - "-v --group Cache"
+#          - "-v --group Config"
+#          - "-v --group Entity"
+#          - "-v --group Installer"
+
+    services:
+      mysql:
+        image: "mysql:5.7"
+        options: >-
+          -e MYSQL_ALLOW_EMPTY_PASSWORD=yes
+          -e MYSQL_DATABASE=drudbal
+        ports:
+          - "3306:3306"
 
     steps:
     - name: Install PHP
@@ -45,6 +51,7 @@ jobs:
       with:
         php-version: "${{ matrix.php-version }}"
         coverage: "none"
+        extensions: "mysqli"
         ini-values: "zend.assertions=1"
 
     - name: Checkout Drupal
@@ -61,6 +68,7 @@ jobs:
     - name: Install Composer dependencies
       run: |
         composer install --no-progress --ansi
+        composer config --no-plugins allow-plugins.composer/package-versions-deprecated true
 
     - name: Composer require DruDbal from local staging
       run: |

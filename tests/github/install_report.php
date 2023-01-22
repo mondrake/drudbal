@@ -40,3 +40,6 @@ print("-------------------------------------------------------------------------
 print("Drupal db connection URL:\n");
 print($connection->createUrlFromConnectionOptions($connection_info['default']) . "\n");
 print("------------------------------------------------------------------------------------------------\n");
+print("MySql variables:\n");
+dump($connection->query('show variables')->fetchAll());
+print("------------------------------------------------------------------------------------------------\n");
