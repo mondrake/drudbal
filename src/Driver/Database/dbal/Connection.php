@@ -12,6 +12,7 @@ use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
 use Doctrine\DBAL\ExpandArrayParameters;
 use Doctrine\DBAL\Platforms\AbstractPlatform as DbalAbstractPlatform;
 use Doctrine\DBAL\SQL\Parser as DbalParser;
+use Doctrine\DBAL\Tools\DsnParser;
 use Doctrine\DBAL\Types\Type as DbalType;
 use Drupal\Component\Uuid\Php as Uuid;
 use Drupal\Core\Database\Connection as DatabaseConnection;
@@ -220,9 +221,7 @@ class Connection extends DatabaseConnection {
         // needs to use.
         throw new ConnectionNotDefinedException("Database connection is not defined properly for the 'dbal' driver. The 'dbal_url' key is missing. Check the database connection definition in settings.php.");
       }
-      $dbal_connection = DbalDriverManager::getConnection([
-        'url' => $connection_options['dbal_url'],
-      ]);
+      $dbal_connection = DbalDriverManager::getConnection((new DsnParser())->parse($connection_options['dbal_url']));
       // Below shouldn't happen, but if it does, then use the driver name
       // from the just established DBAL connection.
       $uri = new Uri($connection_options['dbal_url']);
@@ -235,7 +234,7 @@ class Connection extends DatabaseConnection {
     try {
       $dbal_connection_options = static::mapConnectionOptionsToDbal($connection_options);
       $dbal_extension_class::preConnectionOpen($connection_options, $dbal_connection_options);
-      $dbal_connection = DBALDriverManager::getConnection($dbal_connection_options);
+      $dbal_connection = DbalDriverManager::getConnection($dbal_connection_options);
       $dbal_extension_class::postConnectionOpen($dbal_connection, $connection_options, $dbal_connection_options);
     }
     catch (DbalConnectionException $e) {

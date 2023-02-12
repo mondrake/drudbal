@@ -6,6 +6,7 @@ use Doctrine\DBAL\Exception as DbalException;
 use Doctrine\DBAL\DriverManager as DbalDriverManager;
 use Doctrine\DBAL\Exception\ConnectionException as DbalExceptionConnectionException;
 use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
+use Doctrine\DBAL\Tools\DsnParser;
 use Drupal\Core\Database\ConnectionNotDefinedException;
 use Drupal\Core\Database\Database;
 use Drupal\Core\Database\Install\Tasks as InstallTasks;
@@ -210,8 +211,8 @@ class Tasks extends InstallTasks {
         $form_state->setValue(['dbal', 'dbal_url'], getenv("DBAL_URL"));
       }
       $url = $form_state->getValue(['dbal', 'dbal_url']);
-      $dbal_connection = DbalDriverManager::getConnection(['url' => $url]);
-
+      $dbal_connection = DbalDriverManager::getConnection((new DsnParser())->parse($url));
+      
       $uri = new Uri($url);
       $user_info = $uri->getUserInfo();
       if (!empty($user_info)) {
