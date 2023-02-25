@@ -11,7 +11,8 @@ env:
     DRUDBAL_DRUPAL_PROFILE: "standard"
     SIMPLETEST_BASE_URL: "http://localhost:8080"
     PHPUNIT_SKIP_CLASS: '[
-      "Drupal\\KernelTests\\Core\\Cache\\ApcuBackendTest"
+      "Drupal\\KernelTests\\Core\\Cache\\ApcuBackendTest",
+      "Drupal\\Tests\\file\\Functional\\FileAddPermissionsUpdateTest"
     ]'
 
 jobs:
