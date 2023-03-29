@@ -94,4 +94,3 @@ tbd                                                             | Ensure that wh
 tbd                                                             | UpdateTestBase::runUpdate should reset database schema after updating  |
 [2992274](https://www.drupal.org/project/drupal/issues/2992274) | Installer tests fail if contrib driver hides database credentials form fields |
 [3256642](https://www.drupal.org/project/drupal/issues/3256642) | Autoload classes of database drivers modules' dependencies |
-[3265086](https://www.drupal.org/project/drupal/issues/3265086) | Implement statement classes using \Iterator to fix memory usage regression and prevent rewinding |
