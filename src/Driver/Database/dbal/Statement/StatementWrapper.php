@@ -120,13 +120,15 @@ class StatementWrapper extends StatementWrapperIterator {
    * @param bool $row_count_enabled
    *   (optional) Enables counting the rows affected. Defaults to FALSE.
    */
-  public function __construct(DruDbalConnection $connection, DbalConnection $dbal_connection, string $query, array $driver_options = [], bool $row_count_enabled = FALSE) {
-    $this->connection = $connection;
-    $this->rowCountEnabled = $row_count_enabled;
-
-    $this->queryString = $query;
+  public function __construct(
+    DruDbalConnection $connection,
+    DbalConnection $dbal_connection,
+    string $query,
+    array $driver_options = [],
+    bool $row_count_enabled = FALSE
+  ) {
+    parent::__construct($connection, $dbal_connection, $query, $driver_options, $row_count_enabled);
     $this->dbalConnection = $dbal_connection;
-    $this->setFetchMode(\PDO::FETCH_OBJ);
     $this->driverOpts = $driver_options;
   }
 
