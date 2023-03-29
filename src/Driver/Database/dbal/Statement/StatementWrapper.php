@@ -6,7 +6,7 @@ use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\Exception as DbalException;
 use Doctrine\DBAL\FetchMode;
 use Doctrine\DBAL\Result;
-use Doctrine\DBAL\Statement;
+use Doctrine\DBAL\Statement as DbalStatement;
 use Drupal\Core\Database\Database;
 use Drupal\Core\Database\DatabaseExceptionWrapper;
 use Drupal\Core\Database\Event\StatementExecutionEndEvent;
@@ -31,46 +31,41 @@ class StatementWrapper implements \Iterator, StatementInterface {
   use FetchModeTrait;
 
   /**
-   * The DBAL executed statement result.
-   *
-   * @var \Doctrine\DBAL\Result
+   * The client database Statement object.
    */
-  protected $dbalResult;
+  protected DbalStatement $clientStatement;
+
+  /**
+   * The DBAL executed statement result.
+   */
+  protected Result $dbalResult;
 
   /**
    * Holds the index position of named parameters.
    *
    * Used in positional-only parameters binding drivers.
-   *
-   * @var array
    */
-  protected $paramsPositions;
+  protected array $paramsPositions;
 
   /**
    * The default fetch mode.
    *
    * See http://php.net/manual/pdo.constants.php for the definition of the
    * constants used.
-   *
-   * @var int
    */
-  protected $defaultFetchMode;
+  protected int $defaultFetchMode;
 
   /**
    * The class to be used for returning row results.
    *
    * Used when fetch mode is \PDO::FETCH_CLASS.
-   *
-   * @var string
    */
-  protected $fetchClass;
+  protected string $fetchClass;
 
   /**
    * Holds supplementary fetch options.
-   *
-   * @var array
    */
-  protected $fetchOptions = [
+  protected array $fetchOptions = [
     'class' => 'stdClass',
     'constructor_args' => [],
   ];
@@ -78,10 +73,8 @@ class StatementWrapper implements \Iterator, StatementInterface {
   /**
    * Holds the current fetch style (which will be used by the next fetch).
    * @see \PDOStatement::fetch()
-   *
-   * @var int
    */
-  protected $fetchStyle = \PDO::FETCH_OBJ;
+  protected int $fetchStyle = \PDO::FETCH_OBJ;
 
   /**
    * Constructs a Statement object.
@@ -92,9 +85,9 @@ class StatementWrapper implements \Iterator, StatementInterface {
    *
    * @param \Drupal\drudbal\Driver\Database\dbal\Connection $connection
    *   The database connection object for this statement.
-   * @param \Doctrine\DBAL\Connection $dbal_connection
+   * @param \Doctrine\DBAL\Connection $dbalConnection
    *   DBAL connection object.
-   * @param string $query
+   * @param string $queryString
    *   A string containing an SQL query.
    * @param array $driverOpts
    *   (optional) An array of driver options for this query.
@@ -118,6 +111,13 @@ class StatementWrapper implements \Iterator, StatementInterface {
     $connection = $this->connection;
     assert($connection instanceof DruDbalConnection);
     return $connection;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getConnectionTarget(): string {
+    return $this->connection()->getTarget();
   }
 
   /**
@@ -228,6 +228,20 @@ class StatementWrapper implements \Iterator, StatementInterface {
       \PDO::FETCH_COLUMN => $this->assocToColumn($row, $columnNames, $this->fetchOptions['column']),
       default => throw new DatabaseExceptionWrapper("Unknown fetch type '{$mode}'"),
     };
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function fetchAssoc() {
+    return $this->fetch(\PDO::FETCH_ASSOC);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function fetchCol($index = 0) {
+    return $this->fetchAll(\PDO::FETCH_COLUMN, $index);
   }
 
   /**
