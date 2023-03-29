@@ -124,8 +124,8 @@ class StatementWrapper implements \Iterator, StatementInterface {
    * {@inheritdoc}
    */
   public function execute($args = [], $options = []) {
-    /** @var Statement|null $clientStatement */
-    $clientStatement = $this->clientStatement;
+    /** @var DbalStatement|null $clientStatement */
+    $clientStatement = $this->clientStatement ?? NULL;
 
     $args = $args ?? [];
 
