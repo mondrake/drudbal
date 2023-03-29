@@ -13,7 +13,8 @@ use Drupal\Core\Database\Event\StatementExecutionEndEvent;
 use Drupal\Core\Database\Event\StatementExecutionStartEvent;
 use Drupal\Core\Database\FetchModeTrait;
 use Drupal\Core\Database\RowCountException;
-use Drupal\Core\Database\StatementWrapperIterator;
+use Drupal\Core\Database\StatementInterface;
+use Drupal\Core\Database\StatementIteratorTrait;
 use Drupal\drudbal\Driver\Database\dbal\Connection as DruDbalConnection;
 
 /**
@@ -24,16 +25,10 @@ use Drupal\drudbal\Driver\Database\dbal\Connection as DruDbalConnection;
  * code in Drupal\drudbal\Driver\Database\dbal\DbalExtension\[dbal_driver_name]
  * classes and execution handed over to there.
  */
-class StatementWrapper extends StatementWrapperIterator {
+class StatementWrapper implements \Iterator, StatementInterface {
 
+  use StatementIteratorTrait;
   use FetchModeTrait;
-
-  /**
-   * The DBAL client connection.
-   *
-   * @var \Doctrine\DBAL\Connection
-   */
-  protected $dbalConnection;
 
   /**
    * The DBAL executed statement result.
@@ -41,13 +36,6 @@ class StatementWrapper extends StatementWrapperIterator {
    * @var \Doctrine\DBAL\Result
    */
   protected $dbalResult;
-
-  /**
-   * Holds supplementary driver options.
-   *
-   * @var array
-   */
-  protected $driverOpts;
 
   /**
    * Holds the index position of named parameters.
@@ -67,13 +55,6 @@ class StatementWrapper extends StatementWrapperIterator {
    * @var int
    */
   protected $defaultFetchMode;
-
-  /**
-   * The query string, in its form with placeholders.
-   *
-   * @var string
-   */
-  protected $queryString;
 
   /**
    * The class to be used for returning row results.
@@ -115,21 +96,19 @@ class StatementWrapper extends StatementWrapperIterator {
    *   DBAL connection object.
    * @param string $query
    *   A string containing an SQL query.
-   * @param array $driver_options
+   * @param array $driverOpts
    *   (optional) An array of driver options for this query.
-   * @param bool $row_count_enabled
+   * @param bool $rowCountEnabled
    *   (optional) Enables counting the rows affected. Defaults to FALSE.
    */
   public function __construct(
-    DruDbalConnection $connection,
-    DbalConnection $dbal_connection,
-    string $query,
-    array $driver_options = [],
-    bool $row_count_enabled = FALSE
+    protected readonly DruDbalConnection $connection,
+    protected readonly DbalConnection $dbalConnection,
+    protected string $queryString,
+    protected array $driverOpts = [],
+    protected readonly bool $rowCountEnabled = FALSE
   ) {
-    parent::__construct($connection, $dbal_connection, $query, $driver_options, $row_count_enabled);
-    $this->dbalConnection = $dbal_connection;
-    $this->driverOpts = $driver_options;
+    $this->setFetchMode(\PDO::FETCH_OBJ);
   }
 
   /**
