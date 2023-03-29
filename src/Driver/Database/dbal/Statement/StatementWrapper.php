@@ -235,6 +235,7 @@ class StatementWrapper extends StatementWrapperIterator {
     if (!$dbal_row) {
       return FALSE;
     }
+    $columnNames = array_keys($dbal_row);
     $row = $this->connection()->getDbalExtension()->processFetchedRecord($dbal_row);
 
     return match($mode) {
