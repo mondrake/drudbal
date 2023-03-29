@@ -9,8 +9,11 @@ use Doctrine\DBAL\Result;
 use Doctrine\DBAL\Statement;
 use Drupal\Core\Database\Database;
 use Drupal\Core\Database\DatabaseExceptionWrapper;
+use Drupal\Core\Database\Event\StatementExecutionEndEvent;
+use Drupal\Core\Database\Event\StatementExecutionStartEvent;
+use Drupal\Core\Database\FetchModeTrait;
 use Drupal\Core\Database\RowCountException;
-use Drupal\Core\Database\StatementWrapper as BaseStatementWrapper;
+use Drupal\Core\Database\StatementWrapperIterator;
 use Drupal\drudbal\Driver\Database\dbal\Connection as DruDbalConnection;
 
 /**
@@ -21,7 +24,9 @@ use Drupal\drudbal\Driver\Database\dbal\Connection as DruDbalConnection;
  * code in Drupal\drudbal\Driver\Database\dbal\DbalExtension\[dbal_driver_name]
  * classes and execution handed over to there.
  */
-class StatementWrapper extends BaseStatementWrapper {
+class StatementWrapper extends StatementWrapperIterator {
+
+  use FetchModeTrait;
 
   /**
    * The DBAL client connection.
@@ -178,8 +183,17 @@ class StatementWrapper extends BaseStatementWrapper {
       }
     }
 
-    $logger = $this->connection()->getLogger();
-    $query_start = microtime(TRUE);
+    if ($this->connection()->isEventEnabled(StatementExecutionStartEvent::class)) {
+      $startEvent = new StatementExecutionStartEvent(
+        spl_object_id($this),
+        $this->connection()->getKey(),
+        $this->connection()->getTarget(),
+        $this->getQueryString(),
+        $args ?? [],
+        $this->connection()->findCallerFromDebugBacktrace()
+      );
+      $this->connection()->dispatchEvent($startEvent);
+    }
 
     try {
       $this->dbalResult = $this->clientStatement->executeQuery($args);
@@ -188,9 +202,16 @@ class StatementWrapper extends BaseStatementWrapper {
       throw new DatabaseExceptionWrapper($e->getMessage(), $e->getCode(), $e);
     }
 
-    $query_end = microtime(TRUE);
-    if (!empty($logger)) {
-      $logger->log($this, $args, $query_end - $query_start, $query_start);
+    if (isset($startEvent) && $this->connection()->isEventEnabled(StatementExecutionEndEvent::class)) {
+      $this->connection()->dispatchEvent(new StatementExecutionEndEvent(
+        $startEvent->statementObjectId,
+        $startEvent->key,
+        $startEvent->target,
+        $startEvent->queryString,
+        $startEvent->args,
+        $startEvent->caller,
+        $startEvent->time
+      ));
     }
 
     return TRUE;
@@ -213,38 +234,18 @@ class StatementWrapper extends BaseStatementWrapper {
       return FALSE;
     }
     $row = $this->connection()->getDbalExtension()->processFetchedRecord($dbal_row);
-    switch ($mode) {
-      case \PDO::FETCH_ASSOC:
-        return $row;
 
-      case \PDO::FETCH_NUM:
-        return array_values($row);
-
-      case \PDO::FETCH_BOTH:
-        return $row + array_values($row);
-
-      case \PDO::FETCH_OBJ:
-        return (object) $row;
-
-      case \PDO::FETCH_CLASS:
-        $constructor_arguments = $this->fetchOptions['constructor_args'] ?? [];
-        $class_obj = new $this->fetchClass(...$constructor_arguments);
-        foreach ($row as $column => $value) {
-          $class_obj->$column = $value;
-        }
-        return $class_obj;
-
-      case \PDO::FETCH_CLASS | \PDO::FETCH_CLASSTYPE:
-        $class = array_shift($row);
-        $class_obj = new $class();
-        foreach ($row as $column => $value) {
-          $class_obj->$column = $value;
-        }
-        return $class_obj;
-
-      default:
-          throw new DbalException("Unknown fetch type '{$mode}'");
-    }
+    return match($mode) {
+      \PDO::FETCH_ASSOC => $row,
+      \PDO::FETCH_BOTH => $this->assocToBoth($row),
+      \PDO::FETCH_NUM => $this->assocToNum($row),
+      \PDO::FETCH_LAZY, \PDO::FETCH_OBJ => $this->assocToObj($row),
+      \PDO::FETCH_CLASS | \PDO::FETCH_CLASSTYPE => $this->assocToClassType($row, $this->fetchOptions['constructor_args']),
+      \PDO::FETCH_CLASS => $this->assocToClass($row, $this->fetchOptions['class'], $this->fetchOptions['constructor_args']),
+      \PDO::FETCH_INTO => $this->assocIntoObject($row, $this->fetchOptions['object']),
+      \PDO::FETCH_COLUMN => $this->assocToColumn($row, $columnNames, $this->fetchOptions['column']),
+      default => throw new DatabaseExceptionWrapper("Unknown fetch type '{$mode}'"),
+    };
   }
 
   /**
