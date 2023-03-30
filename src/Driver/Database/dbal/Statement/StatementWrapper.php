@@ -359,7 +359,7 @@ class StatementWrapper implements \Iterator, StatementInterface {
    * {@inheritdoc}
    */
   public function setFetchMode($mode, $a1 = NULL, $a2 = []) {
-    $this->defaultFetchStyle = $mode;
+    $this->defaultFetchMode = $mode;
     switch ($mode) {
       case \PDO::FETCH_CLASS:
         $this->fetchOptions['class'] = $a1;
