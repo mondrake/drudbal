@@ -9,6 +9,8 @@ use Doctrine\DBAL\Result as DbalResult;
 use Doctrine\DBAL\Statement as DbalStatement;
 use Drupal\Core\Database\Database;
 use Drupal\Core\Database\DatabaseExceptionWrapper;
+use Drupal\Core\Database\Event\StatementExecutionEndEvent;
+use Drupal\Core\Database\Event\StatementExecutionStartEvent;
 use Drupal\Core\Database\RowCountException;
 use Drupal\Core\Database\StatementInterface;
 use Drupal\drudbal\Driver\Database\dbal\Connection as DruDbalConnection;
@@ -254,8 +256,17 @@ class PrefetchingStatementWrapper implements \IteratorAggregate, StatementInterf
       }
     }
 
-    $logger = $this->connection()->getLogger();
-    $query_start = microtime(TRUE);
+    if ($this->connection()->isEventEnabled(StatementExecutionStartEvent::class)) {
+      $startEvent = new StatementExecutionStartEvent(
+        spl_object_id($this),
+        $this->connection()->getKey(),
+        $this->connection()->getTarget(),
+        $this->getQueryString(),
+        $args ?? [],
+        $this->connection()->findCallerFromDebugBacktrace()
+      );
+      $this->connection()->dispatchEvent($startEvent);
+    }
 
     try {
       $this->dbalResult = $this->dbalStatement->executeQuery($args);
@@ -290,9 +301,16 @@ class PrefetchingStatementWrapper implements \IteratorAggregate, StatementInterf
     // Initialize the first row in $this->currentRow.
     $this->next();
 
-    $query_end = microtime(TRUE);
-    if (!empty($logger)) {
-      $logger->log($this, $args, $query_end - $query_start, $query_start);
+    if (isset($startEvent) && $this->connection()->isEventEnabled(StatementExecutionEndEvent::class)) {
+      $this->connection()->dispatchEvent(new StatementExecutionEndEvent(
+        $startEvent->statementObjectId,
+        $startEvent->key,
+        $startEvent->target,
+        $startEvent->queryString,
+        $startEvent->args,
+        $startEvent->caller,
+        $startEvent->time
+      ));
     }
 
     return TRUE;
