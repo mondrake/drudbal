@@ -178,6 +178,7 @@ class StatementWrapper implements \Iterator, StatementInterface {
 
     try {
       $this->dbalResult = $this->clientStatement->executeQuery($args);
+      $this->markResultsetIterable((bool) $this->dbalResult);
     }
     catch (DbalException $e) {
       throw new DatabaseExceptionWrapper($e->getMessage(), $e->getCode(), $e);
@@ -212,12 +213,14 @@ class StatementWrapper implements \Iterator, StatementInterface {
 
     $dbal_row = $this->dbalResult->fetchAssociative();
     if (!$dbal_row) {
+      $this->markResultsetFetchingComplete();
       return FALSE;
     }
+
     $columnNames = array_keys($dbal_row);
     $row = $this->connection()->getDbalExtension()->processFetchedRecord($dbal_row);
 
-    return match($mode) {
+    $ret = match($mode) {
       \PDO::FETCH_ASSOC => $row,
       \PDO::FETCH_BOTH => $this->assocToBoth($row),
       \PDO::FETCH_NUM => $this->assocToNum($row),
@@ -228,6 +231,9 @@ class StatementWrapper implements \Iterator, StatementInterface {
       \PDO::FETCH_COLUMN => $this->assocToColumn($row, $columnNames, $this->fetchOptions['column']),
       default => throw new DatabaseExceptionWrapper("Unknown fetch type '{$mode}'"),
     };
+
+    $this->setResultsetCurrentRow($ret);
+    return $ret;
   }
 
   /**
