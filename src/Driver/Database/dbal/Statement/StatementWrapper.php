@@ -56,18 +56,13 @@ class StatementWrapper implements \Iterator, StatementInterface {
   protected int $defaultFetchMode;
 
   /**
-   * The class to be used for returning row results.
-   *
-   * Used when fetch mode is \PDO::FETCH_CLASS.
-   */
-  protected string $fetchClass;
-
-  /**
    * Holds supplementary fetch options.
    */
   protected array $fetchOptions = [
     'class' => 'stdClass',
     'constructor_args' => [],
+    'object' => NULL,
+    'column' => 0,
   ];
 
   /**
@@ -118,6 +113,13 @@ class StatementWrapper implements \Iterator, StatementInterface {
    */
   public function getConnectionTarget(): string {
     return $this->connection()->getTarget();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getQueryString() {
+    return $this->queryString;
   }
 
   /**
@@ -284,13 +286,6 @@ class StatementWrapper implements \Iterator, StatementInterface {
   /**
    * {@inheritdoc}
    */
-  public function getQueryString() {
-    return $this->queryString;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function fetchAllAssoc($key, $fetch = NULL) {
     $return = [];
     if (isset($fetch)) {
@@ -364,9 +359,22 @@ class StatementWrapper implements \Iterator, StatementInterface {
    * {@inheritdoc}
    */
   public function setFetchMode($mode, $a1 = NULL, $a2 = []) {
-    $this->defaultFetchMode = $mode;
-    if ($mode === \PDO::FETCH_CLASS) {
-      $this->fetchClass = $a1;
+    $this->defaultFetchStyle = $mode;
+    switch ($mode) {
+      case \PDO::FETCH_CLASS:
+        $this->fetchOptions['class'] = $a1;
+        if ($a2) {
+          $this->fetchOptions['constructor_args'] = $a2;
+        }
+        break;
+
+      case \PDO::FETCH_COLUMN:
+        $this->fetchOptions['column'] = $a1;
+        break;
+
+      case \PDO::FETCH_INTO:
+        $this->fetchOptions['object'] = $a1;
+        break;
     }
     return TRUE;
   }
