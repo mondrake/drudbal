@@ -10,28 +10,26 @@ env:
     SIMPLETEST_BASE_URL: "http://localhost:8080"
     PHPUNIT_SKIP_CLASS: '[
       "Drupal\\KernelTests\\Core\\Cache\\ApcuBackendTest",
-      "Drupal\\Tests\\file\\Functional\\FileAddPermissionsUpdateTest",
-      "Drupal\\Tests\\file\\Functional\\DownloadTest"
+      "Drupal\\Tests\\file\\Functional\\FileAddPermissionsUpdateTest"
     ]'
 
 jobs:
 
 #################################
 
-  sqlite-pdo:
-    name: "SQLite with PDO"
-    runs-on: ubuntu-20.04
+  mysql-pdo:
+    name: "MySql"
+    runs-on: ubuntu-latest
     env:
-        DRUDBAL_ENV: "dbal/sqlite/file"
-        DBAL_URL: "sqlite://localhost/sites/drudbal.sqlite"
-        SIMPLETEST_DB: "dbal://localhost/sites/drudbal.sqlite?module=drudbal&dbal_driver=pdo_sqlite"
+        DRUDBAL_ENV: "dbal/mysql"
+        DBAL_URL: "mysql://root:@0.0.0.0:3306/drudbal"
+        SIMPLETEST_DB: "dbal://root:@0.0.0.0:3306/drudbal?module=drudbal&dbal_driver=pdo_mysql"
 
     strategy:
       fail-fast: false
       matrix:
         php-version:
           - "8.1"
-#          - "8.2"
         test-args:
           - "--group Database"
 #          - "--group Entity"
@@ -40,12 +38,22 @@ jobs:
 #          - "--group file"
 #          - "--group views"
 
+    services:
+      mysql:
+        image: "mysql:5.7"
+        options: >-
+          -e MYSQL_ALLOW_EMPTY_PASSWORD=yes
+          -e MYSQL_DATABASE=drudbal
+        ports:
+          - "3306:3306"
+
     steps:
     - name: Install PHP
       uses: "shivammathur/setup-php@v2"
       with:
         php-version: "${{ matrix.php-version }}"
         coverage: "none"
+        extensions: "pdo_mysql"
         ini-values: "zend.assertions=1"
 
     - name: Checkout Drupal
@@ -62,6 +70,7 @@ jobs:
     - name: Install Composer dependencies
       run: |
         composer install --no-progress --ansi
+        composer config --no-plugins allow-plugins.composer/package-versions-deprecated true
 
     - name: Composer require DruDbal from local staging
       run: |
