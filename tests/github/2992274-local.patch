@@ -1,0 +1,38 @@
+diff --git a/core/tests/Drupal/FunctionalTests/Installer/InstallerTestBase.php b/core/tests/Drupal/FunctionalTests/Installer/InstallerTestBase.php
+index 7ded3eec27..851b0343fb 100644
+--- a/core/tests/Drupal/FunctionalTests/Installer/InstallerTestBase.php
++++ b/core/tests/Drupal/FunctionalTests/Installer/InstallerTestBase.php
+@@ -10,6 +10,7 @@
+ use Drupal\Core\Utility\PhpRequirements;
+ use Drupal\Tests\BrowserTestBase;
+ use Drupal\Tests\RequirementsPageTrait;
++use Behat\Mink\Exception\ElementNotFoundException;
+ use GuzzleHttp\HandlerStack;
+ use Symfony\Component\DependencyInjection\ContainerBuilder;
+ use Symfony\Component\DependencyInjection\Reference;
+@@ -258,8 +259,23 @@ protected function setUpSettings() {
+     $parameters = $this->parameters['forms']['install_settings_form'];
+     $driver = $parameters['driver'];
+     unset($parameters[$driver]['dependencies']);
+-    $edit = $this->translatePostValues($parameters);
+-    $this->submitForm($edit, $this->translations['Save and continue']);
++
++    $form_values_to_submit = $this->translatePostValues($parameters);
++
++    // Ensure that the fields to be edited actually exist on the form.
++    $assert_session = $this->assertSession();
++    $form_values = [];
++    foreach ($form_values_to_submit as $name => $value) {
++      try {
++        $field = $assert_session->fieldExists($name);
++        $form_values[$name] = $value;
++      }
++      catch (ElementNotFoundException $e) {
++        continue;
++      }
++    }
++
++    $this->submitForm($form_values, $this->translations['Save and continue']);
+   }
+ 
+   /**

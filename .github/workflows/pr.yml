@@ -31,9 +31,9 @@ jobs:
         php-version:
           - "8.1"
         test-args:
-          - "--group Database"
+#          - "--group Database"
 #          - "--group Entity"
-#          - "--group Cache,Config"
+          - "--group Cache,Config"
 #          - "--group field,Field"
 #          - "--group file"
 #          - "--group views"
