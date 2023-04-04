@@ -94,7 +94,7 @@ class StatementWrapper implements \Iterator, StatementInterface {
     protected readonly DbalConnection $dbalConnection,
     protected string $queryString,
     protected array $driverOpts = [],
-    protected readonly bool $rowCountEnabled = FALSE
+    protected readonly bool $rowCountEnabled = FALSE,
   ) {
     $this->setFetchMode(\PDO::FETCH_OBJ);
   }

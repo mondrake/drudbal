@@ -11,8 +11,10 @@ use Drupal\Core\Database\Database;
 use Drupal\Core\Database\DatabaseExceptionWrapper;
 use Drupal\Core\Database\Event\StatementExecutionEndEvent;
 use Drupal\Core\Database\Event\StatementExecutionStartEvent;
+use Drupal\Core\Database\FetchModeTrait;
 use Drupal\Core\Database\RowCountException;
 use Drupal\Core\Database\StatementInterface;
+use Drupal\Core\Database\StatementIteratorTrait;
 use Drupal\drudbal\Driver\Database\dbal\Connection as DruDbalConnection;
 
 /**
@@ -23,21 +25,46 @@ use Drupal\drudbal\Driver\Database\dbal\Connection as DruDbalConnection;
  * code in Drupal\drudbal\Driver\Database\dbal\DbalExtension\[dbal_driver_name]
  * classes and execution handed over to there.
  */
-class PrefetchingStatementWrapper implements \IteratorAggregate, StatementInterface {
+class PrefetchingStatementWrapper implements \Iterator, StatementInterface {
+
+  use StatementIteratorTrait;
+  use FetchModeTrait;
 
   /**
-   * The Drupal database connection object.
+   * Main data store.
    *
-   * @var \Drupal\Core\Database\Connection
+   * The resultset is stored as a \PDO::FETCH_ASSOC array.
    */
-  protected $connection;
+  protected array $data = [];
 
   /**
-   * Is rowCount() execution allowed.
+   * The list of column names in this result set.
    *
-   * @var bool
+   * @var string[]
    */
-  protected $rowCountEnabled = FALSE;
+  protected ?array $columnNames = NULL;
+
+  /**
+   * The number of rows matched by the last query.
+   */
+  protected ?int $rowCount = NULL;
+
+  /**
+   * Holds the default fetch style.
+   */
+  protected int $defaultFetchStyle = \PDO::FETCH_OBJ;
+
+  /**
+   * Holds fetch options.
+   *
+   * @var string[]
+   */
+  protected array $fetchOptions = [
+    'class' => 'stdClass',
+    'constructor_args' => [],
+    'object' => NULL,
+    'column' => 0,
+  ];
 
   /**
    * The DBAL statement.
@@ -45,131 +72,9 @@ class PrefetchingStatementWrapper implements \IteratorAggregate, StatementInterf
   protected ?DbalStatement $dbalStatement;
 
   /**
-   * The DBAL client connection.
-   *
-   * @var \Doctrine\DBAL\Connection
-   */
-  protected $dbalConnection;
-
-  /**
    * The DBAL executed statement result.
    */
   protected ?DbalResult $dbalResult;
-
-  /**
-   * Holds supplementary driver options.
-   *
-   * @var array
-   */
-  protected $driverOpts;
-
-  /**
-   * Holds the index position of named parameters.
-   *
-   * Used in positional-only parameters binding drivers.
-   *
-   * @var array
-   */
-  protected $paramsPositions;
-
-  /**
-   * The default fetch mode.
-   *
-   * See http://php.net/manual/pdo.constants.php for the definition of the
-   * constants used.
-   *
-   * @var int
-   */
-  protected $defaultFetchMode;
-
-  /**
-   * The query string, in its form with placeholders.
-   *
-   * @var string
-   */
-  protected $queryString;
-
-  /**
-   * The class to be used for returning row results.
-   *
-   * Used when fetch mode is \PDO::FETCH_CLASS.
-   *
-   * @var string
-   */
-  protected $fetchClass;
-
-  /**
-   * Main data store.
-   *
-   * @var array
-   */
-  protected $data = [];
-
-  /**
-   * The current row, retrieved in \PDO::FETCH_ASSOC format.
-   */
-  protected ?array $currentRow;
-
-  /**
-   * The key of the current row.
-   */
-  protected int $currentKey;
-
-  /**
-   * The list of column names in this result set.
-   */
-  protected array $columnNames;
-
-  /**
-   * The number of rows affected by the last query.
-   */
-  protected int $rowCount;
-
-  /**
-   * The number of rows in this result set.
-   */
-  protected int $resultRowCount = 0;
-
-  /**
-   * Holds the current fetch style (which will be used by the next fetch).
-   * @see \PDOStatement::fetch()
-   *
-   * @var int
-   */
-  protected $fetchStyle = \PDO::FETCH_OBJ;
-
-  /**
-   * Holds supplementary current fetch options.
-   *
-   * Will be used by the next fetch.
-   *
-   * @var array
-   */
-  protected $fetchOptions = [
-    'class' => 'stdClass',
-    'constructor_args' => [],
-    'object' => NULL,
-    'column' => 0,
-  ];
-
-  /**
-   * Holds the default fetch style.
-   *
-   * @var int
-   */
-  protected $defaultFetchStyle = \PDO::FETCH_OBJ;
-
-  /**
-   * Holds supplementary default fetch options.
-   *
-   * @var array
-   */
-  protected $defaultFetchOptions = [
-    'class' => 'stdClass',
-    'constructor_args' => [],
-    'object' => NULL,
-    'column' => 0,
-  ];
 
   /**
    * Constructs a Statement object.
@@ -189,14 +94,14 @@ class PrefetchingStatementWrapper implements \IteratorAggregate, StatementInterf
    * @param bool $row_count_enabled
    *   (optional) Enables counting the rows affected. Defaults to FALSE.
    */
-  public function __construct(DruDbalConnection $connection, DbalConnection $dbal_connection, string $query, array $driver_options = [], bool $row_count_enabled = FALSE) {
-    $this->connection = $connection;
-    $this->rowCountEnabled = $row_count_enabled;
-
-    $this->queryString = $query;
-    $this->dbalConnection = $dbal_connection;
+  public function __construct(
+    protected readonly DruDbalConnection $connection,
+    protected readonly DbalConnection $dbalConnection,
+    protected string $queryString,
+    protected array $driverOpts = [],
+    protected readonly bool $rowCountEnabled = FALSE,
+  ) {
     $this->setFetchMode(\PDO::FETCH_OBJ);
-    $this->driverOpts = $driver_options;
   }
 
   /**
