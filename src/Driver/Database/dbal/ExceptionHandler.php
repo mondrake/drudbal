@@ -30,6 +30,9 @@ class ExceptionHandler extends DatabaseExceptionHandler {
    */
   public function handleExecutionException(\Exception $exception, StatementInterface $statement, array $arguments = [], array $options = []): void {
     assert($exception instanceof DbalDriverException || $exception instanceof DatabaseExceptionWrapper || $exception instanceof EventException, 'Unexpected exception: ' . get_class($exception) . ' ' . $exception->getMessage());
+    if ($exception instanceof EventException) {
+      throw $exception;
+    }
     $query_string = $statement->getQueryString();
     $message = $exception->getMessage() . ": " . $query_string . "; " . print_r($arguments, TRUE);
     $this->connection->getDbalExtension()->delegateQueryExceptionProcess($query_string, $arguments, $options, $message, $exception);
