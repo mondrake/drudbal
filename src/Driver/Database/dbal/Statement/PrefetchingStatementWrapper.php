@@ -77,6 +77,18 @@ class PrefetchingStatementWrapper implements \Iterator, StatementInterface {
   protected ?DbalResult $dbalResult;
 
   /**
+   * Holds the index position of named parameters.
+   *
+   * Used in positional-only parameters binding drivers.
+   */
+  protected array $paramsPositions;
+
+  /**
+   * The number of rows in this result set.
+   */
+  protected int $resultRowCount = 0;
+
+  /**
    * Constructs a Statement object.
    *
    * Preparation of the actual lower-level statement is deferred to the first
