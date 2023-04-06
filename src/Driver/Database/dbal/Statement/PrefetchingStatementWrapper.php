@@ -57,7 +57,7 @@ class PrefetchingStatementWrapper implements \Iterator, StatementInterface {
   /**
    * Holds fetch options.
    *
-   * @var string[]
+   * @var array<string,mixed>
    */
   protected array $fetchOptions = [
     'class' => 'stdClass',
