@@ -85,13 +85,13 @@ class PrefetchingStatementWrapper implements \Iterator, StatementInterface {
    *
    * @param \Drupal\drudbal\Driver\Database\dbal\Connection $connection
    *   The database connection object for this statement.
-   * @param \Doctrine\DBAL\Connection $dbal_connection
+   * @param \Doctrine\DBAL\Connection $dbalConnection
    *   DBAL connection object.
    * @param string $query
    *   A string containing an SQL query.
-   * @param array $driver_options
+   * @param array $driverOpts
    *   (optional) An array of driver options for this query.
-   * @param bool $row_count_enabled
+   * @param bool $rowCountEnabled
    *   (optional) Enables counting the rows affected. Defaults to FALSE.
    */
   public function __construct(
@@ -323,6 +323,16 @@ class PrefetchingStatementWrapper implements \Iterator, StatementInterface {
       $result[$row[$key]] = $row[$value];
     }
     return $result;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function fetchColumn($index = 0) {
+    if ($row = $this->fetch(\PDO::FETCH_ASSOC)) {
+      return $row[$this->columnNames[$index]];
+    }
+    return FALSE;
   }
 
   /**
