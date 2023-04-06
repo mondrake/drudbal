@@ -11,8 +11,10 @@ use Drupal\Core\Database\Database;
 use Drupal\Core\Database\DatabaseExceptionWrapper;
 use Drupal\Core\Database\Event\StatementExecutionEndEvent;
 use Drupal\Core\Database\Event\StatementExecutionStartEvent;
+use Drupal\Core\Database\FetchModeTrait;
 use Drupal\Core\Database\RowCountException;
 use Drupal\Core\Database\StatementInterface;
+use Drupal\Core\Database\StatementIteratorTrait;
 use Drupal\drudbal\Driver\Database\dbal\Connection as DruDbalConnection;
 
 /**
@@ -23,21 +25,46 @@ use Drupal\drudbal\Driver\Database\dbal\Connection as DruDbalConnection;
  * code in Drupal\drudbal\Driver\Database\dbal\DbalExtension\[dbal_driver_name]
  * classes and execution handed over to there.
  */
-class PrefetchingStatementWrapper implements \IteratorAggregate, StatementInterface {
+class PrefetchingStatementWrapper implements \Iterator, StatementInterface {
+
+  use StatementIteratorTrait;
+  use FetchModeTrait;
 
   /**
-   * The Drupal database connection object.
+   * Main data store.
    *
-   * @var \Drupal\Core\Database\Connection
+   * The resultset is stored as a \PDO::FETCH_ASSOC array.
    */
-  protected $connection;
+  protected array $data = [];
 
   /**
-   * Is rowCount() execution allowed.
+   * The list of column names in this result set.
    *
-   * @var bool
+   * @var string[]
    */
-  protected $rowCountEnabled = FALSE;
+  protected ?array $columnNames = NULL;
+
+  /**
+   * The number of rows matched by the last query.
+   */
+  protected ?int $rowCount = NULL;
+
+  /**
+   * Holds the default fetch style.
+   */
+  protected int $defaultFetchStyle = \PDO::FETCH_OBJ;
+
+  /**
+   * Holds fetch options.
+   *
+   * @var array<string,mixed>
+   */
+  protected array $fetchOptions = [
+    'class' => 'stdClass',
+    'constructor_args' => [],
+    'object' => NULL,
+    'column' => 0,
+  ];
 
   /**
    * The DBAL statement.
@@ -45,131 +72,21 @@ class PrefetchingStatementWrapper implements \IteratorAggregate, StatementInterf
   protected ?DbalStatement $dbalStatement;
 
   /**
-   * The DBAL client connection.
-   *
-   * @var \Doctrine\DBAL\Connection
-   */
-  protected $dbalConnection;
-
-  /**
    * The DBAL executed statement result.
    */
   protected ?DbalResult $dbalResult;
 
   /**
-   * Holds supplementary driver options.
-   *
-   * @var array
-   */
-  protected $driverOpts;
-
-  /**
    * Holds the index position of named parameters.
    *
    * Used in positional-only parameters binding drivers.
-   *
-   * @var array
    */
-  protected $paramsPositions;
-
-  /**
-   * The default fetch mode.
-   *
-   * See http://php.net/manual/pdo.constants.php for the definition of the
-   * constants used.
-   *
-   * @var int
-   */
-  protected $defaultFetchMode;
-
-  /**
-   * The query string, in its form with placeholders.
-   *
-   * @var string
-   */
-  protected $queryString;
-
-  /**
-   * The class to be used for returning row results.
-   *
-   * Used when fetch mode is \PDO::FETCH_CLASS.
-   *
-   * @var string
-   */
-  protected $fetchClass;
-
-  /**
-   * Main data store.
-   *
-   * @var array
-   */
-  protected $data = [];
-
-  /**
-   * The current row, retrieved in \PDO::FETCH_ASSOC format.
-   */
-  protected ?array $currentRow;
-
-  /**
-   * The key of the current row.
-   */
-  protected int $currentKey;
-
-  /**
-   * The list of column names in this result set.
-   */
-  protected array $columnNames;
-
-  /**
-   * The number of rows affected by the last query.
-   */
-  protected int $rowCount;
+  protected array $paramsPositions;
 
   /**
    * The number of rows in this result set.
    */
   protected int $resultRowCount = 0;
-
-  /**
-   * Holds the current fetch style (which will be used by the next fetch).
-   * @see \PDOStatement::fetch()
-   *
-   * @var int
-   */
-  protected $fetchStyle = \PDO::FETCH_OBJ;
-
-  /**
-   * Holds supplementary current fetch options.
-   *
-   * Will be used by the next fetch.
-   *
-   * @var array
-   */
-  protected $fetchOptions = [
-    'class' => 'stdClass',
-    'constructor_args' => [],
-    'object' => NULL,
-    'column' => 0,
-  ];
-
-  /**
-   * Holds the default fetch style.
-   *
-   * @var int
-   */
-  protected $defaultFetchStyle = \PDO::FETCH_OBJ;
-
-  /**
-   * Holds supplementary default fetch options.
-   *
-   * @var array
-   */
-  protected $defaultFetchOptions = [
-    'class' => 'stdClass',
-    'constructor_args' => [],
-    'object' => NULL,
-    'column' => 0,
-  ];
 
   /**
    * Constructs a Statement object.
@@ -180,23 +97,23 @@ class PrefetchingStatementWrapper implements \IteratorAggregate, StatementInterf
    *
    * @param \Drupal\drudbal\Driver\Database\dbal\Connection $connection
    *   The database connection object for this statement.
-   * @param \Doctrine\DBAL\Connection $dbal_connection
+   * @param \Doctrine\DBAL\Connection $dbalConnection
    *   DBAL connection object.
-   * @param string $query
+   * @param string $queryString
    *   A string containing an SQL query.
-   * @param array $driver_options
+   * @param array $driverOpts
    *   (optional) An array of driver options for this query.
-   * @param bool $row_count_enabled
+   * @param bool $rowCountEnabled
    *   (optional) Enables counting the rows affected. Defaults to FALSE.
    */
-  public function __construct(DruDbalConnection $connection, DbalConnection $dbal_connection, string $query, array $driver_options = [], bool $row_count_enabled = FALSE) {
-    $this->connection = $connection;
-    $this->rowCountEnabled = $row_count_enabled;
-
-    $this->queryString = $query;
-    $this->dbalConnection = $dbal_connection;
+  public function __construct(
+    protected readonly DruDbalConnection $connection,
+    protected readonly DbalConnection $dbalConnection,
+    protected string $queryString,
+    protected array $driverOpts = [],
+    protected readonly bool $rowCountEnabled = FALSE,
+  ) {
     $this->setFetchMode(\PDO::FETCH_OBJ);
-    $this->driverOpts = $driver_options;
   }
 
   /**
@@ -270,6 +187,7 @@ class PrefetchingStatementWrapper implements \IteratorAggregate, StatementInterf
 
     try {
       $this->dbalResult = $this->dbalStatement->executeQuery($args);
+      $this->markResultsetIterable((bool) $this->dbalResult);
     }
     catch (DbalException $e) {
       throw new DatabaseExceptionWrapper($e->getMessage(), $e->getCode(), $e);
@@ -298,9 +216,6 @@ class PrefetchingStatementWrapper implements \IteratorAggregate, StatementInterf
       $this->columnNames = [];
     }
 
-    // Initialize the first row in $this->currentRow.
-    $this->next();
-
     if (isset($startEvent) && $this->connection()->isEventEnabled(StatementExecutionEndEvent::class)) {
       $this->connection()->dispatchEvent(new StatementExecutionEndEvent(
         $startEvent->statementObjectId,
@@ -319,32 +234,43 @@ class PrefetchingStatementWrapper implements \IteratorAggregate, StatementInterf
   /**
    * {@inheritdoc}
    */
-  public function fetch($mode = NULL, $cursor_orientation = NULL, $cursor_offset = NULL) {
-    if (isset($this->currentRow)) {
-      // Set the fetch parameter.
-      $this->fetchOptions = $this->defaultFetchOptions;
+  public function fetch($fetch_style = NULL, $cursor_orientation = NULL, $cursor_offset = NULL) {
+    $currentKey = $this->getResultsetCurrentRowIndex();
 
-      // Grab the row in the format specified above.
-      $return = $this->current();
-      // Advance the cursor.
-      $this->next();
-
-      // Reset the fetch parameters to the value stored using setFetchMode().
-      $this->fetchStyle = $this->defaultFetchStyle;
-      $this->fetchOptions = $this->defaultFetchOptions;
-      return $return;
-    }
-    else {
+    // We can remove the current record from the prefetched data, before
+    // moving to the next record.
+    unset($this->data[$currentKey]);
+    $currentKey++;
+    if (!isset($this->data[$currentKey])) {
+      $this->markResultsetFetchingComplete();
       return FALSE;
     }
+
+    // Now, format the next prefetched record according to the required fetch
+    // style.
+    $rowAssoc = $this->data[$currentKey];
+    $row = match($fetch_style ?? $this->defaultFetchStyle) {
+      \PDO::FETCH_ASSOC => $rowAssoc,
+      \PDO::FETCH_BOTH => $this->assocToBoth($rowAssoc),
+      \PDO::FETCH_NUM => $this->assocToNum($rowAssoc),
+      \PDO::FETCH_LAZY, \PDO::FETCH_OBJ => $this->assocToObj($rowAssoc),
+      \PDO::FETCH_CLASS | \PDO::FETCH_CLASSTYPE => $this->assocToClassType($rowAssoc, $this->fetchOptions['constructor_args']),
+      \PDO::FETCH_CLASS => $this->assocToClass($rowAssoc, $this->fetchOptions['class'], $this->fetchOptions['constructor_args']),
+      \PDO::FETCH_INTO => $this->assocIntoObject($rowAssoc, $this->fetchOptions['object']),
+      \PDO::FETCH_COLUMN => $this->assocToColumn($rowAssoc, $this->columnNames, $this->fetchOptions['column']),
+      // @todo in Drupal 11, throw an exception if the fetch style cannot be
+      //   matched.
+      default => FALSE,
+    };
+    $this->setResultsetCurrentRow($row);
+    return $row;
   }
 
   /**
    * {@inheritdoc}
    */
   public function fetchAll($mode = NULL, $column_index = NULL, $constructor_arguments = NULL) {
-    $this->fetchStyle = isset($mode) ? $mode : $this->defaultFetchStyle;
-    $this->fetchOptions = $this->defaultFetchOptions;
+    $fetchStyle = $mode ?? $this->defaultFetchStyle;
     if (isset($column_index)) {
       $this->fetchOptions['column'] = $column_index;
     }
@@ -353,24 +279,10 @@ class PrefetchingStatementWrapper implements \IteratorAggregate, StatementInterf
     }
 
     $result = [];
-    // Traverse the array as PHP would have done.
-    while (isset($this->currentRow)) {
-      // Grab the row in the format specified above.
-      $result[] = $this->current();
-      $this->next();
+    while ($row = $this->fetch($fetchStyle)) {
+      $result[] = $row;
     }
-
-    // Reset the fetch parameters to the value stored using setFetchMode().
-    $this->fetchStyle = $this->defaultFetchStyle;
-    $this->fetchOptions = $this->defaultFetchOptions;
     return $result;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function getIterator(): \ArrayIterator {
-    return new \ArrayIterator($this->fetchAll());
   }
 
   /**
@@ -386,37 +298,24 @@ class PrefetchingStatementWrapper implements \IteratorAggregate, StatementInterf
   public function fetchCol($index = 0) {
     if (isset($this->columnNames[$index])) {
       $result = [];
-      // Traverse the array as PHP would have done.
-      while (isset($this->currentRow)) {
-        $result[] = $this->currentRow[$this->columnNames[$index]];
-        $this->next();
+      while ($row = $this->fetch(\PDO::FETCH_ASSOC)) {
+        $result[] = $row[$this->columnNames[$index]];
       }
       return $result;
     }
-    else {
-      return [];
-    }
+    return [];
   }
 
   /**
    * {@inheritdoc}
    */
-  public function fetchAllAssoc($key, $fetch = NULL) {
-    $this->fetchStyle = isset($fetch) ? $fetch : $this->defaultFetchStyle;
-    $this->fetchOptions = $this->defaultFetchOptions;
+  public function fetchAllAssoc($key, $fetch_style = NULL) {
+    $fetchStyle = $fetch_style ?? $this->defaultFetchStyle;
 
     $result = [];
-    // Traverse the array as PHP would have done.
-    while (isset($this->currentRow)) {
-      // Grab the row in its raw \PDO::FETCH_ASSOC format.
-      $result_row = $this->current();
-      $result[$this->currentRow[$key]] = $result_row;
-      $this->next();
+    while ($row = $this->fetch($fetchStyle)) {
+      $result[$this->data[$this->getResultsetCurrentRowIndex()][$key]] = $row;
     }
-
-    // Reset the fetch parameters to the value stored using setFetchMode().
-    $this->fetchStyle = $this->defaultFetchStyle;
-    $this->fetchOptions = $this->defaultFetchOptions;
     return $result;
   }
 
@@ -432,10 +331,8 @@ class PrefetchingStatementWrapper implements \IteratorAggregate, StatementInterf
     $value = $this->columnNames[$value_index];
 
     $result = [];
-    // Traverse the array as PHP would have done.
-    while (isset($this->currentRow)) {
-      $result[$this->currentRow[$key]] = $this->currentRow[$value];
-      $this->next();
+    while ($row = $this->fetch(\PDO::FETCH_ASSOC)) {
+      $result[$row[$key]] = $row[$value];
     }
     return $result;
   }
@@ -443,61 +340,39 @@ class PrefetchingStatementWrapper implements \IteratorAggregate, StatementInterf
   /**
    * {@inheritdoc}
    */
+  public function fetchColumn($index = 0) {
+    if ($row = $this->fetch(\PDO::FETCH_ASSOC)) {
+      return $row[$this->columnNames[$index]];
+    }
+    return FALSE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function fetchField($index = 0) {
-    if (isset($this->currentRow) && isset($this->columnNames[$index])) {
-      // We grab the value directly from $this->data, and format it.
-      $return = $this->currentRow[$this->columnNames[$index]];
-      $this->next();
-      return $return;
-    }
-    else {
-      return FALSE;
-    }
+    return $this->fetchColumn($index);
   }
 
   /**
    * {@inheritdoc}
    */
   public function fetchAssoc() {
-    if (isset($this->currentRow)) {
-      $result = $this->currentRow;
-      $this->next();
-      return $result;
-    }
-    else {
-      return FALSE;
-    }
+    return $this->fetch(\PDO::FETCH_ASSOC);
   }
 
   /**
    * {@inheritdoc}
    */
   public function fetchObject(string $class_name = NULL, array $constructor_arguments = NULL) {
-    if (isset($this->currentRow)) {
-      if (!isset($class_name)) {
-        // Directly cast to an object to avoid a function call.
-        $result = (object) $this->currentRow;
-      }
-      else {
-        $this->fetchStyle = \PDO::FETCH_CLASS;
-        $this->fetchOptions = [
-          'class' => $class_name,
-          'constructor_args' => $constructor_arguments,
-        ];
-        // Grab the row in the format specified above.
-        $result = $this->current();
-        // Reset the fetch parameters to the value stored using setFetchMode().
-        $this->fetchStyle = $this->defaultFetchStyle;
-        $this->fetchOptions = $this->defaultFetchOptions;
-      }
-
-      $this->next();
-
-      return $result;
+    if (!isset($class_name)) {
+      return $this->fetch(\PDO::FETCH_OBJ);
     }
-    else {
-      return FALSE;
-    }
+    $this->fetchOptions = [
+      'class' => $class_name,
+      'constructor_args' => $constructor_arguments,
+    ];
+    return $this->fetch(\PDO::FETCH_CLASS);
   }
 
   /**
@@ -520,95 +395,19 @@ class PrefetchingStatementWrapper implements \IteratorAggregate, StatementInterf
     $this->defaultFetchStyle = $mode;
     switch ($mode) {
       case \PDO::FETCH_CLASS:
-        $this->defaultFetchOptions['class'] = $a1;
+        $this->fetchOptions['class'] = $a1;
         if ($a2) {
-          $this->defaultFetchOptions['constructor_args'] = $a2;
+          $this->fetchOptions['constructor_args'] = $a2;
         }
         break;
+
       case \PDO::FETCH_COLUMN:
-        $this->defaultFetchOptions['column'] = $a1;
+        $this->fetchOptions['column'] = $a1;
         break;
+
       case \PDO::FETCH_INTO:
-        $this->defaultFetchOptions['object'] = $a1;
+        $this->fetchOptions['object'] = $a1;
         break;
-    }
-
-    // Set the values for the next fetch.
-    $this->fetchStyle = $this->defaultFetchStyle;
-    $this->fetchOptions = $this->defaultFetchOptions;
-  }
-
-  /**
-   * Return the current row formatted according to the current fetch style.
-   *
-   * This is the core method of this class. It grabs the value at the current
-   * array position in $this->data and format it according to $this->fetchStyle
-   * and $this->fetchMode.
-   *
-   * @return mixed
-   *   The current row formatted as requested.
-   */
-  public function current() {
-    if (isset($this->currentRow)) {
-      switch ($this->fetchStyle) {
-        case \PDO::FETCH_ASSOC:
-          return $this->currentRow;
-        case \PDO::FETCH_BOTH:
-          // \PDO::FETCH_BOTH returns an array indexed by both the column name
-          // and the column number.
-          return $this->currentRow + array_values($this->currentRow);
-        case \PDO::FETCH_NUM:
-          return array_values($this->currentRow);
-        case \PDO::FETCH_LAZY:
-          // We do not do lazy as everything is fetched already. Fallback to
-          // \PDO::FETCH_OBJ.
-        case \PDO::FETCH_OBJ:
-          return (object) $this->currentRow;
-        case \PDO::FETCH_CLASS | \PDO::FETCH_CLASSTYPE:
-          $class_name = array_shift($this->currentRow);
-          // Deliberate no break.
-        case \PDO::FETCH_CLASS:
-          if (!isset($class_name)) {
-            $class_name = $this->fetchOptions['class'];
-          }
-          if (count($this->fetchOptions['constructor_args'])) {
-            $reflector = new \ReflectionClass($class_name);
-            $result = $reflector->newInstanceArgs($this->fetchOptions['constructor_args']);
-          }
-          else {
-            $result = new $class_name();
-          }
-          foreach ($this->currentRow as $k => $v) {
-            $result->$k = $v;
-          }
-          return $result;
-        case \PDO::FETCH_INTO:
-          foreach ($this->currentRow as $k => $v) {
-            $this->fetchOptions['object']->$k = $v;
-          }
-          return $this->fetchOptions['object'];
-        case \PDO::FETCH_COLUMN:
-          if (isset($this->columnNames[$this->fetchOptions['column']])) {
-            return $this->currentRow[$this->columnNames[$this->fetchOptions['column']]];
-          }
-          else {
-            return;
-          }
-      }
-    }
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function next() {
-    if (!empty($this->data)) {
-      $this->currentRow = reset($this->data);
-      $this->currentKey = key($this->data);
-      unset($this->data[$this->currentKey]);
-    }
-    else {
-      $this->currentRow = NULL;
     }
   }
 
