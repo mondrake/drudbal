@@ -87,7 +87,7 @@ class PrefetchingStatementWrapper implements \Iterator, StatementInterface {
    *   The database connection object for this statement.
    * @param \Doctrine\DBAL\Connection $dbalConnection
    *   DBAL connection object.
-   * @param string $query
+   * @param string $queryString
    *   A string containing an SQL query.
    * @param array $driverOpts
    *   (optional) An array of driver options for this query.
@@ -222,7 +222,7 @@ class PrefetchingStatementWrapper implements \Iterator, StatementInterface {
   /**
    * {@inheritdoc}
    */
-  public function fetch($mode = NULL, $cursor_orientation = NULL, $cursor_offset = NULL) {
+  public function fetch($fetch_style = NULL, $cursor_orientation = NULL, $cursor_offset = NULL) {
     $currentKey = $this->getResultsetCurrentRowIndex();
 
     // We can remove the current record from the prefetched data, before
@@ -297,7 +297,7 @@ class PrefetchingStatementWrapper implements \Iterator, StatementInterface {
   /**
    * {@inheritdoc}
    */
-  public function fetchAllAssoc($key, $fetch = NULL) {
+  public function fetchAllAssoc($key, $fetch_style = NULL) {
     $fetchStyle = $fetch_style ?? $this->defaultFetchStyle;
 
     $result = [];
