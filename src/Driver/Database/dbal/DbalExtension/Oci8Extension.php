@@ -1001,6 +1001,7 @@ dump('HAS SEQ');
       ' START WITH ' . $start .
       ' MINVALUE ' . $start .
       ' INCREMENT BY 1';
+    }
 
     $sql[] = 'CREATE OR REPLACE TRIGGER ' . $autoincrementIdentifierName . '
    BEFORE INSERT
@@ -1023,7 +1024,6 @@ BEGIN
       SELECT ' . $sequenceName . '.NEXTVAL INTO last_Sequence FROM DUAL;
    END IF;
 END;';
-}
 
     return $sql;
   }
