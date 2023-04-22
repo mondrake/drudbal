@@ -979,7 +979,7 @@ SQL
   }
 
   /** @return array<int, string> */
-  protected function getCreateOrUpdateAutoincrementSql(DbalSchema $dbal_schema, string $quotedName, string $quotedTableName, int $start = 1): array {
+  private function getCreateOrUpdateAutoincrementSql(DbalSchema $dbal_schema, string $quotedName, string $quotedTableName, int $start = 1): array {
     $unquotedTableName = substr($quotedTableName, 1, strlen($quotedTableName) - 2);
     $unquotedName = substr($quotedName, 1, strlen($quotedName) - 2);
     $autoincrementIdentifierName = "\"" . $unquotedTableName ."_AI_PK\"";
@@ -989,18 +989,19 @@ SQL
     $unquotedSequenceName = $unquotedTableName . "_SEQ";
     $sequenceName = "\"" . $unquotedSequenceName . "\"";
 dump([array_keys($dbal_schema->getSequences()),$sequenceName,$dbal_schema->hasSequence($sequenceName),$unquotedSequenceName,$dbal_schema->hasSequence($unquotedSequenceName)]);
-//    if ($dbal_schema->hasSequence($sequenceName)) {
-//dump('HAS SEQ');
-//      $sql[] = 'DROP SEQUENCE ' . $sequenceName;
-//    }
 $xx = $this->getDbalConnection()->createSchemaManager()->introspectSchema();
 dump(['xx', array_keys($xx->getSequences())]);
+    if ($xx->hasSequence($sequenceName)) {
+dump('HAS SEQ');
+      $sql[] = 'DROP SEQUENCE ' . $sequenceName;
+    }
+
     $sql[] = 'CREATE SEQUENCE ' . $sequenceName .
       ' START WITH ' . $start .
       ' MINVALUE ' . $start .
       ' INCREMENT BY 1';
 
-        $sql[] = 'CREATE OR REPLACE TRIGGER ' . $autoincrementIdentifierName . '
+    $sql[] = 'CREATE OR REPLACE TRIGGER ' . $autoincrementIdentifierName . '
    BEFORE INSERT
    ON ' . $quotedTableName . '
    FOR EACH ROW
@@ -1022,7 +1023,7 @@ BEGIN
    END IF;
 END;';
 
-        return $sql;
-    }
+    return $sql;
+  }
 
 }
