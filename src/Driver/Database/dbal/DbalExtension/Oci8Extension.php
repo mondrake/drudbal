@@ -925,7 +925,7 @@ PLSQL
 
     if ($new_db_field_is_serial) {
       $prev_max_sequence = (int) $this->connection->query("SELECT MAX({$db_field}) FROM {$db_table}")->fetchField();
-      $autoincrement_sql = $this->getCreateOrUpdateAutoincrementSql($new_db_field, $db_table, $prev_max_sequence);
+      $autoincrement_sql = $this->getCreateOrUpdateAutoincrementSql($new_db_field, $db_table, $prev_max_sequence + 1);
       $sql = array_merge($sql, $autoincrement_sql);
     }
 
@@ -979,17 +979,13 @@ SQL
   }
 
     /** @return array<int, string> */
-    protected function getCreateOrUpdateAutoincrementSql(string $name, string $table, int $start = 1): array {
+    protected function getCreateOrUpdateAutoincrementSql(string $quotedName, string $quotedTableName, int $start = 1): array {
 dump([__METHOD__, $name, $table, $start]);
-      $unquotedTableName = $table;
-      $quotedTableName   = "\"" . $table . "\"";
-
-      $unquotedName   = $name;
-      $quotedName     = "\"" . $name . "\"";
-
+      $unquotedTableName = substr($quotedTableName, 1, strlen($quotedTableName) - 2);
+      $unquotedName = substr($quotedName, 1, strlen($quotedName) - 2);
       $autoincrementIdentifierName = "\"" . $unquotedTableName ."_AI_PK\"";
 
-        $sql = [];
+      $sql = [];
 
         $unquotedSequenceName = $unquotedTableName . "_SEQ";
         $sequenceName = "\"" . $unquotedSequenceName . "\"";
