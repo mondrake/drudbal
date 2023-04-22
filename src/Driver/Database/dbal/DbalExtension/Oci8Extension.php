@@ -993,7 +993,7 @@ $xx = $this->getDbalConnection()->createSchemaManager()->introspectSchema();
 dump(['xx', array_keys($xx->getSequences())]);
     if ($xx->hasSequence($sequenceName)) {
 dump('HAS SEQ');
-      $sql[] = 'DROP SEQUENCE ' . $sequenceName;
+//      $sql[] = 'DROP SEQUENCE ' . $sequenceName;
     }
 
     $sql[] = 'CREATE SEQUENCE ' . $sequenceName .
