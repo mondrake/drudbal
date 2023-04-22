@@ -980,10 +980,10 @@ SQL
 
     /** @return array<int, string> */
     protected function getCreateOrUpdateAutoincrementSql(string $quotedName, string $quotedTableName, int $start = 1): array {
-dump([__METHOD__, $name, $table, $start]);
       $unquotedTableName = substr($quotedTableName, 1, strlen($quotedTableName) - 2);
       $unquotedName = substr($quotedName, 1, strlen($quotedName) - 2);
       $autoincrementIdentifierName = "\"" . $unquotedTableName ."_AI_PK\"";
+dump([__METHOD__, $quotedName, $quotedTableName, $start, $unquotedName, $unquotedTableName]);
 
       $sql = [];
 
