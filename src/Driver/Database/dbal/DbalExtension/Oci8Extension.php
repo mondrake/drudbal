@@ -993,14 +993,15 @@ $xx = $this->getDbalConnection()->createSchemaManager()->introspectSchema();
 dump(['xx', array_keys($xx->getSequences())]);
     if ($xx->hasSequence($sequenceName)) {
 dump('HAS SEQ');
-      $this->getDbalConnection()->executeStatement('DROP SEQUENCE ' . $sequenceName);
+//      $this->getDbalConnection()->executeStatement('DROP SEQUENCE ' . $sequenceName);
 //      $sql[] = 'DROP SEQUENCE ' . $sequenceName;
     }
-
-    $sql[] = 'CREATE SEQUENCE ' . $sequenceName .
+    else {
+      $sql[] = 'CREATE SEQUENCE ' . $sequenceName .
       ' START WITH ' . $start .
       ' MINVALUE ' . $start .
       ' INCREMENT BY 1';
+    }
 
     $sql[] = 'CREATE OR REPLACE TRIGGER ' . $autoincrementIdentifierName . '
    BEFORE INSERT
