@@ -979,15 +979,15 @@ SQL
   }
 
     /** @return array<int, string> */
-    protected function getCreateOrUpdateAutoincrementSql(string $name, string $table, int $start = 1): array
-    {
-        $quotedTableName   = "\"" . $table . "\"";
-        $unquotedTableName = $table;
+    protected function getCreateOrUpdateAutoincrementSql(string $name, string $table, int $start = 1): array {
+dump([__METHOD__, $name, $table, $start]);
+      $unquotedTableName = $table;
+      $quotedTableName   = "\"" . $table . "\"";
 
-        $quotedName     = "\"" . $name . "\"";
-        $unquotedName   = $name;
+      $unquotedName   = $name;
+      $quotedName     = "\"" . $name . "\"";
 
-        $autoincrementIdentifierName = "\"" . $unquotedTableName ."_AI_PK\"";
+      $autoincrementIdentifierName = "\"" . $unquotedTableName ."_AI_PK\"";
 
         $sql = [];
 
