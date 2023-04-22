@@ -821,7 +821,7 @@ PLSQL
     $sql[] = "ALTER TABLE $db_table ADD $db_field $column_definition";
 
     if ($drupal_field_specs['type'] === 'serial') {
-      $sql = array_merge($sql, $this->getCreateOrUpdateAutoincrementSql($db_field, $db_table));
+      $sql = array_merge($sql, $this->getCreateOrUpdateAutoincrementSql($db_field, $db_table, 1, $dbal_schema));
     }
 
     if (!$has_primary_key && $db_primary_key_columns) {
@@ -925,7 +925,7 @@ PLSQL
 
     if ($new_db_field_is_serial) {
       $prev_max_sequence = (int) $this->connection->query("SELECT MAX({$db_field}) FROM {$db_table}")->fetchField();
-      $autoincrement_sql = $this->getCreateOrUpdateAutoincrementSql($new_db_field, $db_table, $prev_max_sequence + 1);
+      $autoincrement_sql = $this->getCreateOrUpdateAutoincrementSql($new_db_field, $db_table, $prev_max_sequence + 1, $dbal_schema);
       $sql = array_merge($sql, $autoincrement_sql);
     }
 
@@ -979,20 +979,27 @@ SQL
   }
 
     /** @return array<int, string> */
-    protected function getCreateOrUpdateAutoincrementSql(string $quotedName, string $quotedTableName, int $start = 1): array {
+    protected function getCreateOrUpdateAutoincrementSql(string $quotedName, string $quotedTableName, int $start = 1, DbalSchema $dbal_schema): array {
       $unquotedTableName = substr($quotedTableName, 1, strlen($quotedTableName) - 2);
       $unquotedName = substr($quotedName, 1, strlen($quotedName) - 2);
       $autoincrementIdentifierName = "\"" . $unquotedTableName ."_AI_PK\"";
-dump([__METHOD__, $quotedName, $quotedTableName, $start, $unquotedName, $unquotedTableName]);
 
       $sql = [];
 
-        $unquotedSequenceName = $unquotedTableName . "_SEQ";
-        $sequenceName = "\"" . $unquotedSequenceName . "\"";
-        $sql[]        = 'CREATE SEQUENCE ' . $sequenceName .
-        ' START WITH ' . $start .
-        ' MINVALUE ' . $start .
-        ' INCREMENT BY 1';
+      $unquotedSequenceName = $unquotedTableName . "_SEQ";
+      $sequenceName = "\"" . $unquotedSequenceName . "\"";
+      if ($dbal_schema->hasSequence($sequenceName)) {
+        $sql[] = 'CREATE SEQUENCE ' . $sequenceName .
+          ' START WITH ' . $start .
+          ' MINVALUE ' . $start .
+          ' INCREMENT BY 1';
+      }
+      else {
+        $sql[] = 'ALTER SEQUENCE ' . $sequenceName .
+          ' START WITH ' . $start .
+          ' MINVALUE ' . $start .
+          ' INCREMENT BY 1';
+      }
 
         $sql[] = 'CREATE OR REPLACE TRIGGER ' . $autoincrementIdentifierName . '
    BEFORE INSERT
