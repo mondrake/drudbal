@@ -988,11 +988,13 @@ SQL
 
     $unquotedSequenceName = $unquotedTableName . "_SEQ";
     $sequenceName = "\"" . $unquotedSequenceName . "\"";
-//dump($dbal_schema->getSequences(),$sequenceName,$dbal_schema->hasSequence($sequenceName),$unquotedSequenceName,$dbal_schema->hasSequence($unquotedSequenceName));
+dump([array_keys($dbal_schema->getSequences()),$sequenceName,$dbal_schema->hasSequence($sequenceName),$unquotedSequenceName,$dbal_schema->hasSequence($unquotedSequenceName)]);
 //    if ($dbal_schema->hasSequence($sequenceName)) {
 //dump('HAS SEQ');
-      $sql[] = 'DROP SEQUENCE ' . $sequenceName;
+//      $sql[] = 'DROP SEQUENCE ' . $sequenceName;
 //    }
+$xx = $this->getDbalConnection()->createSchemaManager()->introspectSchema();
+dump(['xx', array_keys($xx->getSequences())]);
     $sql[] = 'CREATE SEQUENCE ' . $sequenceName .
       ' START WITH ' . $start .
       ' MINVALUE ' . $start .
