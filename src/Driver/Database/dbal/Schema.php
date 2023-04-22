@@ -716,9 +716,11 @@ class Schema extends DatabaseSchema {
     // fallback to platform specific syntax.
     // @see https://github.com/doctrine/dbal/issues/1033
     $primary_key_processed_by_extension = FALSE;
+    $this->dbalExtension->setDebugging(TRUE);
     if (!$this->dbalExtension->delegateChangeField($primary_key_processed_by_extension, $this->dbalSchema(), $table, $field, $field_new, $spec, $keys_new, $dbal_column_options)) {
       return;
     }
+    $this->dbalExtension->setDebugging(FALSE);
     // We need to reload the schema at next get.
     $this->dbalSchemaForceReload();  // @todo can we just replace the column object in the dbal schema??
 
