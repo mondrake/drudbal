@@ -1023,7 +1023,7 @@ SQL
       ' MINVALUE ' . $start .
       ' INCREMENT BY 1';
 
-/*    $sql[] = 'CREATE OR REPLACE TRIGGER ' . $autoincrementIdentifierName . '
+    $sql[] = 'CREATE TRIGGER ' . $autoincrementIdentifierName . '
    BEFORE INSERT
    ON ' . $quotedTableName . '
    FOR EACH ROW
@@ -1043,7 +1043,7 @@ BEGIN
       END LOOP;
       SELECT ' . $sequenceName . '.NEXTVAL INTO last_Sequence FROM DUAL;
    END IF;
-END;';*/
+END;';
 
     return $sql;
   }
