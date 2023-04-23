@@ -908,9 +908,9 @@ dump(['xx', array_keys($xx->getSequences())]);
 dump('HAS SEQ');
         $sql[] = 'DROP TRIGGER ' . $autoincrementIdentifierName;
         $sql[] = 'DROP SEQUENCE ' . $sequenceName;
-        if ($has_primary_key) {
-          $sql[] = 'ALTER TABLE ' . $db_table . ' DROP CONSTRAINT ' . $pkConstraintName;
-        }
+//        if ($has_primary_key) {
+//          $sql[] = 'ALTER TABLE ' . $db_table . ' DROP CONSTRAINT ' . $pkConstraintName;
+//        }
         foreach ($sql as $exec) {
           if ($this->getDebugging()) dump($exec);
           $this->getDbalConnection()->executeStatement($exec);
