@@ -893,31 +893,6 @@ dump([__METHOD__, $drupal_table_name, $field_name, $field_new_name]);
     $dbal_primary_key = $dbal_table->getPrimaryKey();
     $has_primary_key = (bool) $dbal_primary_key;
 
-    // Drop autoincrement setup elements if new field is serial.
-    if ($new_db_field_is_serial) {
-      $unquotedSequenceName = $unquoted_db_table . "_SEQ";
-      $sequenceName = "\"" . $unquotedSequenceName . "\"";
-      $pkConstraintName = "\"" . $unquoted_db_table . "_PK\"";
-      $autoincrementIdentifierName = "\"" . $unquoted_db_table ."_AI_PK\"";
-
-      $sm = $this->getDbalConnection()->createSchemaManager();
-      $xx = $sm->introspectSchema();
-dump(['xx', array_keys($xx->getSequences())]);
-      $sql = [];
-      if ($xx->hasSequence($sequenceName)) {
-dump('HAS SEQ');
-        $sql[] = 'DROP TRIGGER ' . $autoincrementIdentifierName;
-        $sql[] = 'DROP SEQUENCE ' . $sequenceName;
-//        if ($has_primary_key) {
-//          $sql[] = 'ALTER TABLE ' . $db_table . ' DROP CONSTRAINT ' . $pkConstraintName;
-//        }
-        foreach ($sql as $exec) {
-          if ($this->getDebugging()) dump($exec);
-          $this->getDbalConnection()->executeStatement($exec);
-        }
-      }
-    }
-
     $db_primary_key_columns = $dbal_primary_key ? $dbal_primary_key->getColumns() : [];
     $drop_primary_key = $has_primary_key && (!empty($keys_new_specs['primary key']) || in_array($db_field, $db_primary_key_columns));
     if (!empty($keys_new_specs['primary key'])) {
@@ -928,10 +903,34 @@ dump('HAS SEQ');
       $db_primary_key_columns[$key] = $new_db_field;
     }
 
+    // Drop primary key if needed.
     if ($drop_primary_key) {
       $db_pk_constraint = '';
       $this->delegateDropPrimaryKey($primary_key_processed_by_extension, $db_pk_constraint, $dbal_schema, $drupal_table_name);
+dump(['$db_pk_constraint', $db_pk_constraint]);
       $has_primary_key = FALSE;
+    }
+
+    // Drop autoincrement setup elements if new field is serial.
+    if ($new_db_field_is_serial) {
+      $unquotedSequenceName = $unquoted_db_table . "_SEQ";
+      $sequenceName = "\"" . $unquotedSequenceName . "\"";
+      $pkConstraintName = "\"" . $unquoted_db_table . "_PK\"";
+      $autoincrementIdentifierName = "\"" . $unquoted_db_table ."_AI_PK\"";
+
+      $sm = $this->getDbalConnection()->createSchemaManager();
+      $xx = $sm->introspectSchema();
+dump(['sequences', array_keys($xx->getSequences())]);
+      $sql = [];
+      if ($xx->hasSequence($sequenceName)) {
+dump('HAS SEQ');
+        $sql[] = 'DROP TRIGGER ' . $autoincrementIdentifierName;
+        $sql[] = 'DROP SEQUENCE ' . $sequenceName;
+        foreach ($sql as $exec) {
+          if ($this->getDebugging()) dump($exec);
+          $this->getDbalConnection()->executeStatement($exec);
+        }
+      }
     }
 
     $temp_column = $this->getLimitedIdentifier(str_replace('-', '', 'tmp' . (new Uuid())->generate()));
@@ -1001,6 +1000,7 @@ SQL
     assert(is_object($db_constraint));
     $primary_key_asset_name = $db_constraint->name;
     $exec = "ALTER TABLE $db_table DROP CONSTRAINT \"$primary_key_asset_name\"";
+    if ($this->getDebugging()) dump($exec);
     $this->getDbalConnection()->executeStatement($exec);
     $primary_key_dropped_by_extension = TRUE;
     return TRUE;
