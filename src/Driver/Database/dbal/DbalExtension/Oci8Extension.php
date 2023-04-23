@@ -998,7 +998,7 @@ dump('HAS SEQ');
 //dump($sm->listSequences());
       $sql[] = 'DROP TRIGGER ' . $autoincrementIdentifierName;
       $sql[] = 'DROP SEQUENCE ' . $sequenceName;
-      $sql[] = 'ALTER TABLE ' . $quotedName . ' DROP CONSTRAINT ' . $autoincrementIdentifierName;
+      $sql[] = 'ALTER TABLE ' . $quotedTableName . ' DROP CONSTRAINT ' . $autoincrementIdentifierName;
     }
 
     $sql[] = 'CREATE SEQUENCE ' . $sequenceName .
