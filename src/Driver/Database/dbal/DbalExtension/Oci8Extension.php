@@ -940,7 +940,8 @@ PLSQL
     }
 
     foreach ($sql as $exec) {
-      if ($this->getDebugging()) dump($exec);
+      //if ($this->getDebugging())
+      dump($exec);
       $this->getDbalConnection()->executeStatement($exec);
     }
 
@@ -982,20 +983,22 @@ SQL
   private function getCreateOrUpdateAutoincrementSql(DbalSchema $dbal_schema, string $quotedName, string $quotedTableName, int $start = 1): array {
     $unquotedTableName = substr($quotedTableName, 1, strlen($quotedTableName) - 2);
     $unquotedName = substr($quotedName, 1, strlen($quotedName) - 2);
+    $unquotedSequenceName = $unquotedTableName . "_SEQ";
+    $sequenceName = "\"" . $unquotedSequenceName . "\"";
     $autoincrementIdentifierName = "\"" . $unquotedTableName ."_AI_PK\"";
 
     $sql = [];
 
-    $unquotedSequenceName = $unquotedTableName . "_SEQ";
-    $sequenceName = "\"" . $unquotedSequenceName . "\"";
 //dump([array_keys($dbal_schema->getSequences()),$sequenceName,$dbal_schema->hasSequence($sequenceName),$unquotedSequenceName,$dbal_schema->hasSequence($unquotedSequenceName)]);
 $sm = $this->getDbalConnection()->createSchemaManager();
 $xx = $sm->introspectSchema();
 dump(['xx', array_keys($xx->getSequences())]);
     if ($xx->hasSequence($sequenceName)) {
 dump('HAS SEQ');
-dump($sm->listSequences());
-//      $sql[] = 'DROP SEQUENCE ' . $sequenceName;
+//dump($sm->listSequences());
+      $sql[] = 'DROP TRIGGER ' . $autoincrementIdentifierName;
+      $sql[] = 'DROP SEQUENCE ' . $sequenceName;
+      $sql[] = 'ALTER TABLE ' . $quotedName . ' DROP CONSTRAINT ' . $autoincrementIdentifierName;
     }
 
     $sql[] = 'CREATE SEQUENCE ' . $sequenceName .
