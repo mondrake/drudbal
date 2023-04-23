@@ -821,7 +821,7 @@ PLSQL
     $sql[] = "ALTER TABLE $db_table ADD $db_field $column_definition";
 
     if ($drupal_field_specs['type'] === 'serial') {
-      $sql = array_merge($sql, $this->getCreateOrUpdateAutoincrementSql($dbal_schema, $db_field, $db_table));
+      $sql = array_merge($sql, $this->getAutoincrementSql($db_field, $db_table));
     }
 
     if (!$has_primary_key && $db_primary_key_columns) {
@@ -875,6 +875,8 @@ PLSQL
    * {@inheritdoc}
    */
   public function delegateChangeField(&$primary_key_processed_by_extension, DbalSchema $dbal_schema, $drupal_table_name, $field_name, $field_new_name, array $drupal_field_new_specs, array $keys_new_specs, array $dbal_column_options) {
+$this->setDebugging(TRUE);
+dump([__METHOD__, $drupal_table_name, $field_name, $field_new_name]);
     $primary_key_processed_by_extension = TRUE;
 
     $unquoted_db_table = $this->connection->getPrefixedTableName($drupal_table_name, FALSE);
@@ -890,6 +892,31 @@ PLSQL
     $dbal_table = $dbal_schema->getTable($unquoted_db_table);
     $dbal_primary_key = $dbal_table->getPrimaryKey();
     $has_primary_key = (bool) $dbal_primary_key;
+
+    // Drop autoincrement setup elements if new field is serial.
+    if ($new_db_field_is_serial) {
+      $unquotedSequenceName = $unquoted_db_table . "_SEQ";
+      $sequenceName = "\"" . $unquotedSequenceName . "\"";
+      $pkConstraintName = "\"" . $unquoted_db_table . "_PK\"";
+      $autoincrementIdentifierName = "\"" . $unquoted_db_table ."_AI_PK\"";
+
+      $sm = $this->getDbalConnection()->createSchemaManager();
+      $xx = $sm->introspectSchema();
+dump(['xx', array_keys($xx->getSequences())]);
+      $sql = [];
+      if ($xx->hasSequence($sequenceName)) {
+dump('HAS SEQ');
+        $sql[] = 'DROP TRIGGER ' . $autoincrementIdentifierName;
+        $sql[] = 'DROP SEQUENCE ' . $sequenceName;
+        if ($has_primary_key) {
+          $sql[] = 'ALTER TABLE ' . $db_table . ' DROP CONSTRAINT ' . $pkConstraintName;
+        }
+        foreach ($sql as $exec) {
+          if ($this->getDebugging()) dump($exec);
+          $this->getDbalConnection()->executeStatement($exec);
+        }
+      }
+    }
 
     $db_primary_key_columns = $dbal_primary_key ? $dbal_primary_key->getColumns() : [];
     $drop_primary_key = $has_primary_key && (!empty($keys_new_specs['primary key']) || in_array($db_field, $db_primary_key_columns));
@@ -924,8 +951,10 @@ PLSQL
     }
 
     if ($new_db_field_is_serial) {
+$this->setDebugging(FALSE);
+return TRUE;
       $prev_max_sequence = (int) $this->connection->query("SELECT MAX({$db_field}) FROM {$db_table}")->fetchField();
-      $autoincrement_sql = $this->getCreateOrUpdateAutoincrementSql($dbal_schema, $new_db_field, $db_table, $prev_max_sequence + 1);
+      $autoincrement_sql = $this->getAutoincrementSql($new_db_field, $db_table, $prev_max_sequence + 1);
       $sql = array_merge($sql, $autoincrement_sql);
     }
 
@@ -940,11 +969,11 @@ PLSQL
     }
 
     foreach ($sql as $exec) {
-      //if ($this->getDebugging())
-      dump($exec);
+      if ($this->getDebugging()) dump($exec);
       $this->getDbalConnection()->executeStatement($exec);
     }
 
+$this->setDebugging(FALSE);
     return TRUE;
   }
 
@@ -980,7 +1009,7 @@ SQL
   }
 
   /** @return array<int, string> */
-  private function getCreateOrUpdateAutoincrementSql(DbalSchema $dbal_schema, string $quotedName, string $quotedTableName, int $start = 1): array {
+  private function getAutoincrementSql(string $quotedName, string $quotedTableName, int $start = 1): array {
     $unquotedTableName = substr($quotedTableName, 1, strlen($quotedTableName) - 2);
     $unquotedName = substr($quotedName, 1, strlen($quotedName) - 2);
     $unquotedSequenceName = $unquotedTableName . "_SEQ";
@@ -988,18 +1017,6 @@ SQL
     $autoincrementIdentifierName = "\"" . $unquotedTableName ."_AI_PK\"";
 
     $sql = [];
-
-//dump([array_keys($dbal_schema->getSequences()),$sequenceName,$dbal_schema->hasSequence($sequenceName),$unquotedSequenceName,$dbal_schema->hasSequence($unquotedSequenceName)]);
-$sm = $this->getDbalConnection()->createSchemaManager();
-$xx = $sm->introspectSchema();
-dump(['xx', array_keys($xx->getSequences())]);
-    if ($xx->hasSequence($sequenceName)) {
-dump('HAS SEQ');
-//dump($sm->listSequences());
-      $sql[] = 'DROP TRIGGER ' . $autoincrementIdentifierName;
-      $sql[] = 'DROP SEQUENCE ' . $sequenceName;
-//      $sql[] = 'ALTER TABLE ' . $quotedTableName . ' DROP CONSTRAINT ' . $autoincrementIdentifierName;
-    }
 
     $sql[] = 'CREATE SEQUENCE ' . $sequenceName .
       ' START WITH ' . $start .
