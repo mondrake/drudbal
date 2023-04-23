@@ -950,13 +950,11 @@ dump('HAS SEQ');
       $sql[] = "ALTER TABLE $db_table MODIFY $new_db_field NOT NULL";
     }
 
-    if ($new_db_field_is_serial) {
-$this->setDebugging(FALSE);
-return TRUE;
+/*    if ($new_db_field_is_serial) {
       $prev_max_sequence = (int) $this->connection->query("SELECT MAX({$db_field}) FROM {$db_table}")->fetchField();
       $autoincrement_sql = $this->getAutoincrementSql($new_db_field, $db_table, $prev_max_sequence + 1);
       $sql = array_merge($sql, $autoincrement_sql);
-    }
+    }*/
 
     if (!$has_primary_key && $db_primary_key_columns) {
       $db_pk_constraint = $db_pk_constraint ?? $unquoted_db_table . '_PK';
