@@ -1023,7 +1023,7 @@ SQL
       ' MINVALUE ' . $start .
       ' INCREMENT BY 1';
 
-    $sql[] = 'CREATE TRIGGER ' . $autoincrementIdentifierName . '
+    $sql[] = 'CREATE OR REPLACE TRIGGER ' . $autoincrementIdentifierName . '
    BEFORE INSERT
    ON ' . $quotedTableName . '
    FOR EACH ROW
