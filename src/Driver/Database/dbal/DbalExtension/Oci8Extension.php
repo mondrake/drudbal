@@ -949,15 +949,17 @@ dump('HAS SEQ');
       $sql[] = "ALTER TABLE $db_table MODIFY $new_db_field NOT NULL";
     }
 
-/*    if ($new_db_field_is_serial) {
-      $prev_max_sequence = (int) $this->connection->query("SELECT MAX({$db_field}) FROM {$db_table}")->fetchField();
-      $autoincrement_sql = $this->getAutoincrementSql($new_db_field, $db_table, $prev_max_sequence + 1);
-      $sql = array_merge($sql, $autoincrement_sql);
-    }*/
-
+    // Add primary key if needed.
     if (!$has_primary_key && $db_primary_key_columns) {
       $db_pk_constraint = $db_pk_constraint ?? $unquoted_db_table . '_PK';
       $sql[] = "ALTER TABLE $db_table ADD CONSTRAINT $db_pk_constraint PRIMARY KEY (" . implode(', ', $db_primary_key_columns) . ")";
+    }
+
+    // Add autoincrement if needed.
+    if ($new_db_field_is_serial) {
+      $prev_max_sequence = (int) $this->connection->query("SELECT MAX({$db_field}) FROM {$db_table}")->fetchField();
+      $autoincrement_sql = $this->getAutoincrementSql($new_db_field, $db_table, $prev_max_sequence + 1);
+      $sql = array_merge($sql, $autoincrement_sql);
     }
 
     if (isset($drupal_field_new_specs['description'])) {
@@ -1029,7 +1031,7 @@ DECLARE
    last_Sequence NUMBER;
    last_InsertID NUMBER;
 BEGIN
-   IF (:NEW.' . $quotedName . ' IS NULL OR :NEW.' . $quotedName . ' = 0) THEN
+   IF (:NEW.' . $quotedName . ' IS NULL) THEN
       SELECT ' . $sequenceName . '.NEXTVAL INTO :NEW.' . $quotedName . ' FROM DUAL;
    ELSE
       SELECT NVL(Last_Number, 0) INTO last_Sequence
