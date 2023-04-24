@@ -1028,9 +1028,9 @@ BEGIN
         FROM User_Sequences
        WHERE Sequence_Name = \'' . $unquotedSequenceName . '\';
       SELECT :NEW.' . $quotedName . ' INTO last_InsertID FROM DUAL;
-      WHILE (last_InsertID > last_Sequence) LOOP
-         SELECT ' . $sequenceName . '.NEXTVAL INTO last_Sequence FROM DUAL;
-      END LOOP;
+REM      WHILE (last_InsertID > last_Sequence) LOOP
+REM         SELECT ' . $sequenceName . '.NEXTVAL INTO last_Sequence FROM DUAL;
+REM      END LOOP;
       SELECT ' . $sequenceName . '.NEXTVAL INTO last_Sequence FROM DUAL;
    END IF;
 END;';
