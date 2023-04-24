@@ -1028,8 +1028,9 @@ BEGIN
       SELECT :NEW.' . $quotedName . ' INTO last_InsertID FROM DUAL;
       SELECT ' . $sequenceName . '.NEXTVAL INTO last_Sequence FROM DUAL;
       IF (last_InsertID > (last_Sequence - 1)) THEN
-         EXECUTE IMMEDIATE \'drop sequence ' . $sequenceName . '\';
-         EXECUTE IMMEDIATE \'create sequence ' . $sequenceName . ' START WITH \' || last_InsertID || \' MINVALUE \' || last_InsertID || \' INCREMENT BY 1\';
+         EXECUTE IMMEDIATE \'alter sequence ' . $sequenceName . ' INCREMENT BY 100000\';
+         SELECT ' . $sequenceName . '.NEXTVAL INTO last_Sequence FROM DUAL;
+         EXECUTE IMMEDIATE \'alter sequence ' . $sequenceName . ' INCREMENT BY 1\';
       END IF;
    END IF;
 END;';
@@ -1038,3 +1039,5 @@ END;';
   }
 
 }
+//EXECUTE IMMEDIATE \'drop sequence ' . $sequenceName . '\';
+//EXECUTE IMMEDIATE \'create sequence ' . $sequenceName . ' START WITH \' || last_InsertID || \' MINVALUE \' || last_InsertID || \' INCREMENT BY 1\';
