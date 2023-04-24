@@ -1029,6 +1029,7 @@ BEGIN
       SELECT ' . $sequenceName . '.NEXTVAL INTO last_Sequence FROM DUAL;
       IF (last_InsertID > (last_Sequence - 1)) THEN
          EXECUTE IMMEDIATE \'drop sequence ' . $sequenceName . '\';
+         EXECUTE IMMEDIATE \'create sequence ' . $sequenceName . ' START WITH \' || last_InsertID || \' MINVALUE \' || last_InsertID || \' INCREMENT BY 1\';
       END IF;
    END IF;
 END;';
