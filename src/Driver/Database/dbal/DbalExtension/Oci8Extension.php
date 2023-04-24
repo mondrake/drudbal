@@ -1026,8 +1026,8 @@ BEGIN
       SELECT ' . $sequenceName . '.NEXTVAL INTO :NEW.' . $quotedName . ' FROM DUAL;
    ELSE
       SELECT :NEW.' . $quotedName . ' INTO last_InsertID FROM DUAL;
-      SELECT ' . $sequenceName . '.CURRVAL INTO last_Sequence FROM DUAL;
-      IF (last_InsertID > last_Sequence) THEN
+      SELECT ' . $sequenceName . '.NEXTVAL INTO last_Sequence FROM DUAL;
+      IF (last_InsertID > (last_Sequence - 1)) THEN
          EXECUTE IMMEDIATE \'drop sequence ' . $sequenceName . '\';
       END IF;
    END IF;
