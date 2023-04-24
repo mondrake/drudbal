@@ -1043,9 +1043,9 @@ BEGIN
       END LOOP;
       SELECT ' . $sequenceName . '.NEXTVAL INTO last_Sequence FROM DUAL;
    END IF;
-END;';
+END;';*/
 
     return $sql;
-  }*/
+  }
 
 }
