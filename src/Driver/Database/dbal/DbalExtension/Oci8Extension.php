@@ -1018,17 +1018,18 @@ SQL
    ON ' . $quotedTableName . '
    FOR EACH ROW
 DECLARE
+   pragma autonomous_transaction;
    last_Sequence NUMBER;
    last_InsertID NUMBER;
 BEGIN
    IF (:NEW.' . $quotedName . ' IS NULL) THEN
       SELECT ' . $sequenceName . '.NEXTVAL INTO :NEW.' . $quotedName . ' FROM DUAL;
    ELSE
-      SELECT NVL(Last_Number, 0) INTO last_Sequence
-        FROM User_Sequences
-       WHERE Sequence_Name = \'' . $unquotedSequenceName . '\';
       SELECT :NEW.' . $quotedName . ' INTO last_InsertID FROM DUAL;
-      SELECT ' . $sequenceName . '.NEXTVAL INTO last_Sequence FROM DUAL;
+      SELECT ' . $sequenceName . '.CURRVAL INTO last_Sequence FROM DUAL;
+      IF (last_InsertID > last_Sequence) THEN
+         EXECUTE IMMEDIATE \'drop sequence ' . $sequenceName . '\';
+      END IF;
    END IF;
 END;';
 

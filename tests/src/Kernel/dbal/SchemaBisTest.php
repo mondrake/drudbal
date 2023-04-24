@@ -286,11 +286,13 @@ class SchemaBisTest extends DriverSpecificSchemaTestBase {
     ])->execute();
 $xx = $this->connection->query('SELECT * FROM {change_serial_to_big}');
 dump($xx->fetchAll());
-$this->markTestIncomplete('incomplete');
 
     $id_two = $this->connection->insert('change_serial_to_big')->fields([
       'text' => 'Testing for ID generation',
     ])->execute();
+$xx = $this->connection->query('SELECT * FROM {change_serial_to_big}');
+dump($xx->fetchAll());
+$this->markTestIncomplete('incomplete');
 
     $this->assertEquals($id + 1, $id_two);
   }
