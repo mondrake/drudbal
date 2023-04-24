@@ -876,7 +876,6 @@ PLSQL
    */
   public function delegateChangeField(&$primary_key_processed_by_extension, DbalSchema $dbal_schema, $drupal_table_name, $field_name, $field_new_name, array $drupal_field_new_specs, array $keys_new_specs, array $dbal_column_options) {
 $this->setDebugging(TRUE);
-dump([__METHOD__, $drupal_table_name, $field_name, $field_new_name]);
     $primary_key_processed_by_extension = TRUE;
 
     $unquoted_db_table = $this->connection->getPrefixedTableName($drupal_table_name, FALSE);
@@ -907,9 +906,10 @@ dump([__METHOD__, $drupal_table_name, $field_name, $field_new_name]);
     if ($drop_primary_key) {
       $db_pk_constraint = '';
       $this->delegateDropPrimaryKey($primary_key_processed_by_extension, $db_pk_constraint, $dbal_schema, $drupal_table_name);
-dump(['$db_pk_constraint', $db_pk_constraint]);
       $has_primary_key = FALSE;
     }
+
+    $sql = [];
 
     // Drop autoincrement setup elements if new field is serial.
     if ($new_db_field_is_serial) {
@@ -918,18 +918,10 @@ dump(['$db_pk_constraint', $db_pk_constraint]);
       $pkConstraintName = "\"" . $unquoted_db_table . "_PK\"";
       $autoincrementIdentifierName = "\"" . $unquoted_db_table ."_AI_PK\"";
 
-      $sm = $this->getDbalConnection()->createSchemaManager();
-      $xx = $sm->introspectSchema();
-dump(['sequences_a', array_keys($xx->getSequences()), array_keys($dbal_schema->getSequences())]);
-      $sql = [];
-      if ($xx->hasSequence($sequenceName)) {
-dump('HAS SEQ');
+      $currentSchema = $this->getDbalConnection()->createSchemaManager()->introspectSchema();
+      if ($currentSchema->hasSequence($sequenceName)) {
         $sql[] = 'DROP TRIGGER ' . $autoincrementIdentifierName;
         $sql[] = 'DROP SEQUENCE ' . $sequenceName;
-        foreach ($sql as $exec) {
-          if ($this->getDebugging()) dump($exec);
-          $this->getDbalConnection()->executeStatement($exec);
-        }
       }
     }
 
@@ -940,7 +932,6 @@ dump('HAS SEQ');
       $column_definition = str_replace("NOT NULL", "NULL", $column_definition);
     }
 
-    $sql = [];
     $sql[] = "ALTER TABLE $db_table ADD \"$temp_column\" $column_definition";
     $sql[] = "UPDATE $db_table SET \"$temp_column\" = $db_field";
     $sql[] = "ALTER TABLE $db_table DROP COLUMN $db_field";
@@ -972,9 +963,6 @@ dump('HAS SEQ');
       $this->getDbalConnection()->executeStatement($exec);
     }
 
-$xx = $sm->introspectSchema();
-dump(['sequences_b', array_keys($xx->getSequences())]);
-$this->setDebugging(FALSE);
     return TRUE;
   }
 
