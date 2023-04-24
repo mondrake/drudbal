@@ -45,7 +45,7 @@ jobs:
         php-version:
           - "8.1"
         test-args:
-          - "-v modules/contrib/drudbal/tests/src/Kernel/dbal/SchemaTest.php"
+          - "-v modules/contrib/drudbal/tests/src/Kernel/dbal/SchemaBisTest.php"
 #          - "--group Database"
 #          - "--group Entity"
 #          - "--group Cache,Config"
