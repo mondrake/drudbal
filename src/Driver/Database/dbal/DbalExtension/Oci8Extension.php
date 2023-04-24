@@ -920,7 +920,7 @@ dump(['$db_pk_constraint', $db_pk_constraint]);
 
       $sm = $this->getDbalConnection()->createSchemaManager();
       $xx = $sm->introspectSchema();
-dump(['sequences', array_keys($xx->getSequences())]);
+dump(['sequences_1', array_keys($xx->getSequences())]);
       $sql = [];
       if ($xx->hasSequence($sequenceName)) {
 dump('HAS SEQ');
@@ -972,6 +972,8 @@ dump('HAS SEQ');
       $this->getDbalConnection()->executeStatement($exec);
     }
 
+$xx = $sm->introspectSchema();
+dump(['sequences_b', array_keys($xx->getSequences())]);
 $this->setDebugging(FALSE);
     return TRUE;
   }
