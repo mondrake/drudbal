@@ -279,12 +279,14 @@ class SchemaBisTest extends DriverSpecificSchemaTestBase {
     ];
     $this->schema->changeField('change_serial_to_big', 'id', 'id', $new_specification);
     $this->assertTrue($this->schema->fieldExists('change_serial_to_big', 'id'));
-$this->markTestIncomplete('incomplete');
 
     // Test if we can actually add a big int.
     $id = $this->connection->insert('change_serial_to_big')->fields([
       'id' => 21474836470,
     ])->execute();
+$xx = $this->connection->query('SELECT * FROM {change_serial_to_big}');
+dump($xx->fetchAll());
+$this->markTestIncomplete('incomplete');
 
     $id_two = $this->connection->insert('change_serial_to_big')->fields([
       'text' => 'Testing for ID generation',

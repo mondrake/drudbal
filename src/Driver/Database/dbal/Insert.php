@@ -101,12 +101,12 @@ class Insert extends QueryInsert {
         $stmt = $this->connection()->prepareStatement($sql, $this->queryOptions);
         try {
           $stmt->execute([], $this->queryOptions);
-          try {
+/*          try {
             $last_insert_id = $this->connection()->lastInsertId($sequence_name);
           }
-          catch (DatabaseObjectNotFoundException $e) {
+          catch (DatabaseObjectNotFoundException $e) {*/
             $last_insert_id = 0;
-          }
+//          }
         }
         catch (\Exception $e) {
           $this->connection()->exceptionHandler()->handleExecutionException($e, $stmt, [], $this->queryOptions);
