@@ -113,8 +113,6 @@ class Schema extends DatabaseSchema {
     }
 
     // Execute the table creation.
-$this->dbalExtension->setDebugging(TRUE);
-dump([__METHOD__, $name, $table]);
     $this->dbalExecuteSchemaChange($to_schema);
 
     // Add unique keys.
@@ -133,8 +131,6 @@ dump([__METHOD__, $name, $table]);
 
     // Post-create.
     $this->dbalExtension->postCreateTable($name, $table);
-
-$this->dbalExtension->setDebugging(FALSE);
   }
 
   /**

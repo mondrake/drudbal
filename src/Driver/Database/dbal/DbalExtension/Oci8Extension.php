@@ -709,10 +709,10 @@ PLSQL
     // Update the autoincrement trigger from the stock DBAL one to the
     // DruDbal one.
     foreach ($drupalTableSpecs['fields'] as $drupalFieldName => $drupalFieldSpec) {
-      if ($drupalFieldSpec['type'] === 'serial') {
+      if (($drupalFieldSpec['type'] ?? null) === 'serial') {
         $sql = $this->getAutoincrementTriggerSql(
-          $this->connection->getPrefixedTableName($drupalTableName, FALSE),
-          $this->getDbFieldName($drupalFieldName, FALSE),
+          $this->connection->getPrefixedTableName($drupalTableName, false),
+          $this->getDbFieldName($drupalFieldName, false),
         );
         if ($this->getDebugging()) dump($sql);
         $this->getDbalConnection()->executeStatement($sql);
