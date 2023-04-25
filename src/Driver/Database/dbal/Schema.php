@@ -130,6 +130,10 @@ dump([__METHOD__, $name, $table]);
         $this->addIndex($name, $index, $fields, $table);
       }
     }
+
+    // Post-create.
+    $this->dbalExtension->postCreateTable($name, $table);
+
 $this->dbalExtension->setDebugging(FALSE);
   }
 

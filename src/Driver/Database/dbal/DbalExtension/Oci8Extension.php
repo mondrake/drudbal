@@ -705,6 +705,22 @@ PLSQL
     return TRUE;
   }
 
+  public function postCreateTable(string $drupalTableName, array $drupalTableSpecs): void {
+    // Update the autoincrement trigger from the stock DBAL one to the
+    // DruDbal one.
+    foreach ($drupalTableSpecs['fields'] as $drupalFieldName => $drupalFieldSpec) {
+      if ($drupalFieldSpec['type'] === 'serial') {
+        $sql = $this->getAutoincrementTriggerSql(
+          $this->connection->getPrefixedTableName($drupalTableName, FALSE),
+          $this->getDbFieldName($drupalFieldName, FALSE),
+        );
+        if ($this->getDebugging()) dump($sql);
+        $this->getDbalConnection()->executeStatement($sql);
+        break;
+      }
+    }
+  }
+
   /**
    * {@inheritdoc}
    */

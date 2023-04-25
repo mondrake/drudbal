@@ -487,6 +487,10 @@ class AbstractExtension implements DbalExtensionInterface {
     return FALSE;
   }
 
+  public function postCreateTable(string $drupalTableName, array $drupalTableSpecs): void {
+    return;
+  }
+
   /**
    * {@inheritdoc}
    */
