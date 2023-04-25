@@ -113,6 +113,8 @@ class Schema extends DatabaseSchema {
     }
 
     // Execute the table creation.
+$this->dbalExtension->setDebugging(TRUE);
+dump([__METHOD__, $name, $table]);
     $this->dbalExecuteSchemaChange($to_schema);
 
     // Add unique keys.
@@ -128,6 +130,7 @@ class Schema extends DatabaseSchema {
         $this->addIndex($name, $index, $fields, $table);
       }
     }
+$this->dbalExtension->setDebugging(FALSE);
   }
 
   /**
@@ -691,7 +694,6 @@ class Schema extends DatabaseSchema {
    * {@inheritdoc}
    */
   public function changeField($table, $field, $field_new, $spec, $keys_new = []) {
-//global $xxx; if ($xxx) dump([$table, $field, $field_new, $spec, $keys_new]);
     if (!$this->fieldExists($table, $field)) {
       throw new SchemaObjectDoesNotExistException(t("Cannot change the definition of field @table.@name: field doesn't exist.", [
         '@table' => $table,
@@ -813,23 +815,16 @@ class Schema extends DatabaseSchema {
    * {@inheritdoc}
    */
   public function fieldExists($table, $column) {
-//global $xxx; if ($xxx) dump(['fieldExists', $table, $column]);
     $result = NULL;
     if ($this->dbalExtension->delegateFieldExists($result, $table, $column)) {
-//if ($xxx) dump(['fieldExists delegated', $result]);
       return $result;
     }
 
     // DBAL extension did not pick up, proceed with DBAL.
     if (!$this->tableExists($table)) {
-//if ($xxx) dump(['fieldExists notableexist']);
       return FALSE;
     }
-/*if ($xxx) dump([
-  'fieldExists list',
-  $this->dbalExtension->getDbFieldName($column, FALSE),
-  array_keys($this->dbalSchemaManager->listTableColumns($this->connection()->getPrefixedTableName($table)))
-]);*/
+
     // Column name must not be quoted here.
     return in_array(
       $this->dbalExtension->getDbFieldName($column, FALSE),
