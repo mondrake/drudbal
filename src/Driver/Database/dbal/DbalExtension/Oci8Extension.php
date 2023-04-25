@@ -875,7 +875,6 @@ PLSQL
    * {@inheritdoc}
    */
   public function delegateChangeField(&$primary_key_processed_by_extension, DbalSchema $dbal_schema, $drupal_table_name, $field_name, $field_new_name, array $drupal_field_new_specs, array $keys_new_specs, array $dbal_column_options) {
-$this->setDebugging(TRUE);
     $primary_key_processed_by_extension = TRUE;
 
     $unquoted_db_table = $this->connection->getPrefixedTableName($drupal_table_name, FALSE);

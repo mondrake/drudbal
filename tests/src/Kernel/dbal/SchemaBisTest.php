@@ -292,7 +292,6 @@ dump($xx->fetchAll());
     ])->execute();
 $xx = $this->connection->query('SELECT * FROM {change_serial_to_big}');
 dump($xx->fetchAll());
-$this->markTestIncomplete('incomplete');
 
     $this->assertEquals($id + 1, $id_two);
   }
