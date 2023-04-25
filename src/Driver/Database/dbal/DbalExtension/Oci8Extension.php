@@ -822,7 +822,7 @@ PLSQL
 
     if ($drupal_field_specs['type'] === 'serial') {
       $sql[] = $this->getAutoincrementSequenceSql($unquoted_db_table);
-      $sql = array_merge($sql, $this->getAutoincrementSql($db_field, $db_table));
+      $sql[] = $this->getAutoincrementTriggerSql($unquoted_db_table, $unquoted_db_field);
     }
 
     if (!$has_primary_key && $db_primary_key_columns) {
@@ -949,8 +949,7 @@ PLSQL
     if ($new_db_field_is_serial) {
       $prev_max_sequence = (int) $this->connection->query("SELECT MAX({$db_field}) FROM {$db_table}")->fetchField();
       $sql[] = $this->getAutoincrementSequenceSql($unquoted_db_table, $prev_max_sequence + 1);
-      $autoincrement_sql = $this->getAutoincrementSql($new_db_field, $db_table, $prev_max_sequence + 1);
-      $sql = array_merge($sql, $autoincrement_sql);
+      $sql[] = $this->getAutoincrementTriggerSql($unquoted_db_table, $unquoted_new_db_field);
     }
 
     if (isset($drupal_field_new_specs['description'])) {
@@ -1002,39 +1001,30 @@ SQL
     return "CREATE SEQUENCE \"{$unquotedTableName}_SEQ\" START WITH {$start} MINVALUE {$start} INCREMENT BY 1";
   }
 
-    /** @return array<int, string> */
-  private function getAutoincrementSql(string $quotedName, string $quotedTableName, int $start = 1): array {
-    $unquotedTableName = substr($quotedTableName, 1, strlen($quotedTableName) - 2);
-    $unquotedName = substr($quotedName, 1, strlen($quotedName) - 2);
-    $unquotedSequenceName = $unquotedTableName . "_SEQ";
-    $sequenceName = "\"" . $unquotedSequenceName . "\"";
-    $autoincrementIdentifierName = "\"" . $unquotedTableName ."_AI_PK\"";
-
-    $sql = [];
-
-    $sql[] = 'CREATE OR REPLACE TRIGGER ' . $autoincrementIdentifierName . '
+  private function getAutoincrementTriggerSql(string $unquotedTableName, string $unquotedColumnName): string {
+    $unquotedSequenceName = $unquotedTableName . '_SEQ';
+    return "
+CREATE OR REPLACE TRIGGER \"{$unquotedTableName}_AI_PK\"
    BEFORE INSERT
-   ON ' . $quotedTableName . '
+   ON \"{$unquotedTableName}\"
    FOR EACH ROW
 DECLARE
    pragma autonomous_transaction;
    last_Sequence NUMBER;
    last_InsertID NUMBER;
 BEGIN
-   IF (:NEW.' . $quotedName . ' IS NULL) THEN
-      SELECT ' . $sequenceName . '.NEXTVAL INTO :NEW.' . $quotedName . ' FROM DUAL;
+   IF (:NEW.\"{$unquotedColumnName}\" IS NULL) THEN
+      SELECT \"{$unquotedSequenceName}\".NEXTVAL INTO :NEW.\"{$unquotedColumnName}\" FROM DUAL;
    ELSE
-      SELECT :NEW.' . $quotedName . ' INTO last_InsertID FROM DUAL;
-      SELECT (' . $sequenceName . '.NEXTVAL - 1) INTO last_Sequence FROM DUAL;
+      SELECT :NEW.\"{$unquotedColumnName}\" INTO last_InsertID FROM DUAL;
+      SELECT (\"{$unquotedSequenceName}\".NEXTVAL - 1) INTO last_Sequence FROM DUAL;
       IF (last_InsertID > last_Sequence) THEN
-         EXECUTE IMMEDIATE \'alter sequence ' . $sequenceName . ' INCREMENT BY \' || TO_CHAR(last_InsertID - last_Sequence -1);
-         SELECT ' . $sequenceName . '.NEXTVAL INTO last_Sequence FROM DUAL;
-         EXECUTE IMMEDIATE \'alter sequence ' . $sequenceName . ' INCREMENT BY 1\';
+         EXECUTE IMMEDIATE \'alter sequence \"{$unquotedSequenceName}\" INCREMENT BY \' || TO_CHAR(last_InsertID - last_Sequence -1);
+         SELECT \"{$unquotedSequenceName}\".NEXTVAL INTO last_Sequence FROM DUAL;
+         EXECUTE IMMEDIATE \'alter sequence \"{$unquotedSequenceName}\" INCREMENT BY 1\';
       END IF;
    END IF;
-END;';
-
-    return $sql;
+END;";
   }
 
 }
