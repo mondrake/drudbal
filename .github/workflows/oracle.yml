@@ -45,7 +45,7 @@ jobs:
       fail-fast: false
       matrix:
         php-version:
-          - "8.1"
+          - "8.2"
         test-args:
           - "--group Database"
 #          - "--group Entity"
@@ -84,10 +84,6 @@ jobs:
         git -C drudbal_staging checkout -b test-run-branch
         composer config repositories.test-run '{"type": "path", "url": "drudbal_staging", "options": {"symlink": false}}'
         composer require "mondrake/drudbal:dev-test-run-branch" --no-progress --ansi
-
-    - name: Patch doctrine/dbal
-      run: |
-        curl https://patch-diff.githubusercontent.com/raw/mondrake/dbal/pull/6.diff | patch -d vendor/doctrine/dbal -p1
 
     - name: Create Oracle schema
       run: |
