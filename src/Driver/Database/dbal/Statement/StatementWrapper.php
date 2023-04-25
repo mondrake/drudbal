@@ -6,11 +6,15 @@ use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\Exception as DbalException;
 use Doctrine\DBAL\FetchMode;
 use Doctrine\DBAL\Result;
-use Doctrine\DBAL\Statement;
+use Doctrine\DBAL\Statement as DbalStatement;
 use Drupal\Core\Database\Database;
 use Drupal\Core\Database\DatabaseExceptionWrapper;
+use Drupal\Core\Database\Event\StatementExecutionEndEvent;
+use Drupal\Core\Database\Event\StatementExecutionStartEvent;
+use Drupal\Core\Database\FetchModeTrait;
 use Drupal\Core\Database\RowCountException;
-use Drupal\Core\Database\StatementWrapper as BaseStatementWrapper;
+use Drupal\Core\Database\StatementInterface;
+use Drupal\Core\Database\StatementIteratorTrait;
 use Drupal\drudbal\Driver\Database\dbal\Connection as DruDbalConnection;
 
 /**
@@ -21,81 +25,51 @@ use Drupal\drudbal\Driver\Database\dbal\Connection as DruDbalConnection;
  * code in Drupal\drudbal\Driver\Database\dbal\DbalExtension\[dbal_driver_name]
  * classes and execution handed over to there.
  */
-class StatementWrapper extends BaseStatementWrapper {
+class StatementWrapper implements \Iterator, StatementInterface {
+
+  use StatementIteratorTrait;
+  use FetchModeTrait;
 
   /**
-   * The DBAL client connection.
-   *
-   * @var \Doctrine\DBAL\Connection
+   * The client database Statement object.
    */
-  protected $dbalConnection;
+  protected DbalStatement $clientStatement;
 
   /**
    * The DBAL executed statement result.
-   *
-   * @var \Doctrine\DBAL\Result
    */
-  protected $dbalResult;
-
-  /**
-   * Holds supplementary driver options.
-   *
-   * @var array
-   */
-  protected $driverOpts;
+  protected Result $dbalResult;
 
   /**
    * Holds the index position of named parameters.
    *
    * Used in positional-only parameters binding drivers.
-   *
-   * @var array
    */
-  protected $paramsPositions;
+  protected array $paramsPositions;
 
   /**
    * The default fetch mode.
    *
    * See http://php.net/manual/pdo.constants.php for the definition of the
    * constants used.
-   *
-   * @var int
    */
-  protected $defaultFetchMode;
-
-  /**
-   * The query string, in its form with placeholders.
-   *
-   * @var string
-   */
-  protected $queryString;
-
-  /**
-   * The class to be used for returning row results.
-   *
-   * Used when fetch mode is \PDO::FETCH_CLASS.
-   *
-   * @var string
-   */
-  protected $fetchClass;
+  protected int $defaultFetchMode;
 
   /**
    * Holds supplementary fetch options.
-   *
-   * @var array
    */
-  protected $fetchOptions = [
+  protected array $fetchOptions = [
     'class' => 'stdClass',
     'constructor_args' => [],
+    'object' => NULL,
+    'column' => 0,
   ];
 
   /**
    * Holds the current fetch style (which will be used by the next fetch).
    * @see \PDOStatement::fetch()
-   *
-   * @var int
    */
-  protected $fetchStyle = \PDO::FETCH_OBJ;
+  protected int $fetchStyle = \PDO::FETCH_OBJ;
 
   /**
    * Constructs a Statement object.
@@ -106,23 +80,23 @@ class StatementWrapper extends BaseStatementWrapper {
    *
    * @param \Drupal\drudbal\Driver\Database\dbal\Connection $connection
    *   The database connection object for this statement.
-   * @param \Doctrine\DBAL\Connection $dbal_connection
+   * @param \Doctrine\DBAL\Connection $dbalConnection
    *   DBAL connection object.
-   * @param string $query
+   * @param string $queryString
    *   A string containing an SQL query.
-   * @param array $driver_options
+   * @param array $driverOpts
    *   (optional) An array of driver options for this query.
-   * @param bool $row_count_enabled
+   * @param bool $rowCountEnabled
    *   (optional) Enables counting the rows affected. Defaults to FALSE.
    */
-  public function __construct(DruDbalConnection $connection, DbalConnection $dbal_connection, string $query, array $driver_options = [], bool $row_count_enabled = FALSE) {
-    $this->connection = $connection;
-    $this->rowCountEnabled = $row_count_enabled;
-
-    $this->queryString = $query;
-    $this->dbalConnection = $dbal_connection;
+  public function __construct(
+    protected readonly DruDbalConnection $connection,
+    protected readonly DbalConnection $dbalConnection,
+    protected string $queryString,
+    protected array $driverOpts = [],
+    protected readonly bool $rowCountEnabled = FALSE,
+  ) {
     $this->setFetchMode(\PDO::FETCH_OBJ);
-    $this->driverOpts = $driver_options;
   }
 
   /**
@@ -137,9 +111,23 @@ class StatementWrapper extends BaseStatementWrapper {
   /**
    * {@inheritdoc}
    */
+  public function getConnectionTarget(): string {
+    return $this->connection()->getTarget();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getQueryString() {
+    return $this->queryString;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function execute($args = [], $options = []) {
-    /** @var Statement|null $clientStatement */
-    $clientStatement = $this->clientStatement;
+    /** @var DbalStatement|null $clientStatement */
+    $clientStatement = $this->clientStatement ?? NULL;
 
     $args = $args ?? [];
 
@@ -178,22 +166,39 @@ class StatementWrapper extends BaseStatementWrapper {
       }
     }
 
-    $logger = $this->connection()->getLogger();
-    $query_start = microtime(TRUE);
+    if ($this->connection()->isEventEnabled(StatementExecutionStartEvent::class)) {
+      $startEvent = new StatementExecutionStartEvent(
+        spl_object_id($this),
+        $this->connection()->getKey(),
+        $this->connection()->getTarget(),
+        $this->getQueryString(),
+        $args ?? [],
+        $this->connection()->findCallerFromDebugBacktrace()
+      );
+      $this->connection()->dispatchEvent($startEvent);
+    }
 
     try {
       foreach($args as $param => $value) {
         $this->clientStatement->bindValue($param, $value);
       }
       $this->dbalResult = $this->clientStatement->executeQuery();
+      $this->markResultsetIterable((bool) $this->dbalResult);
     }
     catch (DbalException $e) {
       throw new DatabaseExceptionWrapper($e->getMessage(), $e->getCode(), $e);
     }
 
-    $query_end = microtime(TRUE);
-    if (!empty($logger)) {
-      $logger->log($this, $args, $query_end - $query_start, $query_start);
+    if (isset($startEvent) && $this->connection()->isEventEnabled(StatementExecutionEndEvent::class)) {
+      $this->connection()->dispatchEvent(new StatementExecutionEndEvent(
+        $startEvent->statementObjectId,
+        $startEvent->key,
+        $startEvent->target,
+        $startEvent->queryString,
+        $startEvent->args,
+        $startEvent->caller,
+        $startEvent->time
+      ));
     }
 
     return TRUE;
@@ -213,41 +218,41 @@ class StatementWrapper extends BaseStatementWrapper {
 
     $dbal_row = $this->dbalResult->fetchAssociative();
     if (!$dbal_row) {
+      $this->markResultsetFetchingComplete();
       return FALSE;
     }
+
+    $columnNames = array_keys($dbal_row);
     $row = $this->connection()->getDbalExtension()->processFetchedRecord($dbal_row);
-    switch ($mode) {
-      case \PDO::FETCH_ASSOC:
-        return $row;
 
-      case \PDO::FETCH_NUM:
-        return array_values($row);
+    $ret = match($mode) {
+      \PDO::FETCH_ASSOC => $row,
+      \PDO::FETCH_BOTH => $this->assocToBoth($row),
+      \PDO::FETCH_NUM => $this->assocToNum($row),
+      \PDO::FETCH_LAZY, \PDO::FETCH_OBJ => $this->assocToObj($row),
+      \PDO::FETCH_CLASS | \PDO::FETCH_CLASSTYPE => $this->assocToClassType($row, $this->fetchOptions['constructor_args']),
+      \PDO::FETCH_CLASS => $this->assocToClass($row, $this->fetchOptions['class'], $this->fetchOptions['constructor_args']),
+      \PDO::FETCH_INTO => $this->assocIntoObject($row, $this->fetchOptions['object']),
+      \PDO::FETCH_COLUMN => $this->assocToColumn($row, $columnNames, $this->fetchOptions['column']),
+      default => throw new DatabaseExceptionWrapper("Unknown fetch type '{$mode}'"),
+    };
 
-      case \PDO::FETCH_BOTH:
-        return $row + array_values($row);
+    $this->setResultsetCurrentRow($ret);
+    return $ret;
+  }
 
-      case \PDO::FETCH_OBJ:
-        return (object) $row;
+  /**
+   * {@inheritdoc}
+   */
+  public function fetchAssoc() {
+    return $this->fetch(\PDO::FETCH_ASSOC);
+  }
 
-      case \PDO::FETCH_CLASS:
-        $constructor_arguments = $this->fetchOptions['constructor_args'] ?? [];
-        $class_obj = new $this->fetchClass(...$constructor_arguments);
-        foreach ($row as $column => $value) {
-          $class_obj->$column = $value;
-        }
-        return $class_obj;
-
-      case \PDO::FETCH_CLASS | \PDO::FETCH_CLASSTYPE:
-        $class = array_shift($row);
-        $class_obj = new $class();
-        foreach ($row as $column => $value) {
-          $class_obj->$column = $value;
-        }
-        return $class_obj;
-
-      default:
-          throw new DatabaseExceptionWrapper("Unknown fetch type '{$mode}'");
-    }
+  /**
+   * {@inheritdoc}
+   */
+  public function fetchCol($index = 0) {
+    return $this->fetchAll(\PDO::FETCH_COLUMN, $index);
   }
 
   /**
@@ -279,13 +284,6 @@ class StatementWrapper extends BaseStatementWrapper {
     }
 
     return $rows;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function getQueryString() {
-    return $this->queryString;
   }
 
   /**
@@ -365,8 +363,21 @@ class StatementWrapper extends BaseStatementWrapper {
    */
   public function setFetchMode($mode, $a1 = NULL, $a2 = []) {
     $this->defaultFetchMode = $mode;
-    if ($mode === \PDO::FETCH_CLASS) {
-      $this->fetchClass = $a1;
+    switch ($mode) {
+      case \PDO::FETCH_CLASS:
+        $this->fetchOptions['class'] = $a1;
+        if ($a2) {
+          $this->fetchOptions['constructor_args'] = $a2;
+        }
+        break;
+
+      case \PDO::FETCH_COLUMN:
+        $this->fetchOptions['column'] = $a1;
+        break;
+
+      case \PDO::FETCH_INTO:
+        $this->fetchOptions['object'] = $a1;
+        break;
     }
     return TRUE;
   }

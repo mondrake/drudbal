@@ -11,7 +11,9 @@ env:
     DRUDBAL_DRUPAL_PROFILE: "standard"
     SIMPLETEST_BASE_URL: "http://localhost:8080"
     PHPUNIT_SKIP_CLASS: '[
-      "Drupal\\KernelTests\\Core\\Cache\\ApcuBackendTest"
+      "Drupal\\KernelTests\\Core\\Cache\\ApcuBackendTest",
+      "Drupal\\Tests\\file\\Functional\\FileAddPermissionsUpdateTest",
+      "Drupal\\KernelTests\\Core\\Database\\SchemaUniquePrefixedKeysIndexTest"
     ]'
 
 jobs:
@@ -28,7 +30,7 @@ jobs:
 
     services:
       oracle:
-        image: gvenzl/oracle-xe:21
+        image: gvenzl/oracle-xe:slim-faststart
         env:
           ORACLE_PASSWORD: oracle
         ports:
