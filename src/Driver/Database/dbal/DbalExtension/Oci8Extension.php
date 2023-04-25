@@ -1019,9 +1019,9 @@ BEGIN
       SELECT :NEW.\"{$unquotedColumnName}\" INTO last_InsertID FROM DUAL;
       SELECT (\"{$unquotedSequenceName}\".NEXTVAL - 1) INTO last_Sequence FROM DUAL;
       IF (last_InsertID > last_Sequence) THEN
-         EXECUTE IMMEDIATE \'alter sequence \"{$unquotedSequenceName}\" INCREMENT BY \' || TO_CHAR(last_InsertID - last_Sequence -1);
+         EXECUTE IMMEDIATE 'alter sequence \"{$unquotedSequenceName}\" INCREMENT BY ' || TO_CHAR(last_InsertID - last_Sequence -1);
          SELECT \"{$unquotedSequenceName}\".NEXTVAL INTO last_Sequence FROM DUAL;
-         EXECUTE IMMEDIATE \'alter sequence \"{$unquotedSequenceName}\" INCREMENT BY 1\';
+         EXECUTE IMMEDIATE 'alter sequence \"{$unquotedSequenceName}\" INCREMENT BY 1';
       END IF;
    END IF;
 END;";
