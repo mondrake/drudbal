@@ -821,13 +821,8 @@ PLSQL
     $sql[] = "ALTER TABLE $db_table ADD $db_field $column_definition";
 
     if ($drupal_field_specs['type'] === 'serial') {
-      /** @var OraclePlatform $platform */
-      $platform = $this->connection->getDbalPlatform();
-      $autoincrement_sql = $platform->getCreateAutoincrementSql($db_field, $db_table);
-      // Remove the auto primary key generation, which is the first element in
-      // the array.
-      array_shift($autoincrement_sql);
-      $sql = array_merge($sql, $autoincrement_sql);
+      $sql[] = $this->getAutoincrementSequenceSql($unquoted_db_table);
+      $sql[] = $this->getAutoincrementTriggerSql($unquoted_db_table, $unquoted_db_field);
     }
 
     if (!$has_primary_key && $db_primary_key_columns) {
@@ -907,10 +902,26 @@ PLSQL
       $db_primary_key_columns[$key] = $new_db_field;
     }
 
+    // Drop primary key if needed.
     if ($drop_primary_key) {
       $db_pk_constraint = '';
       $this->delegateDropPrimaryKey($primary_key_processed_by_extension, $db_pk_constraint, $dbal_schema, $drupal_table_name);
       $has_primary_key = FALSE;
+    }
+
+    $sql = [];
+
+    // Drop autoincrement setup if new field is serial and setup exists
+    // already.
+    if ($new_db_field_is_serial) {
+      $sequenceName = "\"" . $unquoted_db_table . "_SEQ\"";
+      $autoincrementIdentifierName = "\"" . $unquoted_db_table ."_AI_PK\"";
+
+      $currentSchema = $this->getDbalConnection()->createSchemaManager()->introspectSchema();
+      if ($currentSchema->hasSequence($sequenceName)) {
+        $sql[] = 'DROP TRIGGER ' . $autoincrementIdentifierName;
+        $sql[] = 'DROP SEQUENCE ' . $sequenceName;
+      }
     }
 
     $temp_column = $this->getLimitedIdentifier(str_replace('-', '', 'tmp' . (new Uuid())->generate()));
@@ -920,7 +931,6 @@ PLSQL
       $column_definition = str_replace("NOT NULL", "NULL", $column_definition);
     }
 
-    $sql = [];
     $sql[] = "ALTER TABLE $db_table ADD \"$temp_column\" $column_definition";
     $sql[] = "UPDATE $db_table SET \"$temp_column\" = $db_field";
     $sql[] = "ALTER TABLE $db_table DROP COLUMN $db_field";
@@ -929,29 +939,17 @@ PLSQL
       $sql[] = "ALTER TABLE $db_table MODIFY $new_db_field NOT NULL";
     }
 
-    if ($new_db_field_is_serial) {
-      $prev_max_sequence = (int) $this->connection->query("SELECT MAX({$db_field}) FROM {$db_table}")->fetchField();
-      /** @var OraclePlatform $platform */
-      $platform = $this->connection->getDbalPlatform();
-      $autoincrement_sql = $platform->getCreateAutoincrementSql($new_db_field, $db_table);
-      // Remove the auto primary key generation, which is the first element in
-      // the array.
-      array_shift($autoincrement_sql);
-      // Get the the sequence generation, which is the second element in the
-      // array.
-      $sequence_sql = array_shift($autoincrement_sql);
-      if ($prev_max_sequence) {
-        $sql[] = str_replace('START WITH 1', 'START WITH ' . $prev_max_sequence, $sequence_sql);
-      }
-      else {
-        $sql[] = $sequence_sql;
-      }
-      $sql = array_merge($sql, $autoincrement_sql);
-    }
-
+    // Add primary key if needed.
     if (!$has_primary_key && $db_primary_key_columns) {
       $db_pk_constraint = $db_pk_constraint ?? $unquoted_db_table . '_PK';
       $sql[] = "ALTER TABLE $db_table ADD CONSTRAINT $db_pk_constraint PRIMARY KEY (" . implode(', ', $db_primary_key_columns) . ")";
+    }
+
+    // Add autoincrement if needed.
+    if ($new_db_field_is_serial) {
+      $prev_max_sequence = (int) $this->connection->query("SELECT MAX({$db_field}) FROM {$db_table}")->fetchField();
+      $sql[] = $this->getAutoincrementSequenceSql($unquoted_db_table, $prev_max_sequence + 1);
+      $sql[] = $this->getAutoincrementTriggerSql($unquoted_db_table, $unquoted_new_db_field);
     }
 
     if (isset($drupal_field_new_specs['description'])) {
@@ -993,9 +991,40 @@ SQL
     assert(is_object($db_constraint));
     $primary_key_asset_name = $db_constraint->name;
     $exec = "ALTER TABLE $db_table DROP CONSTRAINT \"$primary_key_asset_name\"";
+    if ($this->getDebugging()) dump($exec);
     $this->getDbalConnection()->executeStatement($exec);
     $primary_key_dropped_by_extension = TRUE;
     return TRUE;
+  }
+
+  private function getAutoincrementSequenceSql(string $unquotedTableName, int $start = 1): string {
+    return "CREATE SEQUENCE \"{$unquotedTableName}_SEQ\" START WITH {$start} MINVALUE {$start} INCREMENT BY 1";
+  }
+
+  private function getAutoincrementTriggerSql(string $unquotedTableName, string $unquotedColumnName): string {
+    $unquotedSequenceName = $unquotedTableName . '_SEQ';
+    return "
+CREATE OR REPLACE TRIGGER \"{$unquotedTableName}_AI_PK\"
+   BEFORE INSERT
+   ON \"{$unquotedTableName}\"
+   FOR EACH ROW
+DECLARE
+   pragma autonomous_transaction;
+   last_Sequence NUMBER;
+   last_InsertID NUMBER;
+BEGIN
+   IF (:NEW.\"{$unquotedColumnName}\" IS NULL) THEN
+      SELECT \"{$unquotedSequenceName}\".NEXTVAL INTO :NEW.\"{$unquotedColumnName}\" FROM DUAL;
+   ELSE
+      SELECT :NEW.\"{$unquotedColumnName}\" INTO last_InsertID FROM DUAL;
+      SELECT (\"{$unquotedSequenceName}\".NEXTVAL - 1) INTO last_Sequence FROM DUAL;
+      IF (last_InsertID > last_Sequence) THEN
+         EXECUTE IMMEDIATE 'alter sequence \"{$unquotedSequenceName}\" INCREMENT BY ' || TO_CHAR(last_InsertID - last_Sequence -1);
+         SELECT \"{$unquotedSequenceName}\".NEXTVAL INTO last_Sequence FROM DUAL;
+         EXECUTE IMMEDIATE 'alter sequence \"{$unquotedSequenceName}\" INCREMENT BY 1';
+      END IF;
+   END IF;
+END;";
   }
 
 }
