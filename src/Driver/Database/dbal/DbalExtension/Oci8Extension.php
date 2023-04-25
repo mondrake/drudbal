@@ -821,6 +821,7 @@ PLSQL
     $sql[] = "ALTER TABLE $db_table ADD $db_field $column_definition";
 
     if ($drupal_field_specs['type'] === 'serial') {
+      $sql[] = $this->getAutoincrementSequenceSql($unquoted_db_table);
       $sql = array_merge($sql, $this->getAutoincrementSql($db_field, $db_table));
     }
 
@@ -910,11 +911,10 @@ PLSQL
 
     $sql = [];
 
-    // Drop autoincrement setup elements if new field is serial.
+    // Drop autoincrement setup if new field is serial and setup exists
+    // already.
     if ($new_db_field_is_serial) {
-      $unquotedSequenceName = $unquoted_db_table . "_SEQ";
-      $sequenceName = "\"" . $unquotedSequenceName . "\"";
-      $pkConstraintName = "\"" . $unquoted_db_table . "_PK\"";
+      $sequenceName = "\"" . $unquoted_db_table . "_SEQ\"";
       $autoincrementIdentifierName = "\"" . $unquoted_db_table ."_AI_PK\"";
 
       $currentSchema = $this->getDbalConnection()->createSchemaManager()->introspectSchema();
@@ -948,6 +948,7 @@ PLSQL
     // Add autoincrement if needed.
     if ($new_db_field_is_serial) {
       $prev_max_sequence = (int) $this->connection->query("SELECT MAX({$db_field}) FROM {$db_table}")->fetchField();
+      $sql[] = $this->getAutoincrementSequenceSql($unquoted_db_table, $prev_max_sequence + 1);
       $autoincrement_sql = $this->getAutoincrementSql($new_db_field, $db_table, $prev_max_sequence + 1);
       $sql = array_merge($sql, $autoincrement_sql);
     }
@@ -997,7 +998,11 @@ SQL
     return TRUE;
   }
 
-  /** @return array<int, string> */
+  private function getAutoincrementSequenceSql(string $unquotedTableName, int $start = 1): string {
+    return "CREATE SEQUENCE \"{$unquotedTableName}_SEQ\" START WITH {$start} MINVALUE {$start} INCREMENT BY 1";
+  }
+
+    /** @return array<int, string> */
   private function getAutoincrementSql(string $quotedName, string $quotedTableName, int $start = 1): array {
     $unquotedTableName = substr($quotedTableName, 1, strlen($quotedTableName) - 2);
     $unquotedName = substr($quotedName, 1, strlen($quotedName) - 2);
@@ -1006,11 +1011,6 @@ SQL
     $autoincrementIdentifierName = "\"" . $unquotedTableName ."_AI_PK\"";
 
     $sql = [];
-
-    $sql[] = 'CREATE SEQUENCE ' . $sequenceName .
-      ' START WITH ' . $start .
-      ' MINVALUE ' . $start .
-      ' INCREMENT BY 1';
 
     $sql[] = 'CREATE OR REPLACE TRIGGER ' . $autoincrementIdentifierName . '
    BEFORE INSERT
