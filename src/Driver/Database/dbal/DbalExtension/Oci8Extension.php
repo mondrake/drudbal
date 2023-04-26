@@ -705,6 +705,22 @@ PLSQL
     return TRUE;
   }
 
+  public function postCreateTable(string $drupalTableName, array $drupalTableSpecs): void {
+    // Update the autoincrement trigger from the stock DBAL one to the
+    // DruDbal one.
+    foreach ($drupalTableSpecs['fields'] as $drupalFieldName => $drupalFieldSpec) {
+      if (($drupalFieldSpec['type'] ?? null) === 'serial') {
+        $sql = $this->getAutoincrementTriggerSql(
+          $this->connection->getPrefixedTableName($drupalTableName, false),
+          $this->getDbFieldName($drupalFieldName, false),
+        );
+        if ($this->getDebugging()) dump($sql);
+        $this->getDbalConnection()->executeStatement($sql);
+        break;
+      }
+    }
+  }
+
   /**
    * {@inheritdoc}
    */
@@ -1010,18 +1026,18 @@ CREATE OR REPLACE TRIGGER \"{$unquotedTableName}_AI_PK\"
    FOR EACH ROW
 DECLARE
    pragma autonomous_transaction;
-   last_Sequence NUMBER;
-   last_InsertID NUMBER;
+   sequence_id NUMBER;
+   insert_id NUMBER;
 BEGIN
    IF (:NEW.\"{$unquotedColumnName}\" IS NULL) THEN
       SELECT \"{$unquotedSequenceName}\".NEXTVAL INTO :NEW.\"{$unquotedColumnName}\" FROM DUAL;
    ELSE
-      SELECT :NEW.\"{$unquotedColumnName}\" INTO last_InsertID FROM DUAL;
-      SELECT (\"{$unquotedSequenceName}\".NEXTVAL - 1) INTO last_Sequence FROM DUAL;
-      IF (last_InsertID > last_Sequence) THEN
-         EXECUTE IMMEDIATE 'alter sequence \"{$unquotedSequenceName}\" INCREMENT BY ' || TO_CHAR(last_InsertID - last_Sequence -1);
-         SELECT \"{$unquotedSequenceName}\".NEXTVAL INTO last_Sequence FROM DUAL;
-         EXECUTE IMMEDIATE 'alter sequence \"{$unquotedSequenceName}\" INCREMENT BY 1';
+      SELECT :NEW.\"{$unquotedColumnName}\" INTO insert_id FROM DUAL;
+      SELECT \"{$unquotedSequenceName}\".NEXTVAL INTO sequence_id FROM DUAL;
+      IF (insert_id > sequence_id) THEN
+         EXECUTE IMMEDIATE 'alter sequence \"{$unquotedSequenceName}\" increment by ' || to_char(insert_id - sequence_id);
+         SELECT \"{$unquotedSequenceName}\".NEXTVAL INTO sequence_id FROM DUAL;
+         EXECUTE IMMEDIATE 'alter sequence \"{$unquotedSequenceName}\" increment by 1';
       END IF;
    END IF;
 END;";

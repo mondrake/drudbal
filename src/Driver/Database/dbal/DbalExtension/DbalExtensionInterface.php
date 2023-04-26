@@ -686,6 +686,16 @@ interface DbalExtensionInterface {
   public function delegateFieldExists(&$result, $drupal_table_name, $field_name);
 
   /**
+   * Invoked after DBAL create table.
+   *
+   * @param string $drupalTableName
+   *   A string with the Drupal name of the table.
+   * @param array $drupalTableSpecs
+   *   A Drupal Schema API table definition array. Passed by reference.
+   */
+  public function postCreateTable(string $drupalTableName, array $drupalTableSpecs): void;
+
+  /**
    * Alters the DBAL create table options.
    *
    * @param \Doctrine\DBAL\Schema\Table $dbal_table

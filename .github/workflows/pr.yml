@@ -43,11 +43,10 @@ jobs:
       fail-fast: false
       matrix:
         php-version:
-          - "8.1"
+          - "8.2"
         test-args:
-          - "-v modules/contrib/drudbal/tests/src/Kernel/dbal/SchemaBisTest.php"
-          - "-v modules/contrib/drudbal/tests/src/Kernel/dbal/SchemaTest.php"
-#          - "--group Database"
+#          - "-v modules/contrib/drudbal/tests/src/Kernel/dbal/SchemaTest.php"
+          - "--group Database"
 #          - "--group Entity"
 #          - "--group Cache,Config"
 #          - "--group field,Field"
@@ -84,10 +83,6 @@ jobs:
         git -C drudbal_staging checkout -b test-run-branch
         composer config repositories.test-run '{"type": "path", "url": "drudbal_staging", "options": {"symlink": false}}'
         composer require "mondrake/drudbal:dev-test-run-branch" --no-progress --ansi
-
-    - name: Patch doctrine/dbal
-      run: |
-        curl https://patch-diff.githubusercontent.com/raw/mondrake/dbal/pull/6.diff | patch -d vendor/doctrine/dbal -p1
 
     - name: Create Oracle schema
       run: |
