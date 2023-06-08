@@ -9,7 +9,7 @@ on:
     - cron: "0 6 * * 2"
 
 env:
-    DRUDBAL_DRUPAL_VERSION: "10.1.x"
+    DRUDBAL_DRUPAL_VERSION: "11.x"
 
 jobs:
 

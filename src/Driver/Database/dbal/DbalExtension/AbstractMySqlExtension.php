@@ -204,6 +204,7 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
    * {@inheritdoc}
    */
   public function delegateNextId(int $existing_id = 0): int {
+    @trigger_error(__METHOD__ . '() is deprecated in drupal:10.2.0 and is removed from drupal:11.0.0. Modules should use instead the keyvalue storage for the last used id. See https://www.drupal.org/node/3349345', E_USER_DEPRECATED);
     $this->connection->query('INSERT INTO {sequences} () VALUES ()');
     $new_id = $this->connection->lastInsertId();
     // This should only happen after an import or similar event.
@@ -227,6 +228,7 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
    * Cleanup next ID.
    */
   protected function nextIdDelete() {
+    @trigger_error(__METHOD__ . '() is deprecated in drupal:10.2.0 and is removed from drupal:11.0.0. Modules should use instead the keyvalue storage for the last used id. See https://www.drupal.org/node/3349345', E_USER_DEPRECATED);
     // While we want to clean up the table to keep it up from occupying too
     // much storage and memory, we must keep the highest value in the table
     // because InnoDB uses an in-memory auto-increment counter as long as the

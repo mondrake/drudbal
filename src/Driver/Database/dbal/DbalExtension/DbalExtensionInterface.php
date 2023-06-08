@@ -281,6 +281,8 @@ interface DbalExtensionInterface {
    * @return int
    *   An integer number larger than any number returned by earlier calls and
    *   also larger than the $existing_id if one was passed in.
+   *
+   * @deprecated
    */
   public function delegateNextId(int $existing_id = 0): int;
 

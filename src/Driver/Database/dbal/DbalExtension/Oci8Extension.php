@@ -223,6 +223,7 @@ class Oci8Extension extends AbstractExtension {
    * {@inheritdoc}
    */
   public function delegateNextId(int $existing_id = 0): int {
+    @trigger_error(__METHOD__ . '() is deprecated in drupal:10.2.0 and is removed from drupal:11.0.0. Modules should use instead the keyvalue storage for the last used id. See https://www.drupal.org/node/3349345', E_USER_DEPRECATED);
     // @codingStandardsIgnoreLine
     $trn = $this->connection->startTransaction();
     $stmt = $this->connection->prepareStatement('UPDATE {sequences} SET [value] = GREATEST([value], :existing_id) + 1', [], TRUE);
