@@ -692,4 +692,12 @@ class Connection extends DatabaseConnection {
       $visitor->getTypes(),
     ];
   }
+
+  public function query($query, array $args = [], $options = []) {
+    if ($this->dbalExtension->getDebugging()) {
+      dump([$query, $args]);
+    }
+    return parent::query($query, $args, $options);
+  }
+
 }
