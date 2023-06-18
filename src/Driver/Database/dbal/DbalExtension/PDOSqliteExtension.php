@@ -898,7 +898,7 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateChangeField(&$primary_key_processed_by_extension, DbalSchema $dbal_schema, $drupal_table_name, $field_name, $field_new_name, array $drupal_field_new_specs, array $keys_new_specs, array $dbal_column_options) {
+  public function delegateChangeField(bool &$primary_key_processed_by_extension, bool &$indexes_processed_by_extension, DbalSchema $dbal_schema, string $drupal_table_name, string $field_name, string $field_new_name, array $drupal_field_new_specs, array $keys_new_specs, array $dbal_column_options) {
     $old_schema = $this->buildTableSpecFromDbalSchema($dbal_schema, $drupal_table_name);
     $new_schema = $old_schema;
 
@@ -934,6 +934,7 @@ class PDOSqliteExtension extends AbstractExtension {
 
     $this->alterTable($drupal_table_name, $old_schema, $new_schema, $mapping);
     $primary_key_processed_by_extension = TRUE;
+    $indexes_processed_by_extension = TRUE;
     return TRUE;
   }
 

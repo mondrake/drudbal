@@ -718,7 +718,8 @@ class Schema extends DatabaseSchema {
     // fallback to platform specific syntax.
     // @see https://github.com/doctrine/dbal/issues/1033
     $primary_key_processed_by_extension = FALSE;
-    if (!$this->dbalExtension->delegateChangeField($primary_key_processed_by_extension, $this->dbalSchema(), $table, $field, $field_new, $spec, $keys_new, $dbal_column_options)) {
+    $indexes_processed_by_extension = FALSE;
+    if (!$this->dbalExtension->delegateChangeField($primary_key_processed_by_extension, $indexes_processed_by_extension, $this->dbalSchema(), $table, $field, $field_new, $spec, $keys_new, $dbal_column_options)) {
       return;
     }
     // We need to reload the schema at next get.
@@ -732,14 +733,14 @@ class Schema extends DatabaseSchema {
     }
 
     // Add unique keys.
-    if (!empty($keys_new['unique keys'])) {
+    if (!empty($keys_new['unique keys']) && !$indexes_processed_by_extension) {
       foreach ($keys_new['unique keys'] as $key => $fields) {
         $this->addUniqueKey($table, $key, $fields);
       }
     }
 
     // Add indexes.
-    if (!empty($keys_new['indexes'])) {
+    if (!empty($keys_new['indexes']) && !$indexes_processed_by_extension) {
       foreach ($keys_new['indexes'] as $index => $fields) {
         $this->addIndex($table, $index, $fields, $keys_new);
       }
