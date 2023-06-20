@@ -357,6 +357,7 @@ class Schema extends DatabaseSchema {
    * {@inheritdoc}
    */
   public function addField($table, $field, $spec, $keys_new = []) {
+$this->dbalExtension->setDebug(TRUE);
     if (!$this->tableExists($table)) {
       throw new SchemaObjectDoesNotExistException(t("Cannot add field @table.@field: table doesn't exist.", ['@field' => $field, '@table' => $table]));
     }
@@ -431,6 +432,7 @@ class Schema extends DatabaseSchema {
       $spec['not null'] = TRUE;
       $this->changeField($table, $field, $field, $spec);
     }
+$this->dbalExtension->setDebug(FALSE);
   }
 
   /**
@@ -695,6 +697,7 @@ class Schema extends DatabaseSchema {
    * {@inheritdoc}
    */
   public function changeField($table, $field, $field_new, $spec, $keys_new = []) {
+$this->dbalExtension->setDebug(TRUE);
     if (!$this->fieldExists($table, $field)) {
       throw new SchemaObjectDoesNotExistException(t("Cannot change the definition of field @table.@name: field doesn't exist.", [
         '@table' => $table,
@@ -746,6 +749,7 @@ class Schema extends DatabaseSchema {
         $this->addIndex($table, $index, $fields, $keys_new);
       }
     }
+$this->dbalExtension->setDebug(FALSE);
   }
 
   /**
