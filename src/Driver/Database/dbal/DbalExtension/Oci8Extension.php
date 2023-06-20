@@ -810,7 +810,7 @@ PLSQL
   /**
    * {@inheritdoc}
    */
-  public function delegateAddField(&$primary_key_processed_by_extension, DbalSchema $dbal_schema, $drupal_table_name, $field_name, array $drupal_field_specs, array $keys_new_specs, array $dbal_column_options) {
+  public function delegateAddField(bool &$primary_key_processed_by_extension, bool &$indexes_processed_by_extension, DbalSchema $dbal_schema, string $drupal_table_name, string $field_name, array $drupal_field_specs, array $keys_new_specs, array $dbal_column_options) {
     $primary_key_processed_by_extension = TRUE;
 
     $unquoted_db_table = $this->connection->getPrefixedTableName($drupal_table_name, FALSE);

@@ -812,7 +812,7 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateAddField(&$primary_key_processed_by_extension, DbalSchema $dbal_schema, $drupal_table_name, $field_name, array $drupal_field_specs, array $keys_new_specs, array $dbal_column_options) {
+  public function delegateAddField(bool &$primary_key_processed_by_extension, bool &$indexes_processed_by_extension, DbalSchema $dbal_schema, string $drupal_table_name, string $field_name, array $drupal_field_specs, array $keys_new_specs, array $dbal_column_options) {
     // SQLite doesn't have a full-featured ALTER TABLE statement. It only
     // supports adding new fields to a table, in some simple cases. In most
     // cases, we have to create a new table and copy the data over.
@@ -859,6 +859,7 @@ class PDOSqliteExtension extends AbstractExtension {
         }
       }
       $this->alterTable($drupal_table_name, $old_schema, $new_schema, $mapping);
+      $indexes_processed_by_extension = TRUE;
     }
     return TRUE;
   }

@@ -628,7 +628,7 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateAddField(&$primary_key_processed_by_extension, DbalSchema $dbal_schema, $drupal_table_name, $field_name, array $drupal_field_specs, array $keys_new_specs, array $dbal_column_options) {
+  public function delegateAddField(bool &$primary_key_processed_by_extension, bool &$indexes_processed_by_extension, DbalSchema $dbal_schema, string $drupal_table_name, string $field_name, array $drupal_field_specs, array $keys_new_specs, array $dbal_column_options) {
     if (!empty($keys_new_specs['primary key']) && isset($drupal_field_specs['type']) && $drupal_field_specs['type'] == 'serial') {
       $sql = 'ALTER TABLE {' . $drupal_table_name . '} ADD `' . $field_name . '` ' . $dbal_column_options['columnDefinition'];
       $keys_sql = $this->createKeysSql(['primary key' => $keys_new_specs['primary key']]);
