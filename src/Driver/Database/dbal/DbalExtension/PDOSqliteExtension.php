@@ -15,6 +15,7 @@ use Drupal\Core\Database\IntegrityConstraintViolationException;
 use Drupal\drudbal\Driver\Database\dbal\Connection as DruDbalConnection;
 use Drupal\drudbal\Driver\Database\dbal\Statement\PrefetchingStatementWrapper;
 use Drupal\sqlite\Driver\Database\sqlite\Connection as SqliteConnectionBase;
+use Symfony\Component\Filesystem\Exception\IOException;
 use Symfony\Component\Filesystem\Filesystem;
 
 /**
@@ -340,8 +341,13 @@ class PDOSqliteExtension extends AbstractExtension {
   public function preCreateDatabase($database_name) {
     // Verify the database is writable.
     $db_directory = new \SplFileInfo(dirname($database_name));
-    if (!$db_directory->isDir() && !(new Filesystem())->mkdir($db_directory->getPathName(), 0755)) {
-      throw new DatabaseNotFoundException('Unable to create database directory ' . $db_directory->getPathName());
+    if (!$db_directory->isDir()) {
+      try {
+        (new Filesystem())->mkdir($db_directory->getPathName(), 0755);
+      }
+      catch (IOException $e) {
+        throw new DatabaseNotFoundException('Unable to create database directory ' . $db_directory->getPathName(), $e->getCode(), $e);
+      }
     }
     return $this;
   }
@@ -357,6 +363,7 @@ class PDOSqliteExtension extends AbstractExtension {
    * {@inheritdoc}
    */
   public function delegateNextId(int $existing_id = 0): int {
+    @trigger_error(__METHOD__ . '() is deprecated in drupal:10.2.0 and is removed from drupal:11.0.0. Modules should use instead the keyvalue storage for the last used id. See https://www.drupal.org/node/3349345', E_USER_DEPRECATED);
 
     // @codingStandardsIgnoreLine
     $trn = $this->connection->startTransaction();
@@ -805,7 +812,7 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateAddField(&$primary_key_processed_by_extension, DbalSchema $dbal_schema, $drupal_table_name, $field_name, array $drupal_field_specs, array $keys_new_specs, array $dbal_column_options) {
+  public function delegateAddField(bool &$primary_key_processed_by_extension, bool &$indexes_processed_by_extension, DbalSchema $dbal_schema, string $drupal_table_name, string $field_name, array $drupal_field_specs, array $keys_new_specs, array $dbal_column_options) {
     // SQLite doesn't have a full-featured ALTER TABLE statement. It only
     // supports adding new fields to a table, in some simple cases. In most
     // cases, we have to create a new table and copy the data over.
@@ -852,6 +859,7 @@ class PDOSqliteExtension extends AbstractExtension {
         }
       }
       $this->alterTable($drupal_table_name, $old_schema, $new_schema, $mapping);
+      $indexes_processed_by_extension = TRUE;
     }
     return TRUE;
   }
@@ -891,7 +899,7 @@ class PDOSqliteExtension extends AbstractExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateChangeField(&$primary_key_processed_by_extension, DbalSchema $dbal_schema, $drupal_table_name, $field_name, $field_new_name, array $drupal_field_new_specs, array $keys_new_specs, array $dbal_column_options) {
+  public function delegateChangeField(bool &$primary_key_processed_by_extension, bool &$indexes_processed_by_extension, DbalSchema $dbal_schema, string $drupal_table_name, string $field_name, string $field_new_name, array $drupal_field_new_specs, array $keys_new_specs, array $dbal_column_options) {
     $old_schema = $this->buildTableSpecFromDbalSchema($dbal_schema, $drupal_table_name);
     $new_schema = $old_schema;
 
@@ -927,6 +935,7 @@ class PDOSqliteExtension extends AbstractExtension {
 
     $this->alterTable($drupal_table_name, $old_schema, $new_schema, $mapping);
     $primary_key_processed_by_extension = TRUE;
+    $indexes_processed_by_extension = TRUE;
     return TRUE;
   }
 

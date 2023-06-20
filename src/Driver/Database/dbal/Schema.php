@@ -390,9 +390,10 @@ class Schema extends DatabaseSchema {
 
     // Delegate to DBAL extension.
     $primary_key_processed_by_extension = FALSE;
+    $indexes_processed_by_extension = FALSE;
     $dbal_type = $this->getDbalColumnType($spec);
     $dbal_column_options = $this->getDbalColumnOptions('addField', $field, $dbal_type, $spec);
-    if ($this->dbalExtension->delegateAddField($primary_key_processed_by_extension, $this->dbalSchema(), $table, $field, $spec, $keys_new, $dbal_column_options)) {
+    if ($this->dbalExtension->delegateAddField($primary_key_processed_by_extension, $indexes_processed_by_extension, $this->dbalSchema(), $table, $field, $spec, $keys_new, $dbal_column_options)) {
       $this->dbalSchemaForceReload();
     }
     else {
@@ -410,14 +411,14 @@ class Schema extends DatabaseSchema {
     }
 
     // Add unique keys.
-    if (!empty($keys_new['unique keys'])) {
+    if (!empty($keys_new['unique keys']) && !$indexes_processed_by_extension) {
       foreach ($keys_new['unique keys'] as $key => $fields) {
         $this->addUniqueKey($table, $key, $fields);
       }
     }
 
     // Add indexes.
-    if (!empty($keys_new['indexes'])) {
+    if (!empty($keys_new['indexes']) && !$indexes_processed_by_extension) {
       foreach ($keys_new['indexes'] as $index => $fields) {
         $this->addIndex($table, $index, $fields, $keys_new);
       }
@@ -718,7 +719,8 @@ class Schema extends DatabaseSchema {
     // fallback to platform specific syntax.
     // @see https://github.com/doctrine/dbal/issues/1033
     $primary_key_processed_by_extension = FALSE;
-    if (!$this->dbalExtension->delegateChangeField($primary_key_processed_by_extension, $this->dbalSchema(), $table, $field, $field_new, $spec, $keys_new, $dbal_column_options)) {
+    $indexes_processed_by_extension = FALSE;
+    if (!$this->dbalExtension->delegateChangeField($primary_key_processed_by_extension, $indexes_processed_by_extension, $this->dbalSchema(), $table, $field, $field_new, $spec, $keys_new, $dbal_column_options)) {
       return;
     }
     // We need to reload the schema at next get.
@@ -732,14 +734,14 @@ class Schema extends DatabaseSchema {
     }
 
     // Add unique keys.
-    if (!empty($keys_new['unique keys'])) {
+    if (!empty($keys_new['unique keys']) && !$indexes_processed_by_extension) {
       foreach ($keys_new['unique keys'] as $key => $fields) {
         $this->addUniqueKey($table, $key, $fields);
       }
     }
 
     // Add indexes.
-    if (!empty($keys_new['indexes'])) {
+    if (!empty($keys_new['indexes']) && !$indexes_processed_by_extension) {
       foreach ($keys_new['indexes'] as $index => $fields) {
         $this->addIndex($table, $index, $fields, $keys_new);
       }
