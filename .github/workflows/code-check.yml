@@ -9,7 +9,7 @@ on:
     - cron: "0 6 * * 2"
 
 env:
-    DRUDBAL_DRUPAL_VERSION: "10.0.x"
+    DRUDBAL_DRUPAL_VERSION: "11.x"
 
 jobs:
 
@@ -48,7 +48,7 @@ jobs:
       run: |
         composer install --no-progress --ansi
         composer config --no-plugins allow-plugins.composer/package-versions-deprecated true
-        composer require --dev --ansi phpstan/phpstan-deprecation-rules
+        composer require --dev --ansi -W phpstan/phpstan-deprecation-rules
 
     - name: Composer require DruDbal from local staging
       run: |

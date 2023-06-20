@@ -281,6 +281,8 @@ interface DbalExtensionInterface {
    * @return int
    *   An integer number larger than any number returned by earlier calls and
    *   also larger than the $existing_id if one was passed in.
+   *
+   * @deprecated
    */
   public function delegateNextId(int $existing_id = 0): int;
 
@@ -686,6 +688,16 @@ interface DbalExtensionInterface {
   public function delegateFieldExists(&$result, $drupal_table_name, $field_name);
 
   /**
+   * Invoked after DBAL create table.
+   *
+   * @param string $drupalTableName
+   *   A string with the Drupal name of the table.
+   * @param array $drupalTableSpecs
+   *   A Drupal Schema API table definition array. Passed by reference.
+   */
+  public function postCreateTable(string $drupalTableName, array $drupalTableSpecs): void;
+
+  /**
    * Alters the DBAL create table options.
    *
    * @param \Doctrine\DBAL\Schema\Table $dbal_table
@@ -821,6 +833,9 @@ interface DbalExtensionInterface {
    * @param bool $primary_key_processed_by_extension
    *   Passed by reference. TRUE if the extension also processed adding the
    *   primary key for the table, FALSE otherwise.
+   * @param bool $indexes_processed_by_extension
+   *   Passed by reference. TRUE if the extension also processed adding the
+   *   indexes for the table, FALSE otherwise.
    * @param \Doctrine\DBAL\Schema\Schema $dbal_schema
    *   The DBAL schema object.
    * @param string $drupal_table_name
@@ -842,7 +857,7 @@ interface DbalExtensionInterface {
    *   TRUE if the extension added the field, FALSE if it has to be handled
    *   by DBAL.
    */
-  public function delegateAddField(&$primary_key_processed_by_extension, DbalSchema $dbal_schema, $drupal_table_name, $field_name, array $drupal_field_specs, array $keys_new_specs, array $dbal_column_options);
+  public function delegateAddField(bool &$primary_key_processed_by_extension, bool &$indexes_processed_by_extension, DbalSchema $dbal_schema, string $drupal_table_name, string $field_name, array $drupal_field_specs, array $keys_new_specs, array $dbal_column_options);
 
   /**
    * Initializes a field newly added to a table.
@@ -880,6 +895,9 @@ interface DbalExtensionInterface {
    * @param bool $primary_key_processed_by_extension
    *   Passed by reference. TRUE if the extension also processed adding the
    *   primary key for the table, FALSE otherwise.
+   * @param bool $indexes_processed_by_extension
+   *   Passed by reference. TRUE if the extension also processed adding the
+   *   indexes for the table, FALSE otherwise.
    * @param \Doctrine\DBAL\Schema\Schema $dbal_schema
    *   The DBAL schema object.
    * @param string $drupal_table_name
@@ -902,7 +920,7 @@ interface DbalExtensionInterface {
    *   TRUE if the extension changed the field, FALSE if it has to be handled
    *   by DBAL.
    */
-  public function delegateChangeField(&$primary_key_processed_by_extension, DbalSchema $dbal_schema, $drupal_table_name, $field_name, $field_new_name, array $drupal_field_new_specs, array $keys_new_specs, array $dbal_column_options);
+  public function delegateChangeField(bool &$primary_key_processed_by_extension, bool &$indexes_processed_by_extension, DbalSchema $dbal_schema, string $drupal_table_name, string $field_name, string $field_new_name, array $drupal_field_new_specs, array $keys_new_specs, array $dbal_column_options);
 
   /**
    * Checks if an index exists.

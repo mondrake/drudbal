@@ -150,7 +150,7 @@ class Connection extends DatabaseConnection {
       if (isset($this->dbTables['{' . $table . '}'])) {
         continue;
       }
-      $this->dbTables['{' . $table . '}'] = $this->identifierQuotes[0] . $this->dbalExtension->getDbTableName($this->tablePrefix(), $table) . $this->identifierQuotes[1];
+      $this->dbTables['{' . $table . '}'] = $this->identifierQuotes[0] . $this->dbalExtension->getDbTableName($this->getPrefix(), $table) . $this->identifierQuotes[1];
     }
     return str_replace(array_keys($this->dbTables), array_values($this->dbTables), $sql);
   }
@@ -364,6 +364,7 @@ class Connection extends DatabaseConnection {
    * {@inheritdoc}
    */
   public function nextId($existing_id = 0) {
+    @trigger_error('Drupal\Core\Database\Connection::nextId() is deprecated in drupal:10.2.0 and is removed from drupal:11.0.0. Modules should use instead the keyvalue storage for the last used id. See https://www.drupal.org/node/3349345', E_USER_DEPRECATED);
     $id = is_numeric($existing_id ?? 0) ? ($existing_id ?? 0) : 0;
     return $this->dbalExtension->delegateNextId($id);
   }
@@ -691,4 +692,12 @@ class Connection extends DatabaseConnection {
       $visitor->getTypes(),
     ];
   }
+
+  public function query($query, array $args = [], $options = []) {
+    if ($this->dbalExtension->getDebugging()) {
+      dump([$query, $args]);
+    }
+    return parent::query($query, $args, $options);
+  }
+
 }

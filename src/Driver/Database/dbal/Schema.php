@@ -128,6 +128,9 @@ class Schema extends DatabaseSchema {
         $this->addIndex($name, $index, $fields, $table);
       }
     }
+
+    // Post-create.
+    $this->dbalExtension->postCreateTable($name, $table);
   }
 
   /**
@@ -387,9 +390,10 @@ class Schema extends DatabaseSchema {
 
     // Delegate to DBAL extension.
     $primary_key_processed_by_extension = FALSE;
+    $indexes_processed_by_extension = FALSE;
     $dbal_type = $this->getDbalColumnType($spec);
     $dbal_column_options = $this->getDbalColumnOptions('addField', $field, $dbal_type, $spec);
-    if ($this->dbalExtension->delegateAddField($primary_key_processed_by_extension, $this->dbalSchema(), $table, $field, $spec, $keys_new, $dbal_column_options)) {
+    if ($this->dbalExtension->delegateAddField($primary_key_processed_by_extension, $indexes_processed_by_extension, $this->dbalSchema(), $table, $field, $spec, $keys_new, $dbal_column_options)) {
       $this->dbalSchemaForceReload();
     }
     else {
@@ -407,14 +411,14 @@ class Schema extends DatabaseSchema {
     }
 
     // Add unique keys.
-    if (!empty($keys_new['unique keys'])) {
+    if (!empty($keys_new['unique keys']) && !$indexes_processed_by_extension) {
       foreach ($keys_new['unique keys'] as $key => $fields) {
         $this->addUniqueKey($table, $key, $fields);
       }
     }
 
     // Add indexes.
-    if (!empty($keys_new['indexes'])) {
+    if (!empty($keys_new['indexes']) && !$indexes_processed_by_extension) {
       foreach ($keys_new['indexes'] as $index => $fields) {
         $this->addIndex($table, $index, $fields, $keys_new);
       }
@@ -691,7 +695,6 @@ class Schema extends DatabaseSchema {
    * {@inheritdoc}
    */
   public function changeField($table, $field, $field_new, $spec, $keys_new = []) {
-//global $xxx; if ($xxx) dump([$table, $field, $field_new, $spec, $keys_new]);
     if (!$this->fieldExists($table, $field)) {
       throw new SchemaObjectDoesNotExistException(t("Cannot change the definition of field @table.@name: field doesn't exist.", [
         '@table' => $table,
@@ -716,7 +719,8 @@ class Schema extends DatabaseSchema {
     // fallback to platform specific syntax.
     // @see https://github.com/doctrine/dbal/issues/1033
     $primary_key_processed_by_extension = FALSE;
-    if (!$this->dbalExtension->delegateChangeField($primary_key_processed_by_extension, $this->dbalSchema(), $table, $field, $field_new, $spec, $keys_new, $dbal_column_options)) {
+    $indexes_processed_by_extension = FALSE;
+    if (!$this->dbalExtension->delegateChangeField($primary_key_processed_by_extension, $indexes_processed_by_extension, $this->dbalSchema(), $table, $field, $field_new, $spec, $keys_new, $dbal_column_options)) {
       return;
     }
     // We need to reload the schema at next get.
@@ -730,14 +734,14 @@ class Schema extends DatabaseSchema {
     }
 
     // Add unique keys.
-    if (!empty($keys_new['unique keys'])) {
+    if (!empty($keys_new['unique keys']) && !$indexes_processed_by_extension) {
       foreach ($keys_new['unique keys'] as $key => $fields) {
         $this->addUniqueKey($table, $key, $fields);
       }
     }
 
     // Add indexes.
-    if (!empty($keys_new['indexes'])) {
+    if (!empty($keys_new['indexes']) && !$indexes_processed_by_extension) {
       foreach ($keys_new['indexes'] as $index => $fields) {
         $this->addIndex($table, $index, $fields, $keys_new);
       }
@@ -813,23 +817,16 @@ class Schema extends DatabaseSchema {
    * {@inheritdoc}
    */
   public function fieldExists($table, $column) {
-//global $xxx; if ($xxx) dump(['fieldExists', $table, $column]);
     $result = NULL;
     if ($this->dbalExtension->delegateFieldExists($result, $table, $column)) {
-//if ($xxx) dump(['fieldExists delegated', $result]);
       return $result;
     }
 
     // DBAL extension did not pick up, proceed with DBAL.
     if (!$this->tableExists($table)) {
-//if ($xxx) dump(['fieldExists notableexist']);
       return FALSE;
     }
-/*if ($xxx) dump([
-  'fieldExists list',
-  $this->dbalExtension->getDbFieldName($column, FALSE),
-  array_keys($this->dbalSchemaManager->listTableColumns($this->connection()->getPrefixedTableName($table)))
-]);*/
+
     // Column name must not be quoted here.
     return in_array(
       $this->dbalExtension->getDbFieldName($column, FALSE),
@@ -924,7 +921,7 @@ class Schema extends DatabaseSchema {
   public function findTables($table_expression) {
     $tables = [];
     foreach ($this->dbalExtension->delegateListTableNames() as $table_name) {
-      $unprefixed_table_name = $this->dbalExtension->getDrupalTableName($this->connection()->tablePrefix(), $table_name);
+      $unprefixed_table_name = $this->dbalExtension->getDrupalTableName($this->connection()->getPrefix(), $table_name);
       if ($unprefixed_table_name !== NULL && $unprefixed_table_name !== '') {
         $tables[$unprefixed_table_name] = $unprefixed_table_name;
       }
