@@ -888,7 +888,13 @@ $this->dbalExtension->setDebugging(FALSE);
       if ($this->dbalExtension->getDebugging()) {
         dump($sql);
       }
-      $this->connection()->getDbalConnection()->executeStatement($sql);
+      try {
+        $this->connection()->getDbalConnection()->executeStatement($sql);
+      }
+      catch (\Exception $e) {
+        dump($e);
+        throw $e;
+      }
     }
     $this->dbalSetCurrentSchema($to_schema);
     return TRUE;
