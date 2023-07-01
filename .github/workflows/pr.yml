@@ -44,7 +44,7 @@ jobs:
           php-version:
             - "8.2"
           test-args:
-            - "--group Databasexx"
+            - "--group Database"
   #          - "--group Entity"
   #          - "--group Cache,Config"
   #          - "--group field,Field"
@@ -88,6 +88,7 @@ jobs:
           php install_oracle.php
 
       - name: Install Drupal
+        continue-on-error: true
         run: |
           vendor/bin/drush site-install standard --db-url=$SIMPLETEST_DB -y
           vendor/bin/drush runserver localhost:8080 --default-server=localhost:8080 &

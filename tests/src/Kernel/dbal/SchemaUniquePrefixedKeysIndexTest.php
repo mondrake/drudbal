@@ -7,7 +7,7 @@ use Drupal\KernelTests\Core\Database\SchemaUniquePrefixedKeysIndexTestBase;
 /**
  * Tests adding UNIQUE keys to tables.
  *
- * @group Databasexx
+ * @group Database
  */
 class SchemaUniquePrefixedKeysIndexTest extends SchemaUniquePrefixedKeysIndexTestBase {
 
