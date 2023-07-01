@@ -3,6 +3,7 @@
 namespace Drupal\drudbal\Driver\Database\dbal;
 
 use Doctrine\DBAL\Exception as DbalException;
+use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
 use Doctrine\DBAL\Platforms\AbstractPlatform as DbalAbstractPlatform;
 use Doctrine\DBAL\Schema\AbstractSchemaManager as DbalAbstractSchemaManager;
 use Doctrine\DBAL\Schema\Column as DbalColumn;
@@ -884,7 +885,14 @@ class Schema extends DatabaseSchema {
       if ($this->dbalExtension->getDebugging()) {
         dump($sql);
       }
-      $this->connection()->getDbalConnection()->executeStatement($sql);
+      try {
+        $this->connection()->getDbalConnection()->executeStatement($sql);
+      }
+      catch (DbalDriverException $e) {
+        $exceptionHandler = $this->connection()->exceptionHandler();
+        assert($exceptionHandler instanceOf ExceptionHandler);
+        $exceptionHandler->handleClientExecuteStatementException($e, $sql);
+      }
     }
     $this->dbalSetCurrentSchema($to_schema);
     return TRUE;
