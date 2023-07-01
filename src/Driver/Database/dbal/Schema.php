@@ -893,7 +893,7 @@ $this->dbalExtension->setDebugging(FALSE);
       }
       catch (\Exception $e) {
         dump($e);
-        throw $e;
+        $this->connection()->exceptionHandler()->handleClientExecuteStatementException($e, $sql);
       }
     }
     $this->dbalSetCurrentSchema($to_schema);

@@ -287,7 +287,7 @@ interface DbalExtensionInterface {
   public function delegateNextId(int $existing_id = 0): int;
 
   /**
-   * Handles a DbalExceptions thrown by Connection::query().
+   * Handles DbalExceptions thrown by Drupal's Connection::query().
    *
    * @param string $query
    *   A string containing the failing SQL query.
@@ -306,6 +306,18 @@ interface DbalExtensionInterface {
    *   For any other error.
    */
   public function delegateQueryExceptionProcess($query, array $args, array $options, $message, DbalDriverException|DatabaseExceptionWrapper $e);
+
+  /**
+   * Handles exceptions thrown by DBAL Connection::executeStatement().
+   *
+   * @param DbalDriverException $e
+   *   The exception thrown by query().
+   * @param string $sql
+   *   A string containing the failing SQL query.
+   * @param string $message
+   *   The message to be re-thrown.
+   */
+  public function delegateClientExecuteStatementException(DbalDriverException $e, string $sql, string $message): void;
 
   /**
    * Runs a limited-range query.

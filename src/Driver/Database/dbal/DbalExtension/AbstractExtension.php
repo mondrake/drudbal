@@ -63,6 +63,10 @@ class AbstractExtension implements DbalExtensionInterface {
     throw new \LogicException("Method " . __METHOD__ . "() not implemented.");
   }
 
+  public function delegateClientExecuteStatementException(DbalDriverException $e, string $sql, string $message): void {
+    throw new \LogicException("Method " . __METHOD__ . "() not implemented.");
+  }
+
   /**
    * {@inheritdoc}
    */

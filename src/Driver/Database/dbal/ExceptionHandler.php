@@ -38,4 +38,17 @@ class ExceptionHandler extends DatabaseExceptionHandler {
     $this->connection->getDbalExtension()->delegateQueryExceptionProcess($query_string, $arguments, $options, $message, $exception);
   }
 
+  /**
+   * Handles exceptions thrown by DBAL Connection::executeStatement().
+   *
+   * @param DbalDriverException $e
+   *   The exception thrown by executeStatement().
+   * @param string $sql
+   *   A string containing the failing SQL query.
+   */
+  public function handleClientExecuteStatementException(DbalDriverException $exception, string $sql): void {
+    $message = $exception->getMessage() . ": " . $sql . ";";
+    $this->connection->getDbalExtension()->delegateClientExecuteStatementException($exception, $sql, $message);
+  }
+
 }

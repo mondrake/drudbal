@@ -295,6 +295,20 @@ class Oci8Extension extends AbstractExtension {
     }
   }
 
+  public function delegateClientExecuteStatementException(DbalDriverException $e, string $sql, string $message): void  {
+    switch ($e->getCode()) {
+      // ORA-01408: such column list already indexed.
+      case 1408:
+        // Just return, Oracle detected that an index with same columns exists
+        // already
+        return;
+
+      default:
+        throw new DatabaseExceptionWrapper($message, $e->getCode(), $e);
+
+    }
+  }
+
   /**
    * {@inheritdoc}
    */
