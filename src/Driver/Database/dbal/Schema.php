@@ -3,6 +3,7 @@
 namespace Drupal\drudbal\Driver\Database\dbal;
 
 use Doctrine\DBAL\Exception as DbalException;
+use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
 use Doctrine\DBAL\Platforms\AbstractPlatform as DbalAbstractPlatform;
 use Doctrine\DBAL\Schema\AbstractSchemaManager as DbalAbstractSchemaManager;
 use Doctrine\DBAL\Schema\Column as DbalColumn;
@@ -891,8 +892,7 @@ $this->dbalExtension->setDebugging(FALSE);
       try {
         $this->connection()->getDbalConnection()->executeStatement($sql);
       }
-      catch (\Exception $e) {
-        dump($e);
+      catch (DbalDriverException $e) {
         $exceptionHandler = $this->connection()->exceptionHandler();
         assert($exceptionHandler instanceOf ExceptionHandler);
         $exceptionHandler->handleClientExecuteStatementException($e, $sql);

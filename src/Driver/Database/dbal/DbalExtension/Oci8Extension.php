@@ -297,6 +297,12 @@ class Oci8Extension extends AbstractExtension {
 
   public function delegateClientExecuteStatementException(DbalDriverException $e, string $sql, string $message): void  {
     switch ($e->getCode()) {
+      // ORA-00904: "X"."Y": invalid identifier.
+      case 904:
+        // Just return, it's Drupal that didn't escape the identifier.
+        // @todo more escaping needed in Drupal.
+        return;
+
       // ORA-01408: such column list already indexed.
       case 1408:
         // Just return, Oracle detected that an index with same columns exists
