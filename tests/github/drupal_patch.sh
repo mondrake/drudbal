@@ -12,3 +12,6 @@ curl https://git.drupalcode.org/project/drupal/-/merge_requests/3676.diff | git 
 
 #3355841 Allow DriverSpecificSchemaTestBase::testChangePrimaryKeyToSerial to execute for non-core drivers
 curl https://www.drupal.org/files/issues/2023-04-23/3355841-2.patch | git apply -v
+
+#3371751 Fix HelpSearch queries to ensure db identifiers are properly escaped
+curl https://git.drupalcode.org/project/drupal/-/merge_requests/4301.diff | git apply -v
