@@ -41,7 +41,7 @@ class ExceptionHandler extends DatabaseExceptionHandler {
   /**
    * Handles exceptions thrown by DBAL Connection::executeStatement().
    *
-   * @param DbalDriverException $e
+   * @param DbalDriverException $exception
    *   The exception thrown by executeStatement().
    * @param string $sql
    *   A string containing the failing SQL query.
