@@ -9,6 +9,3 @@ git apply -v ./drudbal_staging/tests/github/2992274-local.patch
 
 #3347497 Introduce a FetchModeTrait to allow emulating PDO fetch modes
 curl https://git.drupalcode.org/project/drupal/-/merge_requests/3676.diff | git apply -v
-
-#3355841 Allow DriverSpecificSchemaTestBase::testChangePrimaryKeyToSerial to execute for non-core drivers
-curl https://www.drupal.org/files/issues/2023-04-23/3355841-2.patch | git apply -v
