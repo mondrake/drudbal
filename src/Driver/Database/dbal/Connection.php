@@ -684,7 +684,7 @@ class Connection extends DatabaseConnection {
   }
 
   public function exceptionHandler() {
-    return new ExceptionHandler();
+    return new ExceptionHandler($this);
   }
 
   public function select($table, $alias = NULL, array $options = []) {
@@ -724,10 +724,16 @@ class Connection extends DatabaseConnection {
     return $schema;
   }
 
+  /**
+   * @todo remove in D11
+   */
   public function condition($conjunction) {
     return new Condition($conjunction);
   }
 
+  /**
+   * @todo remove in D11
+   */
   public function startTransaction($name = '') {
     return new Transaction($this, $name);
   }
