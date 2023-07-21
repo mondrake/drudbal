@@ -2,12 +2,11 @@
 
 namespace Drupal\drudbal\Driver\Database\dbal;
 
-use Drupal\Core\Utility\Error;
 use Composer\InstalledVersions;
 use Doctrine\DBAL\Connection as DbalConnection;
 use Doctrine\DBAL\ConnectionException as DbalConnectionException;
-use Doctrine\DBAL\Exception as DbalException;
 use Doctrine\DBAL\DriverManager as DbalDriverManager;
+use Doctrine\DBAL\Exception as DbalException;
 use Doctrine\DBAL\Exception\DriverException as DbalDriverException;
 use Doctrine\DBAL\ExpandArrayParameters;
 use Doctrine\DBAL\Platforms\AbstractPlatform as DbalAbstractPlatform;
@@ -19,11 +18,14 @@ use Drupal\Core\Database\ConnectionNotDefinedException;
 use Drupal\Core\Database\Database;
 use Drupal\Core\Database\DatabaseExceptionWrapper;
 use Drupal\Core\Database\DatabaseNotFoundException;
+use Drupal\Core\Database\Query\Condition;
 use Drupal\Core\Database\StatementInterface;
+use Drupal\Core\Database\Transaction;
 use Drupal\Core\Database\TransactionCommitFailedException;
 use Drupal\Core\Database\TransactionNameNonUniqueException;
 use Drupal\Core\Database\TransactionNoActiveException;
 use Drupal\Core\Database\TransactionOutOfOrderException;
+use Drupal\Core\Utility\Error;
 use Drupal\drudbal\Driver\Database\dbal\DbalExtension\DbalExtensionInterface;
 use Drupal\drudbal\Driver\Database\dbal\DbalExtension\MysqliExtension;
 use Drupal\drudbal\Driver\Database\dbal\DbalExtension\Oci8Extension;
@@ -184,25 +186,6 @@ class Connection extends DatabaseConnection {
    */
   public function lastInsertId(?string $name = NULL): string {
     return (string) $this->getDbalConnection()->lastInsertId($name);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function exceptionHandler() {
-    return new ExceptionHandler($this);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function schema(): Schema {
-    if (!isset($this->schema)) {
-      $this->schema = new Schema($this);
-    }
-    $schema = $this->schema;
-    assert($schema instanceof Schema);
-    return $schema;
   }
 
   /**
@@ -698,6 +681,61 @@ class Connection extends DatabaseConnection {
       dump([$query, $args]);
     }
     return parent::query($query, $args, $options);
+  }
+
+  public function exceptionHandler() {
+    return new ExceptionHandler($this);
+  }
+
+  public function select($table, $alias = NULL, array $options = []) {
+    return new Select($this, $table, $alias, $options);
+  }
+
+  public function insert($table, array $options = []) {
+    return new Insert($this, $table, $options);
+  }
+
+  public function merge($table, array $options = []) {
+    return new Merge($this, $table, $options);
+  }
+
+  public function upsert($table, array $options = []) {
+    return new Upsert($this, $table, $options);
+  }
+
+  public function update($table, array $options = []) {
+    return new Update($this, $table, $options);
+  }
+
+  public function delete($table, array $options = []) {
+    return new Delete($this, $table, $options);
+  }
+
+  public function truncate($table, array $options = []) {
+    return new Truncate($this, $table, $options);
+  }
+
+  public function schema(): Schema {
+    if (!isset($this->schema)) {
+      $this->schema = new Schema($this);
+    }
+    $schema = $this->schema;
+    assert($schema instanceof Schema);
+    return $schema;
+  }
+
+  /**
+   * @todo remove in D11
+   */
+  public function condition($conjunction) {
+    return new Condition($conjunction);
+  }
+
+  /**
+   * @todo remove in D11
+   */
+  public function startTransaction($name = '') {
+    return new Transaction($this, $name);
   }
 
 }
