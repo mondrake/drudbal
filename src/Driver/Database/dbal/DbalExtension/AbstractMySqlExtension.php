@@ -176,6 +176,7 @@ abstract class AbstractMySqlExtension extends AbstractExtension {
     ];
     $connection_options['init_commands'] += [
       'sql_mode' => "SET sql_mode = 'ANSI,TRADITIONAL'",
+      'isolation_level' => 'SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED',
     ];
     // Execute initial commands.
     foreach ($connection_options['init_commands'] as $sql) {
