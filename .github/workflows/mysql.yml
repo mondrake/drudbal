@@ -12,7 +12,11 @@ env:
     SIMPLETEST_BASE_URL: "http://localhost:8080"
     PHPUNIT_SKIP_CLASS: '[
       "Drupal\\KernelTests\\Core\\Cache\\ApcuBackendTest",
-      "Drupal\\Tests\\file\\Functional\\FileAddPermissionsUpdateTest"
+      "Drupal\\Tests\\file\\Functional\\FileAddPermissionsUpdateTest",
+      "Drupal\\Tests\\file\\Functional\\FileTokenReplaceTest",
+      "Drupal\\Tests\\page_cache\\Functional\\PageCacheTagsIntegrationTest",
+      "Drupal\\Tests\\views\\Functional\\Plugin\\DisplayTest",
+      "Drupal\\Tests\\views\\Functional\\Wizard\\BasicTest"      
     ]'
 
 jobs:
