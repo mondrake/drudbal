@@ -35,7 +35,7 @@ jobs:
 #          - "--group Entity"
 #          - "--group Cache,Config"
 #          - "--group field,Field"
-#          - "--group file"
+          - "--group file"
 #          - "--group views"
 
     services:
