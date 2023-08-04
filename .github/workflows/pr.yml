@@ -31,7 +31,7 @@ jobs:
         php-version:
           - "8.2"
         test-args:
-          - "modules/file/tests/src/Functional/FileManagedFileElementTest.php"
+          - "core/modules/file/tests/src/Functional/FileFieldWidgetTest.php"
 #          - "--group Database"
 #          - "--group Entity"
 #          - "--group Cache,Config"
