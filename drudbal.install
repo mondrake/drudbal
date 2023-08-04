@@ -1,0 +1,50 @@
+<?php
+
+/**
+ * @file
+ * Install, update and uninstall functions for the drudbal module.
+ */
+
+use Drupal\Core\Database\Database;
+use Drupal\Core\Render\Markup;
+
+/**
+ * Implements hook_requirements().
+ */
+function drudbal_requirements($phase) {
+  $requirements = [];
+
+  if ($phase === 'runtime') {
+    // Test with MySql databases.
+    if (Database::isActiveConnection()) {
+      $connection = Database::getConnection();
+      // Only show requirements when MySQL is the default database connection.
+      if ($connection->driver() === 'dbal' && $connection->databaseType() === 'mysql') {
+        $query = 'SELECT @@SESSION.tx_isolation';
+        $isolation_level = $connection->query($query)->fetchField();
+        $description = [];
+        if ($isolation_level == 'READ-COMMITTED') {
+            $severity_level = REQUIREMENT_OK;
+        }
+        else {
+          if ($isolation_level == 'REPEATABLE-READ') {
+            $severity_level = REQUIREMENT_WARNING;
+          }
+          else {
+            $severity_level = REQUIREMENT_ERROR;
+            $description[] = t('This is not supported by Drupal.');
+          }
+          $description[] = t('The recommended level for Drupal is "READ COMMITTED".');
+        }
+        $requirements['mysql_transaction_level'] = [
+          'title' => t('Transaction isolation level'),
+          'severity' => $severity_level,
+          'value' => $isolation_level,
+          'description' => Markup::create(implode(' ', $description)),
+        ];
+      }
+    }
+  }
+
+  return $requirements;
+}
