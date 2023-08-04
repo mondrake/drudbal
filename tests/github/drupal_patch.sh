@@ -9,3 +9,5 @@ git apply -v ./drudbal_staging/tests/github/2992274-local.patch
 
 #3375959 Add a way to delay executions in test runner until terminate event completed in the child site
 curl https://git.drupalcode.org/project/drupal/-/merge_requests/4461.diff | git apply -v
+
+git apply -v ./drudbal_staging/tests/github/wait_for_terminate.patch
