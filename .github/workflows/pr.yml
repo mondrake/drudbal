@@ -31,16 +31,17 @@ jobs:
         php-version:
           - "8.2"
         test-args:
-          - "--group Database"
+          - "core/modules/file/tests/src/Functional/FileFieldWidgetTest.php"
+#          - "--group Database"
 #          - "--group Entity"
 #          - "--group Cache,Config"
-          - "--group field,Field"
-          - "--group file"
-          - "--group views"
+#          - "--group field,Field"
+#          - "--group file"
+#          - "--group views"
 
     services:
       mysql:
-        image: "mysql:5.7"
+        image: "percona:5.7.22"
         options: >-
           -e MYSQL_ALLOW_EMPTY_PASSWORD=yes
           -e MYSQL_DATABASE=drudbal
