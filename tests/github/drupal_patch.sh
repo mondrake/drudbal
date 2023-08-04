@@ -7,5 +7,7 @@ curl https://git.drupalcode.org/project/drupal/-/merge_requests/291.diff | git a
 # curl https://www.drupal.org/files/issues/2022-06-01/2992274-25.patch | git apply -v
 git apply -v ./drudbal_staging/tests/github/2992274-local.patch
 
-#Revert #3295790 Post-response task running (destructable services) are actually blocking; add test coverage and warn for common misconfiguration
-git apply -v ./drudbal_staging/tests/github/3295790-revert.patch
+#3375959 Add a way to delay executions in test runner until terminate event completed in the child site
+curl https://git.drupalcode.org/project/drupal/-/merge_requests/4461.diff | git apply -v
+
+git apply -v ./drudbal_staging/tests/github/wait_for_terminate.patch

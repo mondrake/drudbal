@@ -1,0 +1,28 @@
+diff --git a/core/modules/file/tests/src/Functional/FileFieldWidgetTest.php b/core/modules/file/tests/src/Functional/FileFieldWidgetTest.php
+index 83e12945fd6..f3987733bfc 100644
+--- a/core/modules/file/tests/src/Functional/FileFieldWidgetTest.php
++++ b/core/modules/file/tests/src/Functional/FileFieldWidgetTest.php
+@@ -10,6 +10,7 @@
+ use Drupal\field\Entity\FieldConfig;
+ use Drupal\field\Entity\FieldStorageConfig;
+ use Drupal\Tests\field_ui\Traits\FieldUiTestTrait;
++use Drupal\Tests\WaitTerminateTestTrait;
+ use Drupal\user\RoleInterface;
+ use Drupal\file\Entity\File;
+ use Drupal\user\Entity\User;
+@@ -24,6 +25,7 @@ class FileFieldWidgetTest extends FileFieldTestBase {
+ 
+   use CommentTestTrait;
+   use FieldUiTestTrait;
++  use WaitTerminateTestTrait;
+ 
+   /**
+    * {@inheritdoc}
+@@ -41,6 +43,7 @@ class FileFieldWidgetTest extends FileFieldTestBase {
+   protected function setUp(): void {
+     parent::setUp();
+     $this->drupalPlaceBlock('system_breadcrumb_block');
++    $this->setWaitForTerminate();
+   }
+ 
+   /**
