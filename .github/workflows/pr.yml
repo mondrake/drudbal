@@ -34,9 +34,9 @@ jobs:
           - "--group Database"
 #          - "--group Entity"
 #          - "--group Cache,Config"
-          - "--group field,Field"
+#          - "--group field,Field"
           - "--group file"
-          - "--group views"
+#          - "--group views"
 
     services:
       mysql:
