@@ -270,6 +270,9 @@ class PrefetchingStatementWrapper implements \Iterator, StatementInterface {
    * {@inheritdoc}
    */
   public function fetchAll($mode = NULL, $column_index = NULL, $constructor_arguments = NULL) {
+    if (isset($mode) && !in_array($mode, $this->supportedFetchModes)) {
+      @trigger_error('Fetch mode ' . ($this->fetchModeLiterals[$mode] ?? $mode) . ' is deprecated in drupal:10.2.0 and is removed from drupal:11.0.0. Use supported modes only. See https://www.drupal.org/node/3377999', E_USER_DEPRECATED);
+    }
     $fetchStyle = $mode ?? $this->defaultFetchStyle;
     if (isset($column_index)) {
       $this->fetchOptions['column'] = $column_index;
@@ -364,7 +367,7 @@ class PrefetchingStatementWrapper implements \Iterator, StatementInterface {
   /**
    * {@inheritdoc}
    */
-  public function fetchObject(string $class_name = NULL, array $constructor_arguments = NULL) {
+  public function fetchObject(string $class_name = NULL, array $constructor_arguments = []) {
     if (!isset($class_name)) {
       return $this->fetch(\PDO::FETCH_OBJ);
     }
@@ -392,6 +395,9 @@ class PrefetchingStatementWrapper implements \Iterator, StatementInterface {
    * {@inheritdoc}
    */
   public function setFetchMode($mode, $a1 = NULL, $a2 = []) {
+    if (!in_array($mode, $this->supportedFetchModes)) {
+      @trigger_error('Fetch mode ' . ($this->fetchModeLiterals[$mode] ?? $mode) . ' is deprecated in drupal:10.2.0 and is removed from drupal:11.0.0. Use supported modes only. See https://www.drupal.org/node/3377999', E_USER_DEPRECATED);
+    }
     $this->defaultFetchStyle = $mode;
     switch ($mode) {
       case \PDO::FETCH_CLASS:
