@@ -224,11 +224,14 @@ class StatementWrapper implements \Iterator, StatementInterface {
 
     $ret = match($mode) {
       \PDO::FETCH_ASSOC => $row,
+      // @phpstan-ignore-next-line
       \PDO::FETCH_BOTH => $this->assocToBoth($row),
       \PDO::FETCH_NUM => $this->assocToNum($row),
       \PDO::FETCH_LAZY, \PDO::FETCH_OBJ => $this->assocToObj($row),
+      // @phpstan-ignore-next-line
       \PDO::FETCH_CLASS | \PDO::FETCH_CLASSTYPE => $this->assocToClassType($row, $this->fetchOptions['constructor_args']),
       \PDO::FETCH_CLASS => $this->assocToClass($row, $this->fetchOptions['class'], $this->fetchOptions['constructor_args']),
+      // @phpstan-ignore-next-line
       \PDO::FETCH_INTO => $this->assocIntoObject($row, $this->fetchOptions['object']),
       \PDO::FETCH_COLUMN => $this->assocToColumn($row, $columnNames, $this->fetchOptions['column']),
       default => throw new DatabaseExceptionWrapper("Unknown fetch type '{$mode}'"),

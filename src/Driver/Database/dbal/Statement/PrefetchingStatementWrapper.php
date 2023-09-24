@@ -251,11 +251,14 @@ class PrefetchingStatementWrapper implements \Iterator, StatementInterface {
     $rowAssoc = $this->data[$currentKey];
     $row = match($fetch_style ?? $this->defaultFetchStyle) {
       \PDO::FETCH_ASSOC => $rowAssoc,
+      // @phpstan-ignore-next-line
       \PDO::FETCH_BOTH => $this->assocToBoth($rowAssoc),
       \PDO::FETCH_NUM => $this->assocToNum($rowAssoc),
       \PDO::FETCH_LAZY, \PDO::FETCH_OBJ => $this->assocToObj($rowAssoc),
+      // @phpstan-ignore-next-line
       \PDO::FETCH_CLASS | \PDO::FETCH_CLASSTYPE => $this->assocToClassType($rowAssoc, $this->fetchOptions['constructor_args']),
       \PDO::FETCH_CLASS => $this->assocToClass($rowAssoc, $this->fetchOptions['class'], $this->fetchOptions['constructor_args']),
+      // @phpstan-ignore-next-line
       \PDO::FETCH_INTO => $this->assocIntoObject($rowAssoc, $this->fetchOptions['object']),
       \PDO::FETCH_COLUMN => $this->assocToColumn($rowAssoc, $this->columnNames, $this->fetchOptions['column']),
       // @todo in Drupal 11, throw an exception if the fetch style cannot be
