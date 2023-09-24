@@ -606,11 +606,4 @@ class Connection extends DatabaseConnection {
     return new TransactionManager($this);
   }
 
-  /**
-   * @todo remove in D11
-   */
-  public function startTransaction($name = '') {
-    return new Transaction($this, $name);
-  }
-
 }
