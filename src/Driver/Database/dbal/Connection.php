@@ -21,10 +21,7 @@ use Drupal\Core\Database\DatabaseNotFoundException;
 use Drupal\Core\Database\Query\Condition;
 use Drupal\Core\Database\StatementInterface;
 use Drupal\Core\Database\Transaction;
-use Drupal\Core\Database\TransactionCommitFailedException;
-use Drupal\Core\Database\TransactionNameNonUniqueException;
-use Drupal\Core\Database\TransactionNoActiveException;
-use Drupal\Core\Database\TransactionOutOfOrderException;
+use Drupal\Core\Database\Transaction\TransactionManagerInterface;
 use Drupal\Core\Utility\Error;
 use Drupal\drudbal\Driver\Database\dbal\DbalExtension\DbalExtensionInterface;
 use Drupal\drudbal\Driver\Database\dbal\DbalExtension\MysqliExtension;
@@ -367,135 +364,6 @@ class Connection extends DatabaseConnection {
   }
 
   /**
-   * {@inheritdoc}
-   */
-  public function rollBack($savepoint_name = 'drupal_transaction') {
-    if (!$this->inTransaction()) {
-      throw new TransactionNoActiveException();
-    }
-    // A previous rollback to an earlier savepoint may mean that the savepoint
-    // in question has already been accidentally committed.
-    if (!isset($this->transactionLayers[$savepoint_name])) {
-      throw new TransactionNoActiveException();
-    }
-
-    // We need to find the point we're rolling back to, all other savepoints
-    // before are no longer needed. If we rolled back other active savepoints,
-    // we need to throw an exception.
-    $rolled_back_other_active_savepoints = FALSE;
-    while ($savepoint = array_pop($this->transactionLayers)) {
-      if ($savepoint == $savepoint_name) {
-        // If it is the last the transaction in the stack, then it is not a
-        // savepoint, it is the transaction itself so we will need to roll back
-        // the transaction rather than a savepoint.
-        if (empty($this->transactionLayers)) {
-          break;
-        }
-        $this->getDbalConnection()->executeStatement($this->getDbalPlatform()->rollbackSavePoint($savepoint));
-        $this->popCommittableTransactions();
-        if ($rolled_back_other_active_savepoints) {
-          throw new TransactionOutOfOrderException();
-        }
-        return;
-      }
-      else {
-        $rolled_back_other_active_savepoints = TRUE;
-      }
-    }
-
-    // Notify the callbacks about the rollback.
-    $callbacks = $this->rootTransactionEndCallbacks;
-    $this->rootTransactionEndCallbacks = [];
-    foreach ($callbacks as $callback) {
-      call_user_func($callback, FALSE);
-    }
-
-    $this->getDbalExtension()->delegateRollBack();
-    if ($rolled_back_other_active_savepoints) {
-      throw new TransactionOutOfOrderException();
-    }
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function pushTransaction($name) {
-    if (isset($this->transactionLayers[$name])) {
-      throw new TransactionNameNonUniqueException($name . " is already in use.");
-    }
-    // If we're already in a transaction then we want to create a savepoint
-    // rather than try to create another transaction.
-    if ($this->inTransaction()) {
-      $this->getDbalConnection()->executeStatement($this->getDbalPlatform()->createSavePoint($name));
-    }
-    else {
-      $this->getDbalExtension()->delegateBeginTransaction();
-    }
-    $this->transactionLayers[$name] = $name;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  protected function popCommittableTransactions() {
-    // Commit all the committable layers.
-    foreach (array_reverse($this->transactionLayers) as $name => $active) {
-      // Stop once we found an active transaction.
-      if ($active) {
-        break;
-      }
-
-      // If there are no more layers left then we should commit.
-      unset($this->transactionLayers[$name]);
-      if (empty($this->transactionLayers)) {
-        $this->doCommit();
-      }
-      else {
-        // Attempt to release this savepoint in the standard way.
-        try {
-          $this->getDbalConnection()->executeStatement($this->getDbalPlatform()->releaseSavePoint($name));
-        }
-        catch (DbalDriverException $e) {
-          // If all SAVEPOINTs were released automatically, clean the
-          // transaction stack and commit.
-          if ($this->dbalExtension->delegateReleaseSavepointExceptionProcess($e) === 'all') {
-            $this->transactionLayers = [];
-            $this->doCommit();
-            return;
-          };
-        }
-      }
-    }
-  }
-
-  /**
-   * Do the actual commit, invoke post-commit callbacks.
-   *
-   * @internal
-   */
-  protected function doCommit() {
-    try {
-      $this->getDbalExtension()->delegateCommit();
-      $success = TRUE;
-    }
-    catch (DbalConnectionException $e) {
-      $success = FALSE;
-    }
-
-    if (!empty($this->rootTransactionEndCallbacks)) {
-      $callbacks = $this->rootTransactionEndCallbacks;
-      $this->rootTransactionEndCallbacks = [];
-      foreach ($callbacks as $callback) {
-        call_user_func($callback, $success);
-      }
-    }
-
-    if (!$success) {
-      throw new TransactionCommitFailedException();
-    }
-  }
-
-  /**
    * Gets the wrapped DBAL connection.
    *
    * @return \Doctrine\DBAL\Connection
@@ -732,10 +600,10 @@ class Connection extends DatabaseConnection {
   }
 
   /**
-   * @todo remove in D11
+   * {@inheritdoc}
    */
-  public function startTransaction($name = '') {
-    return new Transaction($this, $name);
+  protected function driverTransactionManager(): TransactionManagerInterface {
+    return new TransactionManager($this);
   }
 
 }

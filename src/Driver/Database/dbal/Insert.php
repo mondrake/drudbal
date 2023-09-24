@@ -88,8 +88,8 @@ class Insert extends QueryInsert {
           catch (IntegrityConstraintViolationException $e) {
             // Abort the entire insert in case of integrity constraint violation
             // and a transaction is open.
-            if ($this->connection()->inTransaction()) {
-              $this->connection()->rollBack();
+            if (isset($trn) && $this->connection()->inTransaction()) {
+              $trn->rollBack();
             }
             throw $e;
           }
@@ -142,8 +142,8 @@ class Insert extends QueryInsert {
         catch (IntegrityConstraintViolationException $e) {
           // Abort the entire insert in case of integrity constraint violation
           // and a transaction is open.
-          if ($this->connection()->inTransaction()) {
-            $this->connection()->rollBack();
+          if (isset($trn) && $this->connection()->inTransaction()) {
+            $trn->rollBack();
           }
           throw $e;
         }
