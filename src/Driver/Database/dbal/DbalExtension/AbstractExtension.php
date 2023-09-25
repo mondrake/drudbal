@@ -268,7 +268,7 @@ class AbstractExtension implements DbalExtensionInterface {
    * {@inheritdoc}
    */
   public function delegateBeginTransaction(): bool {
-    return $this->getDbalConnection()->beginTransaction();;
+    return $this->getDbalConnection()->beginTransaction();
   }
 
   /**
