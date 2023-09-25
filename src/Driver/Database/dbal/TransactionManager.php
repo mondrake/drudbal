@@ -21,14 +21,18 @@ class TransactionManager extends TransactionManagerBase {
    * {@inheritdoc}
    */
   protected function beginClientTransaction(): bool {
-    return $this->connection->getDbalExtension()->delegateBeginTransaction();
+    /** @var \Drupal\drudbal\Driver\Database\dbal\Connection $connection */
+    $connection = $this->connection;
+    return $connection->getDbalExtension()->delegateBeginTransaction();
   }
 
   /**
    * {@inheritdoc}
    */
   protected function rollbackClientTransaction(): bool {
-    $clientRollback = $this->connection->getDbalExtension()->delegateRollBack();
+    /** @var \Drupal\drudbal\Driver\Database\dbal\Connection $connection */
+    $connection = $this->connection;
+    $clientRollback = $connection->getDbalExtension()->delegateRollBack();
     $this->setConnectionTransactionState($clientRollback ?
       ClientConnectionTransactionState::RolledBack :
       ClientConnectionTransactionState::RollbackFailed
@@ -40,7 +44,9 @@ class TransactionManager extends TransactionManagerBase {
    * {@inheritdoc}
    */
   protected function commitClientTransaction(): bool {
-    $clientCommit = $this->connection->getDbalExtension()->delegateCommit();
+    /** @var \Drupal\drudbal\Driver\Database\dbal\Connection $connection */
+    $connection = $this->connection;
+    $clientCommit = $connection->getDbalExtension()->delegateCommit();
     $this->setConnectionTransactionState($clientCommit ?
       ClientConnectionTransactionState::Committed :
       ClientConnectionTransactionState::CommitFailed
