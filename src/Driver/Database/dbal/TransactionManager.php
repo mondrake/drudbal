@@ -38,7 +38,17 @@ class TransactionManager extends TransactionManagerBase {
   protected function releaseClientSavepoint(string $name): bool {
     /** @var \Drupal\drudbal\Driver\Database\dbal\Connection $connection */
     $connection = $this->connection;
-    return $connection->getDbalExtension()->delegateReleaseClientSavepoint($name);
+    if ($connection->getDbalExtension()->delegateReleaseClientSavepoint($name)) {
+      return TRUE;
+    }
+    // If the rollback failed, most likely the savepoint was not there
+    // because the transaction is no longer active. In this case we rollback
+    // to root and cleanup.
+    $connection->getDbalExtension()->delegateRollBack();
+    $this->resetStack();
+    $this->setConnectionTransactionState(ClientConnectionTransactionState::Voided);
+    $this->processPostTransactionCallbacks();
+    return TRUE;
   }
 
   protected function rollbackClientTransaction(): bool {

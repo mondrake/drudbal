@@ -276,8 +276,14 @@ class AbstractExtension implements DbalExtensionInterface {
   }
 
   public function delegateReleaseClientSavepoint($name): bool {
-    $this->getDbalConnection()->executeStatement('RELEASE SAVEPOINT ' . $name);
-    return TRUE;
+    try {
+      $this->getDbalConnection()->executeStatement('RELEASE SAVEPOINT ' . $name);
+      return TRUE;
+    }
+    catch (DbalDriverException $e) {
+      // Continue.
+    }
+    return FALSE;
   }
 
   public function delegateRollBack(): bool {
