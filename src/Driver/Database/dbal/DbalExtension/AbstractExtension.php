@@ -257,37 +257,37 @@ class AbstractExtension implements DbalExtensionInterface {
    * Transaction delegated methods.
    */
 
-  /**
-   * {@inheritdoc}
-   */
   public function delegateInTransaction(): bool {
     return $this->getDbalConnection()->isTransactionActive();
   }
 
-  /**
-   * {@inheritdoc}
-   */
   public function delegateBeginTransaction(): bool {
     return $this->getDbalConnection()->beginTransaction();
   }
 
-  /**
-   * {@inheritdoc}
-   */
+  public function delegateAddClientSavepoint($name): bool {
+    $this->getDbalConnection()->executeStatement('SAVEPOINT ' . $name);
+    return TRUE;
+  }
+
+  public function delegateRollbackClientSavepoint($name): bool {
+    $this->getDbalConnection()->executeStatement('ROLLBACK TO SAVEPOINT ' . $name);
+    return TRUE;
+  }
+
+  public function delegateReleaseClientSavepoint($name): bool {
+    $this->getDbalConnection()->executeStatement('RELEASE SAVEPOINT ' . $name);
+    return TRUE;
+  }
+
   public function delegateRollBack(): bool {
     return $this->getDbalConnection()->rollBack();
   }
 
-  /**
-   * {@inheritdoc}
-   */
   public function delegateCommit(): bool {
     return $this->getDbalConnection()->commit();
   }
 
-  /**
-   * {@inheritdoc}
-   */
   public function delegateReleaseSavepointExceptionProcess(DbalDriverException $e) {
     throw new \LogicException("Method " . __METHOD__ . " not implemented.");
   }

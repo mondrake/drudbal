@@ -363,6 +363,39 @@ interface DbalExtensionInterface {
   public function delegateBeginTransaction(): bool;
 
   /**
+   * Adds a savepoint on the client transaction.
+   *
+   * @param string $name
+   *   The name of the savepoint.
+   *
+   * @return bool
+   *   Returns TRUE on success or FALSE on failure.
+   */
+  public function delegateAddClientSavepoint($name): bool;
+
+  /**
+   * Rolls back to a savepoint on the client transaction.
+   *
+   * @param string $name
+   *   The name of the savepoint.
+   *
+   * @return bool
+   *   Returns TRUE on success or FALSE on failure.
+   */
+  public function delegateRollbackClientSavepoint($name): bool;
+
+  /**
+   * Releases a savepoint on the client transaction.
+   *
+   * @param string $name
+   *   The name of the savepoint.
+   *
+   * @return bool
+   *   Returns TRUE on success or FALSE on failure.
+   */
+  public function delegateReleaseClientSavepoint($name): bool;
+
+  /**
    * Handles rollback of the current transaction.
    */
   public function delegateRollBack(): bool;

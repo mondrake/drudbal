@@ -17,18 +17,30 @@ use Drupal\Core\Database\Transaction\TransactionManagerBase;
  */
 class TransactionManager extends TransactionManagerBase {
 
-  /**
-   * {@inheritdoc}
-   */
   protected function beginClientTransaction(): bool {
     /** @var \Drupal\drudbal\Driver\Database\dbal\Connection $connection */
     $connection = $this->connection;
     return $connection->getDbalExtension()->delegateBeginTransaction();
   }
 
-  /**
-   * {@inheritdoc}
-   */
+  protected function addClientSavepoint(string $name): bool {
+    /** @var \Drupal\drudbal\Driver\Database\dbal\Connection $connection */
+    $connection = $this->connection;
+    return $connection->getDbalExtension()->delegateAddClientSavepoint($name);
+  }
+
+  protected function rollbackClientSavepoint(string $name): bool {
+    /** @var \Drupal\drudbal\Driver\Database\dbal\Connection $connection */
+    $connection = $this->connection;
+    return $connection->getDbalExtension()->delegateRollbackClientSavepoint($name);
+  }
+
+  protected function releaseClientSavepoint(string $name): bool {
+    /** @var \Drupal\drudbal\Driver\Database\dbal\Connection $connection */
+    $connection = $this->connection;
+    return $connection->getDbalExtension()->delegateReleaseClientSavepoint($name);
+  }
+
   protected function rollbackClientTransaction(): bool {
     /** @var \Drupal\drudbal\Driver\Database\dbal\Connection $connection */
     $connection = $this->connection;
@@ -40,9 +52,6 @@ class TransactionManager extends TransactionManagerBase {
     return $clientRollback;
   }
 
-  /**
-   * {@inheritdoc}
-   */
   protected function commitClientTransaction(): bool {
     /** @var \Drupal\drudbal\Driver\Database\dbal\Connection $connection */
     $connection = $this->connection;
