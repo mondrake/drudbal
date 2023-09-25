@@ -230,7 +230,7 @@ class StatementWrapper implements \Iterator, StatementInterface {
       \PDO::FETCH_LAZY, \PDO::FETCH_OBJ => $this->assocToObj($row),
       // @phpstan-ignore-next-line
       \PDO::FETCH_CLASS | \PDO::FETCH_CLASSTYPE => $this->assocToClassType($row, $this->fetchOptions['constructor_args']),
-      \PDO::FETCH_CLASS => $this->assocToClass($row, $this->fetchOptions['class'], $this->fetchOptions['constructor_args']),
+      \PDO::FETCH_CLASS => $this->assocToClass($row, $this->fetchOptions['class'], $this->fetchOptions['constructor_args'] ?? []),
       // @phpstan-ignore-next-line
       \PDO::FETCH_INTO => $this->assocIntoObject($row, $this->fetchOptions['object']),
       \PDO::FETCH_COLUMN => $this->assocToColumn($row, $columnNames, $this->fetchOptions['column']),
@@ -337,7 +337,7 @@ class StatementWrapper implements \Iterator, StatementInterface {
   /**
    * {@inheritdoc}
    */
-  public function fetchObject(string $class_name = NULL, array $constructor_arguments = NULL) {
+  public function fetchObject(string $class_name = NULL, array $constructor_arguments = []) {
     if (isset($class_name)) {
       $this->fetchStyle = \PDO::FETCH_CLASS;
       $this->fetchOptions = [
