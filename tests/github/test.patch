@@ -1,18 +1,12 @@
-diff --git a/core/includes/install.core.inc b/core/includes/install.core.inc
-index 5a5f92339b..7632861426 100644
---- a/core/includes/install.core.inc
-+++ b/core/includes/install.core.inc
-@@ -960,10 +960,13 @@ function install_get_form($form_id, array &$install_state) {
-     // For non-interactive installs, submit the form programmatically with the
-     // values taken from the installation state.
-     $install_form_id = $form_builder->getFormId($form_id, $form_state);
-+dump($install_form_id);
-     if (!empty($install_state['forms'][$install_form_id])) {
-+dump($install_state['forms'][$install_form_id]);
-       $form_state->setValues($install_state['forms'][$install_form_id]);
-     }
-     $form_builder->submitForm($form_id, $form_state);
-+dump($form_state->getErrors());
+diff --git a/core/tests/Drupal/Tests/UpdatePathTestTrait.php b/core/tests/Drupal/Tests/UpdatePathTestTrait.php
+index 0abf1cc477..992dc38ec9 100644
+--- a/core/tests/Drupal/Tests/UpdatePathTestTrait.php
++++ b/core/tests/Drupal/Tests/UpdatePathTestTrait.php
+@@ -44,6 +44,7 @@ protected function runUpdates($update_url = NULL) {
+     ]);
 
-     // Throw an exception in case of any form validation error.
-     if ($errors = $form_state->getErrors()) {
+     $this->drupalGet($update_url);
++dump($update_url, $this->getSession()->getPage());
+     $this->updateRequirementsProblem();
+     $this->clickLink('Continue');
+
