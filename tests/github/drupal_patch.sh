@@ -15,5 +15,3 @@ curl https://git.drupalcode.org/project/drupal/-/merge_requests/5158.diff | git 
 
 #3396559 Only set content-length header in specific situations
 curl https://git.drupalcode.org/project/drupal/-/merge_requests/5121.diff | git apply -v
-
-git apply -v ./drudbal_staging/tests/github/test.patch

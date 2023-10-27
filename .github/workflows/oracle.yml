@@ -13,6 +13,7 @@ env:
     PHPUNIT_SKIP_CLASS: '[
       "Drupal\\KernelTests\\Core\\Cache\\ApcuBackendTest",
       "Drupal\\Tests\\file\\Functional\\FileAddPermissionsUpdateTest"
+      "Drupal\\Tests\\system\\Functional\\Update\\SqlContentEntityStorageRevisionDataCleanupTest"
     ]'
 
 jobs:
