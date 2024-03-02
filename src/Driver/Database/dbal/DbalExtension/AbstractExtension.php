@@ -63,6 +63,10 @@ class AbstractExtension implements DbalExtensionInterface {
     throw new \LogicException("Method " . __METHOD__ . "() not implemented.");
   }
 
+  public function delegateClientExecuteStatementException(DbalDriverException $e, string $sql, string $message): void {
+    throw new \LogicException("Method " . __METHOD__ . "() not implemented.");
+  }
+
   /**
    * {@inheritdoc}
    */
@@ -226,7 +230,8 @@ class AbstractExtension implements DbalExtensionInterface {
    * {@inheritdoc}
    */
   public function delegateNextId(int $existing_id = 0): int {
-    throw new \LogicException("Method " . __METHOD__ . " not implemented.");
+      @trigger_error(__METHOD__ . '() is deprecated in drupal:10.2.0 and is removed from drupal:11.0.0. Modules should use instead the keyvalue storage for the last used id. See https://www.drupal.org/node/3349345', E_USER_DEPRECATED);
+      throw new \LogicException("Method " . __METHOD__ . " not implemented.");
   }
 
   /**
@@ -252,37 +257,43 @@ class AbstractExtension implements DbalExtensionInterface {
    * Transaction delegated methods.
    */
 
-  /**
-   * {@inheritdoc}
-   */
   public function delegateInTransaction(): bool {
     return $this->getDbalConnection()->isTransactionActive();
   }
 
-  /**
-   * {@inheritdoc}
-   */
-  public function delegateBeginTransaction(): void {
-    $this->getDbalConnection()->beginTransaction();
+  public function delegateBeginTransaction(): bool {
+    return $this->getDbalConnection()->beginTransaction();
   }
 
-  /**
-   * {@inheritdoc}
-   */
-  public function delegateRollBack(): void {
-    $this->getDbalConnection()->rollBack();
+  public function delegateAddClientSavepoint($name): bool {
+    $this->getDbalConnection()->executeStatement('SAVEPOINT ' . $name);
+    return TRUE;
   }
 
-  /**
-   * {@inheritdoc}
-   */
-  public function delegateCommit(): void {
-    $this->getDbalConnection()->commit();
+  public function delegateRollbackClientSavepoint($name): bool {
+    $this->getDbalConnection()->executeStatement('ROLLBACK TO SAVEPOINT ' . $name);
+    return TRUE;
   }
 
-  /**
-   * {@inheritdoc}
-   */
+  public function delegateReleaseClientSavepoint($name): bool {
+    try {
+      $this->getDbalConnection()->executeStatement('RELEASE SAVEPOINT ' . $name);
+      return TRUE;
+    }
+    catch (DbalDriverException $e) {
+      // Continue.
+    }
+    return FALSE;
+  }
+
+  public function delegateRollBack(): bool {
+    return $this->getDbalConnection()->rollBack();
+  }
+
+  public function delegateCommit(): bool {
+    return $this->getDbalConnection()->commit();
+  }
+
   public function delegateReleaseSavepointExceptionProcess(DbalDriverException $e) {
     throw new \LogicException("Method " . __METHOD__ . " not implemented.");
   }
@@ -487,6 +498,10 @@ class AbstractExtension implements DbalExtensionInterface {
     return FALSE;
   }
 
+  public function postCreateTable(string $drupalTableName, array $drupalTableSpecs): void {
+    return;
+  }
+
   /**
    * {@inheritdoc}
    */
@@ -546,7 +561,7 @@ class AbstractExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function delegateAddField(&$primary_key_processed_by_extension, DbalSchema $dbal_schema, $drupal_table_name, $field_name, array $drupal_field_specs, array $keys_new_specs, array $dbal_column_options) {
+  public function delegateAddField(bool &$primary_key_processed_by_extension, bool &$indexes_processed_by_extension, DbalSchema $dbal_schema, string $drupal_table_name, string $field_name, array $drupal_field_specs, array $keys_new_specs, array $dbal_column_options) {
     return FALSE;
   }
 
@@ -584,7 +599,7 @@ class AbstractExtension implements DbalExtensionInterface {
   /**
    * {@inheritdoc}
    */
-  public function delegateChangeField(&$primary_key_processed_by_extension, DbalSchema $dbal_schema, $drupal_table_name, $field_name, $field_new_name, array $drupal_field_new_specs, array $keys_new_specs, array $dbal_column_options) {
+  public function delegateChangeField(bool &$primary_key_processed_by_extension, bool &$indexes_processed_by_extension, DbalSchema $dbal_schema, string $drupal_table_name, string $field_name, string $field_new_name, array $drupal_field_new_specs, array $keys_new_specs, array $dbal_column_options) {
     throw new \LogicException("Method " . __METHOD__ . " not implemented.");
   }
 

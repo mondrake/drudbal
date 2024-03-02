@@ -54,7 +54,7 @@ under the hood:
 
 1. Requirements:
     * PHP 8.1+
-    * latest Drupal development branch code, 10.1.x
+    * latest Drupal development branch code, 11.x
     * codebase built via Composer
 
 2. Get the DruDbal module from Packagist via Composer, it will install Doctrine
@@ -93,6 +93,3 @@ tbd                                                             | Add tests for 
 tbd                                                             | Ensure that when INSERTing a NULL value in a database column, SELECTing it back returns NULL and not empty string - for all fetch modes |
 tbd                                                             | UpdateTestBase::runUpdate should reset database schema after updating  |
 [#2992274](https://www.drupal.org/project/drupal/issues/2992274) | Installer tests fail if contrib driver hides database credentials form fields |
-[#3256642](https://www.drupal.org/project/drupal/issues/3256642) | Autoload classes of database drivers modules' dependencies |
-[#3347497](https://www.drupal.org/project/drupal/issues/3347497) | Introduce a FetchModeTrait to allow emulating PDO fetch modes |
-[#3355841](https://www.drupal.org/project/drupal/issues/3355841) | Allow DriverSpecificSchemaTestBase::testChangePrimaryKeyToSerial to execute for non-core drivers |

@@ -227,11 +227,14 @@ class StatementWrapper implements \Iterator, StatementInterface {
 
     $ret = match($mode) {
       \PDO::FETCH_ASSOC => $row,
+      // @phpstan-ignore-next-line
       \PDO::FETCH_BOTH => $this->assocToBoth($row),
       \PDO::FETCH_NUM => $this->assocToNum($row),
       \PDO::FETCH_LAZY, \PDO::FETCH_OBJ => $this->assocToObj($row),
+      // @phpstan-ignore-next-line
       \PDO::FETCH_CLASS | \PDO::FETCH_CLASSTYPE => $this->assocToClassType($row, $this->fetchOptions['constructor_args']),
-      \PDO::FETCH_CLASS => $this->assocToClass($row, $this->fetchOptions['class'], $this->fetchOptions['constructor_args']),
+      \PDO::FETCH_CLASS => $this->assocToClass($row, $this->fetchOptions['class'], $this->fetchOptions['constructor_args'] ?? []),
+      // @phpstan-ignore-next-line
       \PDO::FETCH_INTO => $this->assocIntoObject($row, $this->fetchOptions['object']),
       \PDO::FETCH_COLUMN => $this->assocToColumn($row, $columnNames, $this->fetchOptions['column']),
       default => throw new DatabaseExceptionWrapper("Unknown fetch type '{$mode}'"),
@@ -258,7 +261,10 @@ class StatementWrapper implements \Iterator, StatementInterface {
   /**
    * {@inheritdoc}
    */
-  public function fetchAll($mode = NULL, $column_index = NULL, $constructor_arguments = NULL) {
+  public function fetchAll($mode = NULL, $column_index = NULL, $constructor_arguments = []) {
+    if (isset($mode) && !in_array($mode, $this->supportedFetchModes)) {
+      @trigger_error('Fetch mode ' . ($this->fetchModeLiterals[$mode] ?? $mode) . ' is deprecated in drupal:10.2.0 and is removed from drupal:11.0.0. Use supported modes only. See https://www.drupal.org/node/3377999', E_USER_DEPRECATED);
+    }
     if (is_string($mode)) {
       $this->setFetchMode(\PDO::FETCH_CLASS, $mode);
       $mode = \PDO::FETCH_CLASS;
@@ -334,7 +340,7 @@ class StatementWrapper implements \Iterator, StatementInterface {
   /**
    * {@inheritdoc}
    */
-  public function fetchObject(string $class_name = NULL, array $constructor_arguments = NULL) {
+  public function fetchObject(string $class_name = NULL, array $constructor_arguments = []) {
     if (isset($class_name)) {
       $this->fetchStyle = \PDO::FETCH_CLASS;
       $this->fetchOptions = [
@@ -362,6 +368,9 @@ class StatementWrapper implements \Iterator, StatementInterface {
    * {@inheritdoc}
    */
   public function setFetchMode($mode, $a1 = NULL, $a2 = []) {
+    if (!in_array($mode, $this->supportedFetchModes)) {
+      @trigger_error('Fetch mode ' . ($this->fetchModeLiterals[$mode] ?? $mode) . ' is deprecated in drupal:10.2.0 and is removed from drupal:11.0.0. Use supported modes only. See https://www.drupal.org/node/3377999', E_USER_DEPRECATED);
+    }
     $this->defaultFetchMode = $mode;
     switch ($mode) {
       case \PDO::FETCH_CLASS:

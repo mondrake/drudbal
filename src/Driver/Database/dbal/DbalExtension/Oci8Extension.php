@@ -223,6 +223,7 @@ class Oci8Extension extends AbstractExtension {
    * {@inheritdoc}
    */
   public function delegateNextId(int $existing_id = 0): int {
+    @trigger_error(__METHOD__ . '() is deprecated in drupal:10.2.0 and is removed from drupal:11.0.0. Modules should use instead the keyvalue storage for the last used id. See https://www.drupal.org/node/3349345', E_USER_DEPRECATED);
     // @codingStandardsIgnoreLine
     $trn = $this->connection->startTransaction();
     $stmt = $this->connection->prepareStatement('UPDATE {sequences} SET [value] = GREATEST([value], :existing_id) + 1', [], TRUE);
@@ -291,6 +292,20 @@ class Oci8Extension extends AbstractExtension {
     }
     else {
       throw new DatabaseExceptionWrapper($message, 0, $e);
+    }
+  }
+
+  public function delegateClientExecuteStatementException(DbalDriverException $e, string $sql, string $message): void  {
+    switch ($e->getCode()) {
+      // ORA-01408: such column list already indexed.
+      case 1408:
+        // Just return, Oracle detected that an index with same columns exists
+        // already
+        return;
+
+      default:
+        throw new DatabaseExceptionWrapper($message, $e->getCode(), $e);
+
     }
   }
 
@@ -705,6 +720,22 @@ PLSQL
     return TRUE;
   }
 
+  public function postCreateTable(string $drupalTableName, array $drupalTableSpecs): void {
+    // Update the autoincrement trigger from the stock DBAL one to the
+    // DruDbal one.
+    foreach ($drupalTableSpecs['fields'] as $drupalFieldName => $drupalFieldSpec) {
+      if (($drupalFieldSpec['type'] ?? null) === 'serial') {
+        $sql = $this->getAutoincrementTriggerSql(
+          $this->connection->getPrefixedTableName($drupalTableName, false),
+          $this->getDbFieldName($drupalFieldName, false),
+        );
+        if ($this->getDebugging()) dump($sql);
+        $this->getDbalConnection()->executeStatement($sql);
+        break;
+      }
+    }
+  }
+
   /**
    * {@inheritdoc}
    */
@@ -793,7 +824,7 @@ PLSQL
   /**
    * {@inheritdoc}
    */
-  public function delegateAddField(&$primary_key_processed_by_extension, DbalSchema $dbal_schema, $drupal_table_name, $field_name, array $drupal_field_specs, array $keys_new_specs, array $dbal_column_options) {
+  public function delegateAddField(bool &$primary_key_processed_by_extension, bool &$indexes_processed_by_extension, DbalSchema $dbal_schema, string $drupal_table_name, string $field_name, array $drupal_field_specs, array $keys_new_specs, array $dbal_column_options) {
     $primary_key_processed_by_extension = TRUE;
 
     $unquoted_db_table = $this->connection->getPrefixedTableName($drupal_table_name, FALSE);
@@ -875,7 +906,7 @@ PLSQL
   /**
    * {@inheritdoc}
    */
-  public function delegateChangeField(&$primary_key_processed_by_extension, DbalSchema $dbal_schema, $drupal_table_name, $field_name, $field_new_name, array $drupal_field_new_specs, array $keys_new_specs, array $dbal_column_options) {
+  public function delegateChangeField(bool &$primary_key_processed_by_extension, bool &$indexes_processed_by_extension, DbalSchema $dbal_schema, string $drupal_table_name, string $field_name, string $field_new_name, array $drupal_field_new_specs, array $keys_new_specs, array $dbal_column_options) {
     $primary_key_processed_by_extension = TRUE;
 
     $unquoted_db_table = $this->connection->getPrefixedTableName($drupal_table_name, FALSE);
@@ -1010,18 +1041,18 @@ CREATE OR REPLACE TRIGGER \"{$unquotedTableName}_AI_PK\"
    FOR EACH ROW
 DECLARE
    pragma autonomous_transaction;
-   last_Sequence NUMBER;
-   last_InsertID NUMBER;
+   sequence_id NUMBER;
+   insert_id NUMBER;
 BEGIN
    IF (:NEW.\"{$unquotedColumnName}\" IS NULL) THEN
       SELECT \"{$unquotedSequenceName}\".NEXTVAL INTO :NEW.\"{$unquotedColumnName}\" FROM DUAL;
    ELSE
-      SELECT :NEW.\"{$unquotedColumnName}\" INTO last_InsertID FROM DUAL;
-      SELECT (\"{$unquotedSequenceName}\".NEXTVAL - 1) INTO last_Sequence FROM DUAL;
-      IF (last_InsertID > last_Sequence) THEN
-         EXECUTE IMMEDIATE 'alter sequence \"{$unquotedSequenceName}\" INCREMENT BY ' || TO_CHAR(last_InsertID - last_Sequence -1);
-         SELECT \"{$unquotedSequenceName}\".NEXTVAL INTO last_Sequence FROM DUAL;
-         EXECUTE IMMEDIATE 'alter sequence \"{$unquotedSequenceName}\" INCREMENT BY 1';
+      SELECT :NEW.\"{$unquotedColumnName}\" INTO insert_id FROM DUAL;
+      SELECT \"{$unquotedSequenceName}\".NEXTVAL INTO sequence_id FROM DUAL;
+      IF (insert_id > sequence_id) THEN
+         EXECUTE IMMEDIATE 'alter sequence \"{$unquotedSequenceName}\" increment by ' || to_char(insert_id - sequence_id);
+         SELECT \"{$unquotedSequenceName}\".NEXTVAL INTO sequence_id FROM DUAL;
+         EXECUTE IMMEDIATE 'alter sequence \"{$unquotedSequenceName}\" increment by 1';
       END IF;
    END IF;
 END;";
