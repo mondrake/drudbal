@@ -7,7 +7,7 @@
         "php": ">=8.1",
         "drupal/core": "^11",
         "doctrine/dbal": "^4",
-        "drush/drush": "^12",
+        "drush/drush": "^13",
         "composer-runtime-api": "^2.0.0"
     },
     "autoload": {
