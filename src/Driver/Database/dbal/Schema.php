@@ -808,7 +808,7 @@ class Schema extends DatabaseSchema {
   /**
    * {@inheritdoc}
    */
-  public function tableExists($table) {
+  public function tableExists($table, bool $add_prefix = true) {
     // @todo remove if parent gets typehinted.
     if ($table === NULL) {
       return FALSE;
