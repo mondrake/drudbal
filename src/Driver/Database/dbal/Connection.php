@@ -211,10 +211,8 @@ class Connection extends DatabaseConnection {
     $connection_options['dbal_driver'] = str_replace('-', '_', $connection_options['dbal_driver']);
 
     $dbal_extension_class = static::getDbalExtensionClass($connection_options);
-dump($connection_options);
     try {
       $dbal_connection_options = static::mapConnectionOptionsToDbal($connection_options);
-dump($connection_options, $dbal_connection_options);
       $dbal_extension_class::preConnectionOpen($connection_options, $dbal_connection_options);
       $dbal_connection = DbalDriverManager::getConnection($dbal_connection_options);
       $dbal_extension_class::postConnectionOpen($dbal_connection, $connection_options, $dbal_connection_options);
