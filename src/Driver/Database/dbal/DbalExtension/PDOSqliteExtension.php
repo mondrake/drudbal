@@ -261,6 +261,7 @@ class PDOSqliteExtension extends AbstractExtension {
    * {@inheritdoc}
    */
   public static function preConnectionOpen(array &$connection_options, array &$dbal_connection_options) {
+    assert($connection_options['prefix'], 'The \'prefix\' option to ' . __METHOD__ . '() must be a string');
     if ($connection_options['database'] === ':memory:') {
       $dbal_connection_options['path'] = NULL;
       $dbal_connection_options['url'] = 'sqlite:///:memory:';
