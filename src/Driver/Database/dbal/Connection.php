@@ -214,6 +214,7 @@ class Connection extends DatabaseConnection {
 dump($connection_options);
     try {
       $dbal_connection_options = static::mapConnectionOptionsToDbal($connection_options);
+dump($connection_options, $dbal_connection_options);
       $dbal_extension_class::preConnectionOpen($connection_options, $dbal_connection_options);
       $dbal_connection = DbalDriverManager::getConnection($dbal_connection_options);
       $dbal_extension_class::postConnectionOpen($dbal_connection, $connection_options, $dbal_connection_options);
