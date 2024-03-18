@@ -547,7 +547,6 @@ class Connection extends DatabaseConnection {
   }
 
   public function query($query, array $args = [], $options = []) {
-dump($query);
     if ($this->dbalExtension->getDebugging()) {
       dump([$query, $args]);
     }
