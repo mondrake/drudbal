@@ -262,7 +262,13 @@ class AbstractExtension implements DbalExtensionInterface {
   }
 
   public function delegateBeginTransaction(): bool {
-    return $this->getDbalConnection()->beginTransaction();
+    try {
+      $this->getDbalConnection()->beginTransaction();
+      return true;
+    }
+    catch (\Exception $e) {
+      return false;
+    }
   }
 
   public function delegateAddClientSavepoint($name): bool {
@@ -287,11 +293,23 @@ class AbstractExtension implements DbalExtensionInterface {
   }
 
   public function delegateRollBack(): bool {
-    return $this->getDbalConnection()->rollBack();
+    try {
+      $this->getDbalConnection()->rollBack();
+      return true;
+    }
+    catch (\Exception $e) {
+      return false;
+    }
   }
 
   public function delegateCommit(): bool {
-    return $this->getDbalConnection()->commit();
+    try {
+      $this->getDbalConnection()->commit();
+      return true;
+    }
+    catch (\Exception $e) {
+      return false;
+    }
   }
 
   public function delegateReleaseSavepointExceptionProcess(DbalDriverException $e) {

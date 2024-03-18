@@ -10,6 +10,7 @@ use Doctrine\DBAL\Statement as DbalStatement;
 use Drupal\Core\Database\Database;
 use Drupal\Core\Database\DatabaseExceptionWrapper;
 use Drupal\Core\Database\Event\StatementExecutionEndEvent;
+use Drupal\Core\Database\Event\StatementExecutionFailureEvent;
 use Drupal\Core\Database\Event\StatementExecutionStartEvent;
 use Drupal\Core\Database\FetchModeTrait;
 use Drupal\Core\Database\RowCountException;
@@ -138,6 +139,18 @@ class PrefetchingStatementWrapper implements \Iterator, StatementInterface {
   public function execute($args = [], $options = []) {
     $args = $args ?? [];
 
+    if ($this->connection()->isEventEnabled(StatementExecutionStartEvent::class)) {
+      $startEvent = new StatementExecutionStartEvent(
+        spl_object_id($this),
+        $this->connection()->getKey(),
+        $this->connection()->getTarget(),
+        $this->getQueryString(),
+        $args ?? [],
+        $this->connection()->findCallerFromDebugBacktrace()
+      );
+      $this->connection()->dispatchEvent($startEvent);
+    }
+
     // Prepare the lower-level statement if it's not been prepared already.
     if (!isset($this->dbalStatement)) {
       // Replace named placeholders with positional ones if needed.
@@ -152,6 +165,20 @@ class PrefetchingStatementWrapper implements \Iterator, StatementInterface {
         $this->dbalStatement = $this->connection()->getDbalConnection()->prepare($this->queryString);
       }
       catch (DbalException $e) {
+        if (isset($startEvent) && $this->connection->isEventEnabled(StatementExecutionFailureEvent::class)) {
+          $this->connection->dispatchEvent(new StatementExecutionFailureEvent(
+            $startEvent->statementObjectId,
+            $startEvent->key,
+            $startEvent->target,
+            $startEvent->queryString,
+            $startEvent->args,
+            $startEvent->caller,
+            $startEvent->time,
+            get_class($e),
+            $e->getCode(),
+            $e->getMessage(),
+          ));
+        }
         throw new DatabaseExceptionWrapper($e->getMessage(), $e->getCode(), $e);
       }
     }
@@ -173,23 +200,28 @@ class PrefetchingStatementWrapper implements \Iterator, StatementInterface {
       }
     }
 
-    if ($this->connection()->isEventEnabled(StatementExecutionStartEvent::class)) {
-      $startEvent = new StatementExecutionStartEvent(
-        spl_object_id($this),
-        $this->connection()->getKey(),
-        $this->connection()->getTarget(),
-        $this->getQueryString(),
-        $args ?? [],
-        $this->connection()->findCallerFromDebugBacktrace()
-      );
-      $this->connection()->dispatchEvent($startEvent);
-    }
-
     try {
-      $this->dbalResult = $this->dbalStatement->executeQuery($args);
+      foreach($args as $param => $value) {
+        $this->dbalStatement->bindValue($param, $value);
+      }
+      $this->dbalResult = $this->dbalStatement->executeQuery();
       $this->markResultsetIterable((bool) $this->dbalResult);
     }
     catch (DbalException $e) {
+      if (isset($startEvent) && $this->connection->isEventEnabled(StatementExecutionFailureEvent::class)) {
+        $this->connection->dispatchEvent(new StatementExecutionFailureEvent(
+          $startEvent->statementObjectId,
+          $startEvent->key,
+          $startEvent->target,
+          $startEvent->queryString,
+          $startEvent->args,
+          $startEvent->caller,
+          $startEvent->time,
+          get_class($e),
+          $e->getCode(),
+          $e->getMessage(),
+        ));
+      }
       throw new DatabaseExceptionWrapper($e->getMessage(), $e->getCode(), $e);
     }
 

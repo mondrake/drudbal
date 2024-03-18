@@ -26,15 +26,14 @@ jobs:
     runs-on: ubuntu-20.04
     env:
         DRUDBAL_ENV: "dbal/sqlite/file"
-        DBAL_URL: "sqlite://localhost/sites/drudbal.sqlite"
-        SIMPLETEST_DB: "dbal://localhost/sites/drudbal.sqlite?module=drudbal&dbal_driver=pdo_sqlite"
+        DBAL_URL: "pdo-sqlite://localhost/sites/drudbal.sqlite"
+        SIMPLETEST_DB: "dbal://localhost/sites/drudbal.sqlite?module=drudbal&dbal_driver=pdo-sqlite"
 
     strategy:
       fail-fast: false
       matrix:
         php-version:
-          - "8.1"
-          - "8.2"
+          - "8.3"
         test-args:
           - "--group Database"
           - "--group Entity"

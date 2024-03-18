@@ -23,15 +23,14 @@ jobs:
     runs-on: ubuntu-20.04
     env:
         DRUDBAL_ENV: "dbal/sqlite/file"
-        DBAL_URL: "sqlite://localhost/sites/drudbal.sqlite"
-        SIMPLETEST_DB: "dbal://localhost/sites/drudbal.sqlite?module=drudbal&dbal_driver=pdo_sqlite"
+        DBAL_URL: "pdo-sqlite://localhost/sites/drudbal.sqlite"
+        SIMPLETEST_DB: "dbal://localhost/sites/drudbal.sqlite?module=drudbal&dbal_driver=pdo-sqlite"
 
     strategy:
       fail-fast: false
       matrix:
         php-version:
-#          - "8.1"
-          - "8.2"
+          - "8.3"
         test-args:
           - "--group Database"
 #          - "--group Entity"
@@ -83,12 +82,7 @@ jobs:
         vendor/bin/drush core:requirements
         vendor/bin/drush pml --type=module --no-core
 
-    - name: Run test
-      continue-on-error: true
-      run: vendor/bin/phpunit -c core --color=always core/modules/system/tests/src/Functional/Update/SqlContentEntityStorageRevisionDataCleanupTest.php
-
-    - name: Test artifacts
-      uses: actions/upload-artifact@v3
-      with:
-        name: test-results
-        path: sites/simpletest/browser_output
+    - name: Run test ${{ matrix.test-args }}
+      run: vendor/bin/phpunit -c core --color=always ${{ matrix.test-args }}
+#      run: vendor/bin/phpunit -c core --color=always modules/contrib/drudbal/tests/src/Kernel/dbal/DatabaseEventTest.php
+# core/tests/Drupal/KernelTests/Core/Database/DatabaseEventTest.php

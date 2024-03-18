@@ -15,7 +15,7 @@ class TransactionTest extends DriverSpecificTransactionTestBase {
   /**
    * Tests the compatibility of transactions with DDL statements.
    */
-  public function testTransactionWithDdlStatement() {
+  public function testTransactionWithDdlStatement(): void {
     // First, test that a commit works normally, even with DDL statements.
     $transaction = $this->connection->startTransaction();
     $this->insertRow('row');

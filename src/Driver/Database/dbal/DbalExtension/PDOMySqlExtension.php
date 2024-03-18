@@ -102,29 +102,29 @@ class PDOMySqlExtension extends AbstractMySqlExtension {
   /**
    * {@inheritdoc}
    */
-  public function delegateBeginTransaction(): bool {
-    return $this->pdoMysqlConnection->beginTransaction();;
+  public function delegateBeginTransaction(): void {
+    $this->pdoMysqlConnection->beginTransaction();
   }
 
   /**
    * {@inheritdoc}
    */
-  public function delegateRollBack(): bool {
+  public function delegateRollBack(): void {
     if ($this->delegateInTransaction()) {
-      return $this->pdoMysqlConnection->rollBack();
+      $this->pdoMysqlConnection->rollBack();
     }
-    trigger_error('Rollback attempted when there is no active transaction. This can cause data integrity issues.', E_USER_WARNING);
-    return FALSE;
+    else {
+      trigger_error('Rollback attempted when there is no active transaction. This can cause data integrity issues.', E_USER_WARNING);
+    }
   }
 
   /**
    * {@inheritdoc}
    */
-  public function delegateCommit(): bool {
+  public function delegateCommit(): void {
     if ($this->delegateInTransaction()) {
-      return $this->pdoMysqlConnection->commit();
+      $this->pdoMysqlConnection->commit();
     }
-    return FALSE;
   }
 
 }

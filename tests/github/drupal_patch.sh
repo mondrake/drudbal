@@ -11,4 +11,4 @@ git apply -v ./drudbal_staging/tests/github/2992274-local.patch
 curl https://git.drupalcode.org/project/drupal/-/merge_requests/4865.diff | git apply -v
 
 #3396559 Only set content-length header in specific situations
-curl https://git.drupalcode.org/project/drupal/-/merge_requests/5121.diff | git apply -v
+#curl https://git.drupalcode.org/project/drupal/-/merge_requests/5121.diff | git apply -v

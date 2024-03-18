@@ -187,13 +187,18 @@ class Schema extends DatabaseSchema {
 
     $options['type'] = DbalType::getType($dbal_type);
 
+    if ($dbal_type === 'decimal') {
+      $field['scale'] ??= 0;
+      $field['precision'] ??= 1;
+    }
+
     if (isset($field['length'])) {
-      $options['length'] = $field['length'];
+      $options['length'] = (int) $field['length'];
     }
 
     if (isset($field['precision']) && isset($field['scale'])) {
-      $options['precision'] = $field['precision'];
-      $options['scale'] = $field['scale'];
+      $options['precision'] = (int) $field['precision'];
+      $options['scale'] = (int) $field['scale'];
     }
 
     if (!empty($field['unsigned'])) {
@@ -799,7 +804,7 @@ class Schema extends DatabaseSchema {
   /**
    * {@inheritdoc}
    */
-  public function tableExists($table) {
+  public function tableExists($table, bool $add_prefix = true) {
     // @todo remove if parent gets typehinted.
     if ($table === NULL) {
       return FALSE;
@@ -880,7 +885,7 @@ class Schema extends DatabaseSchema {
    *   TRUE if no exceptions were raised.
    */
   private function dbalExecuteSchemaChange(DbalSchema $to_schema) {
-    $schema_diff = (new Comparator())->compareSchemas($this->dbalSchema(), $to_schema);
+    $schema_diff = (new Comparator($this->dbalPlatform))->compareSchemas($this->dbalSchema(), $to_schema);
     foreach ($this->dbalPlatform->getAlterSchemaSQL($schema_diff) as $sql) {
       if ($this->dbalExtension->getDebugging()) {
         dump($sql);

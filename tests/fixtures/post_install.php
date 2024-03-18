@@ -8,6 +8,7 @@
  */
 
 use Doctrine\DBAL\DriverManager as DbalDriverManager;
+use Doctrine\DBAL\Tools\DsnParser;
 
 // Change the directory to the Drupal root.
 chdir('..');
@@ -17,11 +18,7 @@ $root_path = realpath('');
 // Initialize the autoloader.
 $class_loader = require_once $root_path . '/autoload.php';
 
-$connectionParams = [
-  'url' => getenv("DBAL_URL"),
-];
-
-$dbal_connection = DBALDriverManager::getConnection($connectionParams);
+$dbal_connection = DbalDriverManager::getConnection((new DsnParser())->parse(getenv("DBAL_URL")));
 echo($dbal_connection->getNativeConnection()->getServerVersion() . "\n");
 
 // Drop all tables.
