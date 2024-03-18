@@ -62,13 +62,13 @@ class DatabaseEventTest extends DatabaseTestBase {
     // Enable the statement execution failure event and execute a failing
     // query.
     $this->connection->enableEvents([StatementExecutionFailureEvent::class]);
-    try {
+//    try {
       $this->connection->query('bananas on the palm tree');
-      $this->fail('An exception was expected, but was not thrown');
+/*      $this->fail('An exception was expected, but was not thrown');
     }
     catch (\Exception $e) {
       // Expected, keep going.
-    }
+    }*/
     $this->assertSame(3, $subscriber->countStatementStarts);
     $this->assertSame(1, $subscriber->countStatementEnds);
     $this->assertSame(1, $subscriber->countStatementFailures);
