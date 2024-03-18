@@ -10,6 +10,7 @@ use Doctrine\DBAL\Statement as DbalStatement;
 use Drupal\Core\Database\Database;
 use Drupal\Core\Database\DatabaseExceptionWrapper;
 use Drupal\Core\Database\Event\StatementExecutionEndEvent;
+use Drupal\Core\Database\Event\StatementExecutionFailureEvent;
 use Drupal\Core\Database\Event\StatementExecutionStartEvent;
 use Drupal\Core\Database\FetchModeTrait;
 use Drupal\Core\Database\RowCountException;
@@ -186,6 +187,20 @@ class StatementWrapper implements \Iterator, StatementInterface {
       $this->markResultsetIterable((bool) $this->dbalResult);
     }
     catch (DbalException $e) {
+      if (isset($startEvent) && $this->connection->isEventEnabled(StatementExecutionFailureEvent::class)) {
+        $this->connection->dispatchEvent(new StatementExecutionFailureEvent(
+          $startEvent->statementObjectId,
+          $startEvent->key,
+          $startEvent->target,
+          $startEvent->queryString,
+          $startEvent->args,
+          $startEvent->caller,
+          $startEvent->time,
+          get_class($e),
+          $e->getCode(),
+          $e->getMessage(),
+        ));
+      }
       throw new DatabaseExceptionWrapper($e->getMessage(), $e->getCode(), $e);
     }
 
