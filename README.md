@@ -6,9 +6,17 @@
 [![PHPStan level](https://img.shields.io/badge/PHPStan%20level-5-brightgreen.svg?style=flat)](https://github.com/mondrake/drudbal/actions/workflows/code-quality.yml)
 [![License](https://img.shields.io/github/license/mondrake/drudbal.svg)](https://packagist.org/packages/mondrake/drudbal)
 
+                    | Minimum version |
+--------------------|-----------------|
+Drupal              | 11.x            |
+Doctrine DBAL       | 4               |
+Drush               | 13.x            |
+PHP                 | 8.3             |
+--------------------|-----------------|
+
 (This README updated March 30, 2020)
 
-An __experimental__ Drupal driver for Doctrine DBAL. __Do not use if not for trial. No support, sorry :)__
+An __experimental__ Drupal database driver for Doctrine DBAL. __Do not use if not for trial. No support, sorry :)__
 
 ## Concept
 The concept is to use Doctrine DBAL as an additional database abstraction
