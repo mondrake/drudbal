@@ -6,17 +6,16 @@
 [![PHPStan level](https://img.shields.io/badge/PHPStan%20level-5-brightgreen.svg?style=flat)](https://github.com/mondrake/drudbal/actions/workflows/code-quality.yml)
 [![License](https://img.shields.io/github/license/mondrake/drudbal.svg)](https://packagist.org/packages/mondrake/drudbal)
 
-                    | Minimum version |
---------------------|-----------------|
-Drupal              | 11.x            |
-Doctrine DBAL       | 4               |
-Drush               | 13.x            |
-PHP                 | 8.3             |
---------------------|-----------------|
-
 (This README updated March 30, 2020)
 
 An __experimental__ Drupal database driver for Doctrine DBAL. __Do not use if not for trial. No support, sorry :)__
+
+| Requires            | Minimum version |
+|---------------------|-----------------|
+| Drupal              | 11.x            |
+| Doctrine DBAL       | 4               |
+| Drush               | 13.x            |
+| PHP                 | 8.3             |
 
 ## Concept
 The concept is to use Doctrine DBAL as an additional database abstraction
@@ -60,25 +59,20 @@ driver.
 Very rough instructions to install Drupal from scratch with this db driver
 under the hood:
 
-1. Requirements:
-    * PHP 8.1+
-    * latest Drupal development branch code, 11.x
-    * codebase built via Composer
-
-2. Get the DruDbal module from Packagist via Composer, it will install Doctrine
+1. Get the DruDbal module from Packagist via Composer, it will install Doctrine
    DBAL as well:
   ```
   $ composer require mondrake/drudbal:dev-master
   ```
 
-3. Launch the interactive installer. Proceed as usual and when on the db
+2. Launch the interactive installer. Proceed as usual and when on the db
    selection form, select 'Doctrine DBAL' and enter a 'database URL' compliant
    with Doctrine DBAL syntax. __Note:__ the driver works only with _mysql,
    mysqli, oci8 or sqlite_ DBAL drivers.
 
 ![configuration](https://cloud.githubusercontent.com/assets/1174864/24586418/7f86feb4-17a0-11e7-820f-eb1483dad07f.png)
 
-4. If everything goes right, when you're welcomed to the new Drupal
+3. If everything goes right, when you're welcomed to the new Drupal
    installation, visit the Status Report. The 'database' section will report
    something like:
 
